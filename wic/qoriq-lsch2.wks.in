@@ -1,0 +1,67 @@
+# short-description: Create eMMC/SD card image with a boot partition
+# long-description:
+# Create an image that can be written onto an eMMC or a SD card using
+# dd for use with Layerscape family.
+#
+# Offsets:
+#   * RCW+PBI+BL2 at block 8
+#   * PFE firmware at block 0x100
+#   * FIP (BL31+BL32+BL33) at 0x800
+#   * Env variables at 0x2800
+#   * Secureboot headers at 0x3000
+#   * DDR PHY FIP at 0x4000
+#   * DPAA1 FMAN ucode at 0x4800
+#   * DPAA2-MC at 0x5000
+#   * DPAA2 DPL at 0x6800
+#   * DPAA2 DPC at 0x7000
+#   * Device tree (UEFI) at 0x7800
+#   * Kernel at 0x8000
+#   * Ramdisk at 0x10000
+#
+# The disk layout (in blocks) used is:
+#  blocks                           KiB
+#     0x0 +-----------------------+    0x0
+#         | MBR / GPT ...         |
+#     0x8 +-----------------------+    0x4
+#         | RCW + PBI + BL2       |
+#   0x100 +-----------------------+   0x80
+#         | PFE firmware          |
+#   0x800 +-----------------------+  0x400
+#         | FIP (BL31+BL32+BL33)  |
+#  0x2800 +-----------------------+ 0x1400
+#         | U-Boot Env variables  |
+#  0x3000 +-----------------------+ 0x1800
+#         | Secureboot headers    |
+#  0x4000 +-----------------------+ 0x2000
+#         | DDR PHY FIP           |
+#  0x4800 +-----------------------+ 0x2400
+#         | DPAA1 FMAN ucode      |
+#  0x5000 +-----------------------+ 0x2800
+#         | DPAA2-MC              |
+#  0x6800 +-----------------------+ 0x3400
+#         | DPAA2 DPL             |
+#  0x7000 +-----------------------+ 0x3800
+#         | DPAA2 DPC             |
+#  0x7800 +-----------------------+ 0x3c00
+#         | Device tree (UEFI)    |
+#  0x8000 +-----------------------+ 0x4000
+#         | Kernel                |
+# 0x10000 +-----------------------+ 0x8000
+#         | Ramdisk               |
+#         +-----------------------+
+#
+
+# offset(1K) number in beginning 64MB space of SD/eMMC card on all QorIQ platforms
+
+
+part PBL --source rawcopy --sourceparams="file=${PBL_FILE}" --ondisk mmcblk --no-table --align ${SD_PBL_OFFSET}
+
+part FIP --source rawcopy --sourceparams="file=${FIP_FILE}" --ondisk mmcblk --no-table --align ${SD_FIP_OFFSET}
+
+part FMANUCODER --source rawcopy --sourceparams="file=${FMAN_UCODE_FILE}" --ondisk mmcblk --no-table --align ${SD_FMAN_UCODE_OFFSET}
+
+part /boot --source bootimg-partition --ondisk mmcblk --fstype=ext4 --label boot --active --align 4096 --extra-space 0
+
+part / --source rootfs --ondisk mmcblk --fstype=ext4 --label rootfs --align 4096 --extra-space 32
+
+bootloader --ptable msdos
