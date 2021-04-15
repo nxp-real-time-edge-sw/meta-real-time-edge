@@ -1,0 +1,4 @@
+Industrial Yocto BSP layer for NXP's platforms
+======================================================
+
+OpenIL layer bases on imx/qoriq layer and provides support for NXP's platforms for OpenIL distribution.
