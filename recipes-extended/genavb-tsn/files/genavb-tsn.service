@@ -1,0 +1,22 @@
+[Unit]
+Description=GenAVB/TSN Stack Daemons and applications
+After=weston.service systemd-networkd.service
+
+[Service]
+User=root
+
+# Log us in via PAM so we get our XDG & QT_QPA_PLATFORM environment and
+# are treated as logged in
+PAMName=login
+
+ExecStart=/usr/bin/avb.sh start
+ExecStop=/usr/bin/avb.sh stop
+
+RemainAfterExit=yes
+
+# stderr stdout to journal so our logging doesn't get lost into /dev/null
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -13,6 +13,10 @@ PACKAGES = "${PN}"
 tsntoolimage ?= ""
 tsntoolimage_ls1028a = "tsntool"
 
+genavbtsnimage ?= ""
+genavbtsnimage_ls1028ardb = "genavb-tsn"
+genavbtsnimage_imx8mpevk = "genavb-tsn"
+
 RDEPENDS_${PN} = " \
     iomem \
     ${@bb.utils.contains('DISTRO_FEATURES', 'baremetal',  \
@@ -42,4 +46,5 @@ RDEPENDS_${PN} = " \
     iproute2-tc \
     tcpdump \
     devmem2 \
+    ${genavbtsnimage} \
 "
