@@ -11,7 +11,5 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 PACKAGES = "${PN}"
 
 RDEPENDS_${PN} = " \
-    iomem \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'baremetal',  \
-    'packagegroup-baremetal-app', '', d)} \
+    u-boot-baremetal \
 "
