@@ -53,20 +53,20 @@
 
 # offset(1K) number in beginning 64MB space of SD/eMMC card on all QorIQ platforms
 
-part PBL --source rawcopy --sourceparams="file=${PBL_FILE}" --ondisk mmcblk --no-table --align ${SD_PBL_OFFSET}
+part PBL --source rawcopy --sourceparams="file=${PBL_FILE}" --ondisk mmcblk0 --no-table --align ${SD_PBL_OFFSET}
 
-part FIP --source rawcopy --sourceparams="file=${FIP_FILE}" --ondisk mmcblk --no-table --align ${SD_FIP_OFFSET}
+part FIP --source rawcopy --sourceparams="file=${FIP_FILE}" --ondisk mmcblk0 --no-table --align ${SD_FIP_OFFSET}
 
-part DDR --source rawcopy --sourceparams="file=${DDR_PYH_FILE}" --ondisk mmcblk --no-table --align ${SD_DDR_PHY_FW_OFFSET}
+part DDR --source rawcopy --sourceparams="file=${DDR_PYH_FILE}" --ondisk mmcblk0 --no-table --align ${SD_DDR_PHY_FW_OFFSET}
 
-part MCFW --source rawcopy --sourceparams="file=${MCFW_FILE}" --ondisk mmcblk --no-table --align ${SD_DPAA2_MC_FW_OFFSET}
+part MCFW --source rawcopy --sourceparams="file=${MCFW_FILE}" --ondisk mmcblk0 --no-table --align ${SD_DPAA2_MC_FW_OFFSET}
 
-part DPL --source rawcopy --sourceparams="file=${DPL_FILE}" --ondisk mmcblk --no-table --align ${SD_DPAA2_MC_DPL_OFFSET}
+part DPL --source rawcopy --sourceparams="file=${DPL_FILE}" --ondisk mmcblk0 --no-table --align ${SD_DPAA2_MC_DPL_OFFSET}
 
-part DPC --source rawcopy --sourceparams="file=${DPC_FILE}" --ondisk mmcblk --no-table --align ${SD_DPAA2_MC_DPC_OFFSET}
+part DPC --source rawcopy --sourceparams="file=${DPC_FILE}" --ondisk mmcblk0 --no-table --align ${SD_DPAA2_MC_DPC_OFFSET}
 
-part /boot --source bootimg-partition --ondisk mmcblk --fstype=ext4 --label boot --active --align 4096 --extra-space 0
+part /boot --source bootimg-partition --ondisk mmcblk0 --fstype=ext4 --label boot --active --align 4096 --extra-space 0
 
-part / --source rootfs --ondisk mmcblk --fstype=ext4 --label rootfs --align 4096 --extra-space 32
+part / --source rootfs --ondisk mmcblk0 --fstype=ext4 --label rootfs --align 4096 --extra-space 32
 
 bootloader --ptable msdos

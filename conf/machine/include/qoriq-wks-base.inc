@@ -84,7 +84,7 @@ ITB_FILE ?= ""
 SOC_DEFAULT_IMAGE_FSTYPES += " wic.bmap wic.gz"
 
 # Do not update fstab file when using wic images
-WIC_CREATE_EXTRA_ARGS ?= "--no-fstab-update"
+# WIC_CREATE_EXTRA_ARGS ?= "--no-fstab-update"
 
 IMAGE_BOOT_FILES ?= " \
     ${KERNEL_IMAGETYPE} \
