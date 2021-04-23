@@ -1,0 +1,40 @@
+From dfbfef2c435a705426eb813d0c8915c92e506f42 Mon Sep 17 00:00:00 2001
+From: Changming Huang <jerry.huang@nxp.com>
+Date: Mon, 26 Apr 2021 17:14:46 +0800
+Subject: [PATCH 2/3] add static for gphNxpExtns_Context
+
+Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+---
+ src/service/extns/src/mifare/phNxpExtns_MifareStd.c | 2 +-
+ src/service/extns/src/phNxpExtns.c                  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/service/extns/src/mifare/phNxpExtns_MifareStd.c b/src/service/extns/src/mifare/phNxpExtns_MifareStd.c
+index 6cd6aaf..c28e24f 100644
+--- a/src/service/extns/src/mifare/phNxpExtns_MifareStd.c
++++ b/src/service/extns/src/mifare/phNxpExtns_MifareStd.c
+@@ -20,7 +20,7 @@
+ #include <phNxpLog.h>
+ #include <phNxpExtns_MifareStd.h>
+ 
+-phNxpExtns_Context_t       gphNxpExtns_Context;
++static phNxpExtns_Context_t       gphNxpExtns_Context;
+ phNciNfc_TransceiveInfo_t  tNciTranscvInfo;
+ phFriNfc_sNdefSmtCrdFmt_t  *NdefSmtCrdFmt = NULL;
+ phFriNfc_NdefMap_t         *NdefMap = NULL;
+diff --git a/src/service/extns/src/phNxpExtns.c b/src/service/extns/src/phNxpExtns.c
+index 3ceae90..aecd1c0 100644
+--- a/src/service/extns/src/phNxpExtns.c
++++ b/src/service/extns/src/phNxpExtns.c
+@@ -25,7 +25,7 @@
+ #include <phNxpLog.h>
+ #include <phNxpConfig.h>
+ 
+-phNxpExtns_Context_t         gphNxpExtns_Context;
++static phNxpExtns_Context_t         gphNxpExtns_Context;
+ extern phFriNfc_NdefMap_t    *NdefMap;
+ extern phNci_mfc_auth_cmd_t  gAuthCmdBuf;
+ 
+-- 
+2.25.1
+

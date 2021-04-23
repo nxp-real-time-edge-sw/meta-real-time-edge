@@ -1,0 +1,79 @@
+From fb54a677493f8342d5e1ee7e098329d01e4fcbac Mon Sep 17 00:00:00 2001
+From: Jianchao Wang <jianchao.wang@nxp.com>
+Date: Mon, 26 Apr 2021 16:57:08 +0800
+Subject: [PATCH 1/3] set configuration for libnfc-nci
+
+Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+---
+ conf/libnfc-nci.conf                    | 11 +++++++----
+ conf/libnfc-nxp-init.conf               |  4 ++++
+ src/halimpl/pn54x/tml/i2c/phTmlNfc.c    |  2 +-
+ src/halimpl/pn54x/utils/phNxpConfig.cpp |  2 ++
+ 4 files changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/conf/libnfc-nci.conf b/conf/libnfc-nci.conf
+index fcd1dfc..1b87d7a 100644
+--- a/conf/libnfc-nci.conf
++++ b/conf/libnfc-nci.conf
+@@ -6,10 +6,13 @@ APPL_TRACE_LEVEL=0x00
+ PROTOCOL_TRACE_LEVEL=0x00
+ 
+ ###############################################################################
+-# Force HOST listen feature enable or disable.
+-# 0: Disable
+-# 1: Enable
+-HOST_LISTEN_ENABLE=0x01
++# Specify HOST to listen for a selected protocol
++# 0x00 : Disable Host Listen
++# 0x01 : Enable Host to Listen (A)  for ISO-DEP tech A
++# 0x02 : Enable Host to Listen (B)  for ISO-DEP tech B
++# 0x04 : Enable Host to Listen (F)  for T3T Tag Type Protocol tech F
++# 0x07 : Enable Host to Listen (ABF)for ISO-DEP tech AB & T3T Tag Type Protocol tech F
++HOST_LISTEN_TECH_MASK=0x07
+ 
+ ###############################################################################
+ # Force tag polling for the following technology(s).
+diff --git a/conf/libnfc-nxp-init.conf b/conf/libnfc-nxp-init.conf
+index 4c30610..9079dda 100644
+--- a/conf/libnfc-nxp-init.conf
++++ b/conf/libnfc-nxp-init.conf
+@@ -27,6 +27,10 @@ NXPLOG_NCIR_LOGLEVEL=0x00
+ NXPLOG_FWDNLD_LOGLEVEL=0x00
+ NXPLOG_TML_LOGLEVEL=0x00
+ 
++###############################################################################
++# NXP HW Device Node information, when pn5xx_i2c kernel driver configuration is used
++NXP_NFC_DEV_NODE="/dev/pn544"
++
+ ###############################################################################
+ # NXP proprietary settings to enable NXP Proprietary features
+ # For NXP NFC Controller value must be fixed to {2F, 02, 00}
+diff --git a/src/halimpl/pn54x/tml/i2c/phTmlNfc.c b/src/halimpl/pn54x/tml/i2c/phTmlNfc.c
+index ef87c50..ff14904 100755
+--- a/src/halimpl/pn54x/tml/i2c/phTmlNfc.c
++++ b/src/halimpl/pn54x/tml/i2c/phTmlNfc.c
+@@ -388,7 +388,7 @@ static void phTmlNfc_TmlThread(void *pParam)
+                     else // aborting
+                     {
+                         s_customReadErrCounter = 0; // reset counter
+-                        printf("CUSTOM> too many i2c read errors: ABORTING...\n");
++                        //printf("CUSTOM> too many i2c read errors: ABORTING...\n");
+                         // XXX: similar code than nominal case, but with FAIL status (see later)
+                         gpphTmlNfc_Context->tReadInfo.bEnable = 0;
+                         if ((phTmlNfc_e_EnableRetrans == gpphTmlNfc_Context->eConfig) &&
+diff --git a/src/halimpl/pn54x/utils/phNxpConfig.cpp b/src/halimpl/pn54x/utils/phNxpConfig.cpp
+index 21c5dda..a4c07b5 100644
+--- a/src/halimpl/pn54x/utils/phNxpConfig.cpp
++++ b/src/halimpl/pn54x/utils/phNxpConfig.cpp
+@@ -46,6 +46,8 @@
+ 
+ #include <phNxpLog.h>
+ 
++#define GENERIC_TARGET 1
++
+ #if GENERIC_TARGET
+ const char alternative_config_path[] = "/data/nfc/";
+ #else
+-- 
+2.25.1
+
