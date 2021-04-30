@@ -14,7 +14,7 @@ SRC_URI_append_industrial = " \
     file://linux-selinux.config \
 "
 
-DELTA_KERNEL_DEFCONFIG_industrial += " \
+DELTA_KERNEL_DEFCONFIG_append_industrial = " \
     linux-rt.config \
     ${@bb.utils.contains('DISTRO_FEATURES', 'wifi',  \
     'linux-wifi.config', '', d)} \
