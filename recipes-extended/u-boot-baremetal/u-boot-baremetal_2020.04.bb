@@ -16,6 +16,8 @@ LIC_FILES_CHKSUM = " \
 
 PROVIDES = "u-boot-baremetal"
 
+DEPENDS_append = " libgcc dtc-native bison-native bc-native"
+
 UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2020.04"
 UBOOT_BAREMETAL_SRC ?= "git://bitbucket.sw.nxp.com/dnind/industry-uboot.git;protocol=ssh"
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
