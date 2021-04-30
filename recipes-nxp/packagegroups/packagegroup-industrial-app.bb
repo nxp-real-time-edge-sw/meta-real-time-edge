@@ -14,4 +14,5 @@ RDEPENDS_${PN} = " \
     iomem \
     ${@bb.utils.contains('DISTRO_FEATURES', 'baremetal',  \
     'packagegroup-baremetal-app', '', d)} \
+    jailhouse-industrial \
 "
