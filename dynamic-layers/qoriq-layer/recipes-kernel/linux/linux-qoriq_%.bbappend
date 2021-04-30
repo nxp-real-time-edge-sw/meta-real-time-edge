@@ -4,7 +4,7 @@ SRCBRANCH_industrial = "linux_5.10.y"
 SRCREV_industrial = "ad3906065edc78ca77f5d707d751d040018a591f"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
-SRC_URI_append_industrial += " \
+SRC_URI_append_industrial = " \
     file://linux-rt.config \
     file://linux-wifi.config \
     file://linux-baremetal.config \
@@ -12,4 +12,10 @@ SRC_URI_append_industrial += " \
     file://linux-baremetal-ls1028a.config \
     file://linux-baremetal-lx2160a.config \
     file://linux-selinux.config \
+"
+
+DELTA_KERNEL_DEFCONFIG_industrial += " \
+    linux-rt.config \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'wifi',  \
+    'linux-wifi.config', '', d)} \
 "
