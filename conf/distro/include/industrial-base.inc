@@ -1,4 +1,4 @@
-# OpenIL base conf
+# Industrial base conf
 
 DISTRO = "nxp-industrial"
 DISTROOVERRIDES = "industrial"
