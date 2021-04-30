@@ -19,7 +19,7 @@
 #  blocks                           KiB
 #     0x0 +-----------------------+    0x0
 #         | MBR / GPT ...         |
-#     0x8 +-----------------------+    0x4a
+#     0x8 +-----------------------+    0x4
 #         | RCW + PBI + BL2       |
 #   0x100 +-----------------------+   0x80
 #         | PFE firmware          |
@@ -57,9 +57,8 @@ SD_SECUREBOOT_HEADERS_OFFSET  ?= "6144"
 SD_DDR_PHY_FW_OFFSET  ?= "8192"
 SD_FUSE_HEADERS_OFFSET  ?= "8704"
 SD_FMAN_UCODE_OFFSET  ?= "9216"
-SD_QE_FIRMWARE_OFFSET  ?= "9472"
-SD_DP_FIRMWARE_OFFSET  ?= "9472"
-SD_PHY_FIRMWARE_OFFSET  ?= "9728"
+SD_QE_DP_FW_OFFSET  ?= "9472"
+SD_ETH_PHY_FW_OFFSET  ?= "9728"
 SD_UBOOT_SCR_OFFSET  ?= "9984"
 SD_DPAA2_MC_FW_OFFSET  ?= "10240"
 SD_DPAA2_MC_DPL_OFFSET  ?= "13312"
@@ -69,19 +68,91 @@ SD_KERNEL_OFFSET  ?= "16384"
 SD_KERNELITB_OFFSET  ?= "16384"
 SD_RAMDISKRFS_OFFSET  ?= "17408"
 
+# offset(1K) number in beginning 64MB space of QSPI/XSPI/NAND flash on all QorIQ platforms
 
+FLASH_PBL_OFFSET  ?= "0"
+FLASH_FIP_OFFSET  ?= "1024"
+FLASH_UBOOT_ENV_OFFSET  ?= "5120"
+FLASH_SECUREBOOT_HEADERS_OFFSET  ?= "6144"
+FLASH_DDR_PHY_FW_OFFSET  ?= "8192"
+FLASH_FUSE_HEADERS_OFFSET  ?= "8704"
+FLASH_FMAN_UCODE_OFFSET  ?= "9216"
+FLASH_QE_DP_FW_OFFSET  ?= "9472"
+FLASH_ETH_PHY_FW_OFFSET  ?= "9728"
+FLASH_UBOOT_SCR_OFFSET  ?= "9984"
+FLASH_PFE_OFFSET ?= "10240"
+FLASH_DPAA2_MC_FW_OFFSET  ?= "10240"
+FLASH_DPAA2_MC_DPL_OFFSET  ?= "13312"
+FLASH_DPAA2_MC_DPC_OFFSET  ?= "14336"
+FLASH_DEVICE_TREE_OFFSET  ?= "15360"
+FLASH_KERNEL_OFFSET  ?= "16384"
+FLASH_KERNELITB_OFFSET  ?= "16384"
+FLASH_RAMDISKRFS_OFFSET  ?= "17408"
+
+# Defaualt Firmware setting
 PBL_FILE ?= "atf/bl2_sd.pbl"
 FIP_FILE ?= "atf/fip_uboot.bin"
-DDR_PYH_FILE ?= "ddr-phy/fip_ddr_all.bin"
-FMAN_UCODE_FILE ?= ""
+DDR_PHY_FILE ?= ""
 QE_DP_FILE ?= ""
-ETH_PHY_FILE ?= "ls2-phy/cs4315-cs4340-PHY-ucode.txt"
-MCFW_FILE ?= "mc_app/mc.itb"
+FMAN_UCODE_FILE ?= ""
+ETH_PHY_FILE ?= ""
+PFE_FILE ?= ""
+MCFW_FILE ?= ""
 DPL_FILE ?= ""
 DPC_FILE ?= ""
-ITB_FILE ?= ""
+ITB_FILE ?= "fitImage"
 
-SOC_DEFAULT_IMAGE_FSTYPES += " wic.bmap wic.gz"
+WKS_FILE ?= ""
+
+# lx2160a
+DDR_PHY_FILE_lx2160a ?= "ddr-phy/fip_ddr_all.bin"
+ETH_PHY_FILE_lx2160a ?= "inphi/in112525-phy-ucode.txt"
+MCFW_FILE_lx2160a ?= "mc_app/mc.itb"
+DPL_FILE_lx2160a ?= "mc-utils/dpl-eth.19.dtb"
+DPC_FILE_lx2160a ?= "mc-utils/dpc-usxgmii.dtb"
+
+WKS_FILE_lx2160a ?= "qoriq-lx2160a.wks.in"
+
+# ls1043a
+FMAN_UCODE_FILE_ls1043a ?= "fsl_fman_ucode_ls1043_r1.1_108_4_9.bin"
+ETH_PHY_FILE_ls1043a ?= "ls2-phy/cs4315-cs4340-PHY-ucode.txt"
+
+WKS_FILE_ls1043a ?= "qoriq-ls104xa.wks.in"
+
+
+# ls1046a
+FMAN_UCODE_FILE_ls1046a ?= "fsl_fman_ucode_ls1046_r1.0_106_4_18.bin"
+ETH_PHY_FILE_ls1046a ?= "ls2-phy/cs4315-cs4340-PHY-ucode.txt"
+
+WKS_FILE_ls1046a ?= "qoriq-ls104xa.wks.in"
+
+# ls1028a
+QE_DP_FILE_ls1028a ?= "dp/ls1028a-dp-fw.bin"
+
+WKS_FILE_ls1028a ?= "qoriq-ls1028a.wks.in"
+
+# ls102xa
+# ls1021atwr
+RCW_FILE_ls1021atwr = "rcw/ls1021atwr/SSR_PNS_30/rcw_1200_sdboot.bin"
+UBOOT_FILE_ls1021atwr = "u-boot.bin-sdcard-qspi"
+
+# ls1021atsn
+RCW_FILE_ls1021atsn = "rcw/ls1021atsn/SSR_PNS_30/rcw_1200_sdboot.bin"
+UBOOT_FILE_ls1021atsn = "u-boot.bin-sdcard"
+
+QE_DP_FILE_ls102xa = "boot/iram_Type_A_LS1021a_r1.0.bin"
+
+WKS_FILE_ls102xa ?= "qoriq-ls102xa.wks.in"
+
+# ls1012a
+FLASH_PFE_OFFSET_ls1012afrwy ?= "128"
+FLASH_FIP_OFFSET_ls1012afrwy ?= "384"
+
+PBL_FILE_ls1012a ?= "atf/bl2_qspi.pbl"
+PFE_FILE_ls1012a ?= "engine-pfe-bin/pfe_fw_sbl.itb"
+
+WKS_FILE_ls1012ardb ?= "qoriq-ls1012a.wks.in"
+
 
 # Do not update fstab file when using wic images
 # WIC_CREATE_EXTRA_ARGS ?= "--no-fstab-update"
@@ -91,7 +162,4 @@ IMAGE_BOOT_FILES ?= " \
     *.dtb \
 "
 
-SOC_DEFAULT_WKS_FILE_fsl-lsch2 ?= "qoriq-lsch2.wks.in"
-SOC_DEFAULT_WKS_FILE_fsl-lsch3 ?= "qoriq-lsch3.wks.in"
-
-WKS_FILE ?= "${SOC_DEFAULT_WKS_FILE}"
+SOC_DEFAULT_IMAGE_FSTYPES += " wic.bmap wic.gz"
