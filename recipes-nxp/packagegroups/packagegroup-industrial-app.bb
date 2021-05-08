@@ -15,4 +15,5 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'baremetal',  \
     'packagegroup-baremetal-app', '', d)} \
     jailhouse-industrial \
+    igh-ethercat \
 "
