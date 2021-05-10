@@ -47,6 +47,7 @@ do_compile_append() {
 inherit systemd
 do_install_append() {
 	oe_runmake MODLIB=${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION} modules_install
+	rm -rf ${D}${sysconfdir}/init.d/ethercat
 	if [ ! -z "${PACKAGECONFIG}" ]; then
 		if [ ! -d ${D}${sysconfdir}/modprobe.d ]; then
 			mkdir ${D}${sysconfdir}/modprobe.d
