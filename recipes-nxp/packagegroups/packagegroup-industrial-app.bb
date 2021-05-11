@@ -14,6 +14,7 @@ RDEPENDS_${PN} = " \
     iomem \
     ${@bb.utils.contains('DISTRO_FEATURES', 'baremetal',  \
     'packagegroup-baremetal-app', '', d)} \
-    jailhouse-industrial \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'jailhouse-industrial',  \
+    'jailhouse-industrial', '', d)} \
     igh-ethercat \
 "

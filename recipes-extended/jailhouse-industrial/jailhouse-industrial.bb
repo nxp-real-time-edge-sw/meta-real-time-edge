@@ -164,4 +164,4 @@ RDEPENDS_pyjailhouse = " \
 
 INSANE_SKIP_${PN} = "ldflags"
 
-COMPATIBLE_MACHINE = "(ls)"
+COMPATIBLE_MACHINE = "(qoriq|mx8)"
