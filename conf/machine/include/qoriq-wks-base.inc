@@ -132,6 +132,9 @@ QE_DP_FILE_ls1028a ?= "dp/ls1028a-dp-fw.bin"
 WKS_FILE_ls1028a ?= "qoriq-ls1028a.wks.in"
 
 # ls102xa
+QE_DP_FILE_ls102xa ?= "boot/iram_Type_A_LS1021a_r1.0.bin"
+WKS_FILE_ls102xa ?= "qoriq-ls102xa.wks.in"
+
 # ls1021atwr
 RCW_FILE_ls1021atwr = "rcw/ls1021atwr/SSR_PNS_30/rcw_1200_sdboot.bin"
 UBOOT_FILE_ls1021atwr = "u-boot.bin-sdcard-qspi"
@@ -140,9 +143,9 @@ UBOOT_FILE_ls1021atwr = "u-boot.bin-sdcard-qspi"
 RCW_FILE_ls1021atsn = "rcw/ls1021atsn/SSR_PNS_30/rcw_1200_sdboot.bin"
 UBOOT_FILE_ls1021atsn = "u-boot.bin-sdcard"
 
-QE_DP_FILE_ls102xa = "boot/iram_Type_A_LS1021a_r1.0.bin"
-
-WKS_FILE_ls102xa ?= "qoriq-ls102xa.wks.in"
+# ls1021aiot
+UBOOT_FILE_ls1021aiot ?= "u-boot.bin-sdcard"
+WKS_FILE_ls1021aiot ?= "qoriq-ls1021aiot.wks.in"
 
 # ls1012a
 FLASH_PFE_OFFSET_ls1012afrwy ?= "128"
@@ -152,7 +155,6 @@ PBL_FILE_ls1012a ?= "atf/bl2_qspi.pbl"
 PFE_FILE_ls1012a ?= "engine-pfe-bin/pfe_fw_sbl.itb"
 
 WKS_FILE_ls1012ardb ?= "qoriq-ls1012a.wks.in"
-
 
 # Do not update fstab file when using wic images
 # WIC_CREATE_EXTRA_ARGS ?= "--no-fstab-update"
