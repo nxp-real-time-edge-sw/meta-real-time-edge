@@ -16,5 +16,8 @@ RDEPENDS_${PN} = " \
     'packagegroup-baremetal-app', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'jailhouse-industrial',  \
     'jailhouse-industrial', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'libbee', 'libbee', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'libblep', 'libblep', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'libnfc-nci', 'libnfc-nci', '', d)} \
     igh-ethercat \
 "
