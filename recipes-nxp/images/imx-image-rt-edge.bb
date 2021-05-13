@@ -1,13 +1,13 @@
 # Copyright 2021 NXP
 # Released under the MIT license (see COPYING.MIT for the terms)
 
-DESCRIPTION = "This is the basic industrial core image"
+DESCRIPTION = "This is the basic rt-edge core image"
 
 inherit core-image
 
 LICENSE = "MIT"
 
-export IMAGE_BASENAME = "imx-image-industrial"
+export IMAGE_BASENAME = "imx-image-rt-edge"
 
 IMAGE_FEATURES += " \
     debug-tweaks \
@@ -35,6 +35,7 @@ IMAGE_INSTALL += " \
     packagegroup-imx-security \
     ${CLINFO} \
 "
+
 IMAGE_INSTALL += " \
-    packagegroup-industrial-app \
+    packagegroup-rt-edge \
 "
