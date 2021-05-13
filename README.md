@@ -1,4 +1,7 @@
-# Open Industrial Linux
-# Open-source Software Platform for Industrial Automation
+# RT Edge Layer
 
-For more information on OpenIL, refer to the [OpenIL official websize](https://www.openil.org)
+RT Edge Yocto BSP layer for NXP's platforms
+
+======================================================
+
+RT Edge Layer layer bases on imx/qoriq layer and provides support for NXP's platforms for real time edge distribution.
