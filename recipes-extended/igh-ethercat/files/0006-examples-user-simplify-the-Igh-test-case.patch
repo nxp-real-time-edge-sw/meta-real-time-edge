@@ -1,7 +1,7 @@
 From d139f29e4edaf2e57963b5b33f7aeac200968365 Mon Sep 17 00:00:00 2001
 From: Wenbin Song <wenbin.song@nxp.com>
 Date: Mon, 18 May 2020 18:34:35 +0800
-Subject: [PATCH 6/8] examples/user: simplify the Igh test case
+Subject: [PATCH 06/10] examples/user: simplify the Igh test case
 
 On the original case, we needed a stepper motor and the
 corresponding driver. It was diffcult to rebuild this

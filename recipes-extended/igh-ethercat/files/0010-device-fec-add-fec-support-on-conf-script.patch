@@ -1,0 +1,30 @@
+From ed015f89ad896ab378635e5df45d2ab1232b8ef2 Mon Sep 17 00:00:00 2001
+From: Wenbin Song <wenbin.song@nxp.com>
+Date: Sat, 8 May 2021 16:09:22 +0800
+Subject: [PATCH 10/10] device/fec: add fec support on conf script
+
+Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+---
+ script/ethercat.conf | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/script/ethercat.conf b/script/ethercat.conf
+index 41f41c1..3dd71ae 100644
+--- a/script/ethercat.conf
++++ b/script/ethercat.conf
+@@ -36,10 +36,10 @@ MASTER0_DEVICE=""
+ # the EtherCAT-capable ones. If a certain (EtherCAT-capable) driver is not
+ # found, a warning will appear.
+ #
+-# Possible values: 8139too, e100, e1000, e1000e, r8169, generic. Separate
++# Possible values: 8139too, e100, e1000, e1000e, r8169, fec, generic. Separate
+ # multiple drivers with spaces.
+ #
+-# Note: The e100, e1000, e1000e and r8169 drivers are not built by default.
++# Note: The e100, e1000, e1000e, fec and r8169 drivers are not built by default.
+ # Enable them with the --enable-<driver> configure switches.
+ #
+ DEVICE_MODULES=""
+-- 
+2.17.1
+

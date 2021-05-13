@@ -10,4 +10,5 @@ SRC_URI_append_industrial = " \
     file://linux-wifi.config \
     file://linux-baremetal.config \
     file://linux-selinux.config \
+    file://linux-fec.config \
 "

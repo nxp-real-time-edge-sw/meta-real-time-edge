@@ -1,7 +1,7 @@
 From 1a5577e075246f84a30c72c098c8ea9a30d85c3f Mon Sep 17 00:00:00 2001
 From: XianyuWei <xianyu.wei@nxp.com>
 Date: Tue, 24 Jul 2018 14:14:03 +0800
-Subject: [PATCH 1/8] Fixed compilation error for the EtherCat drivers.
+Subject: [PATCH 01/10] Fixed compilation error for the EtherCat drivers.
 
 There were some errors in compiling the module
 because EtherCat 1.5.2 did not support the Linux kernel 4.x well.
