@@ -1,0 +1,72 @@
+From 8d95a624b2de4d0df98438d521f9d9f798d888f8 Mon Sep 17 00:00:00 2001
+From: "hongbo.wang" <hongbo.wang@nxp.com>
+Date: Sat, 8 May 2021 11:05:10 +0800
+Subject: [PATCH] fix warning for sysrepo-persistent-data.yang
+
+Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+---
+ yang/sysrepo-persistent-data.yang | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/yang/sysrepo-persistent-data.yang b/yang/sysrepo-persistent-data.yang
+index 6742d884..1c19ad6f 100644
+--- a/yang/sysrepo-persistent-data.yang
++++ b/yang/sysrepo-persistent-data.yang
+@@ -126,20 +126,20 @@ module sysrepo-persistent-data {
+         }
+
+         leaf xpath {
+-          when "../type = 'subtree-change' or ../type = 'dp-get-items' or ../type = 'rpc' " +
+-               "or ../type = 'action' or ../type = 'event-notification'";
++          when "../type = 'srpd:subtree-change' or ../type = 'srpd:dp-get-items' or ../type = 'srpd:rpc' " +
++               "or ../type = 'srpd:action' or ../type = 'srpd:event-notification'";
+           type string;
+           description "XPath of the subtree where the subscription is active.";
+         }
+
+         leaf username {
+-          when "../type = 'event-notification'";
++          when "../type = 'srpd:event-notification'";
+           type string;
+           description "Name of the user behind the subcription for event notification delivery.";
+         }
+
+         leaf event {
+-          when "../type = 'module-change' or ../type = 'subtree-change'";
++          when "../type = 'srpd:module-change' or ../type = 'srpd:subtree-change'";
+           type identityref {
+             base notification-event;
+           }
+@@ -147,26 +147,26 @@ module sysrepo-persistent-data {
+         }
+
+         leaf priority {
+-          when "../type = 'module-change' or ../type = 'subtree-change'";
++          when "../type = 'srpd:module-change' or ../type = 'srpd:subtree-change'";
+           type uint32;
+           description "Priority of the subscribtion by delivering notifications (0 is the lowest priority).";
+         }
+
+         leaf enable-running {
+-          when "../type = 'module-change' or ../type = 'subtree-change' or ../type = 'dp-get-items'";
++          when "../type = 'srpd:module-change' or ../type = 'srpd:subtree-change' or ../type = 'srpd:dp-get-items'";
+           type empty;
+           description "If present, the subscription enables specified subtree in
+             the running datastore.";
+         }
+
+         leaf enable-nacm {
+-          when "../type = 'event-notification'";
++          when "../type = 'srpd:event-notification'";
+           type empty;
+           description "If present, the NETCONF Access Control is enabled for this subscription.";
+         }
+
+         leaf api-variant {
+-          when "../type = 'rpc' or ../type = 'event-notification' or ../type = 'action'";
++          when "../type = 'srpd:rpc' or ../type = 'srpd:event-notification' or ../type = 'srpd:action'";
+           type enumeration {
+             enum "values" {
+               value 1;
+--
+2.17.1
