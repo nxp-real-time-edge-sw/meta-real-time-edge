@@ -26,6 +26,7 @@ SRCREV = "f72ce0feca3ef92ecaee58e105de454ea1e0ff69"
 
 S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
+B_ls1021aiot = "${S}"
 
 UBOOT_BAREMETAL_DEFCONFIG ?= ""
 DELTA_UBOOT_BAREMETAL_DEFCONFIG ?= ""
