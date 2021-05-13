@@ -1,0 +1,25 @@
+From bbdc475cd524a3360c8660c38d77f900dc4f9f2c Mon Sep 17 00:00:00 2001
+From: "hongbo.wang" <hongbo.wang@nxp.com>
+Date: Wed, 21 Apr 2021 16:15:23 +0800
+Subject: [PATCH] change PIDFILE_PREFIX to tmp
+
+Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f0c82c1..882e591 100755
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -46,7 +46,7 @@ endif()
+
+ # set prefix for the PID file
+ if (NOT PIDFILE_PREFIX)
+-    set(PIDFILE_PREFIX "/var/run")
++    set(PIDFILE_PREFIX "/tmp")
+ endif()
+
+ # get keystored keys directory
+--
+2.17.1

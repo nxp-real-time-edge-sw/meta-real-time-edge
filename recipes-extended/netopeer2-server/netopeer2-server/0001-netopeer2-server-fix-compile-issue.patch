@@ -1,0 +1,25 @@
+From a9def1c257db4f651884fe74ed41efdde5f3a0a3 Mon Sep 17 00:00:00 2001
+From: hongbo wang <hongbo.wang@nxp.com>
+Date: Wed, 21 Apr 2021 10:51:44 +0800
+Subject: [PATCH] netopeer2-server: fix compile issue
+
+Signed-off-by: hongbo wang <hongbo.wang@nxp.com>
+---
+ log.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/log.h b/log.h
+index c8c2ba3..4d5754f 100644
+--- a/log.h
++++ b/log.h
+@@ -37,7 +37,7 @@ extern uint8_t np2_sr_verbose_level;
+ /**
+  * @brief netopeer2 flag whether to print messages to stderr (only if not daemon).
+  */
+-uint8_t np2_stderr_log;
++extern uint8_t np2_stderr_log;
+
+ /**
+  * @brief internal printing function, follows the levels from libnetconf2
+--
+2.27.0

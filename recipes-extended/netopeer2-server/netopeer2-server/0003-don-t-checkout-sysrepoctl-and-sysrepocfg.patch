@@ -1,0 +1,68 @@
+From 340f9dc5b31b718cbc6e6befe1272c95a2eb99e2 Mon Sep 17 00:00:00 2001
+From: "hongbo.wang" <hongbo.wang@nxp.com>
+Date: Sat, 8 May 2021 11:51:59 +0800
+Subject: [PATCH] don't checkout sysrepoctl and sysrepocfg
+
+Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+---
+ CMakeLists.txt | 38 ++++++++++++--------------------------
+ 1 file changed, 12 insertions(+), 26 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 882e591..ed5b09e 100755
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -180,20 +180,20 @@ if (ENABLE_CONFIGURATION)
+     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/scripts/model-install.sh.in" "${PROJECT_BINARY_DIR}/model-install.sh" ESCAPE_QUOTES @ONLY)
+
+     # find sysrepoctl
+-    if (NOT SYSREPOCTL_EXECUTABLE)
+-        find_program(SYSREPOCTL_EXECUTABLE sysrepoctl)
+-    endif()
+-    if (NOT SYSREPOCTL_EXECUTABLE)
+-        message(FATAL_ERROR "Unable to find sysrepoctl, set SYSREPOCTL_EXECUTABLE manually.")
+-    endif()
++    # if (NOT SYSREPOCTL_EXECUTABLE)
++    #   find_program(SYSREPOCTL_EXECUTABLE sysrepoctl)
++    #endif()
++    #if (NOT SYSREPOCTL_EXECUTABLE)
++    #   message(FATAL_ERROR "Unable to find sysrepoctl, set SYSREPOCTL_EXECUTABLE manually.")
++    #endif()
+
+     # find sysrepocfg
+-    if (NOT SYSREPOCFG_EXECUTABLE)
+-        find_program(SYSREPOCFG_EXECUTABLE sysrepocfg)
+-    endif()
+-    if (NOT SYSREPOCFG_EXECUTABLE)
+-        message(FATAL_ERROR "Unable to find sysrepocfg, set SYSREPOCFG_EXECUTABLE manually.")
+-    endif()
++    #if (NOT SYSREPOCFG_EXECUTABLE)
++    #    find_program(SYSREPOCFG_EXECUTABLE sysrepocfg)
++    #endif()
++    #if (NOT SYSREPOCFG_EXECUTABLE)
++    #    message(FATAL_ERROR "Unable to find sysrepocfg, set SYSREPOCFG_EXECUTABLE manually.")
++    #endif()
+
+     # Command line options to be passed to `sysrepoctl` when working with modules
+     # which should only be accessible by an administrator
+@@ -226,18 +226,4 @@ if(ENABLE_VALGRIND_TESTS)
+     set(ENABLE_BUILD_TESTS ON)
+ endif()
+
+-if(ENABLE_BUILD_TESTS)
+-    find_package(CMocka 1.0.0)
+-    if(CMOCKA_FOUND)
+-        enable_testing()
+-        add_subdirectory(tests)
+-    endif(CMOCKA_FOUND)
+-endif(ENABLE_BUILD_TESTS)
+-
+-add_custom_target(integration-test
+-                  COMMAND make build
+-                  COMMAND make test
+-                  WORKING_DIRECTORY integration-tests/
+-                  COMMENT Running integration-tests)
+-
+ file(COPY integration-tests DESTINATION ${CMAKE_BINARY_DIR})
+--
+2.17.1
