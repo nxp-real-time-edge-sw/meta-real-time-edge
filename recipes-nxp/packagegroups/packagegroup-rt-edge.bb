@@ -24,4 +24,5 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libnfc-nci', 'libnfc-nci', '', d)} \
     igh-ethercat \
     ${tsntoolimage} \
+    lldpd \
 "
