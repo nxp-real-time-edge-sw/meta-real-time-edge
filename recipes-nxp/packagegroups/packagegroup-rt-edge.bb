@@ -25,4 +25,5 @@ RDEPENDS_${PN} = " \
     igh-ethercat \
     ${tsntoolimage} \
     lldpd \
+    avahi-daemon \
 "
