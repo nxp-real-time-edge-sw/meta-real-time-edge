@@ -13,9 +13,3 @@ SRC_URI_append_rt-edge = " \
     file://linux-baremetal-lx2160a.config \
     file://linux-selinux.config \
 "
-
-DELTA_KERNEL_DEFCONFIG_append_rt-edge = " \
-    linux-rt.config \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'wifi',  \
-    'linux-wifi.config', '', d)} \
-"
