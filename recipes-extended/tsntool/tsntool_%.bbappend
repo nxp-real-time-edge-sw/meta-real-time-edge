@@ -1,0 +1,25 @@
+DESCRIPTION = "A tool to configure TSN funtionalities in user space for industrial"
+
+SAVED_DIR := "${THISDIR}"
+
+#SRC_URI_industrial = "git://github.com/openil/tsntool.git;protocol=https"
+#SRC_URI_industrial = "git://bitbucket.sw.nxp.com/~nxa19039/tsntool_yocto.git;protocol=ssh;nobranch=1"
+SRC_URI_rt-edge = "git://bitbucket.sw.nxp.com/dnind/tsntool.git;protocol=ssh;nobranch=1"
+#SRCREV_industrial = "e0bd2f6fd9b066bc8da09aeddd88c6237e0872a4"
+
+SRCREV_rt-edge = "3b69fb220808afd34a952957371ada019da54333"
+
+FILES_${PN} += "/root/* /root/sample/* /root/samples/* \
+               /root/samples/gatescripts/* /root/samples/pktgen/* \
+               /root/samples/cncdemo/* "
+
+do_install_append() {
+    install -d ${D}/root/samples
+    install -d ${D}/root/samples/gatescripts
+    install -d ${D}/root/samples/pktgen
+    install -d ${D}/root/samples/cncdemo
+    install -Dm 0755 ${SAVED_DIR}/samples/gatescripts/* ${D}/root/samples/gatescripts/
+    install -Dm 0755 ${SAVED_DIR}/samples/pktgen/* ${D}/root/samples/pktgen/
+    install -Dm 0755 ${S}/demos/cnc/topoagent.py ${D}/root/samples/cncdemo/
+}
+

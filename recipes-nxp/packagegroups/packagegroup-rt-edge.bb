@@ -10,6 +10,9 @@ inherit packagegroup
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 PACKAGES = "${PN}"
 
+tsntoolimage ?= ""
+tsntoolimage_ls1028a = "tsntool"
+
 RDEPENDS_${PN} = " \
     iomem \
     ${@bb.utils.contains('DISTRO_FEATURES', 'baremetal',  \
@@ -20,4 +23,5 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libblep', 'libblep', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libnfc-nci', 'libnfc-nci', '', d)} \
     igh-ethercat \
+    ${tsntoolimage} \
 "
