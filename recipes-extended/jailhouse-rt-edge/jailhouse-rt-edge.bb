@@ -1,6 +1,6 @@
 SUMMARY = "Jailhouse, OpenIL fork"
 HOMEPAGE = "https://github.com/siemens/jailhouse"
-SECTION = "jailhouse-industrial"
+SECTION = "jailhouse-rt-edge"
 LICENSE = "GPL-2.0"
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=9fa7f895f96bde2d47fd5b7d95b6ba4d \

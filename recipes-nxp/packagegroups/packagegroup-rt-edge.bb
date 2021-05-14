@@ -1,7 +1,7 @@
 # Copyright 2021 NXP
 # Released under the MIT license (see COPYING.MIT for the terms)
 
-SUMMARY = "NXP Package group for Industrial"
+SUMMARY = "NXP Package group for RT Edge"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
@@ -13,9 +13,9 @@ PACKAGES = "${PN}"
 RDEPENDS_${PN} = " \
     iomem \
     ${@bb.utils.contains('DISTRO_FEATURES', 'baremetal',  \
-    'packagegroup-baremetal-app', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'jailhouse-industrial',  \
-    'jailhouse-industrial', '', d)} \
+    'packagegroup-baremetal', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'jailhouse-rt-edge',  \
+    'jailhouse-rt-edge', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libbee', 'libbee', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libblep', 'libblep', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libnfc-nci', 'libnfc-nci', '', d)} \
