@@ -22,6 +22,12 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libbee', 'libbee', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libblep', 'libblep', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libnfc-nci', 'libnfc-nci', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'libdrm', 'libdrm', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'imx-gpu-viv', 'imx-gpu-viv', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'wayland-protocols', 'wayland-protocols', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'weston', 'weston', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'kmscube', 'kmscube', '', d)} \
+    linuxptp \
     igh-ethercat \
     ${tsntoolimage} \
     lldpd \
