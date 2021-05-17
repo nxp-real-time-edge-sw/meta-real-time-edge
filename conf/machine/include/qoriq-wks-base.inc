@@ -144,7 +144,10 @@ RCW_FILE_ls1021atsn = "rcw/ls1021atsn/SSR_PNS_30/rcw_1200_sdboot.bin"
 UBOOT_FILE_ls1021atsn = "u-boot.bin-sdcard"
 
 # ls1021aiot
-UBOOT_FILE_ls1021aiot ?= "u-boot.bin-sdcard"
+UBOOT_FILE_ls1021aiot ?= "${@bb.utils.contains('DISTRO_FEATURES', \
+                          'baremetal', \
+                          'u-boot.bin-baremetal', \
+                          'u-boot.bin-sdcard', d)}"
 WKS_FILE_ls1021aiot ?= "qoriq-ls1021aiot.wks.in"
 
 # ls1012a
