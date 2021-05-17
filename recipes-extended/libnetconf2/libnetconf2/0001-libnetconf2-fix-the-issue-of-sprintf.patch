@@ -1,0 +1,25 @@
+From 5b0e9740f6858b7ccb8625d99628c36974cba376 Mon Sep 17 00:00:00 2001
+From: hongbo wang <hongbo.wang@nxp.com>
+Date: Tue, 20 Apr 2021 17:47:56 +0800
+Subject: [PATCH] libnetconf2: fix the issue of sprintf
+
+Signed-off-by: hongbo wang <hongbo.wang@nxp.com>
+---
+ src/io.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/io.c b/src/io.c
+index 9c4fa9f..f7b9ec2 100644
+--- a/src/io.c
++++ b/src/io.c
+@@ -62,7 +62,7 @@ nc_ssl_error_get_reasons(void)
+             ERRMEM;
+             return NULL;
+         }
+-        reason_len += sprintf(reasons + reason_len, ERR_reason_error_string(e));
++        reason_len += sprintf(reasons + reason_len, "%s", ERR_reason_error_string(e));
+     }
+
+     return reasons;
+--
+2.27.0
