@@ -33,6 +33,12 @@ IMAGE_INSTALL += " \
     imx-test \
     packagegroup-imx-core-tools \
     packagegroup-imx-security \
+    libopencl-imx \
+    imx-gpu-viv-demos \
+    packagegroup-fsl-tools-gpu \
+    packagegroup-imx-tools-audio \
+    weston-init weston-examples gtk+3-demo \
+    packagegroup-fsl-gstreamer1.0-full \
     ${CLINFO} \
 "
 
