@@ -1,7 +1,7 @@
 From 53985a48b5635babc26025cb5bd077e43ddfe0cc Mon Sep 17 00:00:00 2001
 From: Wenbin Song <wenbin.song@nxp.com>
 Date: Sat, 8 May 2021 15:36:13 +0800
-Subject: [PATCH 09/10] device/fec: Add fec device
+Subject: [PATCH 09/11] device/fec: Add fec device
 
 Signed-off-by: Wenbin Song  <wenbin.song@nxp.com>
 ---

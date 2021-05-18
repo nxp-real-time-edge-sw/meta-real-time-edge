@@ -1,7 +1,7 @@
 From a365acaa0f6489d54ec64427d7edebeed3b12e87 Mon Sep 17 00:00:00 2001
 From: Wenbin Song <wenbin.song@nxp.com>
 Date: Fri, 7 May 2021 15:08:05 +0800
-Subject: [PATCH 07/10] configure: Fix the subdir-objects error
+Subject: [PATCH 07/11] configure: Fix the subdir-objects error
 
 Signed-off-by: Wenbin Song  <wenbin.song@nxp.com>
 ---
