@@ -32,4 +32,5 @@ RDEPENDS_${PN} = " \
     ${tsntoolimage} \
     lldpd \
     avahi-daemon \
+    qoriq-servo \
 "
