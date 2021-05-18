@@ -12,4 +12,5 @@ PACKAGES = "${PN}"
 
 RDEPENDS_${PN} = " \
     u-boot-baremetal \
+    icc \
 "

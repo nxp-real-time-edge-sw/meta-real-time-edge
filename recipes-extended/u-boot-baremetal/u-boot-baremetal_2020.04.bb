@@ -25,8 +25,7 @@ SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
 SRCREV = "f72ce0feca3ef92ecaee58e105de454ea1e0ff69"
 
 S = "${WORKDIR}/git"
-B = "${WORKDIR}/build"
-B_ls1021aiot = "${S}"
+B = "${S}"
 
 UBOOT_BAREMETAL_DEFCONFIG ?= ""
 DELTA_UBOOT_BAREMETAL_DEFCONFIG ?= ""
@@ -50,7 +49,7 @@ do_configure () {
 
 do_compile () {
     if [ -n "${UBOOT_BAREMETAL_DEFCONFIG}" ]; then
-        oe_runmake -C ${S} O=${B} ${UBOOT_MAKE_TARGET}
+        oe_runmake -C ${S} ${UBOOT_MAKE_TARGET}
         cp ${B}/${UBOOT_BINARY} ${B}/${UBOOT_BAREMETAL_RENAME}
     fi
 }
