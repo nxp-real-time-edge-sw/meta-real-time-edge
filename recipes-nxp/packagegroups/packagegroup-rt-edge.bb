@@ -34,4 +34,5 @@ RDEPENDS_${PN} = " \
     avahi-daemon \
     qoriq-servo \
     libopen62541 \
+    libmodbus \
 "
