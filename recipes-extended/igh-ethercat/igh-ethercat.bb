@@ -20,6 +20,7 @@ SRC_URI += "\
     file://0008-master-master-fix-the-issue-of-sched_setscheduler-un.patch \
     file://0009-device-fec-Add-fec-device.patch \
     file://0010-device-fec-add-fec-support-on-conf-script.patch \
+    file://0011-Fix-ethercat-tool-compilation.patch \
 "
 S = "${WORKDIR}/ethercat-${PV}"
 

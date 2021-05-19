@@ -1,7 +1,7 @@
 From 3f79128fa3178a9e727a469fe3b05c05c4fa88bb Mon Sep 17 00:00:00 2001
 From: Jerry Huang <jerry.huang@nxp.com>
 Date: Thu, 17 Oct 2019 17:19:12 +0800
-Subject: [PATCH 04/10] replace the init_timer with timer_setup function
+Subject: [PATCH 04/11] replace the init_timer with timer_setup function
 
 Since Linux Kernel 4.15, need to replace init_timer with timer_setup function.
 otherwise, there will be compile issue:
