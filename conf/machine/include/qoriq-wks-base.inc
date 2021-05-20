@@ -172,5 +172,3 @@ WKS_FILE_DEPENDS_append = " u-boot-script-distroboot"
 
 IMAGE_BOOT_FILES_remove_ls1012a = " ${MACHINE}_boot.scr"
 WKS_FILE_DEPENDS_remove_ls1012a = " u-boot-script-distroboot"
-
-SOC_DEFAULT_IMAGE_FSTYPES += " wic.bmap wic.gz"
