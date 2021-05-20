@@ -32,8 +32,9 @@ RDEPENDS_${PN} = " \
     igh-ethercat \
     ${tsntoolimage} \
     lldpd \
-    avahi-daemon \
+    avahi-daemon avahi-utils \
     qoriq-servo \
     libopen62541 \
     libmodbus \
+    python3-websockets \
 "
