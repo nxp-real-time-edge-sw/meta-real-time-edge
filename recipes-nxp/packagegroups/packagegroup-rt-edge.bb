@@ -27,6 +27,7 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'wayland-protocols', 'wayland-protocols', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'weston', 'weston', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'kmscube', 'kmscube', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'sysrepo-tsn', 'sysrepo-tsn', '', d)} \
     linuxptp \
     igh-ethercat \
     ${tsntoolimage} \
