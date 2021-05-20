@@ -42,3 +42,4 @@ do_install_append() {
     install -Dm 0755 ${S}/demos/cnc/topoagent.py ${D}/root/samples/cncdemo/
 }
 
+COMPATIBLE_MACHINE = "qoriq|imx"
