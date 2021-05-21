@@ -19,6 +19,8 @@ SRC_URI_append_ls1046ardb = "file://ls1046ardb_boot.cmd \
 SRC_URI_append_ls1046afrwy = "file://ls1046afrwy_boot.cmd"
 SRC_URI_append_lx2160ardb = "file://lx2160ardb_boot.cmd \
                              file://lx2160ardb_baremetal_boot.cmd"
+SRC_URI_append_lx2160ardb-rev2 = "file://lx2160ardb-rev2_boot.cmd \
+                             file://lx2160ardb-rev2_baremetal_boot.cmd"
 
 inherit deploy
 

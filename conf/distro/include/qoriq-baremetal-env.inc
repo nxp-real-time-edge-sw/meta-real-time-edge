@@ -16,6 +16,7 @@ UBOOT_BOOT_BAREMETAL_DEFCONFIG_ls1043ardb ?= "ls1043ardb_tfa_baremetal_defconfig
 UBOOT_BOOT_BAREMETAL_DEFCONFIG_ls1046ardb ?= "ls1046ardb_tfa_baremetal_defconfig"
 UBOOT_BOOT_BAREMETAL_DEFCONFIG_ls1028ardb ?= "ls1028ardb_tfa_baremetal_defconfig"
 UBOOT_BOOT_BAREMETAL_DEFCONFIG_lx2160ardb ?= "lx2160ardb_tfa_baremetal_defconfig"
+UBOOT_BOOT_BAREMETAL_DEFCONFIG_lx2160ardb-rev2 ?= "lx2160ardb_tfa_baremetal_defconfig"
 
 UBOOT_BOOT_BINARY ?= "u-boot-dtb.bin"
 UBOOT_BOOT_BINARY_ls1021aiot ?= "u-boot-with-spl-pbl.bin"
