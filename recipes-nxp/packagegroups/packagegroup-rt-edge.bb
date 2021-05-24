@@ -29,6 +29,7 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'kmscube', 'kmscube', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'sysrepo-tsn', 'sysrepo-tsn', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'tsn-scripts', 'tsn-scripts', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'canfestival', 'canfestival', '', d)} \
     linuxptp \
     igh-ethercat \
     ${tsntoolimage} \

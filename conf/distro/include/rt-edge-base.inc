@@ -15,6 +15,7 @@ DISTRO_FEATURES_append_mx8mp = " jailhouse-rt-edge sysrepo-tsn"
 DISTRO_FEATURES_append_mx8m = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
 DISTRO_FEATURES_append_ls1028atsn = " sysrepo-tsn"
 DISTRO_FEATURES_append_ls1021atsn = " sysrepo-tsn"
+DISTRO_FEATURES_append_ls1021aiot = " canfestival"
 
 DISTRO_FEATURES_remove = " x11"
 PREFERRED_VERSION_weston = "9.0.0.imx"
