@@ -10,7 +10,7 @@ DISTRO_FEATURES_append_ls1043ardb = " jailhouse-rt-edge"
 DISTRO_FEATURES_append_ls1046ardb = " jailhouse-rt-edge"
 DISTRO_FEATURES_append_ls1028ardb = " jailhouse-industrial libbee libblep libnfc-nci \
 				      wayland-protocols weston imx-gpu-viv libdrm kmscube \
-				      sysrepo-tsn"
+				      sysrepo-tsn tsn-scripts"
 DISTRO_FEATURES_append_mx8mp = " jailhouse-rt-edge sysrepo-tsn"
 DISTRO_FEATURES_append_mx8m = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
 DISTRO_FEATURES_append_ls1028atsn = " sysrepo-tsn"
