@@ -23,23 +23,12 @@ IMAGE_FEATURES += " \
 SDKIMAGE_FEATURES_append = " \
     staticdev-pkgs \
 "
-CLINFO ?= ""
-CLINFO_imxgpu = "clinfo"
-CLINFO_mx8mm = ""
-
 IMAGE_INSTALL += " \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'wayland', ' weston weston-examples weston-init','', d)} \
     imx-uuc \
     imx-test \
     packagegroup-imx-core-tools \
     packagegroup-imx-security \
-    libopencl-imx \
-    imx-gpu-viv-demos \
-    packagegroup-fsl-tools-gpu \
-    packagegroup-imx-tools-audio \
-    weston-init weston-examples gtk+3-demo \
-    packagegroup-fsl-gstreamer1.0-full \
-    ${CLINFO} \
+    packagegroup-multimedia \
 "
 
 IMAGE_INSTALL += " \
