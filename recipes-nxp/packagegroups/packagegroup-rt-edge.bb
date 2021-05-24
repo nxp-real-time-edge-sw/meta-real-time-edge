@@ -25,6 +25,9 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'sysrepo-tsn', 'sysrepo-tsn', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'tsn-scripts', 'tsn-scripts', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'canfestival', 'canfestival', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'nodejs-lbt', 'nodejs-lbt', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'feedgnuplot', 'feedgnuplot', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'prl', 'prl', '', d)} \
     linuxptp \
     igh-ethercat \
     ${tsntoolimage} \
