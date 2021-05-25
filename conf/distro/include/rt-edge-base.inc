@@ -39,3 +39,11 @@ SYSREPO_TSN_ls1028atsn = "sysrepo-tsn-tc"
 SYSREPO_TSN_ls1021atsn = "sysrepo-tsn-tc"
 SYSREPO_TSN_mx8mp = "sysrepo-tsn-tc"
 PACKAGECONFIG_append_pn-sysrepo-tsn = "${SYSREPO_TSN}"
+
+# dtb for jailhouse
+KERNEL_DEVICETREE_append_ls1043ardb= " freescale/fsl-ls1043a-rdb-sdk-jailhouse.dtb"
+KERNEL_DEVICETREE_append_ls1043ardb= " freescale/fsl-ls1043a-rdb-sdk-jailhouse-with-dpaa.dtb"
+KERNEL_DEVICETREE_append_ls1046ardb= " freescale/fsl-ls1046a-rdb-sdk-jailhouse.dtb"
+KERNEL_DEVICETREE_append_ls1046ardb= " freescale/fsl-ls1046a-rdb-sdk-jailhouse-with-dpaa.dtb"
+KERNEL_DEVICETREE_append_ls1028ardb= " freescale/fsl-ls1028a-rdb-jailhouse.dtb"
+KERNEL_DEVICETREE_append_imx8mpevk = " freescale/imx8mp-evk-root.dtb"
