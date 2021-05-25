@@ -37,4 +37,5 @@ RDEPENDS_${PN} = " \
     libopen62541 \
     libmodbus \
     python3-websockets \
+    rt-tests \
 "
