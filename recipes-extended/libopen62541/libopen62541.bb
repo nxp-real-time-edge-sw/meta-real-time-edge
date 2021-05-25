@@ -15,8 +15,11 @@ S = "${WORKDIR}/git"
 DEPENDS = "openssl"
 
 do_install_append () {
-	install -d ${D}${ROOT_HOME}/open62541_example/
-	install -m 0755 ${B}/bin/examples/* ${D}${ROOT_HOME}/open62541_example/
+	if [ -d ${B}/bin/examples ] && [ -z $(find ${B}/bin/examples -maxdepth 0 -empty) ]
+	then
+		install -d ${D}${ROOT_HOME}/open62541_example/
+		install -m 0755 ${B}/bin/examples/* ${D}${ROOT_HOME}/open62541_example/
+	fi
 }
 
 FILES_${PN} += "${bindir_native}/* ${datadir_native}/open62541/* ${libdir_native}/* ${ROOT_HOME}/*"
