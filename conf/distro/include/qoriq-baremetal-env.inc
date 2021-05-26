@@ -1,7 +1,8 @@
 # update kernel configuration
-DELTA_KERNEL_DEFCONFIG_append_qoriq = " linux-baremetal.config"
+DELTA_KERNEL_DEFCONFIG_append_ls1043ardb = " linux-baremetal-ls104xa.config"
+DELTA_KERNEL_DEFCONFIG_append_ls1046ardb = " linux-baremetal-ls104xa.config"
 DELTA_KERNEL_DEFCONFIG_append_ls1028ardb = " linux-baremetal-ls1028a.config"
-DELTA_KERNEL_DEFCONFIG_append_lx2160ardb = " linux-baremetal-lx2160a.config"
+DELTA_KERNEL_DEFCONFIG_append_lx2160a    = " linux-baremetal-lx2160a.config"
 DELTA_KERNEL_DEFCONFIG_append_ls1021aiot = " linux-baremetal-ls1021a.config"
 
 # update baremetal dts
