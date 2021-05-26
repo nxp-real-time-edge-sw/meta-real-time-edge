@@ -6,6 +6,8 @@ SRC_URI = "git://bitbucket.sw.nxp.com/dnind/icc.git;protocol=ssh;nobranch=1"
 SRCREV = "7438ebe3a7432d330d8b2ed9092488f7769f79b1"
 PV = "1.1"
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"
+
 S = "${WORKDIR}/git"
 
 
