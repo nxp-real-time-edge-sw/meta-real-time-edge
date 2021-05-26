@@ -29,6 +29,10 @@ IMAGE_INSTALL += " \
     packagegroup-imx-core-tools \
     packagegroup-imx-security \
     packagegroup-multimedia \
+    ethtool \
+    iproute2 \
+    iproute2-tc \
+    tcpdump \
 "
 
 IMAGE_INSTALL += " \
