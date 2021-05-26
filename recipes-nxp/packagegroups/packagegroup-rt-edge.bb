@@ -38,4 +38,5 @@ RDEPENDS_${PN} = " \
     libmodbus \
     python3-websockets \
     rt-tests \
+    iperf3 e2fsprogs e2fsprogs-resize2fs \
 "
