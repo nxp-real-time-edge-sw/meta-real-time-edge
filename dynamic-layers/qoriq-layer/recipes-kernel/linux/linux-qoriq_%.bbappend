@@ -13,3 +13,8 @@ SRC_URI_append_rt-edge = " \
     file://linux-baremetal-lx2160a.config \
     file://linux-selinux.config \
 "
+
+do_configure_prepend_rt-edge() {
+    mkdir -p ${WORKDIR}/source-date-epoch
+    date '+%s' > ${WORKDIR}/source-date-epoch/__source_date_epoch.txt
+}
