@@ -7,7 +7,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 SRC_URI_append_rt-edge = " \
     file://linux-rt.config \
     file://linux-wifi.config \
-    file://linux-baremetal.config \
+    file://linux-baremetal-ls104xa.config \
     file://linux-baremetal-ls1021a.config \
     file://linux-baremetal-ls1028a.config \
     file://linux-baremetal-lx2160a.config \
