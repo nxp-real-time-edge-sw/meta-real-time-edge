@@ -1,0 +1,62 @@
+From 62fa8f1f24f29be15c0f0fa2efc0d97f3f1f3da1 Mon Sep 17 00:00:00 2001
+From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Date: Wed, 26 May 2021 16:22:57 +0800
+Subject: [PATCH 4/4] ethtool: Add configure to compile preempt file
+
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+---
+ Makefile.in | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/Makefile.in b/Makefile.in
+index b19bc57..07a000b 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -109,6 +109,7 @@ sbin_PROGRAMS = ethtool$(EXEEXT)
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  netlink/eee.c netlink/tsinfo.c \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  netlink/desc-ethtool.c netlink/desc-genlctrl.c \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  netlink/desc-rtnl.c netlink/cable_test.c \
++@ETHTOOL_ENABLE_NETLINK_TRUE@		  netlink/preempt.c \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  uapi/linux/ethtool_netlink.h \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  uapi/linux/netlink.h uapi/linux/genetlink.h \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  uapi/linux/rtnetlink.h uapi/linux/if_link.h
+@@ -155,7 +156,7 @@ am__ethtool_SOURCES_DIST = ethtool.c uapi/linux/ethtool.h internal.h \
+ 	netlink/channels.c netlink/coalesce.c netlink/pause.c \
+ 	netlink/eee.c netlink/tsinfo.c netlink/desc-ethtool.c \
+ 	netlink/desc-genlctrl.c netlink/desc-rtnl.c \
+-	netlink/cable_test.c uapi/linux/ethtool_netlink.h \
++	netlink/cable_test.c netlink/preempt.c uapi/linux/ethtool_netlink.h \
+ 	uapi/linux/netlink.h uapi/linux/genetlink.h \
+ 	uapi/linux/rtnetlink.h uapi/linux/if_link.h
+ @ETHTOOL_ENABLE_PRETTY_DUMP_TRUE@am__objects_1 = amd8111e.$(OBJEXT) \
+@@ -210,7 +211,8 @@ am__dirstamp = $(am__leading_dot)dirstamp
+ @ETHTOOL_ENABLE_NETLINK_TRUE@	netlink/desc-ethtool.$(OBJEXT) \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@	netlink/desc-genlctrl.$(OBJEXT) \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@	netlink/desc-rtnl.$(OBJEXT) \
+-@ETHTOOL_ENABLE_NETLINK_TRUE@	netlink/cable_test.$(OBJEXT)
++@ETHTOOL_ENABLE_NETLINK_TRUE@	netlink/cable_test.$(OBJEXT) \
++@ETHTOOL_ENABLE_NETLINK_TRUE@   netlink/preempt.$(OBJEXT)
+ am_ethtool_OBJECTS = ethtool.$(OBJEXT) rxclass.$(OBJEXT) \
+ 	common.$(OBJEXT) json_writer.$(OBJEXT) json_print.$(OBJEXT) \
+ 	$(am__objects_1) $(am__objects_2)
+@@ -237,7 +239,7 @@ am__test_cmdline_SOURCES_DIST = test-cmdline.c test-common.c ethtool.c \
+ 	netlink/coalesce.c netlink/pause.c netlink/eee.c \
+ 	netlink/tsinfo.c netlink/desc-ethtool.c \
+ 	netlink/desc-genlctrl.c netlink/desc-rtnl.c \
+-	netlink/cable_test.c uapi/linux/ethtool_netlink.h \
++	netlink/cable_test.c netlink/preempt.c uapi/linux/ethtool_netlink.h \
+ 	uapi/linux/netlink.h uapi/linux/genetlink.h \
+ 	uapi/linux/rtnetlink.h uapi/linux/if_link.h
+ @ETHTOOL_ENABLE_PRETTY_DUMP_TRUE@am__objects_3 = test_cmdline-amd8111e.$(OBJEXT) \
+@@ -325,7 +327,7 @@ am__test_features_SOURCES_DIST = test-features.c test-common.c \
+ 	netlink/channels.c netlink/coalesce.c netlink/pause.c \
+ 	netlink/eee.c netlink/tsinfo.c netlink/desc-ethtool.c \
+ 	netlink/desc-genlctrl.c netlink/desc-rtnl.c \
+-	netlink/cable_test.c uapi/linux/ethtool_netlink.h \
++	netlink/cable_test.c netlink/preempt.c uapi/linux/ethtool_netlink.h \
+ 	uapi/linux/netlink.h uapi/linux/genetlink.h \
+ 	uapi/linux/rtnetlink.h uapi/linux/if_link.h
+ @ETHTOOL_ENABLE_PRETTY_DUMP_TRUE@am__objects_6 = test_features-amd8111e.$(OBJEXT) \
+-- 
+2.27.0
+
