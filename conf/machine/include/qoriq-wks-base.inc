@@ -1,3 +1,5 @@
+require conf/machine/include/utilities.inc
+
 # short-description: Create eMMC/SD card image with a boot partition
 #
 # Offsets:
@@ -164,7 +166,7 @@ WKS_FILE_ls1012ardb ?= "qoriq-ls1012a.wks.in"
 
 IMAGE_BOOT_FILES ?= " \
     ${KERNEL_IMAGETYPE} \
-    *.dtb \
+    ${@make_dtb_boot_files(d)} \
 "
 
 DISTRO_BOOT_SCR_FILE ?= "${MACHINE}_boot.scr"
