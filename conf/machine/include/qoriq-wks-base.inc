@@ -167,8 +167,11 @@ IMAGE_BOOT_FILES ?= " \
     *.dtb \
 "
 
-IMAGE_BOOT_FILES_append = " ${MACHINE}_boot.scr"
+DISTRO_BOOT_SCR_FILE ?= "${MACHINE}_boot.scr"
+DISTRO_BOOT_SCR_FILE_lx2160ardb-rev2 ?= "lx2160ardb_boot.scr"
+
+IMAGE_BOOT_FILES_append = " ${DISTRO_BOOT_SCR_FILE}"
 WKS_FILE_DEPENDS_append = " u-boot-script-distroboot"
 
-IMAGE_BOOT_FILES_remove_ls1012a = " ${MACHINE}_boot.scr"
+IMAGE_BOOT_FILES_remove_ls1012a = " ${DISTRO_BOOT_SCR_FILE}"
 WKS_FILE_DEPENDS_remove_ls1012a = " u-boot-script-distroboot"

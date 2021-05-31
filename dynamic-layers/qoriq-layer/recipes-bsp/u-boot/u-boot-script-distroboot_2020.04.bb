@@ -32,8 +32,6 @@ DISTRO_BOOT_CMD_FILE ?= "${@bb.utils.contains('DISTRO_FEATURES', 'baremetal',  \
     '${MACHINE}_baremetal_boot.cmd', '${MACHINE}_boot.cmd', d)}"
 DISTRO_BOOT_SCR_FILE ?= "${MACHINE}_boot.scr"
 
-DISTRO_BOOT_SCR_FILE_lx2160ardb-rev2 ?= "lx2160ardb_boot.scr"
-
 do_compile() {
     mkimage -A arm64 -T script -C none -n "Distro boot script" -d ${B}/${DISTRO_BOOT_CMD_FILE} ${B}/${DISTRO_BOOT_SCR_FILE}
 }
