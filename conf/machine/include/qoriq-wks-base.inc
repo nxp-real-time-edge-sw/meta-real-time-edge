@@ -1,3 +1,5 @@
+require conf/machine/include/utilities.inc
+
 # short-description: Create eMMC/SD card image with a boot partition
 #
 # Offsets:
@@ -164,11 +166,14 @@ WKS_FILE_ls1012ardb ?= "qoriq-ls1012a.wks.in"
 
 IMAGE_BOOT_FILES ?= " \
     ${KERNEL_IMAGETYPE} \
-    *.dtb \
+    ${@make_dtb_boot_files(d)} \
 "
 
-IMAGE_BOOT_FILES_append = " ${MACHINE}_boot.scr"
+DISTRO_BOOT_SCR_FILE ?= "${MACHINE}_boot.scr"
+DISTRO_BOOT_SCR_FILE_lx2160ardb-rev2 ?= "lx2160ardb_boot.scr"
+
+IMAGE_BOOT_FILES_append = " ${DISTRO_BOOT_SCR_FILE}"
 WKS_FILE_DEPENDS_append = " u-boot-script-distroboot"
 
-IMAGE_BOOT_FILES_remove_ls1012a = " ${MACHINE}_boot.scr"
+IMAGE_BOOT_FILES_remove_ls1012a = " ${DISTRO_BOOT_SCR_FILE}"
 WKS_FILE_DEPENDS_remove_ls1012a = " u-boot-script-distroboot"
