@@ -39,4 +39,6 @@ RDEPENDS_${PN} = " \
     python3-websockets \
     rt-tests \
     iperf3 e2fsprogs e2fsprogs-resize2fs \
+    iproute2-tc \
+    tcpdump \
 "
