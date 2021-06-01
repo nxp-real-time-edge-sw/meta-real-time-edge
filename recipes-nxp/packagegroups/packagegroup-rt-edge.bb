@@ -41,4 +41,5 @@ RDEPENDS_${PN} = " \
     iperf3 e2fsprogs e2fsprogs-resize2fs \
     iproute2-tc \
     tcpdump \
+    devmem2 \
 "
