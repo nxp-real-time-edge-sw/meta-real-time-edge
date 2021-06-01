@@ -34,8 +34,8 @@ DELTA_KERNEL_DEFCONFIG_append = " \
 DELTA_KERNEL_DEFCONFIG_append_mx8mm = " linux-fec.config"
 DELTA_KERNEL_DEFCONFIG_append_mx8m = " linux-imx8.config"
 
-SYSREPO_TSN_ls1028ardb = "sysrepo-tsn-tc"
-SYSREPO_TSN_ls1028atsn = "sysrepo-tsn-tc"
+SYSREPO_TSN_ls1028ardb = ""
+SYSREPO_TSN_ls1028atsn = ""
 SYSREPO_TSN_ls1021atsn = "sysrepo-tsn-tc"
 SYSREPO_TSN_mx8mp = "sysrepo-tsn-tc"
 PACKAGECONFIG_append_pn-sysrepo-tsn = "${SYSREPO_TSN}"

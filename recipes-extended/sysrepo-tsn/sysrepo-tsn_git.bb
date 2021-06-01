@@ -10,7 +10,7 @@ SRC_URI = "git://bitbucket.sw.nxp.com/dnind/sysrepo-tsn.git;protocol=ssh;nobranc
            file://scripts/model-install.sh \
 "
 
-SRCREV = "76761c8ba806856a4633627a4aa51f30b2759d76"
+SRCREV = "85a1704aebc6b46e8e1f4b1a44c00c26b65b0f55"
 
 S = "${WORKDIR}/git"
 
