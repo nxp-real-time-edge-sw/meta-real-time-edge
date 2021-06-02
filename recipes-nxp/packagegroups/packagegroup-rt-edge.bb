@@ -37,7 +37,7 @@ RDEPENDS_${PN} = " \
     ${tsntoolimage} \
     lldpd \
     avahi-daemon avahi-utils \
-    qoriq-servo \
+    nxp-servo \
     libopen62541 \
     libmodbus \
     python3-websockets \
