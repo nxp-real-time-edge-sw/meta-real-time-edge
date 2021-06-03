@@ -33,6 +33,8 @@ IMAGE_INSTALL += " \
     iproute2 \
     iproute2-tc \
     tcpdump \
+    openssh-sftp-server \
+    openssh-keygen \
 "
 
 IMAGE_INSTALL += " \
