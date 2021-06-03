@@ -25,5 +25,3 @@ cd /etc/sysrepo-tsn/scripts
 
 touch "/etc/Netopeer2/init.stamp"
 echo "configure sysrepo and netopeer2 OK"
-
-cd /home/root/

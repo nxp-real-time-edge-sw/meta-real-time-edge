@@ -1,0 +1,12 @@
+[Unit]
+Description=Sysrepo netopeer2-server yang-module and sysrepo-tsn configuration management
+ConditionFileIsExecutable=/etc/sysrepo-tsn/scripts/sysrepo-cfg.sh
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/etc/sysrepo-tsn/scripts/sysrepo-cfg.sh start
+ExecStop=/etc/sysrepo-tsn/scripts/sysrepo-cfg.sh stop
+TimeoutSec=0
+RemainAfterExit=yes
+GuessMainPID=no
