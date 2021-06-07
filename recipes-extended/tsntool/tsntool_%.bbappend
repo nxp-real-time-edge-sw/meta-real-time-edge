@@ -3,10 +3,11 @@ DESCRIPTION = "A tool to configure TSN funtionalities in user space for industri
 SAVED_DIR := "${THISDIR}"
 
 #SRC_URI_industrial = "git://github.com/openil/tsntool.git;protocol=https"
-SRC_URI_rt-edge = "git://bitbucket.sw.nxp.com/dnind/tsntool.git;protocol=ssh;nobranch=1"
+SRC_URI = "git://bitbucket.sw.nxp.com/dnind/tsntool.git;protocol=ssh;nobranch=1"
 #SRCREV_industrial = "e0bd2f6fd9b066bc8da09aeddd88c6237e0872a4"
 
-SRCREV_rt-edge = "b30a3fbad987832e7ed45fdebaa91a9f7f21128e"
+SRCREV_qoriq = "b30a3fbad987832e7ed45fdebaa91a9f7f21128e"
+SRCREV_imx = "b30a3fbad987832e7ed45fdebaa91a9f7f21128e"
 
 FILES_${PN} += "/root/* /root/sample/* /root/samples/* \
                /root/samples/gatescripts/* /root/samples/pktgen/* \
