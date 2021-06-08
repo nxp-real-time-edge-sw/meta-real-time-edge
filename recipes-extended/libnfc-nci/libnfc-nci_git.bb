@@ -15,7 +15,8 @@ S = "${WORKDIR}/git"
 
 inherit autotools-brokensep pkgconfig
 
-EXTRA_OECONF = " --host=${TARGET_SYS}"
+EXTRA_OECONF = "LDFLAGS=-static --host=${TARGET_SYS}"
+EXTRA_OEMAKE = "CCLD='${CXX}'"
 
 do_configure() {
     ./bootstrap
@@ -24,17 +25,10 @@ do_configure() {
 
 do_install() {
     install -d ${D}/${datadir}/nfc
-    install -d ${D}/${libdir}/nfc
     install -d ${D}/${sbindir}
-    install -d ${D}/${includedir}
     install ${S}/conf/*.conf ${D}/${datadir}/nfc
     install ${S}/nfcDemoApp ${D}/${sbindir}
-    install ${S}/src/include/*  ${D}/${includedir}
-    install ${S}/.libs/libnfc_nci_linux-1.so ${D}/${libdir}/nfc/
-    ln -s -r ${D}/${libdir}/nfc/libnfc_nci_linux-1.so ${D}/${libdir}/nfc/libnfc_nci_linux.so
 }
 
-FILES_${PN} += "${datadir}/nfc/* ${libdir}/nfc/*"
-FILES_SOLIBSDEV = "${libdir}/nfc/libnfc_nci_linux.so"
-
-RDEPENDS_${PN} = "bash"
+INSANE_SKIP_${PN} += "ldflags"
+FILES_${PN} += "${datadir}/nfc/*"
