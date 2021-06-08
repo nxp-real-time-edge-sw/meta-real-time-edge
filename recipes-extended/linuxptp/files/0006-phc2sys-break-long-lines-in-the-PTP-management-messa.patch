@@ -1,0 +1,40 @@
+From 0c8ec90f70f480196383e02997db81b58205ef51 Mon Sep 17 00:00:00 2001
+From: Vladimir Oltean <olteanv@gmail.com>
+Date: Sun, 30 Aug 2020 00:34:01 +0300
+Subject: [PATCH 06/23] phc2sys: break long lines in the PTP management message
+ accessors
+
+In preparation of moving these functions to pmc_common.c, break the
+lines to a maximum of 80 characters, otherwise checkpatch will complain.
+
+Signed-off-by: Vladimir Oltean <olteanv@gmail.com>
+---
+ phc2sys.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/phc2sys.c b/phc2sys.c
+index a36cbe0..9af93c6 100644
+--- a/phc2sys.c
++++ b/phc2sys.c
+@@ -821,13 +821,17 @@ static int is_msg_mgt(struct ptp_message *msg)
+
+ static int get_mgt_id(struct ptp_message *msg)
+ {
+-	struct management_tlv *mgt = (struct management_tlv *) msg->management.suffix;
++	struct management_tlv *mgt;
++
++	mgt = (struct management_tlv *) msg->management.suffix;
+	return mgt->id;
+ }
+
+ static void *get_mgt_data(struct ptp_message *msg)
+ {
+-	struct management_tlv *mgt = (struct management_tlv *) msg->management.suffix;
++	struct management_tlv *mgt;
++
++	mgt = (struct management_tlv *) msg->management.suffix;
+	return mgt->data;
+ }
+
+--
+2.25.1

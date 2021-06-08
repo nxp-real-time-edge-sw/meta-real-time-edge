@@ -1,0 +1,62 @@
+From 8d4052a69cc5745c3af24d96bc632d14a9f70171 Mon Sep 17 00:00:00 2001
+From: Vincent Cheng <vincent.cheng.xh@renesas.com>
+Date: Fri, 8 Jan 2021 10:21:14 -0500
+Subject: [PATCH 21/23] port: Fix link down/up to continue using phc_index set
+ from command line -p option.
+
+In the scenario where a port link goes down and up, current code checks
+the port's phc_index against the interface's phc_index and if they are
+different will set the port phc_index to the interface phc_index.
+
+If the phc_index was initially set by the command line -p option, then we
+end up using the wrong phc_index.
+
+Fix is to skip updating the port phc_index with the interface phc_index
+when port link is back up if it was initialy set from the command line.
+
+Signed-off-by: Vincent Cheng <vincent.cheng.xh@renesas.com>
+[cherry-pick]
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ port.c         | 6 ++++++
+ port_private.h | 1 +
+ 2 files changed, 7 insertions(+)
+
+diff --git a/port.c b/port.c
+index 82214cd..55dcf5a 100644
+--- a/port.c
++++ b/port.c
+@@ -2656,6 +2656,11 @@ void port_link_status(void *ctx, int linkup, int ts_index)
+				       "timestamping mode, set link status down by force.",
+				       interface_label(p->iface));
+				p->link_status = LINK_DOWN | LINK_STATE_CHANGED;
++			} else if (p->phc_from_cmdline) {
++				pr_warning("port %d: taking /dev/ptp%d from the "
++					   "command line, not the attached ptp%d",
++					   portnum(p), p->phc_index,
++					   interface_phc_index(p->iface));
+			} else if (p->phc_index != interface_phc_index(p->iface)) {
+				p->phc_index = interface_phc_index(p->iface);
+
+@@ -3139,6 +3144,7 @@ struct port *port_open(const char *phc_device,
+				   "not the attached ptp%d", number, phc_device,
+				   interface_phc_index(interface));
+			p->phc_index = phc_index;
++			p->phc_from_cmdline = 1;
+		} else {
+			pr_err("port %d: PHC device mismatch", number);
+			pr_err("port %d: /dev/ptp%d requested, ptp%d attached",
+diff --git a/port_private.h b/port_private.h
+index fcabaa6..6e40e15 100644
+--- a/port_private.h
++++ b/port_private.h
+@@ -69,6 +69,7 @@ struct port {
+	struct fdarray fda;
+	int fault_fd;
+	int phc_index;
++	int phc_from_cmdline;
+
+	void (*dispatch)(struct port *p, enum fsm_event event, int mdiff);
+	enum fsm_event (*event)(struct port *p, int fd_index);
+--
+2.25.1
