@@ -1,0 +1,31 @@
+From 72b175eb45aeadd20072c19167206e1ece812640 Mon Sep 17 00:00:00 2001
+From: Vladimir Oltean <vladimir.oltean@nxp.com>
+Date: Fri, 2 Oct 2020 15:37:52 +0300
+Subject: [PATCH 19/23] README: mention support of IEEE 802.1AS time-aware
+ bridge
+
+The OpenIL fork of linuxptp has added protocol compatibility for
+boundary clocks with IEEE 802.1AS, as well as the IEEE 802.1AS specific
+BMCA. Mention this in the README.
+
+Signed-off-by: Vladimir Oltean <vladimir.oltean@nxp.com>
+---
+ README.org | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/README.org b/README.org
+index 063b542..049ab7e 100644
+--- a/README.org
++++ b/README.org
+@@ -28,7 +28,8 @@
+
+   - Transport over UDP/IPv4, UDP/IPv6, and raw Ethernet (Layer 2).
+
+-  - Supports IEEE 802.1AS-2011 in the role of end station.
++  - Supports IEEE 802.1AS-2011 in the role of end station and time-aware
++    bridge.
+
+   - Modular design allowing painless addition of new transports and
+     clock servos.
+--
+2.25.1

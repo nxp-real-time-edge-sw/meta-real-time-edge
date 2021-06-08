@@ -32,7 +32,7 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'nodejs-lbt', 'nodejs-lbt', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'feedgnuplot', 'feedgnuplot', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'prl', 'prl', '', d)} \
-    ptp4l \
+    linuxptp \
     igh-ethercat \
     ${tsntoolimage} \
     lldpd \

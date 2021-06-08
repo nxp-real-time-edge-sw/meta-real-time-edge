@@ -1,0 +1,357 @@
+From 41ee5bb884258e9ebc837227d9f6b4d8a1e58cf8 Mon Sep 17 00:00:00 2001
+From: Vladimir Oltean <olteanv@gmail.com>
+Date: Mon, 25 May 2020 10:57:44 +0300
+Subject: [PATCH 18/23] ts2phc_phc_master: make use of new kernel API for
+ perout waveform
+
+This API was introduced for 2 reasons:
+
+1. Some hardware can emit PPS signals but not starting from arbitrary
+   absolute times, but rather phase-aligned to the beginning of a
+   second. We _could_ patch ts2phc to always specify a start time of
+   0.000000000 to PTP_PEROUT_REQUEST, but in practice, we would never
+   know whether that would actually work with all in-tree PHC drivers.
+   So there was a need for a new flag that only specifies the phase of
+   the periodic signal, and not the absolute start time.
+
+2. Some hardware can, rather unfortunately, not distinguish between a
+   rising and a falling extts edge. And, since whatever rises also has
+   to fall before rising again, the strategy in ts2phc is to set a
+   'large' pulse width (half the period) and ignore the extts event
+   corresponding to the mid-way between one second and another. This is
+   all fine, but currently, ts2phc.pulsewidth is a read-only property in
+   the config file. The kernel is not instructed in any way to use this
+   value, it is simply that must be configured based on prior knowledge
+   of the PHC's implementation. This API changes that.
+
+The introduction of a phase adjustment for the master PHC means we have
+to adjust our approximation of the precise perout timestamp. We put that
+code into a common function and convert all call sites to call that. We
+also need to do the same thing for the edge ignoring logic.
+
+Signed-off-by: Vladimir Oltean <olteanv@gmail.com>
+---
+ config.c            |  1 +
+ missing.h           | 53 ++++++++++++++++++++++++++++
+ ts2phc.8            |  5 +++
+ ts2phc.c            | 86 ++++++++++++++++++++++++++++++---------------
+ ts2phc.h            |  1 +
+ ts2phc_phc_master.c | 20 +++++++++--
+ ts2phc_slave.c      | 16 +++++++--
+ 7 files changed, 150 insertions(+), 32 deletions(-)
+
+diff --git a/config.c b/config.c
+index d237de9..3fd45e3 100644
+--- a/config.c
++++ b/config.c
+@@ -315,6 +315,7 @@ struct config_item config_tab[] = {
+	GLOB_ITEM_STR("ts2phc.nmea_remote_host", ""),
+	GLOB_ITEM_STR("ts2phc.nmea_remote_port", ""),
+	GLOB_ITEM_STR("ts2phc.nmea_serialport", "/dev/ttyS0"),
++	PORT_ITEM_INT("ts2phc.perout_phase", -1, 0, 999999999),
+	PORT_ITEM_INT("ts2phc.pin_index", 0, 0, INT_MAX),
+	GLOB_ITEM_INT("ts2phc.pulsewidth", 500000000, 1000000, 999000000),
+	PORT_ITEM_ENU("tsproc_mode", TSPROC_FILTER, tsproc_enu),
+diff --git a/missing.h b/missing.h
+index 35eaf15..e52915e 100644
+--- a/missing.h
++++ b/missing.h
+@@ -97,6 +97,59 @@ struct compat_ptp_clock_caps {
+
+ #endif /*LINUX_VERSION_CODE < 5.8*/
+
++/*
++ * Bits of the ptp_perout_request.flags field:
++ */
++
++#ifndef PTP_PEROUT_ONE_SHOT
++#define PTP_PEROUT_ONE_SHOT		(1<<0)
++#endif
++
++#ifndef PTP_PEROUT_DUTY_CYCLE
++#define PTP_PEROUT_DUTY_CYCLE		(1<<1)
++#endif
++
++#ifndef PTP_PEROUT_PHASE
++#define PTP_PEROUT_PHASE		(1<<2)
++#endif
++
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5,9,0)
++
++/* from upcoming Linux kernel version 5.9 */
++struct compat_ptp_perout_request {
++	union {
++		/*
++		 * Absolute start time.
++		 * Valid only if (flags & PTP_PEROUT_PHASE) is unset.
++		 */
++		struct ptp_clock_time start;
++		/*
++		 * Phase offset. The signal should start toggling at an
++		 * unspecified integer multiple of the period, plus this value.
++		 * The start time should be "as soon as possible".
++		 * Valid only if (flags & PTP_PEROUT_PHASE) is set.
++		 */
++		struct ptp_clock_time phase;
++	};
++	struct ptp_clock_time period; /* Desired period, zero means disable. */
++	unsigned int index;           /* Which channel to configure. */
++	unsigned int flags;
++	union {
++		/*
++		 * The "on" time of the signal.
++		 * Must be lower than the period.
++		 * Valid only if (flags & PTP_PEROUT_DUTY_CYCLE) is set.
++		 */
++		struct ptp_clock_time on;
++		/* Reserved for future use. */
++		unsigned int rsv[4];
++	};
++};
++
++#define ptp_perout_request compat_ptp_perout_request
++
++#endif /*LINUX_VERSION_CODE < 5.8*/
++
+ #ifndef PTP_MAX_SAMPLES
+ #define PTP_MAX_SAMPLES 25 /* Maximum allowed offset measurement samples. */
+ #endif /* PTP_MAX_SAMPLES */
+diff --git a/ts2phc.8 b/ts2phc.8
+index 6c2646d..6df111e 100644
+--- a/ts2phc.8
++++ b/ts2phc.8
+@@ -175,6 +175,11 @@ specified, then the given remote connection will be used in preference
+ to the configured serial port.
+ The default is "/dev/ttyS0".
+ .TP
++.B ts2phc.perout_phase
++Configures the offset between the beginning of the second and the PPS
++master's rising edge. Available only for a PHC master. The supported
++range is 0 to 999999999 nanoseconds. The default is 0 nanoseconds.
++.TP
+ .B ts2phc.pulsewidth
+ The expected pulse width of the external PPS signal in nanoseconds.
+ When 'ts2phc.extts_polarity' is "both", the given pulse width is used
+diff --git a/ts2phc.c b/ts2phc.c
+index ac420bf..7a1a41c 100644
+--- a/ts2phc.c
++++ b/ts2phc.c
+@@ -402,6 +402,40 @@ static void ts2phc_reconfigure(struct ts2phc_private *priv)
+	pr_info("selecting %s as the source clock", src->name);
+ }
+
++static int ts2phc_approximate_master_tstamp(struct ts2phc_private *priv,
++					    tmv_t *master_tmv)
++{
++	struct timespec master_ts;
++	tmv_t tmv;
++	int err;
++
++	err = ts2phc_master_getppstime(priv->master, &master_ts);
++	if (err < 0) {
++		pr_err("master ts not valid");
++		return err;
++	}
++
++	tmv = timespec_to_tmv(master_ts);
++	tmv = tmv_sub(tmv, priv->perout_phase);
++	master_ts = tmv_to_timespec(tmv);
++
++	/*
++	 * As long as the kernel doesn't support a proper API for reporting
++	 * a precise perout timestamp, we'll have to use this crude
++	 * approximation.
++	 */
++	if (master_ts.tv_nsec > NS_PER_SEC / 2)
++		master_ts.tv_sec++;
++	master_ts.tv_nsec = 0;
++
++	tmv = timespec_to_tmv(master_ts);
++	tmv = tmv_add(tmv, priv->perout_phase);
++
++	*master_tmv = tmv;
++
++	return 0;
++}
++
+ static void ts2phc_synchronize_clocks(struct ts2phc_private *priv, int autocfg)
+ {
+	tmv_t source_tmv;
+@@ -420,18 +454,9 @@ static void ts2phc_synchronize_clocks(struct ts2phc_private *priv, int autocfg)
+			return;
+		}
+	} else {
+-		struct timespec source_ts;
+-
+-		err = ts2phc_master_getppstime(priv->master, &source_ts);
+-		if (err < 0) {
+-			pr_err("source ts not valid");
++		err = ts2phc_approximate_master_tstamp(priv, &source_tmv);
++		if (err < 0)
+			return;
+-		}
+-		if (source_ts.tv_nsec > NS_PER_SEC / 2)
+-			source_ts.tv_sec++;
+-		source_ts.tv_nsec = 0;
+-
+-		source_tmv = timespec_to_tmv(source_ts);
+	}
+
+	LIST_FOREACH(c, &priv->clocks, list) {
+@@ -480,7 +505,7 @@ static void ts2phc_synchronize_clocks(struct ts2phc_private *priv, int autocfg)
+ static int ts2phc_collect_master_tstamp(struct ts2phc_private *priv)
+ {
+	struct clock *master_clock;
+-	struct timespec master_ts;
++	tmv_t master_tmv;
+	int err;
+
+	master_clock = ts2phc_master_get_clock(priv->master);
+@@ -493,22 +518,11 @@ static int ts2phc_collect_master_tstamp(struct ts2phc_private *priv)
+	if (!master_clock)
+		return 0;
+
+-	err = ts2phc_master_getppstime(priv->master, &master_ts);
+-	if (err < 0) {
+-		pr_err("source ts not valid");
++	err = ts2phc_approximate_master_tstamp(priv, &master_tmv);
++	if (err < 0)
+		return err;
+-	}
+-
+-	/*
+-	 * As long as the kernel doesn't support a proper API for reporting
+-	 * a precise perout timestamp, we'll have to use this crude
+-	 * approximation.
+-	 */
+-	if (master_ts.tv_nsec > NS_PER_SEC / 2)
+-		master_ts.tv_sec++;
+-	master_ts.tv_nsec = 0;
+
+-	clock_add_tstamp(master_clock, timespec_to_tmv(master_ts));
++	clock_add_tstamp(master_clock, master_tmv);
+
+	return 0;
+ }
+@@ -657,13 +671,29 @@ int main(int argc, char *argv[])
+	}
+
+	STAILQ_FOREACH(iface, &cfg->interfaces, list) {
+-		if (1 == config_get_int(cfg, interface_name(iface), "ts2phc.master")) {
++		const char *dev = interface_name(iface);
++
++		if (1 == config_get_int(cfg, dev, "ts2phc.master")) {
++			int perout_phase;
++
+			if (pps_source) {
+				fprintf(stderr, "too many PPS sources\n");
+				ts2phc_cleanup(&priv);
+				return -1;
+			}
+-			pps_source = interface_name(iface);
++			pps_source = dev;
++			perout_phase = config_get_int(cfg, dev,
++						      "ts2phc.perout_phase");
++			/*
++			 * We use a default value of -1 to distinguish whether
++			 * to use the PTP_PEROUT_PHASE API or not. But if we
++			 * don't use that (and therefore we use absolute start
++			 * time), the phase is still zero, by our application's
++			 * convention.
++			 */
++			if (perout_phase < 0)
++				perout_phase = 0;
++			priv.perout_phase = nanoseconds_to_tmv(perout_phase);
+		} else {
+			if (ts2phc_slave_add(&priv, interface_name(iface))) {
+				fprintf(stderr, "failed to add slave\n");
+diff --git a/ts2phc.h b/ts2phc.h
+index 1c85131..5597fea 100644
+--- a/ts2phc.h
++++ b/ts2phc.h
+@@ -44,6 +44,7 @@ struct ts2phc_private {
+	STAILQ_HEAD(slave_ifaces_head, ts2phc_slave) slaves;
+	unsigned int n_slaves;
+	struct ts2phc_slave_array *polling_array;
++	tmv_t perout_phase;
+	struct config *cfg;
+	struct pmc_node node;
+	int state_changed;
+diff --git a/ts2phc_phc_master.c b/ts2phc_phc_master.c
+index 8626626..5810ec5 100644
+--- a/ts2phc_phc_master.c
++++ b/ts2phc_phc_master.c
+@@ -27,6 +27,8 @@ static int ts2phc_phc_master_activate(struct config *cfg, const char *dev,
+ {
+	struct ptp_perout_request perout_request;
+	struct ptp_pin_desc desc;
++	int32_t perout_phase;
++	int32_t pulsewidth;
+	struct timespec ts;
+
+	memset(&desc, 0, sizeof(desc));
+@@ -44,12 +46,26 @@ static int ts2phc_phc_master_activate(struct config *cfg, const char *dev,
+		perror("clock_gettime");
+		return -1;
+	}
++	perout_phase = config_get_int(cfg, dev, "ts2phc.perout_phase");
+	memset(&perout_request, 0, sizeof(perout_request));
+	perout_request.index = master->channel;
+-	perout_request.start.sec = ts.tv_sec + 2;
+-	perout_request.start.nsec = 0;
+	perout_request.period.sec = 1;
+	perout_request.period.nsec = 0;
++	perout_request.flags = 0;
++	pulsewidth = config_get_int(cfg, dev, "ts2phc.pulsewidth");
++	if (pulsewidth) {
++		perout_request.flags |= PTP_PEROUT_DUTY_CYCLE;
++		perout_request.on.sec = pulsewidth / NS_PER_SEC;
++		perout_request.on.nsec = pulsewidth % NS_PER_SEC;
++	}
++	if (perout_phase != -1) {
++		perout_request.flags |= PTP_PEROUT_PHASE;
++		perout_request.phase.sec = perout_phase / NS_PER_SEC;
++		perout_request.phase.nsec = perout_phase % NS_PER_SEC;
++	} else {
++		perout_request.start.sec = ts.tv_sec + 2;
++		perout_request.start.nsec = 0;
++	}
+
+	if (ioctl(CLOCKID_TO_FD(master->clock->clkid), PTP_PEROUT_REQUEST2,
+		  &perout_request)) {
+diff --git a/ts2phc_slave.c b/ts2phc_slave.c
+index 031362a..6bb2128 100644
+--- a/ts2phc_slave.c
++++ b/ts2phc_slave.c
+@@ -241,6 +241,19 @@ static void ts2phc_slave_destroy(struct ts2phc_slave *slave)
+	free(slave);
+ }
+
++static bool ts2phc_slave_ignore(struct ts2phc_private *priv,
++				struct ts2phc_slave *slave,
++				struct timespec source_ts)
++{
++	tmv_t source_tmv = timespec_to_tmv(source_ts);
++
++	source_tmv = tmv_sub(source_tmv, priv->perout_phase);
++	source_ts = tmv_to_timespec(source_tmv);
++
++	return source_ts.tv_nsec > slave->ignore_lower &&
++	       source_ts.tv_nsec < slave->ignore_upper;
++}
++
+ static enum extts_result ts2phc_slave_event(struct ts2phc_private *priv,
+					    struct ts2phc_slave *slave)
+ {
+@@ -269,8 +282,7 @@ static enum extts_result ts2phc_slave_event(struct ts2phc_private *priv,
+	}
+
+	if (slave->polarity == (PTP_RISING_EDGE | PTP_FALLING_EDGE) &&
+-	    source_ts.tv_nsec > slave->ignore_lower &&
+-	    source_ts.tv_nsec < slave->ignore_upper) {
++	    ts2phc_slave_ignore(priv, slave, source_ts)) {
+
+		pr_debug("%s SKIP extts index %u at %lld.%09u src %" PRIi64 ".%ld",
+		 slave->name, event.index, event.t.sec, event.t.nsec,
+--
+2.25.1
