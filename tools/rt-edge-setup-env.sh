@@ -175,7 +175,7 @@ esac
 
 if [ -z "$DISTRO" ]; then
 	if [ -z "$FSLDISTRO" ]; then
-		FSLDISTRO='${PLATFORM}-rt-edge'
+		FSLDISTRO='nxp-rt-edge'
 		fi
 else
 	FSLDISTRO="$DISTRO"
