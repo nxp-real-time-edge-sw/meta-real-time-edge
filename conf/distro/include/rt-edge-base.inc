@@ -3,7 +3,7 @@
 DISTRO = "nxp-rt-edge"
 DISTROOVERRIDES = "rt-edge"
 DISTRO_NAME = "NXP RT Edge Distro"
-DISTRO_VERSION = "1.12"
+DISTRO_VERSION = "2.0"
 
 DISTRO_FEATURES_remove_mx8 = "jailhouse "
 DISTRO_FEATURES_append_ls1043ardb = " jailhouse-rt-edge"
@@ -47,3 +47,6 @@ KERNEL_DEVICETREE_append_ls1046ardb= " freescale/fsl-ls1046a-rdb-sdk-jailhouse.d
 KERNEL_DEVICETREE_append_ls1046ardb= " freescale/fsl-ls1046a-rdb-sdk-jailhouse-with-dpaa.dtb"
 KERNEL_DEVICETREE_append_ls1028ardb= " freescale/fsl-ls1028a-rdb-jailhouse.dtb"
 KERNEL_DEVICETREE_append_imx8mpevk = " freescale/imx8mp-evk-root.dtb"
+
+# opcua override default log level
+LIBOPEN62541_LOGLEVE = "300"

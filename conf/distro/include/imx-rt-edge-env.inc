@@ -4,8 +4,6 @@ include conf/distro/include/rt-edge-base.inc
 include conf/distro/include/igh-ethercat.inc
 include conf/distro/include/libopen62541.inc
 
-DISTRO = "imx-rt-edge"
-LIBOPEN62541_LOGLEVE = "300"
 # Remove conflicting backends
 DISTRO_FEATURES_remove = "directfb x11 "
 DISTRO_FEATURES_append = " wayland pam systemd"

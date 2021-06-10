@@ -3,10 +3,6 @@ include conf/distro/include/rt-edge-base.inc
 include conf/machine/include/qoriq-wks-base.inc
 include conf/distro/include/libopen62541.inc
 
-LIBOPEN62541_LOGLEVE = "300"
-
-DISTRO = "qoriq-rt-edge"
-MAINTAINER = "Freescale Yocto Team <meta-freescale@yoctoproject.org>"
 
 TARGET_VENDOR = "-fsl"
 
