@@ -6,7 +6,7 @@ LICENSE = "GPL-2.0 & MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=ef58f855337069acd375717db0dbbb6d"
 NXP_SERVO_BRANCH = "master"
 SRC_URI = "git://bitbucket.sw.nxp.com/dnind/nxp-servo.git;protocol=ssh;branch=${NXP_SERVO_BRANCH}"
-SRCREV = "5baea3f28436ec3c95d64121dd1f3431150dd028"
+SRCREV = "0b69841cc5bed80d7ec5631ba9306393745257cc"
 
 S = "${WORKDIR}/git"
 
