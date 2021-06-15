@@ -14,7 +14,7 @@ DISTRO_FEATURES_append_ls1028ardb = " jailhouse-rt-edge rt-edge-libbee rt-edge-l
 DISTRO_FEATURES_append_mx8mp = " jailhouse-rt-edge sysrepo-tsn"
 DISTRO_FEATURES_append_mx8m = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
 DISTRO_FEATURES_append_ls1028atsn = " sysrepo-tsn"
-DISTRO_FEATURES_append_ls1021atsn = " sysrepo-tsn nodejs-lbt feedgnuplot tsn-scripts prl"
+DISTRO_FEATURES_append_ls1021atsn = " sysrepo-tsn rt-edge-nodejs-lbt feedgnuplot tsn-scripts prl"
 DISTRO_FEATURES_append_ls1021aiot = " canfestival"
 
 #For ls1028ardb
