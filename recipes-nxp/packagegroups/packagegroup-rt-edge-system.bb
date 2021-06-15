@@ -11,7 +11,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 PACKAGES = "${PN}"
 
 BAREMETAL_INSTALL = " \
-    u-boot-baremetal \
+    rt-edge-baremetal \
     rt-edge-icc \
 "
 

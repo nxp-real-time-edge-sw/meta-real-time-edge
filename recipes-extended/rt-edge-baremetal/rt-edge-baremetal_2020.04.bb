@@ -1,7 +1,7 @@
 # Copyright 2021 NXP
 
 require recipes-bsp/u-boot/u-boot.inc
-require u-boot-baremetal-env.inc
+require rt-edge-baremetal-env.inc
 inherit fsl-u-boot-localversion
 
 SUMMARY = "U-boot-baremetal provided by NXP"
@@ -14,12 +14,12 @@ LIC_FILES_CHKSUM = " \
     file://Licenses/lgpl-2.1.txt;md5=4fbd65380cdd255951079008b364516c \
 "
 
-PROVIDES = "u-boot-baremetal"
+PROVIDES = "rt-edge-baremetal"
 
 DEPENDS_append = " libgcc dtc-native bison-native bc-native"
 
 UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2020.04"
-UBOOT_BAREMETAL_SRC ?= "git://bitbucket.sw.nxp.com/dnind/industry-uboot.git;protocol=ssh"
+UBOOT_BAREMETAL_SRC ?= "git://bitbucket.sw.nxp.com/dnind/rt-edge-uboot.git;protocol=ssh"
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
 
 SRCREV = "f72ce0feca3ef92ecaee58e105de454ea1e0ff69"
