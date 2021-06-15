@@ -12,7 +12,7 @@ PACKAGES = "${PN}"
 
 BAREMETAL_INSTALL = " \
     u-boot-baremetal \
-    icc \
+    rt-edge-icc \
 "
 
 RDEPENDS_${PN} = " \
