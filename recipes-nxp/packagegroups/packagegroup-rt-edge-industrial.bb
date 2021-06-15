@@ -12,7 +12,7 @@ PACKAGES = "${PN}"
 
 RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rt-edge-libbee', 'rt-edge-libbee', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'libblep', 'libblep', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'rt-edge-libblep', 'rt-edge-libblep', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libnfc-nci', 'libnfc-nci', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'canfestival', 'canfestival', '', d)} \
     igh-ethercat \
