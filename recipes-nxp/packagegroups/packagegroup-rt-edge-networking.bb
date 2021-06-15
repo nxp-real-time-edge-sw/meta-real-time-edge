@@ -22,7 +22,7 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'tsn-scripts', 'tsn-scripts', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'canfestival', 'canfestival', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rt-edge-nodejs-lbt', 'rt-edge-nodejs-lbt', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'prl', 'prl', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'rt-edge-prl', 'rt-edge-prl', '', d)} \
     linuxptp \
     ${tsntoolimage} \
     lldpd \
