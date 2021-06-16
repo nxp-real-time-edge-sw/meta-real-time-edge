@@ -18,7 +18,7 @@ genavbtsnimage_ls1028ardb = "genavb-tsn"
 genavbtsnimage_imx8mpevk = "genavb-tsn"
 
 RDEPENDS_${PN} = " \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'sysrepo-tsn', 'sysrepo-tsn', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'rt-edge-sysrepo', 'rt-edge-sysrepo', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'tsn-scripts', 'tsn-scripts', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'canfestival', 'canfestival', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rt-edge-nodejs-lbt', 'rt-edge-nodejs-lbt', '', d)} \

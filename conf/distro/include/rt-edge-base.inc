@@ -10,11 +10,10 @@ DISTRO_FEATURES_append_ls1043ardb = " jailhouse-rt-edge"
 DISTRO_FEATURES_append_ls1046ardb = " jailhouse-rt-edge"
 DISTRO_FEATURES_append_ls1028ardb = " jailhouse-rt-edge rt-edge-libbee rt-edge-libblep libnfc-nci \
 				      wayland-protocols weston imx-gpu-viv libdrm kmscube \
-				      sysrepo-tsn tsn-scripts wayland"
-DISTRO_FEATURES_append_mx8mp = " jailhouse-rt-edge sysrepo-tsn"
+				      rt-edge-sysrepo tsn-scripts wayland"
+DISTRO_FEATURES_append_mx8mp = " jailhouse-rt-edge rt-edge-sysrepo"
 DISTRO_FEATURES_append_mx8m = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
-DISTRO_FEATURES_append_ls1028atsn = " sysrepo-tsn"
-DISTRO_FEATURES_append_ls1021atsn = " sysrepo-tsn rt-edge-nodejs-lbt feedgnuplot tsn-scripts rt-edge-prl"
+DISTRO_FEATURES_append_ls1021atsn = " rt-edge-sysrepo rt-edge-nodejs-lbt feedgnuplot tsn-scripts rt-edge-prl"
 DISTRO_FEATURES_append_ls1021aiot = " canfestival"
 
 #For ls1028ardb
@@ -34,11 +33,10 @@ DELTA_KERNEL_DEFCONFIG_append = " \
 DELTA_KERNEL_DEFCONFIG_append_mx8mm = " linux-fec.config"
 DELTA_KERNEL_DEFCONFIG_append_mx8m = " linux-imx8.config"
 
-SYSREPO_TSN_ls1028ardb = ""
-SYSREPO_TSN_ls1028atsn = ""
-SYSREPO_TSN_ls1021atsn = "sysrepo-tsn-tc"
-SYSREPO_TSN_mx8mp = "sysrepo-tsn-tc"
-PACKAGECONFIG_append_pn-sysrepo-tsn = "${SYSREPO_TSN}"
+RT_EDGE_SYSREPO_ls1028ardb = ""
+RT_EDGE_SYSREPO_ls1021atsn = "rt-edge-sysrepo-tc"
+RT_EDGE_SYSREPO_mx8mp = "rt-edge-sysrepo-tc"
+PACKAGECONFIG_append_pn-rt-edge-sysrepo = "${RT_EDGE_SYSREPO}"
 
 # dtb for jailhouse
 KERNEL_DEVICETREE_append_ls1043ardb= " freescale/fsl-ls1043a-rdb-sdk-jailhouse.dtb"

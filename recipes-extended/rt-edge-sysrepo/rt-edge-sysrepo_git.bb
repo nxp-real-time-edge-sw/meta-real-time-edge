@@ -1,9 +1,9 @@
-SUMMARY = "sysrepo-tsn"
+SUMMARY = "rt-edge-sysrepo"
 DESCRIPTION = "A tool to configure TSN funtionalities in user space"
 LICENSE = "Apachev2"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
-SRC_URI = "git://bitbucket.sw.nxp.com/dnind/sysrepo-tsn.git;protocol=ssh;nobranch=1 \
+SRC_URI = "git://bitbucket.sw.nxp.com/dnind/rt-edge-sysrepo.git;protocol=ssh;nobranch=1 \
            file://sysrepo-tsnd \
            file://sysrepo-init \
            file://sysrepo-tsn.service \
@@ -12,7 +12,7 @@ SRC_URI = "git://bitbucket.sw.nxp.com/dnind/sysrepo-tsn.git;protocol=ssh;nobranc
            file://scripts/sysrepo-cfg.sh \
 "
 
-SRCREV = "85a1704aebc6b46e8e1f4b1a44c00c26b65b0f55"
+SRCREV = "8064c0efaa56e2d4a855885713271f043bfca0ee"
 
 S = "${WORKDIR}/git"
 
@@ -23,7 +23,7 @@ FILES_${PN} += "/etc/sysrepo-tsn /lib/systemd/system/* /etc/systemd/system/multi
 
 #can modify conf/distro/include/openil-base.inc for PACKAGECONFIG
 PACKAGECONFIG ??= ""
-PACKAGECONFIG[sysrepo-tsn-tc] = "-DCONF_SYSREPO_TSN_TC=ON,-DCONF_SYSREPO_TSN_TC=OFF,"
+PACKAGECONFIG[rt-edge-sysrepo-tc] = "-DCONF_SYSREPO_TSN_TC=ON,-DCONF_SYSREPO_TSN_TC=OFF,"
 
 inherit cmake pkgconfig
 EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE:String=Release -DSYSREPOCTL_EXECUTABLE=/usr/bin/sysrepoctl -DSYSREPOCFG_EXECUTABLE=/usr/bin/sysrepocfg "
