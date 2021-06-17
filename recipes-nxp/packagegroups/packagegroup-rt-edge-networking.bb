@@ -27,7 +27,7 @@ RDEPENDS_${PN} = " \
     ${tsntoolimage} \
     lldpd \
     avahi-daemon avahi-utils \
-    nxp-servo \
+    rt-edge-servo \
     python3-websockets \
     rt-tests \
     iproute2-tc \
