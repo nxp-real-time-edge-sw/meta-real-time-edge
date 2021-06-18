@@ -21,7 +21,7 @@ RDEPENDS_${PN} += "bash curl libyang libnetconf2 sysrepo netopeer2-keystored net
 
 FILES_${PN} += "/etc/sysrepo-tsn /lib/systemd/system/* /etc/systemd/system/multi-user.target.wants/*"
 
-#can modify conf/distro/include/openil-base.inc for PACKAGECONFIG
+#can modify conf/distro/include/rt-edge-base.inc for PACKAGECONFIG
 PACKAGECONFIG ??= ""
 PACKAGECONFIG[rt-edge-sysrepo-tc] = "-DCONF_SYSREPO_TSN_TC=ON,-DCONF_SYSREPO_TSN_TC=OFF,"
 
