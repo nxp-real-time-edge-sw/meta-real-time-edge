@@ -1,0 +1,317 @@
+From ee6f5ebc59b803b03b0237579fe797eeca834167 Mon Sep 17 00:00:00 2001
+From: "hongbo.wang" <hongbo.wang@nxp.com>
+Date: Sat, 27 Feb 2021 18:46:49 +0800
+Subject: [PATCH 11/20] config: ls1046ardb: modify memory range, align with
+ ls1043ardb
+
+Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+---
+ configs/arm64/dts/inmate-ls1046a-rdb.dts |  8 +++--
+ configs/arm64/ls1046a-rdb-inmate-demo.c  | 25 +++++++--------
+ configs/arm64/ls1046a-rdb-linux-demo.c   | 33 ++++++++++----------
+ configs/arm64/ls1046a-rdb.c              | 39 ++++++++++++------------
+ 4 files changed, 55 insertions(+), 50 deletions(-)
+
+diff --git a/configs/arm64/dts/inmate-ls1046a-rdb.dts b/configs/arm64/dts/inmate-ls1046a-rdb.dts
+index f5fa9751..01e8e8be 100644
+--- a/configs/arm64/dts/inmate-ls1046a-rdb.dts
++++ b/configs/arm64/dts/inmate-ls1046a-rdb.dts
+@@ -2,9 +2,11 @@
+ /*
+  * Device Tree for inmate cell on NXP ls1046a RDB platform
+  *
+- * Copyright 2020 NXP
++ * Copyright 2020-2021 NXP
+  *
+  * Jiafei Pan <jiafei.pan@nxp.com>
++ *  Hongbo Wang <hongbo.wang@nxp.com>
++
+  */
+ 
+ /dts-v1/;
+@@ -152,7 +154,7 @@
+ 
+ 	};
+ 
+-	pci@fb500000 {
++	pci@c0700000 {
+ 		compatible = "pci-host-ecam-generic";
+ 		device_type = "pci";
+ 		bus-range = <0 0>;
+@@ -164,7 +166,7 @@
+ 			<0 0 0 2 &gic GIC_SPI 29 IRQ_TYPE_EDGE_RISING>,
+ 			<0 0 0 3 &gic GIC_SPI 30 IRQ_TYPE_EDGE_RISING>,
+ 			<0 0 0 4 &gic GIC_SPI 31 IRQ_TYPE_EDGE_RISING>;
+-		reg = <0x0 0xfb500000 0x0 0x100000>;
++		reg = <0x0 0xc0700000 0x0 0x100000>;
+ 		ranges = <0x02000000 0x00 0x10000000 0x0 0x10000000 0x00 0x10000>;
+ 	};
+ 
+diff --git a/configs/arm64/ls1046a-rdb-inmate-demo.c b/configs/arm64/ls1046a-rdb-inmate-demo.c
+index 6c992caa..5912ccad 100644
+--- a/configs/arm64/ls1046a-rdb-inmate-demo.c
++++ b/configs/arm64/ls1046a-rdb-inmate-demo.c
+@@ -1,10 +1,11 @@
+ /*
+  * ls1046a RDB - inmate demo
+  *
+- * Copyright NXP 2020
++ * Copyright 2020-2021 NXP
+  *
+  * Authors:
+  *  Jiafei Pan <jiafei.pan@nxp.com>
++ *  Hongbo Wang <hongbo.wang@nxp.com>
+  *
+  * This work is licensed under the terms of the GNU GPL, version 2.  See
+  * the COPYING file in the top-level directory.
+@@ -47,34 +48,34 @@ struct {
+ 
+ 	.mem_regions = {
+ 		/* IVSHMEM shared memory region for 00:00.0 */ {
+-			.phys_start = 0xfb700000,
+-			.virt_start = 0xfb700000,
++			.phys_start = 0xc0500000,
++			.virt_start = 0xc0500000,
+ 			.size = 0x1000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb701000,
+-			.virt_start = 0xfb701000,
++			.phys_start = 0xc0501000,
++			.virt_start = 0xc0501000,
+ 			.size = 0x9000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb70a000,
+-			.virt_start = 0xfb70a000,
++			.phys_start = 0xc050a000,
++			.virt_start = 0xc050a000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb70c000,
+-			.virt_start = 0xfb70c000,
++			.phys_start = 0xc050c000,
++			.virt_start = 0xc050c000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb70e000,
+-			.virt_start = 0xfb70e000,
++			.phys_start = 0xc050e000,
++			.virt_start = 0xc050e000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+@@ -86,7 +87,7 @@ struct {
+ 				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		/* RAM: Top at 2GB DRAM1 Space */ {
+-			.phys_start = 0xc0000000,
++			.phys_start = 0xc0900000,
+ 			.virt_start = 0,
+ 			.size = 0x00010000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+diff --git a/configs/arm64/ls1046a-rdb-linux-demo.c b/configs/arm64/ls1046a-rdb-linux-demo.c
+index 6bba61fb..6f0fff74 100644
+--- a/configs/arm64/ls1046a-rdb-linux-demo.c
++++ b/configs/arm64/ls1046a-rdb-linux-demo.c
+@@ -1,10 +1,11 @@
+ /*
+  * ls1046a RDB target - linux-demo
+  *
+- * Copyright 2020 NXP
++ * Copyright 2020-2021 NXP
+  *
+  * Authors:
+  *  Jiafei Pan <jiafei.pan@nxp.com>
++ *  Hongbo Wang <hongbo.wang@nxp.com>
+  *
+  * This work is licensed under the terms of the GNU GPL, version 2.  See
+  * the COPYING file in the top-level directory.
+@@ -39,39 +40,39 @@ struct {
+ 
+ 	.mem_regions = {
+ 		/* IVSHMEM shared memory region for 00:00.0 */ {
+-			.phys_start = 0xfb700000,
+-			.virt_start = 0xfb700000,
++			.phys_start = 0xc0500000,
++			.virt_start = 0xc0500000,
+ 			.size = 0x1000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb701000,
+-			.virt_start = 0xfb701000,
++			.phys_start = 0xc0501000,
++			.virt_start = 0xc0501000,
+ 			.size = 0x9000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb70a000,
+-			.virt_start = 0xfb70a000,
++			.phys_start = 0xc050a000,
++			.virt_start = 0xc050a000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb70c000,
+-			.virt_start = 0xfb70c000,
++			.phys_start = 0xc050c000,
++			.virt_start = 0xc050c000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb70e000,
+-			.virt_start = 0xfb70e000,
++			.phys_start = 0xc050e000,
++			.virt_start = 0xc050e000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		/* IVSHMEM shared memory regions for 00:01.0 (networking) */
+-		JAILHOUSE_SHMEM_NET_REGIONS(0xfb800000, 1),
++		JAILHOUSE_SHMEM_NET_REGIONS(0xc0600000, 1),
+ 		/* DUART1 */ {
+ 			.phys_start = 0x21c0000,
+ 			.virt_start = 0x21c0000,
+@@ -94,16 +95,16 @@ struct {
+ 				JAILHOUSE_MEM_IO,
+ 		},
+ 		/* RAM */ {
+-			.phys_start = 0xbf900000,
++			.phys_start = 0xc0400000,
+ 			.virt_start = 0,
+ 			.size = 0x00010000, /* 64K */
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_EXECUTE | JAILHOUSE_MEM_LOADABLE,
+ 		},
+ 		/* RAM: Top at DRAM1 2GB Space */ {
+-			.phys_start = 0xc0000000,
+-			.virt_start = 0xc0000000,
+-			.size = 0x3b500000,
++			.phys_start = 0xc0900000,
++			.virt_start = 0xc0900000,
++			.size = 0x33700000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_EXECUTE | JAILHOUSE_MEM_DMA |
+ 				JAILHOUSE_MEM_LOADABLE,
+diff --git a/configs/arm64/ls1046a-rdb.c b/configs/arm64/ls1046a-rdb.c
+index d05c1628..c4ecda24 100644
+--- a/configs/arm64/ls1046a-rdb.c
++++ b/configs/arm64/ls1046a-rdb.c
+@@ -1,10 +1,11 @@
+ /*
+  * ls1046a RDB target - linux-demo
+  *
+- * Copyright 2020 NXP
++ * Copyright 2020-2021 NXP
+  *
+  * Authors:
+  *  Jiafei Pan <jiafei.pan@nxp.com>
++ *  Hongbo Wang <hongbo.wang@nxp.com>
+  *
+  * This work is licensed under the terms of the GNU GPL, version 2.  See
+  * the COPYING file in the top-level directory.
+@@ -25,7 +26,7 @@ struct {
+ 		.revision = JAILHOUSE_CONFIG_REVISION,
+ 		.flags = JAILHOUSE_SYS_VIRTUAL_DEBUG_CONSOLE,
+ 		.hypervisor_memory = {
+-			.phys_start = 0xfba00000,
++			.phys_start = 0xc0000000,
+ 			.size =       0x00400000,
+ 		},
+ 		.debug_console = {
+@@ -36,7 +37,7 @@ struct {
+ 				 JAILHOUSE_CON_REGDIST_1,
+ 		},
+ 		.platform_info = {
+-			.pci_mmconfig_base = 0xfb500000,
++			.pci_mmconfig_base = 0xc0700000,
+ 			.pci_mmconfig_end_bus = 0,
+ 			.pci_is_virtual = 1,
+ 			.pci_domain = -1,
+@@ -66,37 +67,37 @@ struct {
+ 
+ 	.mem_regions = {
+ 		/* IVSHMEM shared memory region for 00:00.0 */ {
+-			.phys_start = 0xfb700000,
+-			.virt_start = 0xfb700000,
++			.phys_start = 0xc0500000,
++			.virt_start = 0xc0500000,
+ 			.size = 0x1000,
+ 			.flags = JAILHOUSE_MEM_READ,
+ 		},
+ 		{
+-			.phys_start = 0xfb701000,
+-			.virt_start = 0xfb701000,
++			.phys_start = 0xc0501000,
++			.virt_start = 0xc0501000,
+ 			.size = 0x9000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE,
+ 		},
+ 		{
+-			.phys_start = 0xfb70a000,
+-			.virt_start = 0xfb70a000,
++			.phys_start = 0xc050a000,
++			.virt_start = 0xc050a000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE,
+ 		},
+ 		{
+-			.phys_start = 0xfb70c000,
+-			.virt_start = 0xfb70c000,
++			.phys_start = 0xc050c000,
++			.virt_start = 0xc050c000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ,
+ 		},
+ 		{
+-			.phys_start = 0xfb70e000,
+-			.virt_start = 0xfb70e000,
++			.phys_start = 0xc050e000,
++			.virt_start = 0xc050e000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ,
+ 		},
+ 		/* IVSHMEM shared memory regions for 00:01.0 (networking) */
+-		JAILHOUSE_SHMEM_NET_REGIONS(0xfb800000, 0),
++		JAILHOUSE_SHMEM_NET_REGIONS(0xc0600000, 0),
+ 		/* RAM - 1GB at DRAM1 region - root cell */ {
+ 			.phys_start = 0x80000000,
+ 			.virt_start = 0x80000000,
+@@ -112,15 +113,15 @@ struct {
+ 				JAILHOUSE_MEM_EXECUTE,
+ 		},
+ 		/* RAM: Inmate */ {
+-			.phys_start = 0xc0000000,
+-			.virt_start = 0xc0000000,
+-			.size = 0x3b500000,
++			.phys_start = 0xc0900000,
++			.virt_start = 0xc0900000,
++			.size = 0x33700000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_EXECUTE,
+ 		},
+ 		/* RAM: loader */ {
+-			.phys_start = 0xbf900000,
+-			.virt_start = 0xbf900000,
++			.phys_start = 0xc0400000,
++			.virt_start = 0xc0400000,
+ 			.size = 0x00100000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_EXECUTE,
+-- 
+2.17.1
+

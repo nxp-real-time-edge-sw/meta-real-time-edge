@@ -1,0 +1,90 @@
+From d0ea4e9245d0309a9cf3ec5705942004df6198a3 Mon Sep 17 00:00:00 2001
+From: "hongbo.wang" <hongbo.wang@nxp.com>
+Date: Tue, 2 Mar 2021 11:51:34 +0800
+Subject: [PATCH 10/20] configs: ls1043ardb: Add gpio1 in non-root config and
+ dts file
+
+Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+---
+ configs/arm64/dts/inmate-ls1043a-rdb-dpaa.dts | 12 +++++++++++-
+ configs/arm64/ls1043a-rdb-dpaa-linux-demo.c   | 13 ++++++++++---
+ 2 files changed, 21 insertions(+), 4 deletions(-)
+
+diff --git a/configs/arm64/dts/inmate-ls1043a-rdb-dpaa.dts b/configs/arm64/dts/inmate-ls1043a-rdb-dpaa.dts
+index 34629a41..a9e38073 100644
+--- a/configs/arm64/dts/inmate-ls1043a-rdb-dpaa.dts
++++ b/configs/arm64/dts/inmate-ls1043a-rdb-dpaa.dts
+@@ -2,7 +2,7 @@
+ /*
+  * Device Tree for inmate cell on NXP ls1043a RDB platform
+  *
+- * Copyright 2020 NXP
++ * Copyright 2020-2021 NXP
+  *
+  *  hongbo.wang <hongbo.wang@nxp.com>
+  */
+@@ -182,6 +182,16 @@
+ 			dma-coherent;
+ 		};
+ 
++		gpio1: gpio@2310000 {
++			compatible = "fsl,ls1043a-gpio", "fsl,qoriq-gpio";
++			reg = <0x0 0x2310000 0x0 0x10000>;
++			interrupts = <0 67 0x4>;
++			gpio-controller;
++			#gpio-cells = <2>;
++			interrupt-controller;
++			#interrupt-cells = <2>;
++		};
++
+ 		qman: qman@1880000 {
+ 			compatible = "fsl,qman";
+ 			reg = <0x0 0x1880000 0x0 0x10000>;
+diff --git a/configs/arm64/ls1043a-rdb-dpaa-linux-demo.c b/configs/arm64/ls1043a-rdb-dpaa-linux-demo.c
+index 89552b16..a0385f35 100644
+--- a/configs/arm64/ls1043a-rdb-dpaa-linux-demo.c
++++ b/configs/arm64/ls1043a-rdb-dpaa-linux-demo.c
+@@ -1,7 +1,7 @@
+ /*
+  * ls1043a RDB target - linux-demo
+  *
+- * Copyright 2020 NXP
++ * Copyright 2020-2021 NXP
+  *
+  * Authors:
+  *  Hongbo Wang <hongbo.wang@nxp.com>
+@@ -16,7 +16,7 @@
+ struct {
+ 	struct jailhouse_cell_desc cell;
+ 	__u64 cpus[1];
+-	struct jailhouse_memory mem_regions[23];
++	struct jailhouse_memory mem_regions[24];
+ 	struct jailhouse_irqchip irqchips[2];
+ 	struct jailhouse_pci_device pci_devices[2];
+ } __attribute__((packed)) config = {
+@@ -133,6 +133,13 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_IO,
+ 		},
++		/* gpio1 */ {
++			.phys_start = 0x02310000,
++			.virt_start = 0x02310000,
++			.size = 0x10000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO,
++		},
+ 		/* dcfg */ {
+ 			.phys_start = 0x01ee0000,
+ 			.virt_start = 0x01ee0000,
+@@ -171,7 +178,7 @@ struct {
+ 				1 << (60 - 32)  | 1 << (61 - 32) |
+ 					1 << (62 - 32) | 1 << (63 -32), /* vPCI */
+ 				1 << (44 + 32 - 64) | 1 << (45 + 32 - 64),
+-				0,
++				1 << (67 + 32 - 96),
+ 				0,
+ 			},
+ 		},
+-- 
+2.17.1
+

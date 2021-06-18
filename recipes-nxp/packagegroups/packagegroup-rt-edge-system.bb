@@ -18,6 +18,6 @@ BAREMETAL_INSTALL = " \
 RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'baremetal',  \
     '${BAREMETAL_INSTALL}', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'jailhouse-rt-edge',  \
-    'jailhouse-rt-edge', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'jailhouse',  \
+    'jailhouse', '', d)} \
 "

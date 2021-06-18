@@ -1,0 +1,420 @@
+From 9be7bacea5982603b1f300b96f18f2985dbe5c3c Mon Sep 17 00:00:00 2001
+From: "hongbo.wang" <hongbo.wang@nxp.com>
+Date: Mon, 29 Mar 2021 10:38:47 +0800
+Subject: [PATCH 18/20] update ls1028a-rdb config and dts for openil
+
+Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+---
+ configs/arm64/dts/inmate-ls1028a-rdb.dts |   4 +-
+ configs/arm64/ls1028a-rdb-inmate-demo.c  |  28 +++---
+ configs/arm64/ls1028a-rdb-linux-demo.c   |  46 +++++-----
+ configs/arm64/ls1028a-rdb.c              | 109 ++++++++++++++++++-----
+ 4 files changed, 134 insertions(+), 53 deletions(-)
+
+diff --git a/configs/arm64/dts/inmate-ls1028a-rdb.dts b/configs/arm64/dts/inmate-ls1028a-rdb.dts
+index bf196b92..52274a77 100644
+--- a/configs/arm64/dts/inmate-ls1028a-rdb.dts
++++ b/configs/arm64/dts/inmate-ls1028a-rdb.dts
+@@ -116,7 +116,7 @@
+ 		};
+ 	};
+ 
+-	pci@fb500000 {
++	pci@c0700000 {
+ 		compatible = "pci-host-ecam-generic";
+ 		device_type = "pci";
+ 		bus-range = <0 0>;
+@@ -128,7 +128,7 @@
+ 			<0 0 0 2 &gic GIC_SPI 9 IRQ_TYPE_EDGE_RISING>,
+ 			<0 0 0 3 &gic GIC_SPI 10 IRQ_TYPE_EDGE_RISING>,
+ 			<0 0 0 4 &gic GIC_SPI 11 IRQ_TYPE_EDGE_RISING>;
+-		reg = <0x0 0xfb500000 0x0 0x100000>;
++		reg = <0x0 0xc0700000 0x0 0x100000>;
+ 		ranges = <0x02000000 0x00 0x10000000 0x0 0x10000000 0x00 0x10000>;
+ 	};
+ 
+diff --git a/configs/arm64/ls1028a-rdb-inmate-demo.c b/configs/arm64/ls1028a-rdb-inmate-demo.c
+index 8b45a9ed..b5ddb3e2 100644
+--- a/configs/arm64/ls1028a-rdb-inmate-demo.c
++++ b/configs/arm64/ls1028a-rdb-inmate-demo.c
+@@ -16,8 +16,8 @@
+ struct {
+ 	struct jailhouse_cell_desc cell;
+ 	__u64 cpus[1];
+-	struct jailhouse_memory mem_regions[7];
+-	struct jailhouse_irqchip irqchips[2];
++	struct jailhouse_memory mem_regions[8];
++	struct jailhouse_irqchip irqchips[3];
+ 	struct jailhouse_pci_device pci_devices[1];
+ } __attribute__((packed)) config = {
+ 	.cell = {
+@@ -47,31 +47,37 @@ struct {
+ 
+ 	.mem_regions = {
+ 		/* IVSHMEM shared memory region for 00:00.0 */ {
+-			.phys_start = 0xfb700000,
+-			.virt_start = 0xfb700000,
++			.phys_start = 0xc0500000,
++			.virt_start = 0xc0500000,
+ 			.size = 0x1000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb701000,
+-			.virt_start = 0xfb701000,
++			.phys_start = 0xc0501000,
++			.virt_start = 0xc0501000,
+ 			.size = 0x9000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb70a000,
+-			.virt_start = 0xfb70a000,
++			.phys_start = 0xc050a000,
++			.virt_start = 0xc050a000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb70c000,
+-			.virt_start = 0xfb70c000,
++			.phys_start = 0xc050c000,
++			.virt_start = 0xc050c000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_ROOTSHARED,
+ 		},
++		{
++			.phys_start = 0xc050e000,
++			.virt_start = 0xc050e000,
++			.size = 0x2000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
++		},
+ 		/* DUART1 */ {
+ 			.phys_start = 0x21c0000,
+ 			.virt_start = 0x21c0000,
+@@ -80,7 +86,7 @@ struct {
+ 				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		/* RAM */ {
+-			.phys_start = 0xc0000000,
++			.phys_start = 0xc0900000,
+ 			.virt_start = 0,
+ 			.size = 0x00010000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+diff --git a/configs/arm64/ls1028a-rdb-linux-demo.c b/configs/arm64/ls1028a-rdb-linux-demo.c
+index e2cb01af..1d4bff3e 100644
+--- a/configs/arm64/ls1028a-rdb-linux-demo.c
++++ b/configs/arm64/ls1028a-rdb-linux-demo.c
+@@ -16,7 +16,7 @@
+ struct {
+ 	struct jailhouse_cell_desc cell;
+ 	__u64 cpus[1];
+-	struct jailhouse_memory mem_regions[13];
++	struct jailhouse_memory mem_regions[14];
+ 	struct jailhouse_irqchip irqchips[2];
+ 	struct jailhouse_pci_device pci_devices[2];
+ } __attribute__((packed)) config = {
+@@ -39,33 +39,39 @@ struct {
+ 
+ 	.mem_regions = {
+ 		/* IVSHMEM shared memory region for 00:00.0 */ {
+-			.phys_start = 0xfb700000,
+-			.virt_start = 0xfb700000,
++			.phys_start = 0xc0500000,
++			.virt_start = 0xc0500000,
+ 			.size = 0x1000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb701000,
+-			.virt_start = 0xfb701000,
++			.phys_start = 0xc0501000,
++			.virt_start = 0xc0501000,
+ 			.size = 0x9000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb70a000,
+-			.virt_start = 0xfb70a000,
++			.phys_start = 0xc050a000,
++			.virt_start = 0xc050a000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		{
+-			.phys_start = 0xfb70c000,
+-			.virt_start = 0xfb70c000,
++			.phys_start = 0xc050c000,
++			.virt_start = 0xc050c000,
++			.size = 0x2000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
++		},
++		{
++			.phys_start = 0xc050e000,
++			.virt_start = 0xc050e000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+-		/* IVSHMEM shared memory regions for 00:01.0 */
+-		JAILHOUSE_SHMEM_NET_REGIONS(0xfb800000, 1),
++		/* IVSHMEM shared memory regions for 00:01.0 (networking) */
++		JAILHOUSE_SHMEM_NET_REGIONS(0xc0600000, 1),
+ 		/* DUART1 */ {
+ 			.phys_start = 0x21c0000,
+ 			.virt_start = 0x21c0000,
+@@ -81,16 +87,16 @@ struct {
+ 				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		/* RAM */ {
+-			.phys_start = 0xbf900000,
++			.phys_start = 0xc0400000,
+ 			.virt_start = 0,
+-			.size = 0x00010000,
++			.size = 0x00010000, /* 64K */
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_EXECUTE | JAILHOUSE_MEM_LOADABLE,
+ 		},
+-		/* RAM */ {
+-			.phys_start = 0xc0000000,
+-			.virt_start = 0xc0000000,
+-			.size = 0x3b500000,
++		/* RAM: Top at DRAM1 2GB Space */ {
++			.phys_start = 0xc0900000,
++			.virt_start = 0xc0900000,
++			.size = 0x33700000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_EXECUTE | JAILHOUSE_MEM_DMA |
+ 				JAILHOUSE_MEM_LOADABLE,
+@@ -124,8 +130,8 @@ struct {
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+-			.shmem_dev_id = 1,
+-			.shmem_peers = 2,
++			.shmem_dev_id = 2,
++			.shmem_peers = 3,
+ 			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_UNDEFINED,
+ 		},
+ 		{ /* IVSHMEM 00:01.0 */
+@@ -133,7 +139,7 @@ struct {
+ 			.domain = 0,
+ 			.bdf = 1 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+-			.shmem_regions_start = 4,
++			.shmem_regions_start = 5,
+ 			.shmem_dev_id = 1,
+ 			.shmem_peers = 2,
+ 			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_VETH,
+diff --git a/configs/arm64/ls1028a-rdb.c b/configs/arm64/ls1028a-rdb.c
+index 6027772b..d721542a 100644
+--- a/configs/arm64/ls1028a-rdb.c
++++ b/configs/arm64/ls1028a-rdb.c
+@@ -16,8 +16,8 @@
+ struct {
+ 	struct jailhouse_system header;
+ 	__u64 cpus[1];
+-	struct jailhouse_memory mem_regions[76];
+-	struct jailhouse_irqchip irqchips[2];
++	struct jailhouse_memory mem_regions[85];
++	struct jailhouse_irqchip irqchips[3];
+ 	struct jailhouse_pci_device pci_devices[2];
+ } __attribute__((packed)) config = {
+ 	.header = {
+@@ -25,7 +25,7 @@ struct {
+ 		.revision = JAILHOUSE_CONFIG_REVISION,
+ 		.flags = JAILHOUSE_SYS_VIRTUAL_DEBUG_CONSOLE,
+ 		.hypervisor_memory = {
+-			.phys_start = 0xfba00000,
++			.phys_start = 0xc0000000,
+ 			.size =       0x00400000,
+ 		},
+ 		.debug_console = {
+@@ -36,7 +36,7 @@ struct {
+ 				 JAILHOUSE_CON_REGDIST_1,
+ 		},
+ 		.platform_info = {
+-			.pci_mmconfig_base = 0xfb500000,
++			.pci_mmconfig_base = 0xc0700000,
+ 			.pci_mmconfig_end_bus = 0,
+ 			.pci_is_virtual = 1,
+ 			.pci_domain = -1,
+@@ -54,7 +54,7 @@ struct {
+ 			.cpu_set_size = sizeof(config.cpus),
+ 			.num_memory_regions = ARRAY_SIZE(config.mem_regions),
+ 			.num_irqchips = ARRAY_SIZE(config.irqchips),
+-			.vpci_irq_base = 50 - 32,
++			.vpci_irq_base = 50 - 32, /* Not include 32 base */
+ 		},
+ 	},
+ 
+@@ -64,31 +64,37 @@ struct {
+ 
+ 	.mem_regions = {
+ 		/* IVSHMEM shared memory region for 00:00.0 */ {
+-			.phys_start = 0xfb700000,
+-			.virt_start = 0xfb700000,
++			.phys_start = 0xc0500000,
++			.virt_start = 0xc0500000,
+ 			.size = 0x1000,
+ 			.flags = JAILHOUSE_MEM_READ,
+ 		},
+ 		{
+-			.phys_start = 0xfb701000,
+-			.virt_start = 0xfb701000,
++			.phys_start = 0xc0501000,
++			.virt_start = 0xc0501000,
+ 			.size = 0x9000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE,
+ 		},
+ 		{
+-			.phys_start = 0xfb70a000,
+-			.virt_start = 0xfb70a000,
++			.phys_start = 0xc050a000,
++			.virt_start = 0xc050a000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE,
+ 		},
+ 		{
+-			.phys_start = 0xfb70c000,
+-			.virt_start = 0xfb70c000,
++			.phys_start = 0xc050c000,
++			.virt_start = 0xc050c000,
++			.size = 0x2000,
++			.flags = JAILHOUSE_MEM_READ,
++		},
++		{
++			.phys_start = 0xc050e000,
++			.virt_start = 0xc050e000,
+ 			.size = 0x2000,
+ 			.flags = JAILHOUSE_MEM_READ,
+ 		},
+ 		/* IVSHMEM shared memory regions for 00:01.0 */
+-		JAILHOUSE_SHMEM_NET_REGIONS(0xfb800000, 0),
++		JAILHOUSE_SHMEM_NET_REGIONS(0xc0600000, 0),
+ 		/* RAM - 1GB - root cell */ {
+ 			.phys_start = 0x80000000,
+ 			.virt_start = 0x80000000,
+@@ -103,10 +109,17 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_EXECUTE,
+ 		},
+-		/* RAM - ~1GB - inmate */ {
+-			.phys_start = 0xc0000000,
+-			.virt_start = 0xc0000000,
+-			.size = 0x3b500000,
++		/* RAM: Inmate */ {
++			.phys_start = 0xc0900000,
++			.virt_start = 0xc0900000,
++			.size = 0x33700000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_EXECUTE,
++		},
++		/* RAM: loader */ {
++			.phys_start = 0xc0400000,
++			.virt_start = 0xc0400000,
++			.size = 0x00100000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_EXECUTE,
+ 		},
+@@ -390,6 +403,13 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_IO,
+ 		},
++		/* iommu */ {
++			.phys_start = 0x05000000,
++			.virt_start = 0x05000000,
++			.size = 0x800000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO,
++		},
+ 		/* gic its */ {
+ 			.phys_start = 0x06020000,
+ 			.virt_start = 0x06020000,
+@@ -565,6 +585,48 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_IO,
+ 		},
++		/* for root cell */ {
++			.phys_start = 0xf4000000,
++			.virt_start = 0xf4000000,
++			.size = 0xc000000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_EXECUTE,
++		},
++		/* for enetc pcie */ {
++			.phys_start = 0x1f0000000,
++			.virt_start = 0x1f0000000,
++			.size = 0xd000000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO,
++		},
++		/* for root cell */ {
++			.phys_start = 0x700100000,
++			.virt_start = 0x700100000,
++			.size = 0x1000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO,
++		},
++		/* System RAM */ {
++			.phys_start = 0x2080000000,
++			.virt_start = 0x2080000000,
++			.size = 0x80000000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_EXECUTE,
++		},
++		/* MEM */ {
++			.phys_start = 0x8040000000,
++			.virt_start = 0x8040000000,
++			.size = 0x40000000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_EXECUTE,
++		},
++		/* MEM */ {
++			.phys_start = 0x8840000000,
++			.virt_start = 0x8840000000,
++			.size = 0x40000000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_EXECUTE,
++		},
+ 	},
+ 
+ 	.irqchips = {
+@@ -582,6 +644,13 @@ struct {
+ 				0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+ 			},
+ 		},
++		/* GIC */ {
++			.address = 0x06000000,
++			.pin_base = 288,
++			.pin_bitmap = {
++				0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
++			},
++		},
+ 	},
+ 
+ 	.pci_devices = {
+@@ -592,7 +661,7 @@ struct {
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+ 			.shmem_dev_id = 0,
+-			.shmem_peers = 2,
++			.shmem_peers = 3,
+ 			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_UNDEFINED,
+ 		},
+ 		{ /* IVSHMEM 00:01.0 */
+@@ -600,7 +669,7 @@ struct {
+ 			.domain = 0,
+ 			.bdf = 1 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+-			.shmem_regions_start = 4,
++			.shmem_regions_start = 5,
+ 			.shmem_dev_id = 0,
+ 			.shmem_peers = 2,
+ 			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_VETH,
+-- 
+2.17.1
+

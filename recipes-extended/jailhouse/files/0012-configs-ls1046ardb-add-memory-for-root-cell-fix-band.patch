@@ -1,0 +1,62 @@
+From 25f9918e9ccaa91ea0b7f8cf2acef2eca549be60 Mon Sep 17 00:00:00 2001
+From: "hongbo.wang" <hongbo.wang@nxp.com>
+Date: Sat, 27 Feb 2021 18:58:09 +0800
+Subject: [PATCH 12/20] configs: ls1046ardb: add memory for root cell, fix
+ bandrate issue
+
+Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+---
+ configs/arm64/ls1046a-rdb-inmate-demo.c |  2 +-
+ configs/arm64/ls1046a-rdb.c             | 16 +++++++++++++++-
+ 2 files changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/configs/arm64/ls1046a-rdb-inmate-demo.c b/configs/arm64/ls1046a-rdb-inmate-demo.c
+index 5912ccad..3e9a5521 100644
+--- a/configs/arm64/ls1046a-rdb-inmate-demo.c
++++ b/configs/arm64/ls1046a-rdb-inmate-demo.c
+@@ -35,7 +35,7 @@ struct {
+ 
+ 		.console = {
+ 			.address = 0x21c0600,	/* Uart1 in DUART1 */
+-			.divider = 0xbd, /* baudrate: 115200 */
++			.divider = 0xa3, /* baudrate: 115200 */
+ 			.type = JAILHOUSE_CON_TYPE_8250,
+ 			.flags = JAILHOUSE_CON_ACCESS_MMIO |
+ 				JAILHOUSE_CON_REGDIST_1,
+diff --git a/configs/arm64/ls1046a-rdb.c b/configs/arm64/ls1046a-rdb.c
+index c4ecda24..b6d66a57 100644
+--- a/configs/arm64/ls1046a-rdb.c
++++ b/configs/arm64/ls1046a-rdb.c
+@@ -17,7 +17,7 @@
+ struct {
+ 	struct jailhouse_system header;
+ 	__u64 cpus[1];
+-	struct jailhouse_memory mem_regions[64];
++	struct jailhouse_memory mem_regions[66];
+ 	struct jailhouse_irqchip irqchips[2];
+ 	struct jailhouse_pci_device pci_devices[2];
+ } __attribute__((packed)) config = {
+@@ -119,6 +119,20 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_EXECUTE,
+ 		},
++		/* RAM - FMAN ucode - root cell */ {
++			.phys_start = 0xf4000000,
++			.virt_start = 0xf4000000,
++			.size = 0xc000000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_EXECUTE,
++		},
++		/* RAM -  root cell */ {
++			.phys_start = 0xb40000000,
++			.virt_start = 0xb40000000,
++			.size = 0xc0000000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_EXECUTE,
++		},
+ 		/* RAM: loader */ {
+ 			.phys_start = 0xc0400000,
+ 			.virt_start = 0xc0400000,
+-- 
+2.17.1
+

@@ -1,0 +1,71 @@
+From 13a66fce707d008c5077c65b24382e99c79dd2dd Mon Sep 17 00:00:00 2001
+From: "hongbo.wang" <hongbo.wang@nxp.com>
+Date: Sun, 28 Feb 2021 08:45:46 +0800
+Subject: [PATCH 15/20] configs: ls1046ardb: Add gpio1 in config and dts file
+
+Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+---
+ configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts | 10 ++++++++++
+ configs/arm64/ls1046a-rdb-dpaa-linux-demo.c   | 11 +++++++++--
+ 2 files changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts b/configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts
+index c97ac4ae..65fded70 100644
+--- a/configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts
++++ b/configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts
+@@ -185,6 +185,16 @@
+ 			dma-coherent;
+ 		};
+ 
++		gpio1: gpio@2310000 {
++			compatible = "fsl,ls1043a-gpio", "fsl,qoriq-gpio";
++			reg = <0x0 0x2310000 0x0 0x10000>;
++			interrupts = <0 67 0x4>;
++			gpio-controller;
++			#gpio-cells = <2>;
++			interrupt-controller;
++			#interrupt-cells = <2>;
++		};
++
+ 		qman: qman@1880000 {
+ 			compatible = "fsl,qman";
+ 			reg = <0x0 0x1880000 0x0 0x10000>;
+diff --git a/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c b/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c
+index a28e12f4..9754567c 100644
+--- a/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c
++++ b/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c
+@@ -17,7 +17,7 @@
+ struct {
+ 	struct jailhouse_cell_desc cell;
+ 	__u64 cpus[1];
+-	struct jailhouse_memory mem_regions[23];
++	struct jailhouse_memory mem_regions[24];
+ 	struct jailhouse_irqchip irqchips[2];
+ 	struct jailhouse_pci_device pci_devices[2];
+ } __attribute__((packed)) config = {
+@@ -134,6 +134,13 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_IO,
+ 		},
++		/* gpio1 */ {
++			.phys_start = 0x02310000,
++			.virt_start = 0x02310000,
++			.size = 0x10000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO,
++		},
+ 		/* dcfg */ {
+ 			.phys_start = 0x01ee0000,
+ 			.virt_start = 0x01ee0000,
+@@ -172,7 +179,7 @@ struct {
+ 				1 << (60 - 32)  | 1 << (61 - 32) |
+ 					1 << (62 - 32) | 1 << (63 -32), /* vPCI */
+ 				1 << (44 + 32 - 64) | 1 << (45 + 32 - 64),
+-				0,
++				1 << (67 + 32 - 96),
+ 				0,
+ 			},
+ 		},
+-- 
+2.17.1
+
