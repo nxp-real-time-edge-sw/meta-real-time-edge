@@ -6,8 +6,8 @@ SAVED_DIR := "${THISDIR}"
 SRC_URI = "git://bitbucket.sw.nxp.com/dnind/tsntool.git;protocol=ssh;nobranch=1"
 #SRCREV_industrial = "e0bd2f6fd9b066bc8da09aeddd88c6237e0872a4"
 
-SRCREV_qoriq = "b30a3fbad987832e7ed45fdebaa91a9f7f21128e"
-SRCREV_imx = "b30a3fbad987832e7ed45fdebaa91a9f7f21128e"
+SRCREV_qoriq = "3111f7f79e7d1b1a5e60f37fe76785559b2d0360"
+SRCREV_imx = "3111f7f79e7d1b1a5e60f37fe76785559b2d0360"
 
 FILES_${PN} += "/root/* /root/sample/* /root/samples/* \
                /root/samples/gatescripts/* /root/samples/pktgen/* \
