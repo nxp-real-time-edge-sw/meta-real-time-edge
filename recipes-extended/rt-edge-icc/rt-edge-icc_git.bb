@@ -31,11 +31,11 @@ ICC_MAX_CPUS_lx2160a = "16"
 
 do_configure() {
 
-    if [ ${ICC_GIC_OFFSET_ALIGN} == "y" ]; then
+    if [ "${ICC_GIC_OFFSET_ALIGN}" = "y" ]; then
         echo "#define CONFIG_ICC_GIC_OFFSET_ALIGN" > ${S}/icc_configure.h
     fi
 
-    if [ ${ICC_GIC_TYPE} != "" ]; then
+    if [ "${ICC_GIC_TYPE}" != "" ]; then
         echo "#define ${ICC_GIC_TYPE}" >> ${S}/icc_configure.h
     fi
 
