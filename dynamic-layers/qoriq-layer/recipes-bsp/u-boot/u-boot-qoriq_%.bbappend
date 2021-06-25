@@ -1,7 +1,7 @@
 
 UBOOT_SRC_rt-edge = "git://bitbucket.sw.nxp.com/dnind/industry-uboot.git;protocol=ssh"
 UBOOT_BRANCH_rt-edge = "uboot_v2020.04"
-SRCREV_rt-edge = "01fea3c25ecf4b572dc6e337d628734058630176"
+SRCREV_rt-edge = "0dac57ee613539106bdf535276e99bb7d58e0fb1"
 
 do_configure_prepend_rt-edge() {
     mkdir -p ${WORKDIR}/source-date-epoch
