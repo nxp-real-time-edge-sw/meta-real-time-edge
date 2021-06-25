@@ -1,0 +1,32 @@
+From 9181feecad89d3898d485dba00dbd9cc21f2a92f Mon Sep 17 00:00:00 2001
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Date: Wed, 30 Dec 2020 10:27:02 +0100
+Subject: [PATCH 3/7] arm-common: Account for SMCCC versions > 1.1
+
+We must not limit support to 1.1 exactly. Anything newer is fine as
+well. Required since TF-A 2.3.
+
+Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+---
+ hypervisor/arch/arm-common/smccc.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/hypervisor/arch/arm-common/smccc.c b/hypervisor/arch/arm-common/smccc.c
+index ebee0000..ca4a3e0d 100644
+--- a/hypervisor/arch/arm-common/smccc.c
++++ b/hypervisor/arch/arm-common/smccc.c
+@@ -60,9 +60,9 @@ void smccc_discover(void)
+ 	if (ret != ARM_SMCCC_SUCCESS)
+ 		return;
+ 
+-	/* We need to have SMCCC v1.1 */
++	/* We need to have at least SMCCC v1.1 */
+ 	ret = smc(SMCCC_VERSION);
+-	if (ret != ARM_SMCCC_VERSION_1_1)
++	if (ret < ARM_SMCCC_VERSION_1_1)
+ 		return;
+ 
+ 	/* check if SMCCC_ARCH_FEATURES is actually available */
+-- 
+2.17.1
+
