@@ -43,6 +43,13 @@ SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://0017-configs-arm64-Add-Linux-inmate-DTS-demo-for-NXP-LS10.patch \
            file://0018-update-ls1028a-rdb-config-and-dts-for-openil.patch \
            file://0019-configs-arm64-Add-inmate-device-tree-for-the-i.MX8MP.patch \
+           file://0020-arm64-Make-sure-SMC-and-HVC-calls-don-t-have-side-ef.patch \
+           file://0021-arm-Make-sure-SMC-and-HVC-calls-don-t-have-side-effe.patch \
+           file://0022-arm-common-Account-for-SMCCC-versions-1.1.patch \
+           file://0023-arm-common-Add-handling-of-SMCCC_ARCH_WORKAROUND_2-r.patch \
+           file://0024-arm-common-Return-original-SMCCC_ARCH_WORKAROUND_-fe.patch \
+           file://0025-arm-arm64-Expand-return-type-of-smc-helpers-to-long.patch \
+           file://0026-arm-arm64-Add-further-smc-helpers.patch \
 "
 
 SRCREV = "6a4d89fc27b33bc1d2657ffa7fd7380f061b21a4"

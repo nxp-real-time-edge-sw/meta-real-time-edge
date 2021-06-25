@@ -1,0 +1,98 @@
+From 2c7af783731498308f2f885a9ff254bc24b7d0af Mon Sep 17 00:00:00 2001
+From: Oliver Schwartz <Oliver.Schwartz@gmx.de>
+Date: Wed, 16 Sep 2020 15:07:33 +0200
+Subject: [PATCH 1/7] arm64: Make sure SMC and HVC calls don't have side
+ effects
+
+SMC/HVC calls may modify registers x0 to x3. To make sure the compiler
+doesn't assume input registers to be constant, also mark these registers
+as output when used as input.
+
+Signed-off-by: Oliver Schwartz <Oliver.Schwartz@gmx.de>
+[Jan: rebased on next, aligned smc to smc_arg1, style]
+Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+---
+ hypervisor/arch/arm64/include/asm/smc.h      | 10 ++++------
+ include/arch/arm64/asm/jailhouse_hypercall.h | 17 ++++++++---------
+ 2 files changed, 12 insertions(+), 15 deletions(-)
+
+diff --git a/hypervisor/arch/arm64/include/asm/smc.h b/hypervisor/arch/arm64/include/asm/smc.h
+index 7cc9891c..9c7bc6ab 100644
+--- a/hypervisor/arch/arm64/include/asm/smc.h
++++ b/hypervisor/arch/arm64/include/asm/smc.h
+@@ -15,9 +15,8 @@ static inline int smc(unsigned long id)
+ 	register unsigned long __id asm("r0") = id;
+ 
+ 	asm volatile ("smc #0\n\t"
+-		: "=r" (__id)
+-		: "r"(__id)
+-		: "memory", "x1", "x2", "x3");
++		: "+r" (__id)
++		: : "memory", "x1", "x2", "x3");
+ 
+ 	return __id;
+ }
+@@ -28,9 +27,8 @@ static inline int smc_arg1(unsigned long id, unsigned long par1)
+ 	register unsigned long __par1 asm("r1") = par1;
+ 
+ 	asm volatile ("smc #0\n\t"
+-		: "=r" (__id)
+-		: "r"(__id), "r"(__par1)
+-		: "memory", "x2", "x3");
++		: "+r" (__id), "+r" (__par1)
++		: : "memory", "x2", "x3");
+ 
+ 	return __id;
+ }
+diff --git a/include/arch/arm64/asm/jailhouse_hypercall.h b/include/arch/arm64/asm/jailhouse_hypercall.h
+index 108d052f..7f30a0cd 100644
+--- a/include/arch/arm64/asm/jailhouse_hypercall.h
++++ b/include/arch/arm64/asm/jailhouse_hypercall.h
+@@ -42,6 +42,7 @@
+ #define JAILHOUSE_CALL_NUM_RESULT	"x0"
+ #define JAILHOUSE_CALL_ARG1		"x1"
+ #define JAILHOUSE_CALL_ARG2		"x2"
++#define JAILHOUSE_CALL_CLOBBERED	"x3"
+ 
+ /* CPU statistics, arm64-specific part */
+ #define JAILHOUSE_NUM_CPU_STATS			JAILHOUSE_GENERIC_CPU_STATS + 5
+@@ -54,9 +55,9 @@ static inline __u64 jailhouse_call(__u64 num)
+ 
+ 	asm volatile(
+ 		JAILHOUSE_CALL_INS
+-		: "=r" (num_result)
+-		: "r" (num_result)
+-		: "memory");
++		: "+r" (num_result)
++		: : "memory", JAILHOUSE_CALL_ARG1, JAILHOUSE_CALL_ARG2,
++		    JAILHOUSE_CALL_CLOBBERED);
+ 	return num_result;
+ }
+ 
+@@ -67,9 +68,8 @@ static inline __u64 jailhouse_call_arg1(__u64 num, __u64 arg1)
+ 
+ 	asm volatile(
+ 		JAILHOUSE_CALL_INS
+-		: "=r" (num_result)
+-		: "r" (num_result), "r" (__arg1)
+-		: "memory");
++		: "+r" (num_result), "+r" (__arg1)
++		: : "memory", JAILHOUSE_CALL_ARG2, JAILHOUSE_CALL_CLOBBERED);
+ 	return num_result;
+ }
+ 
+@@ -81,9 +81,8 @@ static inline __u64 jailhouse_call_arg2(__u64 num, __u64 arg1, __u64 arg2)
+ 
+ 	asm volatile(
+ 		JAILHOUSE_CALL_INS
+-		: "=r" (num_result)
+-		: "r" (num_result), "r" (__arg1), "r" (__arg2)
+-		: "memory");
++		: "+r" (num_result), "+r" (__arg1), "+r" (__arg2)
++		: : "memory", JAILHOUSE_CALL_CLOBBERED);
+ 	return num_result;
+ }
+ 
+-- 
+2.17.1
+

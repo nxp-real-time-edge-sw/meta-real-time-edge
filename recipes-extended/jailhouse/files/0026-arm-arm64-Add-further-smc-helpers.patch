@@ -1,0 +1,80 @@
+From 6b846d0fcd79dbe8bf4536f29b488025a3cfeca4 Mon Sep 17 00:00:00 2001
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Date: Mon, 27 Jul 2020 10:06:41 +0200
+Subject: [PATCH 7/7] arm/arm64: Add further smc helpers
+
+Will be used for SDEI. Actually not on ARM, but we add the smc_arg2 to
+please the build and avoid surprises once it is used for real.
+
+Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+---
+ hypervisor/arch/arm/include/asm/smc.h   | 14 +++++++++++
+ hypervisor/arch/arm64/include/asm/smc.h | 33 +++++++++++++++++++++++++
+ 2 files changed, 47 insertions(+)
+
+diff --git a/hypervisor/arch/arm/include/asm/smc.h b/hypervisor/arch/arm/include/asm/smc.h
+index b70af8be..b7348627 100644
+--- a/hypervisor/arch/arm/include/asm/smc.h
++++ b/hypervisor/arch/arm/include/asm/smc.h
+@@ -35,3 +35,17 @@ static inline int smc_arg1(unsigned long id, unsigned long par1)
+ 
+ 	return __id;
+ }
++
++static inline long smc_arg2(unsigned long id, unsigned long par1,
++			    unsigned long par2)
++{
++	register unsigned long __id asm("r0") = id;
++	register unsigned long __par1 asm("r1") = par1;
++	register unsigned long __par2 asm("r2") = par2;
++
++	asm volatile ("smc #0\n\t"
++		: "+r" (__id), "+r" (__par1), "+r" (__par2)
++		: : "memory", "r3");
++
++	return __id;
++}
+diff --git a/hypervisor/arch/arm64/include/asm/smc.h b/hypervisor/arch/arm64/include/asm/smc.h
+index 27e5397b..ecd2cac6 100644
+--- a/hypervisor/arch/arm64/include/asm/smc.h
++++ b/hypervisor/arch/arm64/include/asm/smc.h
+@@ -32,3 +32,36 @@ static inline long smc_arg1(unsigned long id, unsigned long par1)
+ 
+ 	return __id;
+ }
++
++static inline long smc_arg2(unsigned long id, unsigned long par1,
++			    unsigned long par2)
++{
++	register unsigned long __id asm("r0") = id;
++	register unsigned long __par1 asm("r1") = par1;
++	register unsigned long __par2 asm("r2") = par2;
++
++	asm volatile ("smc #0\n\t"
++		: "+r" (__id), "+r" (__par1), "+r" (__par2)
++		: : "memory", "x3");
++
++	return __id;
++}
++
++static inline long smc_arg5(unsigned long id, unsigned long par1,
++			    unsigned long par2, unsigned long par3,
++			    unsigned long par4, unsigned long par5)
++{
++	register unsigned long __id asm("r0") = id;
++	register unsigned long __par1 asm("r1") = par1;
++	register unsigned long __par2 asm("r2") = par2;
++	register unsigned long __par3 asm("r3") = par3;
++	register unsigned long __par4 asm("r4") = par4;
++	register unsigned long __par5 asm("r5") = par5;
++
++	asm volatile ("smc #0\n\t"
++		: "+r" (__id), "+r" (__par1), "+r" (__par2), "+r" (__par3),
++		  "+r"(__par4), "+r"(__par5)
++		: : "memory");
++
++	return __id;
++}
+-- 
+2.17.1
+
