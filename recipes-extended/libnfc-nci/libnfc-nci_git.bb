@@ -24,11 +24,11 @@ do_configure() {
 }
 
 do_install() {
-    install -d ${D}/${datadir}/nfc
+    install -d ${D}/data/nfc
     install -d ${D}/${sbindir}
-    install ${S}/conf/*.conf ${D}/${datadir}/nfc
+    install ${S}/conf/*.conf ${D}/data/nfc
     install ${S}/nfcDemoApp ${D}/${sbindir}
 }
 
 INSANE_SKIP_${PN} += "ldflags"
-FILES_${PN} += "${datadir}/nfc/*"
+FILES_${PN} += "data/nfc/*"
