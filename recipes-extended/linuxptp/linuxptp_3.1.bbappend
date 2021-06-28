@@ -29,4 +29,6 @@ SRC_URI_append = " \
 do_install_append () {
     install -d ${D}/etc/ptp4l_cfg
     install ${S}/configs/* ${D}/etc/ptp4l_cfg
+
+    install -p ${S}/phc_ctl  ${D}/${bindir}
 }
