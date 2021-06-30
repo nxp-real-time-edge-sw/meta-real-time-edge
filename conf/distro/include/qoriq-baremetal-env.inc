@@ -27,3 +27,11 @@ UBOOT_CONFIG[baremetal] = "${UBOOT_BOOT_BAREMETAL_DEFCONFIG},,${UBOOT_BOOT_BINAR
 
 uboot_boot = "${DEPLOY_DIR_IMAGE}/u-boot.bin-baremetal"
 uboot = "${DEPLOY_DIR_IMAGE}/u-boot.bin-baremetal"
+
+# sai
+RCWSD_ls1028ardb = "${@bb.utils.contains('DISTRO_FEATURES', 'sai', \
+                    'R_SQPP_0x85bb/rcw_1500_gpu600_sai', \
+                    'R_SQPP_0x85bb/rcw_1500_gpu600', d)}"
+UBOOT_BAREMETAL_DEFCONFIG_ls1028ardb =  "${@bb.utils.contains('DISTRO_FEATURES', 'sai', \
+                    'ls1028ardb_bm_sai_defconfig', \
+                    'ls1028ardb_bm_defconfig', d)}"

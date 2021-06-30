@@ -1,0 +1,27 @@
+From bd5b89f8c7ace5bf0821e89437f99ec402bb7ea0 Mon Sep 17 00:00:00 2001
+From: Minghuan Lian <Minghuan.Lian@nxp.com>
+Date: Wed, 30 Jun 2021 16:58:58 +0800
+Subject: [PATCH 1/2] ls1028ardb/rcw: Enable CLK_OUT_PMUX for GPIO function
+
+Signed-off-by: Jianchao Wang <jianchao.wang@nxp.com>
+Signed-off-by: Jerry Huang <jerry.huang@nxp.com>
+Signed-off-by: Minghuan Lian <Minghuan.Lian@nxp.com>
+---
+ ls1028ardb/R_SQPP_0x85bb/rcw_1500_gpu600.rcw | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/ls1028ardb/R_SQPP_0x85bb/rcw_1500_gpu600.rcw b/ls1028ardb/R_SQPP_0x85bb/rcw_1500_gpu600.rcw
+index 057b0f1..899d6ee 100644
+--- a/ls1028ardb/R_SQPP_0x85bb/rcw_1500_gpu600.rcw
++++ b/ls1028ardb/R_SQPP_0x85bb/rcw_1500_gpu600.rcw
+@@ -28,7 +28,7 @@ IIC3_PMUX=2
+ IIC4_PMUX=2
+ IIC5_PMUX=1
+ IIC6_PMUX=3
+-CLK_OUT_PMUX=2
++CLK_OUT_PMUX=1
+ EC1_SAI4_5_PMUX=5
+ EC1_SAI3_6_PMUX=5
+ USB3_CLK_FSEL=39
+--
+2.25.1

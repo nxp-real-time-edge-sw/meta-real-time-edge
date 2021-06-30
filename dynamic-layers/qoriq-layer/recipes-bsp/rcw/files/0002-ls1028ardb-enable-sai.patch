@@ -1,0 +1,68 @@
+From 6e9404ef852e6d1b43fad09ac3dfbfb2fb8afcb2 Mon Sep 17 00:00:00 2001
+From: Minghuan Lian <Minghuan.Lian@nxp.com>
+Date: Wed, 30 Jun 2021 17:03:00 +0800
+Subject: [PATCH 2/2] ls1028ardb: enable sai
+
+Signed-off-by: Minghuan Lian <Minghuan.Lian@nxp.com>
+Signed-off-by: Jerry Huang <jerry.huang@nxp.com>
+---
+ .../R_SQPP_0x85bb/rcw_1500_gpu600_sai.rcw     | 48 +++++++++++++++++++
+ 1 file changed, 48 insertions(+)
+ create mode 100644 ls1028ardb/R_SQPP_0x85bb/rcw_1500_gpu600_sai.rcw
+
+diff --git a/ls1028ardb/R_SQPP_0x85bb/rcw_1500_gpu600_sai.rcw b/ls1028ardb/R_SQPP_0x85bb/rcw_1500_gpu600_sai.rcw
+new file mode 100644
+index 0000000..67a79db
+--- /dev/null
++++ b/ls1028ardb/R_SQPP_0x85bb/rcw_1500_gpu600_sai.rcw
+@@ -0,0 +1,48 @@
++/*
++ * SerDes Protocol -  0x85bb
++ *
++ * Frequencies:
++ * Core     -- 1500 MHz
++ * Platform -- 400  MHz
++ * DDR      -- 1600 MHz
++ * DDR Data Rate -- 1.600 GT/s
++ */
++
++#include <../ls1028asi/ls1028a.rcwi>
++
++SYS_PLL_RAT=4
++MEM_PLL_RAT=16
++CGA_PLL1_RAT=15
++CGA_PLL2_RAT=12
++HWA_CGA_M1_CLK_SEL=7
++HWA_CGA_M2_CLK_SEL=1
++HWA_CGA_M3_CLK_SEL=6
++HWA_CGA_M4_CLK_SEL=3
++DDR_REFCLK_SEL=2
++DRAM_LAT=1
++BOOT_LOC=26
++FLASH_CFG1=3
++SYSCLK_FREQ=600
++IIC2_PMUX=6
++IIC3_PMUX=2
++IIC4_PMUX=2
++IIC5_PMUX=1
++IIC6_PMUX=3
++CLK_OUT_PMUX=1
++EC1_SAI4_5_PMUX=2
++EC1_SAI3_6_PMUX=5
++USB3_CLK_FSEL=39
++ENETC_RCW=3
++GTX_CLK125_PMUX=2
++SRDS_PRTCL_S1_L0=8
++SRDS_PRTCL_S1_L1=5
++SRDS_PRTCL_S1_L2=11
++SRDS_PRTCL_S1_L3=11
++
++/* Errata for PCIe controller */
++#include <../ls1028asi/a008851.rcw>
++#include <../ls1028asi/a010477.rcw>
++#include <../ls1028asi/a009531.rcw>
++
++/* Increase FSPI clock frequency */
++#include <../ls1028asi/fspi_speed.rcw>
+--
+2.25.1
