@@ -17,6 +17,10 @@ genavbtsnimage ?= ""
 genavbtsnimage_ls1028ardb = "genavb-tsn"
 genavbtsnimage_imx8mpevk = "genavb-tsn"
 
+cantools ?=""
+cantools_ls1021aiot = "libsocketcan can-utils"
+cantools_ls1028ardb = "libsocketcan can-utils"
+
 RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rt-edge-sysrepo', 'rt-edge-sysrepo', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'tsn-scripts', 'tsn-scripts', '', d)} \
@@ -35,6 +39,7 @@ RDEPENDS_${PN} = " \
     ${genavbtsnimage} \
     ethtool \
     iproute2 \
+    ${cantools} \
     openssh-sftp-server \
     openssh-keygen \
 "
