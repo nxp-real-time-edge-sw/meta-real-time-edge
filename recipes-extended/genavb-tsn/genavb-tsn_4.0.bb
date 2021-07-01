@@ -3,7 +3,7 @@ SUMMARY = "GenAVB/TSN Stack"
 inherit module-base systemd update-rc.d
 
 LICENSE = "NXP-Binary-EULA & GPLv2 & BSD-3-Clause"
-LIC_FILES_CHKSUM = "file://licenses/EULA.txt;md5=7f7cb22e009fabd923dc39ec1b589e9e \
+LIC_FILES_CHKSUM = "file://licenses/EULA.txt;md5=2acb50e7549e3925e6982a7920c26fd8 \
                     file://licenses/COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://licenses/BSD-3-Clause;md5=5cc0aa6b0086f08ef02006d8a2679704 \
 "
