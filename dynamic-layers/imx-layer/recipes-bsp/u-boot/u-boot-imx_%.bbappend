@@ -1,5 +1,5 @@
 
-UBOOT_SRC_rt-edge = "git://bitbucket.sw.nxp.com/dnind/industry-uboot.git;protocol=ssh"
+UBOOT_SRC_rt-edge = "git://github.com/rt-edge-sw/rt-edge-uboot.git;protocol=https"
 UBOOT_BRANCH_rt-edge = "uboot_v2020.04"
 SRCREV_rt-edge = "0dac57ee613539106bdf535276e99bb7d58e0fb1"
 

@@ -19,7 +19,7 @@ PROVIDES = "rt-edge-baremetal"
 DEPENDS_append = " libgcc dtc-native bison-native bc-native"
 
 UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2020.04"
-UBOOT_BAREMETAL_SRC ?= "git://bitbucket.sw.nxp.com/dnind/rt-edge-uboot.git;protocol=ssh"
+UBOOT_BAREMETAL_SRC ?= "git://github.com/rt-edge-sw/rt-edge-uboot.git;protocol=https"
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
 
 SRCREV = "fecd3b0ee3ad1148c86841bb2b2b0f45445d9bfd"

@@ -1,7 +1,7 @@
 
-KERNEL_SRC_rt-edge = "git://bitbucket.sw.nxp.com/dnind/industry-linux.git;protocol=ssh"
+KERNEL_SRC_rt-edge = "git://github.com/rt-edge-sw/rt-edge-linux.git;protocol=https"
 SRCBRANCH_rt-edge = "linux_5.10.y"
-SRCREV_rt-edge = "eff6b3ede72b17edd1244209619078a39e32b9d3"
+SRCREV_rt-edge = "baf692faaebd0fc5f085274124128ffdc1b09403"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 SRC_URI_append_rt-edge = " \
