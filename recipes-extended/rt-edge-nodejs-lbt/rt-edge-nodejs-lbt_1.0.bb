@@ -2,7 +2,7 @@ DESCRIPTION = "Latency and Bandwidth Tester is a web application for generating 
 plotting iPerf and ping traffic."
 
 LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=5ab514dd2789d25115ba18df005856e2"
+LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=f17a9bec9db0496c87aec8b93aa0d3c6"
 
 SRC_URI = "file://client.js \
            file://config.json \
