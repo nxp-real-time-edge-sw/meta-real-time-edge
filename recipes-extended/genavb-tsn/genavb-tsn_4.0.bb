@@ -3,19 +3,19 @@ SUMMARY = "GenAVB/TSN Stack"
 inherit module-base systemd update-rc.d
 
 LICENSE = "NXP-Binary-EULA & GPLv2 & BSD-3-Clause"
-LIC_FILES_CHKSUM = "file://licenses/EULA.txt;md5=7f7cb22e009fabd923dc39ec1b589e9e \
+LIC_FILES_CHKSUM = "file://licenses/EULA.txt;md5=2acb50e7549e3925e6982a7920c26fd8 \
                     file://licenses/COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://licenses/BSD-3-Clause;md5=5cc0aa6b0086f08ef02006d8a2679704 \
 "
 
-GENAVB_TSN_URL = "git://bitbucket.sw.nxp.com/mss/gen_avb_sdk.git;protocol=ssh"
+GENAVB_TSN_URL = "git://github.com/NXP/GenAVB_TSN.git;protocol=http"
 
 SRC_URI = "${GENAVB_TSN_URL};nobranch=1 \
     file://genavb-tsn.service \
     file://libgenavb.pc \
 "
 
-SRCREV = "0a869b87b694c95f11be7b02a7c2ba2a14f33c6e"
+SRCREV = "4193dd6f5832de3f41d980454c20dfe153248b8a"
 
 PR = "r0"
 
