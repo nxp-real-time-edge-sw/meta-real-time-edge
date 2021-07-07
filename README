@@ -1,4 +1,0 @@
-RT Edge Yocto BSP layer for NXP's platforms
-======================================================
-
-rt-edge layer bases on imx/qoriq layer and provides support for NXP's platforms for real time edge distribution.

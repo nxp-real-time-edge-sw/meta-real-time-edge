@@ -1,7 +1,5 @@
-# RT Edge Layer
-
-RT Edge Yocto BSP layer for NXP's platforms
+# Real-time Edge Software Yocto layer
 
 ======================================================
 
-RT Edge Layer layer bases on imx/qoriq layer and provides support for NXP's platforms for real time edge distribution.
+Real-time Edge software Yocto layer, provides support to build NXP's Real-time Edge image, both for i.MX and QorIQ platforms.
