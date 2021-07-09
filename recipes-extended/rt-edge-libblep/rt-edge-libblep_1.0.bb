@@ -1,8 +1,9 @@
 DESCRIPTION = "rt-edge-libblep is a library for MikroBUS bee click board."
-LICENSE = "GPLv2"
-LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/GPL-2.0;md5=801f80980d171dd6425610833a22dbe6"
+LICENSE = "GPLv2 & MIT"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=a960555d80b9e3713204934861ab9112"
 
 SRC_URI = "file://acilib.c \
+           file://LICENSE \
            file://Makefile \
            file://acilib.h \
            file://blep.c \

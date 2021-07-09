@@ -1,8 +1,9 @@
 DESCRIPTION = "Real-time edge PRL (Pipe Rate Limiter) is a C program for pipeline manipulation."
-LICENSE = "SD-3-Clause"
-LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/BSD-3-Clause;md5=550794465ba0ec5312d6919e203a55f9"
+LICENSE = "BSD-3-Clause"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=8636bd68fc00cc6a3809b7b58b45f982"
 
-SRC_URI = "file://prl.c \
+SRC_URI = "file://LICENSE \
+           file://prl.c \
            file://Makefile \
 "
 
