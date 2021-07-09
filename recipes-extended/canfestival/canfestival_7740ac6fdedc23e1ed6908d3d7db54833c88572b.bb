@@ -1,6 +1,6 @@
 DESCRIPTION = "CanFestival is an OpenSource CANOpen framework."
 LICENSE = "GPLv2"
-LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/GPL-2.0;md5=801f80980d171dd6425610833a22dbe6"
+LIC_FILES_CHKSUM = "file://LICENCE;md5=085e7fb76fb3fa8ba9e9ed0ce95a43f9"
 
 SRC_URI = "http://sources.buildroot.net/canfestival/canfestival-7740ac6fdedc23e1ed6908d3d7db54833c88572b.tar.gz \
 	file://0001-install-pkgconfig-module-for-canfestival.patch \
@@ -34,7 +34,7 @@ do_configure() {
 
 EXTRA_OEMAKE = "PYTHON=${STAGING_DIR_NATIVE}/usr/bin/python-native/python2"
 do_compile() {
-    oe_runmake all ${EXTRA_OEMAKE} 
+    oe_runmake all ${EXTRA_OEMAKE}
 }
 
 do_install() {
@@ -46,6 +46,6 @@ do_install() {
 }
 
 INSANE_SKIP_${PN} = "ldflags"
-INSANE_SKIP_${PN}-dev = "ldflags"  
+INSANE_SKIP_${PN}-dev = "ldflags"
 
 FILES_SOLIBSDEV = "${libdir}/libcanfestival_can_socket.so"
