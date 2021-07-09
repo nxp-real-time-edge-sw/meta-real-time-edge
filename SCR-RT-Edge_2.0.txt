@@ -97,7 +97,7 @@ Origin:                      NXP (GPL-2.0)
 
 Package:                     rt-edge-icc
 Outgoing License:            GPL-2.0
-License File:                COPYING
+License File:                LICENSE
 Package Category:            Real-time System
 Type of Content:             Source code
 Description and comments:    Inter-core communication application
@@ -263,13 +263,13 @@ Origin:                    NXP (MIT or GPL-2.0)
 Industrial Packages
 --------------------------------------------
 
-Package:                   CanFestival
+Package:                   canFestival
 Outgoing License:          GPL-2.0
 License Files:             LICENSE
 Package Category:          Industrial
 Type of content:           Source code
 Description and comments:  An OpenSource CANOpen framework
-Release Location:          "http://sources.buildroot.net/canfestival/canfestival-7740ac6fdedc23e1ed6908d3d7db54833c88572b.tar.gz
+Release Location:          http://sources.buildroot.net/canfestival/canfestival-7740ac6fdedc23e1ed6908d3d7db54833c88572b.tar.gz
 Origin:                    Lolitech (GPL-2.0)
 
 --------------------------------------------
@@ -308,63 +308,48 @@ Origin:                      open62541.org (MPL-2.0)
 --------------------------------------------
 
 Package:                   rt-edge-libbee
-Outgoing License:          GPL-2.0
-License Files:
+Outgoing License:          GPL-2.0 or MIT
+License Files:             LICENSE
 Package Category:          Industrial
 Type of content:           Source code
 Description and comments:  A library for BEE click board
 Release Location:          Mirror
-Origin:                    NXP (GPL-2.0)
-                           meta-rt-edge/recipes-extended/rt-edge-libbee/files/bee.c
-                           meta-rt-edge/recipes-extended/rt-edge-libbee/files/Init_Routines.c
-                           meta-rt-edge/recipes-extended/rt-edge-libbee/files/Init_Routines.h
-                           meta-rt-edge/recipes-extended/rt-edge-libbee/files/Makefile
-                           meta-rt-edge/recipes-extended/rt-edge-libbee/files/Misc_Routines.c
-                           meta-rt-edge/recipes-extended/rt-edge-libbee/files/Misc_Routines.h
-                           meta-rt-edge/recipes-extended/rt-edge-libbee/files/ReadWrite_Routines.c
-                           meta-rt-edge/recipes-extended/rt-edge-libbee/files/ReadWrite_Routines.h
-                           meta-rt-edge/recipes-extended/rt-edge-libbee/files/registers.h
-                           meta-rt-edge/recipes-extended/rt-edge-libbee/files/Reset_Routines.c
-                           meta-rt-edge/recipes-extended/rt-edge-libbee/files/Reset_Routines.h
+Origin:                    NXP (GPL-2.0 or MIT) - meta-rt-edge/recipes-extended/rt-edge-libbee/files/
+
 --------------------------------------------
 
 Package:                   rt-edge-libblep
-Outgoing License:          GPL-2.0
-License Files:
+Outgoing License:          GPL-2.0 or MIT
+License Files:             LICENSE
 Package Category:          Industrial
 Type of content:           Source code
 Description and comments:  A library for BLEP click board
 Release Location:          Mirror
-Origin:                    NXP (GPL-2.0)
-                           meta-rt-edge/recipes-extended/rt-edge-libblep/files/acilib.c
-                           meta-rt-edge/recipes-extended/rt-edge-libblep/files/acilib.h
-                           meta-rt-edge/recipes-extended/rt-edge-libblep/files/blep.c
-                           meta-rt-edge/recipes-extended/rt-edge-libblep/files/Makefile
-                           meta-rt-edge/recipes-extended/rt-edge-libblep/files/services.h
+Origin:                    NXP (GPL-2.0 or MIT) - meta-rt-edge/recipes-extended/rt-edge-libblep/files/
 
 --------------------------------------------
 
 Package:                   rt-edge-servo
-Outgoing License:          GPL-2.0, MIT
+Outgoing License:          GPL-2.0 or MIT
 License Files:             LICENSE
 Package Category:          Industrial
 Type of content:           Source code
 Description and comments:  A library for CiA402 profile framework
 Release Location:          https://github.com/rt-edge-sw/rt-edge-servo
-Origin:                    NXP (GPL-2.0, MIT)
+Origin:                    NXP (GPL-2.0 or MIT)
 
 --------------------------------------------
 Tools Packages
 --------------------------------------------
 
 Package:                   feedgnuplot
-Outgoing License:          GPL
-License Files:             COPYING
+Outgoing License:          Artisticv1 or GPL-1.0
+License Files:             LICENSE
 Package Category:          Tools
 Type of content:           Source code
 Description and comments:  General purpose pipe-oriented plotting tool
 Release Location:          https://github.com/dkogan/feedgnuplot.git
-Origin:                    dkogan (GPL)
+Origin:                    dkogan ( Artisticv1 or GPL-1.0)
 
 --------------------------------------------
 
@@ -375,26 +360,15 @@ Package Category:          Tools
 Type of content:           Source code
 Description and comments:  Latency and Bandwidth Tester
 Release Location:          Mirror
-Origin:                    NXP (MIT)
-                           meta-rt-edge/recipes-extended/rt-edge-nodejs-lbt/files/client.js
-                           meta-rt-edge/recipes-extended/rt-edge-nodejs-lbt/files/config.json
-                           meta-rt-edge/recipes-extended/rt-edge-nodejs-lbt/files/flows.json
-                           meta-rt-edge/recipes-extended/rt-edge-nodejs-lbt/files/index.html
-                           meta-rt-edge/recipes-extended/rt-edge-nodejs-lbt/files/package.json
-                           meta-rt-edge/recipes-extended/rt-edge-nodejs-lbt/files/server.js
-                           meta-rt-edge/recipes-extended/rt-edge-nodejs-lbt/files/S95lbt
-
+Origin:                    NXP (MIT) - meta-rt-edge/recipes-extended/rt-edge-nodejs-lbt/files/
 --------------------------------------------
 
 Package:                   rt-edge-prl
 Outgoing License:          BSD-3-Clause
-License Files:
+License Files:             LICENSE
 Package Category:          Tools
 Type of content:           Source code
 Description and comments:  A program for pipeline manipulation
 Release Location:          Mirror
-Origin:                    NXP (BSD-3-Clause)
-                           meta-rt-edge/recipes-extended/rt-edge-prl/files/prl.c
-                           meta-rt-edge/recipes-extended/rt-edge-prl/files/Makefile
-
+Origin:                    NXP (BSD-3-Clause) - meta-rt-edge/recipes-extended/rt-edge-prl/files/
 --------------------------------------------
