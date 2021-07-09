@@ -2,8 +2,7 @@ DESCRIPTION = "General purpose pipe-oriented plotting tool."
 
 LICENSE = "Artisticv1 | GPLv1+"
 
-LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Artistic-1.0;md5=cda03bbdc3c1951996392b872397b798 \
-file://${COMMON_LICENSE_DIR}/GPL-1.0;md5=e9e36a9de734199567a4d769498f743d"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=b7700a0c2f940e07a9a77c579e2f9841"
 
 DEPENDS = "gnuplot list-moreutils-perl exporter-tiny-perl"
 
