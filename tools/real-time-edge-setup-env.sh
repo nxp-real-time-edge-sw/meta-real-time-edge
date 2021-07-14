@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# RT Edge Yocto Project Build Environment Setup Script
+# Real-time Edge Yocto Project Build Environment Setup Script
 #
 # Copyright 2021 NXP
 #
@@ -31,7 +31,7 @@ exit_message ()
 
 usage()
 {
-    echo -e "\nUsage: source rt-edge-setup-env.sh
+    echo -e "\nUsage: source real-time-edge-setup-env.sh
     Optional parameters: [-b build-dir] [-h]"
 echo "
     * [-b build-dir]: Build directory, if unspecified script uses 'build' as output directory
@@ -137,8 +137,8 @@ add_layers()
 	fi
 
 	echo "" >> $BUILD_DIR/conf/bblayers.conf
-	echo "# RT Edge Yocto Project Release layers" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-rt-edge\"" >> $BUILD_DIR/conf/bblayers.conf
+	echo "# Real-time Edge Yocto Project Release layers" >> $BUILD_DIR/conf/bblayers.conf
+	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-real-time-edge\"" >> $BUILD_DIR/conf/bblayers.conf
 }
 
 # get command line options
@@ -175,7 +175,7 @@ esac
 
 if [ -z "$DISTRO" ]; then
 	if [ -z "$FSLDISTRO" ]; then
-		FSLDISTRO='nxp-rt-edge'
+		FSLDISTRO='nxp-real-time-edge'
 		fi
 else
 	FSLDISTRO="$DISTRO"

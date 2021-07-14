@@ -14,7 +14,7 @@ SRC_URI = "file://client.js \
 	   file://S95lbt \
 "
 
-DEPENDS = "nodejs nodejs-native feedgnuplot rt-edge-prl"
+DEPENDS = "nodejs nodejs-native feedgnuplot real-time-edge-prl"
 
 S = "${WORKDIR}"
 

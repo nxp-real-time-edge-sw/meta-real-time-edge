@@ -1,18 +1,18 @@
-# RT Edge base conf
+# Real-time Edge base conf
 
-DISTRO = "nxp-rt-edge"
-DISTROOVERRIDES = "rt-edge"
-DISTRO_NAME = "NXP RT Edge Distro"
+DISTRO = "nxp-real-time-edge"
+DISTROOVERRIDES = "real-time-edge"
+DISTRO_NAME = "NXP Real-time Edge Distro"
 DISTRO_VERSION = "2.0"
 
 DISTRO_FEATURES_append_ls1043ardb = " jailhouse"
 DISTRO_FEATURES_append_ls1046ardb = " jailhouse"
-DISTRO_FEATURES_append_ls1028ardb = " jailhouse rt-edge-libbee rt-edge-libblep libnfc-nci \
+DISTRO_FEATURES_append_ls1028ardb = " jailhouse real-time-edge-libbee real-time-edge-libblep libnfc-nci \
 				      wayland-protocols weston imx-gpu-viv libdrm kmscube \
-				      rt-edge-sysrepo tsn-scripts wayland"
-DISTRO_FEATURES_append_mx8mp = " jailhouse rt-edge-sysrepo"
+				      real-time-edge-sysrepo tsn-scripts wayland"
+DISTRO_FEATURES_append_mx8mp = " jailhouse real-time-edge-sysrepo"
 DISTRO_FEATURES_append_mx8m = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
-DISTRO_FEATURES_append_ls1021atsn = " rt-edge-sysrepo rt-edge-nodejs-lbt feedgnuplot tsn-scripts rt-edge-prl"
+DISTRO_FEATURES_append_ls1021atsn = " real-time-edge-sysrepo real-time-edge-nodejs-lbt feedgnuplot tsn-scripts real-time-edge-prl"
 DISTRO_FEATURES_append_ls1021aiot = " canfestival"
 
 #For ls1028ardb
@@ -32,10 +32,10 @@ DELTA_KERNEL_DEFCONFIG_append = " \
 DELTA_KERNEL_DEFCONFIG_append_mx8mm = " linux-fec.config"
 DELTA_KERNEL_DEFCONFIG_append_mx8m = " linux-imx8.config"
 
-RT_EDGE_SYSREPO_ls1028ardb = ""
-RT_EDGE_SYSREPO_ls1021atsn = "rt-edge-sysrepo-tc"
-RT_EDGE_SYSREPO_mx8mp = "rt-edge-sysrepo-tc"
-PACKAGECONFIG_append_pn-rt-edge-sysrepo = "${RT_EDGE_SYSREPO}"
+REAL_TIME_EDGE_SYSREPO_ls1028ardb = ""
+REAL_TIME_EDGE_SYSREPO_ls1021atsn = "real-time-edge-sysrepo-tc"
+REAL_TIME_EDGE_SYSREPO_mx8mp = "real-time-edge-sysrepo-tc"
+PACKAGECONFIG_append_pn-real-time-edge-sysrepo = "${REAL_TIME_EDGE_SYSREPO}"
 
 # dtb for jailhouse
 KERNEL_DEVICETREE_append_ls1043ardb= " freescale/fsl-ls1043a-rdb-sdk-jailhouse.dtb"

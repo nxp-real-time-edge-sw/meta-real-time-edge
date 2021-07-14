@@ -1,7 +1,7 @@
 # Copyright 2021 NXP
 # Released under the MIT license (see COPYING.MIT for the terms)
 
-SUMMARY = "RT Edge Package group for Networking"
+SUMMARY = "Real-time Edge Package group for Networking"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
@@ -22,16 +22,16 @@ cantools_ls1021aiot = "libsocketcan can-utils"
 cantools_ls1028ardb = "libsocketcan can-utils"
 
 RDEPENDS_${PN} = " \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'rt-edge-sysrepo', 'rt-edge-sysrepo', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-sysrepo', 'real-time-edge-sysrepo', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'tsn-scripts', 'tsn-scripts', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'canfestival', 'canfestival', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'rt-edge-nodejs-lbt', 'rt-edge-nodejs-lbt', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'rt-edge-prl', 'rt-edge-prl', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-nodejs-lbt', 'real-time-edge-nodejs-lbt', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-prl', 'real-time-edge-prl', '', d)} \
     linuxptp \
     ${tsntoolimage} \
     lldpd \
     avahi-daemon avahi-utils \
-    rt-edge-servo \
+    real-time-edge-servo \
     python3-websockets \
     rt-tests \
     iproute2-tc \

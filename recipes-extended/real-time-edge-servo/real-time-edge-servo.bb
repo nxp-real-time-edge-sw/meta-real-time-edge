@@ -5,7 +5,7 @@ DESCRIPTION = "CoE test tool"
 LICENSE = "GPL-2.0 & MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=ef58f855337069acd375717db0dbbb6d"
 RT_EDGE_SERVO_BRANCH = "master"
-SRC_URI = "git://github.com/rt-edge-sw/rt-edge-servo.git;protocol=https;branch=${RT_EDGE_SERVO_BRANCH}"
+SRC_URI = "git://github.com/real-time-edge-sw/real-time-edge-servo.git;protocol=https;branch=${RT_EDGE_SERVO_BRANCH}"
 SRCREV = "030329089da57d68fb60d0c7f115b5f45e7b17af"
 
 S = "${WORKDIR}/git"

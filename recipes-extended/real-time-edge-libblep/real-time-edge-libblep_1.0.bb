@@ -1,4 +1,4 @@
-DESCRIPTION = "rt-edge-libblep is a library for MikroBUS bee click board."
+DESCRIPTION = "real-time-edge-libblep is a library for MikroBUS bee click board."
 LICENSE = "GPLv2 & MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=a960555d80b9e3713204934861ab9112"
 

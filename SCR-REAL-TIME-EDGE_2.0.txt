@@ -4,7 +4,7 @@ Release - Real-time Edge Software 2.0
  July 2021
 
 Yocto Project recipe manifest:
-repo init -u https://github.com/rt-edge-sw/yocto-rt-edge.git -b rt-edge-gatesgarth -m rt-edge-2.0.0.xml
+repo init -u https://github.com/real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-gatesgarth -m real-time-edge-2.0.0.xml
 
 --------------------------------------------
 BSP Packages
@@ -45,25 +45,25 @@ Origin:                      NXP (BSD)
 
 --------------------------------------------
 
-Package:                     rt-edge-linux.git
+Package:                     real-time-edge-linux.git
 Outgoing License:            GPL-2.0
 License File:                COPYING
 Package Category:            BSP
 Type of Content:             source code
 Description and comments:    The Linux kernel with PREEMPT-RT enabled
-Release Location:            https://github.com/rt-edge-sw/rt-edge-linux -b linux_5.10.y
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-linux -b linux_5.10.y
 Origin:                      NXP (GPL-2.0)
                              kernel.org (GPL-2.0) - https://www.kernel.org/
 
 --------------------------------------------
 
-Package:                     rt-edge-uboot.git
+Package:                     real-time-edge-uboot.git
 Outgoing License:            GPL-2.0
 License File:                COPYING
 Package Category:            BSP
 Type of Content:             Source code
 Description and comments:    Bootloader with Real-time Edge specific capabilities
-Release Location:            https://github.com/rt-edge-sw/rt-edge-uboot -b uboot_v2020.04
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b uboot_v2020.04
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -83,25 +83,25 @@ Origin:                      NXP (GPL-2.0)
 
 --------------------------------------------
 
-Package:                     rt-edge-baremetal
+Package:                     real-time-edge-baremetal
 Outgoing License:            GPL-2.0
 License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             Source code
 Description and comments:    A baremetal framework
-Release Location:            https://github.com/rt-edge-sw/rt-edge-uboot -b baremetal-uboot_v2020.04
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2020.04
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
 --------------------------------------------
 
-Package:                     rt-edge-icc
+Package:                     real-time-edge-icc
 Outgoing License:            GPL-2.0
 License File:                LICENSE
 Package Category:            Real-time System
 Type of Content:             Source code
 Description and comments:    Inter-core communication application
-Release Location:            https://github.com/rt-edge-sw/rt-edge-icc
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-icc
 Origin:                      NXP (GPL-2.0)
 
 --------------------------------------------
@@ -217,13 +217,13 @@ Origin:                    CESNET (BSD-3-Clause)
 
 --------------------------------------------
 
-Package:                   rt-edge-sysrepo.git
+Package:                   real-time-edge-sysrepo.git
 Outgoing License:          Apache-2.0
 License Files:             LICENSE
 Package Category:          Real-time Networking
 Type of content:           Source code
 Description and comments:  Sysrepo for TSN cofiguration
-Release Location:          https://github.com/rt-edge-sw/rt-edge-sysrepo
+Release Location:          https://github.com/real-time-edge-sw/real-time-edge-sysrepo
 Origin:                    NXP (Apache-2.0)
 
 --------------------------------------------
@@ -307,35 +307,35 @@ Origin:                      open62541.org (MPL-2.0)
 
 --------------------------------------------
 
-Package:                   rt-edge-libbee
+Package:                   real-time-edge-libbee
 Outgoing License:          GPL-2.0 or MIT
 License Files:             LICENSE
 Package Category:          Industrial
 Type of content:           Source code
 Description and comments:  A library for BEE click board
 Release Location:          Mirror
-Origin:                    NXP (GPL-2.0 or MIT) - meta-rt-edge/recipes-extended/rt-edge-libbee/files/
+Origin:                    NXP (GPL-2.0 or MIT) - meta-real-time-edge/recipes-extended/real-time-edge-libbee/files/
 
 --------------------------------------------
 
-Package:                   rt-edge-libblep
+Package:                   real-time-edge-libblep
 Outgoing License:          GPL-2.0 or MIT
 License Files:             LICENSE
 Package Category:          Industrial
 Type of content:           Source code
 Description and comments:  A library for BLEP click board
 Release Location:          Mirror
-Origin:                    NXP (GPL-2.0 or MIT) - meta-rt-edge/recipes-extended/rt-edge-libblep/files/
+Origin:                    NXP (GPL-2.0 or MIT) - meta-real-time-edge/recipes-extended/real-time-edge-libblep/files/
 
 --------------------------------------------
 
-Package:                   rt-edge-servo
+Package:                   real-time-edge-servo
 Outgoing License:          GPL-2.0 or MIT
 License Files:             LICENSE
 Package Category:          Industrial
 Type of content:           Source code
 Description and comments:  A library for CiA402 profile framework
-Release Location:          https://github.com/rt-edge-sw/rt-edge-servo
+Release Location:          https://github.com/real-time-edge-sw/real-time-edge-servo
 Origin:                    NXP (GPL-2.0 or MIT)
 
 --------------------------------------------
@@ -353,22 +353,22 @@ Origin:                    dkogan ( Artisticv1 or GPL-1.0)
 
 --------------------------------------------
 
-Package:                   rt-edge-nodejs-lbt
+Package:                   real-time-edge-nodejs-lbt
 Outgoing License:          MIT
 License Files:             LICENSE
 Package Category:          Tools
 Type of content:           Source code
 Description and comments:  Latency and Bandwidth Tester
 Release Location:          Mirror
-Origin:                    NXP (MIT) - meta-rt-edge/recipes-extended/rt-edge-nodejs-lbt/files/
+Origin:                    NXP (MIT) - meta-real-time-edge/recipes-extended/real-time-edge-nodejs-lbt/files/
 --------------------------------------------
 
-Package:                   rt-edge-prl
+Package:                   real-time-edge-prl
 Outgoing License:          BSD-3-Clause
 License Files:             LICENSE
 Package Category:          Tools
 Type of content:           Source code
 Description and comments:  A program for pipeline manipulation
 Release Location:          Mirror
-Origin:                    NXP (BSD-3-Clause) - meta-rt-edge/recipes-extended/rt-edge-prl/files/
+Origin:                    NXP (BSD-3-Clause) - meta-real-time-edge/recipes-extended/real-time-edge-prl/files/
 --------------------------------------------

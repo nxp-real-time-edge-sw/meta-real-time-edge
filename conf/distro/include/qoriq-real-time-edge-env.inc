@@ -1,5 +1,5 @@
 require conf/distro/poky.conf
-include conf/distro/include/rt-edge-base.inc
+include conf/distro/include/real-time-edge-base.inc
 include conf/machine/include/qoriq-wks-base.inc
 include conf/distro/include/libopen62541.inc
 
