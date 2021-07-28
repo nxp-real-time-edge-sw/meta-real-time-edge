@@ -12,7 +12,7 @@ SRC_URI = "git://github.com/real-time-edge-sw/real-time-edge-sysrepo.git;protoco
            file://scripts/sysrepo-cfg.sh \
 "
 
-SRCREV = "8064c0efaa56e2d4a855885713271f043bfca0ee"
+SRCREV = "cc413acb5b8dc743aa121d579b66d8b59b3f7d38"
 
 S = "${WORKDIR}/git"
 
