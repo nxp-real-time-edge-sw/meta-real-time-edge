@@ -1,0 +1,46 @@
+From 7f7f7ba98d06402584ec2649b06b27dd4dbe2f80 Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Wed, 28 Jul 2021 16:17:13 +0800
+Subject: [PATCH] ts2phc_slave: fix memory leak in ts2phc_slave_array_create()
+
+Fix memory leak in ts2phc_slave_array_create().
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ ts2phc_slave.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/ts2phc_slave.c b/ts2phc_slave.c
+index 6bb2128..1f0e53d 100644
+--- a/ts2phc_slave.c
++++ b/ts2phc_slave.c
+@@ -63,6 +63,7 @@ static int ts2phc_slave_array_create(struct ts2phc_private *priv)
+ 				      sizeof(*polling_array->slave));
+ 	if (!polling_array->slave) {
+ 		pr_err("low memory");
++		free(polling_array);
+ 		return -1;
+ 	}
+ 	polling_array->pfd = malloc(priv->n_slaves *
+@@ -70,7 +71,7 @@ static int ts2phc_slave_array_create(struct ts2phc_private *priv)
+ 	if (!polling_array->pfd) {
+ 		pr_err("low memory");
+ 		free(polling_array->slave);
+-		polling_array->slave = NULL;
++		free(polling_array);
+ 		return -1;
+ 	}
+ 	polling_array->collected_events = malloc(priv->n_slaves * sizeof(int));
+@@ -78,8 +79,7 @@ static int ts2phc_slave_array_create(struct ts2phc_private *priv)
+ 		pr_err("low memory");
+ 		free(polling_array->slave);
+ 		free(polling_array->pfd);
+-		polling_array->pfd = NULL;
+-		polling_array->slave = NULL;
++		free(polling_array);
+ 		return -1;
+ 	}
+ 	i = 0;
+-- 
+2.25.1
+
