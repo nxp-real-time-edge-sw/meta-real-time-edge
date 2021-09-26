@@ -5,12 +5,14 @@ DISTROOVERRIDES = "real-time-edge"
 DISTRO_NAME = "NXP Real-time Edge Distro"
 DISTRO_VERSION = "2.0"
 
-DISTRO_FEATURES_append_ls1043ardb = " jailhouse"
-DISTRO_FEATURES_append_ls1046ardb = " jailhouse"
-DISTRO_FEATURES_append_ls1028ardb = " jailhouse real-time-edge-libbee real-time-edge-libblep libnfc-nci \
+DISTRO_FEATURES_remove_mx8m = " jailhouse"
+DISTRO_FEATURES_append_ls1043ardb = " real-time-edge-jailhouse"
+DISTRO_FEATURES_append_ls1046ardb = " real-time-edge-jailhouse"
+DISTRO_FEATURES_append_ls1028ardb = " real-time-edge-jailhouse real-time-edge-libbee \
+				      real-time-edge-libblep libnfc-nci \
 				      wayland-protocols weston imx-gpu-viv libdrm kmscube \
 				      real-time-edge-sysrepo tsn-scripts wayland"
-DISTRO_FEATURES_append_mx8mp = " jailhouse real-time-edge-sysrepo"
+DISTRO_FEATURES_append_mx8mp = " real-time-edge-jailhouse real-time-edge-sysrepo"
 DISTRO_FEATURES_append_mx8m = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
 DISTRO_FEATURES_append_ls1021atsn = " real-time-edge-sysrepo real-time-edge-nodejs-lbt feedgnuplot tsn-scripts real-time-edge-prl"
 DISTRO_FEATURES_append_ls1021aiot = " canfestival"

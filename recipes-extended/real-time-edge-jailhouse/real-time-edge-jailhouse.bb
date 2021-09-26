@@ -1,6 +1,8 @@
+require recipes-extended/jailhouse/jailhouse_0.12.bb
+
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-SRCBRANCH = "lf-5.10.y_v0.12"
+SRCBRANCH = "lf-5.10.52_2.1.0"
 RT_EDGE_JAILHOUSE_SRC ?= "git://source.codeaurora.org/external/imx/imx-jailhouse.git;protocol=ssh"
 
 SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
@@ -52,7 +54,7 @@ SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://0026-arm-arm64-Add-further-smc-helpers.patch \
 "
 
-SRCREV = "6a4d89fc27b33bc1d2657ffa7fd7380f061b21a4"
+SRCREV = "9bd24e99c3afd7dea96c3cfb997c41beed84c87c"
 
 DEPENDS += " \
     python3-zipp \
