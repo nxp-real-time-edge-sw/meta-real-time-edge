@@ -1,7 +1,7 @@
-From 1a5577e075246f84a30c72c098c8ea9a30d85c3f Mon Sep 17 00:00:00 2001
+From 39ac5094b2e29b6c2ed6e80f68a01bddda92bf24 Mon Sep 17 00:00:00 2001
 From: XianyuWei <xianyu.wei@nxp.com>
 Date: Tue, 24 Jul 2018 14:14:03 +0800
-Subject: [PATCH 01/11] Fixed compilation error for the EtherCat drivers.
+Subject: [PATCH 01/18] Fixed compilation error for the EtherCat drivers.
 
 There were some errors in compiling the module
 because EtherCat 1.5.2 did not support the Linux kernel 4.x well.
@@ -57,5 +57,5 @@ index 2ceea12..7e2032d 100644
                  " for EoE handler!\n", name);
          ret = -ENODEV;
 -- 
-2.17.1
+2.25.1
 

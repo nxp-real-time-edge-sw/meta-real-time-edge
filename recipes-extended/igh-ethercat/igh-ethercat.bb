@@ -21,6 +21,13 @@ SRC_URI += "\
     file://0009-device-fec-Add-fec-device.patch \
     file://0010-device-fec-add-fec-support-on-conf-script.patch \
     file://0011-Fix-ethercat-tool-compilation.patch \
+    file://0012-enect-Add-enetc-souce-code-based-on-linux-4.14.patch \
+    file://0013-ec_enetc-Add-ec_enetc-native-driver-based-on-linux-4.patch \
+    file://0014-enetc-port-enetc-vf-driver-to-linux-5.10.patch \
+    file://0015-enetc-add-pf-device-support-for-linux-5.10.patch \
+    file://0016-enetc-adjust-the-link-status-dynamically-for-ec_mast.patch \
+    file://0017-enetc-mq-is-useless-to-ndev-struct.patch \
+    file://0018-enetc-add-enetc-support-on-scripts.patch \
 "
 S = "${WORKDIR}/ethercat-${PV}"
 
@@ -33,6 +40,7 @@ PACKAGECONFIG[e1000]   = "--enable-e1000,--disable-e1000,"
 PACKAGECONFIG[e1000e]  = "--enable-e1000e,--disable-e1000e,"
 PACKAGECONFIG[r8169]   = "--enable-r8169,--disable-r8169,"
 PACKAGECONFIG[fec]     = "--enable-fec,--disable-fec,"
+PACKAGECONFIG[enetc]     = "--enable-enetc,--disable-enetc,"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
 

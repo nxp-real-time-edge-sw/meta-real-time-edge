@@ -1,7 +1,7 @@
-From 8b94bab84b8dd5c00beb2e5068bd3d8e537c2a65 Mon Sep 17 00:00:00 2001
+From eee4db7484ec853cad48e3c5e5775379111930d2 Mon Sep 17 00:00:00 2001
 From: Wenbin Song <wenbin.song@nxp.com>
 Date: Sat, 8 May 2021 16:09:22 +0800
-Subject: [PATCH 10/11] device/fec: add fec support on conf script
+Subject: [PATCH 10/18] device/fec: add fec support on conf script
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
 ---
@@ -26,5 +26,5 @@ index 41f41c1..3dd71ae 100644
  #
  DEVICE_MODULES=""
 -- 
-2.17.1
+2.25.1
 
