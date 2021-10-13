@@ -22,7 +22,6 @@ PR = "r0"
 S = "${WORKDIR}/git"
 
 DEPENDS += "libopen62541"
-RDEPENDS_${PN} = "libopen62541"
 
 PROVIDES += "libgenavb"
 RPROVIDES_${PN} = "libgenavb"
