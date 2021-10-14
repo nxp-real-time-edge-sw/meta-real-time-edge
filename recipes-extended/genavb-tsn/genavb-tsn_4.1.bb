@@ -8,20 +8,20 @@ LIC_FILES_CHKSUM = "file://licenses/EULA.txt;md5=2acb50e7549e3925e6982a7920c26fd
                     file://licenses/BSD-3-Clause;md5=5cc0aa6b0086f08ef02006d8a2679704 \
 "
 
-GENAVB_TSN_URL = "git://github.com/NXP/GenAVB_TSN.git;protocol=http"
+GENAVB_TSN_URL = "git://bitbucket.sw.nxp.com/mss/gen_avb_sdk.git;protocol=ssh"
 
 SRC_URI = "${GENAVB_TSN_URL};nobranch=1 \
     file://genavb-tsn.service \
     file://libgenavb.pc \
 "
 
-SRCREV = "4193dd6f5832de3f41d980454c20dfe153248b8a"
+SRCREV = "cd2ea46cf3339a68369a7f7cb12dc38575b9159a"
 
 PR = "r0"
 
 S = "${WORKDIR}/git"
 
-DEPENDS += "libopen62541"
+DEPENDS += "libopen62541 libbpf"
 
 PROVIDES += "libgenavb"
 RPROVIDES_${PN} = "libgenavb"
@@ -94,5 +94,5 @@ INSANE_SKIP_${PN}-dev = "ldflags"
 INSANE_SKIP_${PN} = "ldflags"
 INSANE_SKIP_${PN} += "dev-so"
 
-# Add the module directory to the package files
-FILES_${PN} += "/lib/modules"
+# Add the module and firmware directory to the package files
+FILES_${PN} += "/lib/modules /lib/firmware"
