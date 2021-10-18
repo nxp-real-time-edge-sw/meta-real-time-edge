@@ -1,7 +1,7 @@
-From 53985a48b5635babc26025cb5bd077e43ddfe0cc Mon Sep 17 00:00:00 2001
+From 9a0e0b10160a9addeb2e3b35d4daf5221582c42a Mon Sep 17 00:00:00 2001
 From: Wenbin Song <wenbin.song@nxp.com>
 Date: Sat, 8 May 2021 15:36:13 +0800
-Subject: [PATCH 09/11] device/fec: Add fec device
+Subject: [PATCH 09/18] device/fec: Add fec device
 
 Signed-off-by: Wenbin Song  <wenbin.song@nxp.com>
 ---
@@ -4861,5 +4861,5 @@ index 0000000..be8a2f5
 +		ptp_clock_unregister(fep->ptp_clock);
 +}
 -- 
-2.17.1
+2.25.1
 

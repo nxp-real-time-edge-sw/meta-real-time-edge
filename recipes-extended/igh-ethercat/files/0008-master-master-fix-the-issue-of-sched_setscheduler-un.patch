@@ -1,7 +1,7 @@
-From 79bac0f592ac448803730e276eb14587ec417563 Mon Sep 17 00:00:00 2001
+From 448ca0d2b599acab2516701e24a98c634f01f8fb Mon Sep 17 00:00:00 2001
 From: Wenbin Song <wenbin.song@nxp.com>
 Date: Fri, 19 Mar 2021 15:18:09 +0800
-Subject: [PATCH 08/11] master/master: fix the issue of sched_setscheduler
+Subject: [PATCH 08/18] master/master: fix the issue of sched_setscheduler
  undefined
 
 The symbol "sched_setscheduler" is not exported after linux 5.9.0.
@@ -39,5 +39,5 @@ index f7e5880..b5625d4 100644
  }
  
 -- 
-2.17.1
+2.25.1
 

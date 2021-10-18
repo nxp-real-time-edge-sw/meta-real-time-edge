@@ -1,0 +1,40 @@
+From 75e355fe45fc9a137d6943fe81aa2a1e85eef119 Mon Sep 17 00:00:00 2001
+From: Wenbin Song <wenbin.song@nxp.com>
+Date: Wed, 30 Jun 2021 16:45:48 +0800
+Subject: [PATCH 17/18] enetc: mq is useless to ndev struct
+
+Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+---
+ devices/enetc/enetc_pf.c | 2 +-
+ devices/enetc/enetc_vf.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/devices/enetc/enetc_pf.c b/devices/enetc/enetc_pf.c
+index 3a048d4..432f04f 100644
+--- a/devices/enetc/enetc_pf.c
++++ b/devices/enetc/enetc_pf.c
+@@ -565,7 +565,7 @@ static int enetc_pf_probe(struct pci_dev *pdev,
+ 
+ 	enetc_get_si_caps(si);
+ 
+-	ndev = alloc_etherdev_mq(sizeof(*priv), ENETC_MAX_NUM_TXQS);
++	ndev = alloc_etherdev(sizeof(*priv));
+ 	if (!ndev) {
+ 		err = -ENOMEM;
+ 		dev_err(&pdev->dev, "netdev creation failed\n");
+diff --git a/devices/enetc/enetc_vf.c b/devices/enetc/enetc_vf.c
+index 458b129..d205a8e 100644
+--- a/devices/enetc/enetc_vf.c
++++ b/devices/enetc/enetc_vf.c
+@@ -85,7 +85,7 @@ static int enetc_vf_probe(struct pci_dev *pdev,
+ 
+ 	enetc_get_si_caps(si);
+ 
+-	ndev = alloc_etherdev_mq(sizeof(*priv), ENETC_MAX_NUM_TXQS);
++	ndev = alloc_etherdev(sizeof(*priv));
+ 	if (!ndev) {
+ 		err = -ENOMEM;
+ 		dev_err(&pdev->dev, "netdev creation failed\n");
+-- 
+2.25.1
+

@@ -1,7 +1,7 @@
-From a365acaa0f6489d54ec64427d7edebeed3b12e87 Mon Sep 17 00:00:00 2001
+From 336dc02d6e7969f37fd9ab044001f213da43f7b3 Mon Sep 17 00:00:00 2001
 From: Wenbin Song <wenbin.song@nxp.com>
 Date: Fri, 7 May 2021 15:08:05 +0800
-Subject: [PATCH 07/11] configure: Fix the subdir-objects error
+Subject: [PATCH 07/18] configure: Fix the subdir-objects error
 
 Signed-off-by: Wenbin Song  <wenbin.song@nxp.com>
 ---
@@ -22,5 +22,5 @@ index fff7356..a4c5f54 100644
  AC_CONFIG_HEADERS([config.h])
  AC_CONFIG_SRCDIR([config.h.in])
 -- 
-2.17.1
+2.25.1
 

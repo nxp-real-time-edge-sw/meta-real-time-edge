@@ -1,7 +1,7 @@
-From 68eb03546929d085783c4f14a7f04a486a7c1c35 Mon Sep 17 00:00:00 2001
+From ef4b3816d7660eb460afc9709bf2b8d498a1003b Mon Sep 17 00:00:00 2001
 From: XianyuWei <xianyu.wei@nxp.com>
 Date: Tue, 24 Jul 2018 14:15:19 +0800
-Subject: [PATCH 02/11] Modify the example code.
+Subject: [PATCH 02/18] Modify the example code.
 
 To control BECKHOFF's EL2008,
 modify the examples/user/main.c according to the EtherCat API.
@@ -530,5 +530,5 @@ index 91d9ae6..998b6e3 100644
  
 -/****************************************************************************/
 -- 
-2.17.1
+2.25.1
 
