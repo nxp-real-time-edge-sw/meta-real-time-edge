@@ -1,0 +1,657 @@
+From 2b1f3873e5b95c79441dfc9566beb7ef707d3372 Mon Sep 17 00:00:00 2001
+From: Changming Huang <jerry.huang@nxp.com>
+Date: Tue, 12 Oct 2021 11:13:24 +0800
+Subject: [PATCH 2/2] ls1028ardb: enetc support in jailhouse
+
+Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+---
+ .../arm64/dts/inmate-ls1028a-rdb-enetc.dts    | 381 ++++++++++++++++++
+ configs/arm64/ls1028a-rdb-linux-enetc-demo.c  | 117 ++++++
+ configs/arm64/ls1028a-rdb.c                   |  78 +---
+ 3 files changed, 506 insertions(+), 70 deletions(-)
+ create mode 100644 configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
+ create mode 100644 configs/arm64/ls1028a-rdb-linux-enetc-demo.c
+
+diff --git a/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts b/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
+new file mode 100644
+index 00000000..aed3e50a
+--- /dev/null
++++ b/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
+@@ -0,0 +1,381 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Device Tree for inmate cell on NXP LS1028ARDB platform
++ *
++ * Copyright 2021 NXP
++ *
++ * Jerry Huang <jerry.huang@nxp.com>
++ */
++
++/dts-v1/;
++
++#include <dt-bindings/interrupt-controller/arm-gic.h>
++
++/ {
++	compatible = "fsl,ls1028a-rdb", "fsl,ls1028a";
++	model = "LS1028A RDB Board";
++	interrupt-parent = <&gic>;
++	#address-cells = <2>;
++	#size-cells = <2>;
++
++	aliases {
++		serial0 = &duart1;
++	};
++
++	cpus {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		cpu1: cpu@1 {
++			device_type = "cpu";
++			compatible = "arm,cortex-a72";
++			reg = <0x1>;
++			clocks = <&clockgen 1 0>;
++			next-level-cache = <&l2>;
++			cpu-idle-states = <&CPU_PW20>;
++			#cooling-cells = <2>;
++			enable-method = "psci";
++		};
++
++		l2: l2-cache {
++			compatible = "cache";
++		};
++	};
++	reserved-memory {
++		#address-cells = <2>;
++                #size-cells = <2>;
++                ranges;
++
++                 /* baremetal: slave cores reserved memory */
++                 lpi_reserved: lpi_rd_table@0x80000000 {
++                         no-map;
++                         reg = <0 0x80000000 0 0x100000>;
++                 };
++         };
++
++
++	chosen {
++		stdout-path = "serial0:115200n8";
++	};
++
++	idle-states {
++		entry-method = "psci";
++
++		CPU_PW20: cpu-pw20 {
++			compatible = "arm,idle-state";
++			idle-state-name = "PW20";
++			arm,psci-suspend-param = <0x0>;
++			entry-latency-us = <2000>;
++			exit-latency-us = <2000>;
++			min-residency-us = <6000>;
++		};
++	};
++
++	sysclk: sysclk {
++		compatible = "fixed-clock";
++		#clock-cells = <0>;
++		clock-frequency = <100000000>;
++		clock-output-names = "sysclk";
++	};
++
++	timer {
++		compatible = "arm,armv8-timer";
++		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(2) |
++					  IRQ_TYPE_LEVEL_LOW)>,
++			     <GIC_PPI 14 (GIC_CPU_MASK_SIMPLE(2) |
++					  IRQ_TYPE_LEVEL_LOW)>,
++			     <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(2) |
++					  IRQ_TYPE_LEVEL_LOW)>,
++			     <GIC_PPI 10 (GIC_CPU_MASK_SIMPLE(2) |
++					  IRQ_TYPE_LEVEL_LOW)>;
++	};
++
++	gic: interrupt-controller@6000000 {
++		compatible = "arm,gic-v3";
++		#interrupt-cells = <3>;
++		#address-cells = <2>;
++		#size-cells = <2>;
++		ranges;
++		interrupt-controller;
++		reg = <0x0 0x6000000 0 0x10000>,
++		      <0x0 0x6040000 0 0x40000>;
++		interrupts = <GIC_PPI 9 (GIC_CPU_MASK_RAW(0xf) |
++					 IRQ_TYPE_LEVEL_LOW)>;
++		its: gic-its@6020000 {
++			compatible = "arm,gic-v3-its";
++			msi-controller;
++			reg = <0x0 0x06020000 0 0x20000>;/* GIC Translater */
++		};
++	};
++
++	soc: soc {
++		compatible = "simple-bus";
++		#address-cells = <2>;
++		#size-cells = <2>;
++		ranges;
++
++		ddr: memory-controller@1080000 {
++			compatible = "fsl,qoriq-memory-controller";
++			reg = <0x0 0x1080000 0x0 0x1000>;
++			interrupts = <GIC_SPI 144 IRQ_TYPE_LEVEL_HIGH>;
++			big-endian;
++		};
++
++		clockgen: clock-controller@1300000 {
++			compatible = "fsl,ls1028a-clockgen";
++			reg = <0x0 0x1300000 0x0 0xa0000>;
++			#clock-cells = <2>;
++			clocks = <&sysclk>;
++		};
++
++		duart1: serial@21c0600 {
++			compatible = "fsl,ns16550", "ns16550a";
++			reg = <0x00 0x21c0600 0x0 0x100>;
++			clocks = <&clockgen 4 1>;
++			status = "okay";
++		};
++
++		smmu: iommu@5000000 {
++			compatible = "arm,mmu-500";
++			reg = <0 0x5000000 0 0x800000>;
++			#global-interrupts = <8>;
++			#iommu-cells = <1>;
++			stream-match-mask = <0x7c00>;
++			/* global secure fault */
++			interrupts = <GIC_SPI 13 IRQ_TYPE_LEVEL_HIGH>,
++			/* combined secure interrupt */
++				     <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>,
++			/* global non-secure fault */
++				     <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>,
++			/* combined non-secure interrupt */
++				     <GIC_SPI 16 IRQ_TYPE_LEVEL_HIGH>,
++			/* performance counter interrupts 0-7 */
++				     <GIC_SPI 211 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 212 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 213 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 214 IRQ_TYPE_LEVEL_HIGH>,
++			/* per context interrupt, 64 interrupts */
++				     <GIC_SPI 146 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 147 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 148 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 149 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 150 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 151 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 152 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 153 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 154 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 155 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 156 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 157 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 158 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 159 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 160 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 161 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 162 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 163 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 164 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 165 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 166 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 167 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 168 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 169 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 170 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 171 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 172 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 173 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 174 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 175 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 176 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 177 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 178 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 179 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 180 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 181 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 182 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 183 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 184 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 185 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 186 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 187 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 188 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 189 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 190 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 191 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 192 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 193 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 194 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 195 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 196 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 197 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 198 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 199 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 200 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 201 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 202 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 203 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 204 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 205 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 206 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 207 IRQ_TYPE_LEVEL_HIGH>,
++				     <GIC_SPI 208 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 209 IRQ_TYPE_LEVEL_HIGH>;
++		};
++
++		enetc_pcie: pcie@1f0000000 { /* Integrated Endpoint Root Complex */
++			compatible = "pci-host-ecam-generic";
++			reg = <0x01 0xf0000000 0x0 0x100000>;
++			#address-cells = <3>;
++			#size-cells = <2>;
++			msi-parent = <&its>;
++			device_type = "pci";
++			bus-range = <0x0 0x0>;
++			dma-coherent;
++			msi-map = <0 &its 0x17 0xe>;
++			iommu-map = <0 &smmu 0x17 0xe>;
++				  /* PF0-6 BAR0 - non-prefetchable memory */
++			ranges = <0x82000000 0x0 0x00000000  0x1 0xf8000000  0x0 0x160000
++				  /* PF0-6 BAR2 - prefetchable memory */
++				  0xc2000000 0x0 0x00000000  0x1 0xf8160000  0x0 0x070000
++				  /* PF0: VF0-1 BAR0 - non-prefetchable memory */
++				  0x82000000 0x0 0x00000000  0x1 0xf81d0000  0x0 0x020000
++				  /* PF0: VF0-1 BAR2 - prefetchable memory */
++				  0xc2000000 0x0 0x00000000  0x1 0xf81f0000  0x0 0x020000
++				  /* PF1: VF0-1 BAR0 - non-prefetchable memory */
++				  0x82000000 0x0 0x00000000  0x1 0xf8210000  0x0 0x020000
++				  /* PF1: VF0-1 BAR2 - prefetchable memory */
++				  0xc2000000 0x0 0x00000000  0x1 0xf8230000  0x0 0x020000
++				  /* BAR4 (PF5) - non-prefetchable memory */
++				  0x82000000 0x0 0x00000000  0x1 0xfc000000  0x0 0x400000>;
++
++			enetc_port0: ethernet@0,0 {
++				compatible = "fsl,enetc";
++				phy-handle = <&sgmii_phy0>;
++				phy-connection-type = "sgmii";
++				managed = "in-band-status";
++				reg = <0x000000 0 0 0 0>;
++				status = "okay";
++
++				mdio {
++					#address-cells = <1>;
++					#size-cells = <0>;
++					sgmii_phy0: ethernet-phy@2 {
++						reg = <0x2>;
++					};
++				};
++			};
++
++			enetc_port1: ethernet@0,1 {
++				compatible = "fsl,enetc";
++				reg = <0x000100 0 0 0 0>;
++				status = "disable";
++			};
++
++			enetc_port2: ethernet@0,2 {
++				compatible = "fsl,enetc";
++				reg = <0x000200 0 0 0 0>;
++				phy-mode = "internal";
++				status = "okay";
++
++				fixed-link {
++					speed = <1000>;
++					full-duplex;
++				};
++			};
++
++			enetc_mdio_pf3: mdio@0,3 {
++				compatible = "fsl,enetc-mdio";
++				reg = <0x000300 0 0 0 0>;
++				#address-cells = <1>;
++				#size-cells = <0>;
++				
++				/* VSC8514 QSGMII quad PHY */
++				qsgmii_phy0: ethernet-phy@10 {
++					reg = <0x10>;
++				};
++
++				qsgmii_phy1: ethernet-phy@11 {
++					reg = <0x11>;
++				};
++
++				qsgmii_phy2: ethernet-phy@12 {
++					reg = <0x12>;
++				};
++
++				qsgmii_phy3: ethernet-phy@13 {
++					reg = <0x13>;
++				};
++			};
++
++			ethernet@0,4 {
++				compatible = "fsl,enetc-ptp";
++				reg = <0x000400 0 0 0 0>;
++				clocks = <&clockgen 2 3>;
++				little-endian;
++				fsl,extts-fifo;
++				status= "okay";
++			};
++
++			mscc_felix: ethernet-switch@0,5 {
++				reg = <0x000500 0 0 0 0>;
++				/* IEP INT_B */
++				interrupts = <GIC_SPI 95 IRQ_TYPE_LEVEL_HIGH>;
++				status = "okay";
++
++				mscc_felix_ports: ports {
++					#address-cells = <1>;
++					#size-cells = <0>;
++
++					/* External ports */
++					mscc_felix_port0: port@0 {
++						reg = <0>;
++						label = "swp0";
++						managed = "in-band-status";
++						phy-handle = <&qsgmii_phy0>;
++						phy-mode = "qsgmii";
++						status = "okay";
++					};
++
++					mscc_felix_port1: port@1 {
++						reg = <1>;
++						label = "swp1";
++						managed = "in-band-status";
++						phy-handle = <&qsgmii_phy1>;
++						phy-mode = "qsgmii";
++						status = "okay";
++					};
++
++					mscc_felix_port2: port@2 {
++						reg = <2>;
++						label = "swp2";
++						managed = "in-band-status";
++						phy-handle = <&qsgmii_phy2>;
++						phy-mode = "qsgmii";
++						status = "okay";
++					};
++
++					mscc_felix_port3: port@3 {
++						reg = <3>;
++						label = "swp3";
++						managed = "in-band-status";
++						phy-handle = <&qsgmii_phy3>;
++						phy-mode = "qsgmii";
++						status = "okay";
++					};
++
++					/* Internal ports */
++					mscc_felix_port4: port@4 {
++						reg = <4>;
++						ethernet = <&enetc_port2>;
++						phy-mode = "internal";
++						status = "okay";
++
++						fixed-link {
++							speed = <2500>;
++							full-duplex;
++						};
++					};
++
++					mscc_felix_port5: port@5 {
++						reg = <5>;
++						phy-mode = "internal";
++						status = "disabled";
++
++						fixed-link {
++							speed = <1000>;
++							full-duplex;
++						};
++					};
++				};
++			};
++
++			enetc_port3: ethernet@0,6 {
++				compatible = "fsl,enetc";
++				reg = <0x000600 0 0 0 0>;
++				phy-mode = "internal";
++				status = "disabled";
++
++				fixed-link {
++					speed = <1000>;
++					full-duplex;
++				};
++			};
++		};
++
++		/* Integrated Endpoint Register Block */
++		ierb@1f0800000 {
++			compatible = "fsl,ls1028a-enetc-ierb";
++			reg = <0x01 0xf0800000 0x0 0x10000>;
++		};
++	};
++
++	psci {
++		compatible = "arm,psci-1.0", "arm,psci-0.2";
++		method = "smc";
++	};
++};
+diff --git a/configs/arm64/ls1028a-rdb-linux-enetc-demo.c b/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
+new file mode 100644
+index 00000000..44614643
+--- /dev/null
++++ b/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
+@@ -0,0 +1,117 @@
++/*
++ * Configuration for LS1028ARDB board - linux enetc demo
++ *
++ * Copyright 2021 NXP
++ *
++ * Authors:
++ *  Jerry Huang <jerry.huang@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ */
++
++#include <jailhouse/types.h>
++#include <jailhouse/cell-config.h>
++
++struct {
++	struct jailhouse_cell_desc cell;
++	__u64 cpus[1];
++	struct jailhouse_memory mem_regions[12];
++	struct jailhouse_irqchip irqchips[2];
++} __attribute__((packed)) config = {
++	.cell = {
++		.signature = JAILHOUSE_CELL_DESC_SIGNATURE,
++		.revision = JAILHOUSE_CONFIG_REVISION,
++		.name = "linux-inmate-demo",
++		.flags = JAILHOUSE_CELL_PASSIVE_COMMREG,
++
++		.cpu_set_size = sizeof(config.cpus),
++		.num_memory_regions = ARRAY_SIZE(config.mem_regions),
++		.num_irqchips = ARRAY_SIZE(config.irqchips),
++		.vpci_irq_base = 40 - 32,
++	},
++
++	.cpus = {
++		0x2,
++	},
++
++	.mem_regions = {
++		/* DUART1 */ {
++			.phys_start = 0x21c0000,
++			.virt_start = 0x21c0000,
++			.size = 0x1000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
++		},
++		/* iommu */ {
++			.phys_start = 0x05000000,
++			.virt_start = 0x05000000,
++			.size = 0x800000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
++		},
++		/* for enetc pcie */ {
++			.phys_start = 0x1f0000000,
++			.virt_start = 0x1f0000000,
++			.size = 0x10000000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
++		},
++		/* for IERB */ {
++			.phys_start = 0x1f0800000,
++			.virt_start = 0x1f0800000,
++			.size = 0x10000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
++		},
++		/* gic its */ {
++			.phys_start = 0x06020000,
++			.virt_start = 0x06020000,
++			.size = 0x20000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
++		},
++		/* clockgen */ {
++			.phys_start = 0x01300000,
++			.virt_start = 0x01300000,
++			.size = 0xa0000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
++		},
++		/* RAM */ {
++			.phys_start = 0xc0400000,
++			.virt_start = 0,
++			.size = 0x00010000, /* 64K */
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_EXECUTE | JAILHOUSE_MEM_LOADABLE,
++		},
++		/* RAM: Top at DRAM1 2GB Space */ {
++			.phys_start = 0xc0900000,
++			.virt_start = 0xc0900000,
++			.size = 0x33700000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_EXECUTE | JAILHOUSE_MEM_DMA |
++				JAILHOUSE_MEM_LOADABLE,
++		},
++		/* communication region */ {
++			.virt_start = 0x80000000,
++			.size = 0x00001000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_COMM_REGION,
++		},
++	},
++
++	.irqchips = {
++		/* GIC */ {
++			.address = 0x6000000,
++			.pin_base = 32,
++			.pin_bitmap = {
++				1 << (40 - 32) | 1 << (41 - 32) |
++				1 << (42 - 32) | 1 << (43 - 32),
++				0,
++				1 << (126 - 96) | 1 << (127 - 96),
++				0,
++			},
++		},
++	},
++};
+diff --git a/configs/arm64/ls1028a-rdb.c b/configs/arm64/ls1028a-rdb.c
+index d721542a..8f4cefd5 100644
+--- a/configs/arm64/ls1028a-rdb.c
++++ b/configs/arm64/ls1028a-rdb.c
+@@ -16,9 +16,8 @@
+ struct {
+ 	struct jailhouse_system header;
+ 	__u64 cpus[1];
+-	struct jailhouse_memory mem_regions[85];
++	struct jailhouse_memory mem_regions[80];
+ 	struct jailhouse_irqchip irqchips[3];
+-	struct jailhouse_pci_device pci_devices[2];
+ } __attribute__((packed)) config = {
+ 	.header = {
+ 		.signature = JAILHOUSE_SYSTEM_SIGNATURE,
+@@ -36,11 +35,6 @@ struct {
+ 				 JAILHOUSE_CON_REGDIST_1,
+ 		},
+ 		.platform_info = {
+-			.pci_mmconfig_base = 0xc0700000,
+-			.pci_mmconfig_end_bus = 0,
+-			.pci_is_virtual = 1,
+-			.pci_domain = -1,
+-
+ 			.arm = {
+ 				.gic_version = 3,
+ 				.gicd_base = 0x6000000,
+@@ -50,7 +44,6 @@ struct {
+ 		},
+ 		.root_cell = {
+ 			.name = "ls1028a",
+-			.num_pci_devices = ARRAY_SIZE(config.pci_devices),
+ 			.cpu_set_size = sizeof(config.cpus),
+ 			.num_memory_regions = ARRAY_SIZE(config.mem_regions),
+ 			.num_irqchips = ARRAY_SIZE(config.irqchips),
+@@ -63,38 +56,6 @@ struct {
+ 	},
+ 
+ 	.mem_regions = {
+-		/* IVSHMEM shared memory region for 00:00.0 */ {
+-			.phys_start = 0xc0500000,
+-			.virt_start = 0xc0500000,
+-			.size = 0x1000,
+-			.flags = JAILHOUSE_MEM_READ,
+-		},
+-		{
+-			.phys_start = 0xc0501000,
+-			.virt_start = 0xc0501000,
+-			.size = 0x9000,
+-			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE,
+-		},
+-		{
+-			.phys_start = 0xc050a000,
+-			.virt_start = 0xc050a000,
+-			.size = 0x2000,
+-			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE,
+-		},
+-		{
+-			.phys_start = 0xc050c000,
+-			.virt_start = 0xc050c000,
+-			.size = 0x2000,
+-			.flags = JAILHOUSE_MEM_READ,
+-		},
+-		{
+-			.phys_start = 0xc050e000,
+-			.virt_start = 0xc050e000,
+-			.size = 0x2000,
+-			.flags = JAILHOUSE_MEM_READ,
+-		},
+-		/* IVSHMEM shared memory regions for 00:01.0 */
+-		JAILHOUSE_SHMEM_NET_REGIONS(0xc0600000, 0),
+ 		/* RAM - 1GB - root cell */ {
+ 			.phys_start = 0x80000000,
+ 			.virt_start = 0x80000000,
+@@ -501,6 +462,13 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_IO,
+ 		},
++		/* for IERB */ {
++			.phys_start = 0x1f0800000,
++			.virt_start = 0x1f0800000,
++			.size = 0x10000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO,
++		},
+ 		/* pwm0 */ {
+ 			.phys_start = 0x02800000,
+ 			.virt_start = 0x02800000,
+@@ -592,13 +560,6 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_EXECUTE,
+ 		},
+-		/* for enetc pcie */ {
+-			.phys_start = 0x1f0000000,
+-			.virt_start = 0x1f0000000,
+-			.size = 0xd000000,
+-			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+-				JAILHOUSE_MEM_IO,
+-		},
+ 		/* for root cell */ {
+ 			.phys_start = 0x700100000,
+ 			.virt_start = 0x700100000,
+@@ -652,27 +613,4 @@ struct {
+ 			},
+ 		},
+ 	},
+-
+-	.pci_devices = {
+-		{ /* IVSHMEM 00:00.0 */
+-			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
+-			.bdf = 0 << 3,
+-			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+-			.shmem_regions_start = 0,
+-			.shmem_dev_id = 0,
+-			.shmem_peers = 3,
+-			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_UNDEFINED,
+-		},
+-		{ /* IVSHMEM 00:01.0 */
+-			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
+-			.bdf = 1 << 3,
+-			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+-			.shmem_regions_start = 5,
+-			.shmem_dev_id = 0,
+-			.shmem_peers = 2,
+-			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_VETH,
+-		},
+-	},
+ };
+-- 
+2.25.1
+
