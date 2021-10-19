@@ -12,7 +12,7 @@ SRC_URI = "git://bitbucket.sw.nxp.com/dnind/real-time-edge-sysrepo.git;protocol=
            file://scripts/sysrepo-cfg.sh \
 "
 
-SRCREV = "cc413acb5b8dc743aa121d579b66d8b59b3f7d38"
+SRCREV = "9b0971248f58344f7dd118f30099753e802d5285"
 
 S = "${WORKDIR}/git"
 
