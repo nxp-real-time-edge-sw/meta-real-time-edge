@@ -1,0 +1,63 @@
+From 9f0823d0ce965ea4eee423629c3fb485995f7fb1 Mon Sep 17 00:00:00 2001
+From: Changming Huang <jerry.huang@nxp.com>
+Date: Mon, 11 Oct 2021 17:53:02 +0800
+Subject: [PATCH 1/2] ls1028ardb: add gpio3 for linux demo
+
+Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+---
+ configs/arm64/dts/inmate-ls1028a-rdb.dts | 11 +++++++++++
+ configs/arm64/ls1028a-rdb-linux-demo.c   |  9 ++++++++-
+ 2 files changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/configs/arm64/dts/inmate-ls1028a-rdb.dts b/configs/arm64/dts/inmate-ls1028a-rdb.dts
+index 52274a77..da5d12d5 100644
+--- a/configs/arm64/dts/inmate-ls1028a-rdb.dts
++++ b/configs/arm64/dts/inmate-ls1028a-rdb.dts
+@@ -114,6 +114,17 @@
+ 			clocks = <&clockgen 4 1>;
+ 			status = "okay";
+ 		};
++
++		gpio3: gpio@2320000 {
++			compatible = "fsl,ls1028a-gpio","fsl,qoriq-gpio";
++			reg = <0x0 0x2320000 0x0 0x10000>;
++			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>;
++			gpio-controller;
++			#gpio-cells = <2>;
++			interrupt-controller;
++			#interrupt-cells = <2>;
++			little-endian;
++		};
+ 	};
+ 
+ 	pci@c0700000 {
+diff --git a/configs/arm64/ls1028a-rdb-linux-demo.c b/configs/arm64/ls1028a-rdb-linux-demo.c
+index 1d4bff3e..4c1a3820 100644
+--- a/configs/arm64/ls1028a-rdb-linux-demo.c
++++ b/configs/arm64/ls1028a-rdb-linux-demo.c
+@@ -16,7 +16,7 @@
+ struct {
+ 	struct jailhouse_cell_desc cell;
+ 	__u64 cpus[1];
+-	struct jailhouse_memory mem_regions[14];
++	struct jailhouse_memory mem_regions[15];
+ 	struct jailhouse_irqchip irqchips[2];
+ 	struct jailhouse_pci_device pci_devices[2];
+ } __attribute__((packed)) config = {
+@@ -79,6 +79,13 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
++		/* gpio3 */ {
++			.phys_start = 0x02320000,
++			.virt_start = 0x02320000,
++			.size = 0x10000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
++		},
+ 		/* clockgen */ {
+ 			.phys_start = 0x01300000,
+ 			.virt_start = 0x01300000,
+-- 
+2.25.1
+

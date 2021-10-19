@@ -52,6 +52,7 @@ SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://0024-arm-common-Return-original-SMCCC_ARCH_WORKAROUND_-fe.patch \
            file://0025-arm-arm64-Expand-return-type-of-smc-helpers-to-long.patch \
            file://0026-arm-arm64-Add-further-smc-helpers.patch \
+	   file://0027-ls1028ardb-add-gpio3-for-linux-demo.patch \
 "
 
 SRCREV = "9bd24e99c3afd7dea96c3cfb997c41beed84c87c"
