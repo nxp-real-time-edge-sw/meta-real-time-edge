@@ -2,8 +2,9 @@ DESCRIPTION = "A tool to configure TSN funtionalities in user space for industri
 
 SAVED_DIR := "${THISDIR}"
 
-SRCREV_qoriq = "b767c260b851aac94828ed26c6a9a327e4e98334"
-SRCREV_imx = "b767c260b851aac94828ed26c6a9a327e4e98334"
+SRC_URI_real-time-edge="git://bitbucket.sw.nxp.com/dnind/tsntool.git;protocol=ssh"
+SRCREV_qoriq = "40965a1fb855b3a23b2430eb83e5a3973da04cd9"
+SRCREV_imx = "40965a1fb855b3a23b2430eb83e5a3973da04cd9"
 
 FILES_${PN} += "/home/root/* /home/root/sample/* /home/root/samples/* \
                /home/root/samples/gatescripts/* /home/root/samples/pktgen/* \
