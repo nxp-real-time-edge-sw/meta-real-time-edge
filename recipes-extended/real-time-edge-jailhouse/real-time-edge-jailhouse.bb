@@ -55,6 +55,7 @@ SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://0026-arm-arm64-Add-further-smc-helpers.patch \
 	   file://0027-ls1028ardb-add-gpio3-for-linux-demo.patch \
 	   file://0028-ls1028ardb-enetc-support-in-jailhouse.patch \
+	   file://0029-add-back-virtual-pci-support-in-root-cell.patch \
 "
 
 SRCREV = "9bd24e99c3afd7dea96c3cfb997c41beed84c87c"
