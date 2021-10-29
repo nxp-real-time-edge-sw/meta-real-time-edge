@@ -1,0 +1,54 @@
+From bdd4f2fdc1f4d871478de5caa6ce3686c0b5d08e Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Thu, 21 Oct 2021 17:47:48 +0800
+Subject: [PATCH 32/33] configs/arm64: Add GIC distributor and re-distributor
+ MMIO regions
+
+Add the memory region for GIC distributor and re-distributor MMIO,
+allow the non-root cell Linux access them.
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+---
+ configs/arm64/ls1028a-rdb-linux-enetc-demo.c | 19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/configs/arm64/ls1028a-rdb-linux-enetc-demo.c b/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
+index 44614643..6ba207b8 100644
+--- a/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
++++ b/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
+@@ -16,7 +16,7 @@
+ struct {
+ 	struct jailhouse_cell_desc cell;
+ 	__u64 cpus[1];
+-	struct jailhouse_memory mem_regions[12];
++	struct jailhouse_memory mem_regions[11];
+ 	struct jailhouse_irqchip irqchips[2];
+ } __attribute__((packed)) config = {
+ 	.cell = {
+@@ -64,6 +64,23 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
++
++		/* gic distributor */ {
++			.phys_start = 0x06000000,
++			.virt_start = 0x06000000,
++			.size = 0x10000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
++		},
++
++		/* gic re-distribuitor */ {
++			.phys_start = 0x06060000,
++			.virt_start = 0x06060000,
++			.size = 0x20000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
++		},
++
+ 		/* gic its */ {
+ 			.phys_start = 0x06020000,
+ 			.virt_start = 0x06020000,
+-- 
+2.17.1
+

@@ -56,6 +56,10 @@ SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
 	   file://0027-ls1028ardb-add-gpio3-for-linux-demo.patch \
 	   file://0028-ls1028ardb-enetc-support-in-jailhouse.patch \
 	   file://0029-add-back-virtual-pci-support-in-root-cell.patch \
+	   file://0030-configs-arm64-dts-Change-the-reserved-address-for-LP.patch \
+	   file://0031-configs-arm64-dts-Correct-the-StreamID-of-ls1028a-EN.patch \
+	   file://0032-configs-arm64-Add-GIC-distributor-and-re-distributor.patch \
+	   file://0033-configs-arm64-ls1028a-add-LPI-tables-memory-region.patch \
 "
 
 SRCREV = "9bd24e99c3afd7dea96c3cfb997c41beed84c87c"

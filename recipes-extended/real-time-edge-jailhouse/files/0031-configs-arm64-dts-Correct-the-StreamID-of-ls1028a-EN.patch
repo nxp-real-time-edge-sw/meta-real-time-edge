@@ -1,0 +1,32 @@
+From 917864684e7b626a543e827c231a86d860000582 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Thu, 21 Oct 2021 17:50:38 +0800
+Subject: [PATCH 31/33] configs/arm64/dts: Correct the StreamID of ls1028a
+ ENETC
+
+The Stream ID of ENETC is change to starting from 0x29 by U-Boot fixup,
+so correct it in the non-root cell Linux DTS.
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+---
+ configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts b/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
+index d23ffe43..6b659992 100644
+--- a/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
++++ b/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
+@@ -194,8 +194,8 @@
+ 			device_type = "pci";
+ 			bus-range = <0x0 0x0>;
+ 			dma-coherent;
+-			msi-map = <0 &its 0x17 0xe>;
+-			iommu-map = <0 &smmu 0x17 0xe>;
++			msi-map = <0 &its 0x29 0xe>;
++			iommu-map = <0 &smmu 0x29 0xe>;
+ 				  /* PF0-6 BAR0 - non-prefetchable memory */
+ 			ranges = <0x82000000 0x0 0x00000000  0x1 0xf8000000  0x0 0x160000
+ 				  /* PF0-6 BAR2 - prefetchable memory */
+-- 
+2.17.1
+
