@@ -32,6 +32,7 @@ DELTA_KERNEL_DEFCONFIG_append = " \
     linux-rt.config \
 "
 DELTA_KERNEL_DEFCONFIG_append_mx8mm = " linux-fec.config"
+DELTA_KERNEL_DEFCONFIG_append_mx8mp = " linux-fec.config"
 DELTA_KERNEL_DEFCONFIG_append_mx8m = " linux-imx8.config"
 
 REAL_TIME_EDGE_SYSREPO_ls1028ardb = ""
