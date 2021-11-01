@@ -1,7 +1,7 @@
 
 KERNEL_SRC_real-time-edge = "git://bitbucket.sw.nxp.com/dnind/real-time-edge-linux.git;protocol=ssh"
 KERNEL_BRANCH_real-time-edge = "linux_5.10.y"
-SRCREV_real-time-edge = "f772556d6937385ce2786885057366c8041a3153"
+SRCREV_real-time-edge = "ba8eba9b25ba683f46db9ab0b7b9508dad9fe9a4"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 SRC_URI_append_real-time-edge = " \
