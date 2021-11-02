@@ -1,0 +1,31 @@
+From 1e2ba7e6d91beb4c311b4effb62c33f2cb4f8468 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Fri, 29 Oct 2021 19:22:05 +0800
+Subject: [PATCH 30/33] configs/arm64/dts: Change the reserved address for LPI
+ tables
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+---
+ configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts b/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
+index aed3e50a..d23ffe43 100644
+--- a/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
++++ b/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
+@@ -46,10 +46,8 @@
+                 #size-cells = <2>;
+                 ranges;
+ 
+-                 /* baremetal: slave cores reserved memory */
+-                 lpi_reserved: lpi_rd_table@0x80000000 {
+-                         no-map;
+-                         reg = <0 0x80000000 0 0x100000>;
++                 lpi_reserved: lpi_rd_table@0x90000000 {
++                         reg = <0 0x90000000 0 0x100000>;
+                  };
+          };
+ 
+-- 
+2.17.1
+

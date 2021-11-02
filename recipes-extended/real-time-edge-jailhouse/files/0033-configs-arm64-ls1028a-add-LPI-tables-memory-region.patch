@@ -1,0 +1,43 @@
+From 2a2c6f9fef054ec4fe2735a0399f84a9f0e1c961 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Mon, 25 Oct 2021 17:05:02 +0800
+Subject: [PATCH 33/33] configs: arm64: ls1028a: add LPI tables memory region
+
+Add memory region for GICv3 LPI property and pending tables.
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+---
+ configs/arm64/ls1028a-rdb-linux-enetc-demo.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/configs/arm64/ls1028a-rdb-linux-enetc-demo.c b/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
+index 6ba207b8..5220a91d 100644
+--- a/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
++++ b/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
+@@ -16,7 +16,7 @@
+ struct {
+ 	struct jailhouse_cell_desc cell;
+ 	__u64 cpus[1];
+-	struct jailhouse_memory mem_regions[11];
++	struct jailhouse_memory mem_regions[12];
+ 	struct jailhouse_irqchip irqchips[2];
+ } __attribute__((packed)) config = {
+ 	.cell = {
+@@ -95,6 +95,14 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
+ 		},
++
++		/* RAM: LPI tables */ {
++			.phys_start = 0x90000000,
++			.virt_start = 0x90000000,
++			.size = 0x100000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE,
++		},
++
+ 		/* RAM */ {
+ 			.phys_start = 0xc0400000,
+ 			.virt_start = 0,
+-- 
+2.17.1
+
