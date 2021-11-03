@@ -1,6 +1,6 @@
-From f0a63743e7d08bbf668b7a891be24ee3e755483a Mon Sep 17 00:00:00 2001
+From 6f8d232c59f7a411fbc6003c2e2ccc799b07aad1 Mon Sep 17 00:00:00 2001
 From: Vinicius Costa Gomes <vinicius.gomes@intel.com>
-Date: Wed, 26 May 2021 16:11:11 +0800
+Date: Tue, 2 Nov 2021 11:07:48 +0800
 Subject: [PATCH 3/4] ethtool: add support for configuring frame preemption via
  netlink
 
@@ -9,32 +9,31 @@ the ETHTOOL_MSG_PREEMPT_{GET,SET} netlink messages.
 
 Signed-off-by: Vinicius Costa Gomes <vinicius.gomes@intel.com>
 ---
- Makefile.am            |   2 +-
+ Makefile.am            |   1 +
  ethtool.c              |   2 +
  netlink/desc-ethtool.c |  13 ++++
  netlink/extapi.h       |   4 ++
  netlink/preempt.c      | 148 +++++++++++++++++++++++++++++++++++++++++
- 5 files changed, 168 insertions(+), 1 deletion(-)
+ 5 files changed, 168 insertions(+)
  create mode 100644 netlink/preempt.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 2abb274..135a904 100644
+index e3e311d..c819025 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -37,7 +37,7 @@ ethtool_SOURCES += \
- 		  netlink/channels.c netlink/coalesce.c netlink/pause.c \
+@@ -38,6 +38,7 @@ ethtool_SOURCES += \
  		  netlink/eee.c netlink/tsinfo.c \
  		  netlink/desc-ethtool.c netlink/desc-genlctrl.c \
--		  netlink/desc-rtnl.c netlink/cable_test.c \
-+		  netlink/desc-rtnl.c netlink/cable_test.c netlink/preempt.c \
+ 		  netlink/desc-rtnl.c netlink/cable_test.c netlink/tunnels.c \
++		  netlink/preempt.c \
  		  uapi/linux/ethtool_netlink.h \
  		  uapi/linux/netlink.h uapi/linux/genetlink.h \
  		  uapi/linux/rtnetlink.h uapi/linux/if_link.h
 diff --git a/ethtool.c b/ethtool.c
-index 5de7c96..3c1c409 100644
+index 9537aa4..e185c70 100644
 --- a/ethtool.c
 +++ b/ethtool.c
-@@ -5756,11 +5756,13 @@ static const struct option args[] = {
+@@ -6053,11 +6053,13 @@ static const struct option args[] = {
  	{
  		.opts	= "--show-frame-preemption",
  		.func	= do_get_preempt,
@@ -49,11 +48,11 @@ index 5de7c96..3c1c409 100644
  		.xhelp	= "		[ fp on|off ]\n"
  			  "		[ preemptible-queues-mask %x ]\n"
 diff --git a/netlink/desc-ethtool.c b/netlink/desc-ethtool.c
-index 54f0579..3ef0c72 100644
+index 96291b9..2c59cb5 100644
 --- a/netlink/desc-ethtool.c
 +++ b/netlink/desc-ethtool.c
-@@ -284,6 +284,17 @@ static const struct pretty_nla_desc __cable_test_tdr_ntf_desc[] = {
- 			   cable_test_tdr_nest),
+@@ -317,6 +317,17 @@ const struct pretty_nla_desc __tunnel_info_desc[] = {
+ 	NLATTR_DESC_NESTED(ETHTOOL_A_TUNNEL_INFO_UDP_PORTS, tunnel_udp),
  };
  
 +static const struct pretty_nla_desc __preempt_desc[] = {
@@ -70,32 +69,32 @@ index 54f0579..3ef0c72 100644
  const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
  	NLMSG_DESC_INVALID(ETHTOOL_MSG_USER_NONE),
  	NLMSG_DESC(ETHTOOL_MSG_STRSET_GET, strset),
-@@ -313,6 +324,8 @@ const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
- 	NLMSG_DESC(ETHTOOL_MSG_TSINFO_GET, tsinfo),
+@@ -347,6 +358,8 @@ const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
  	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_ACT, cable_test),
  	NLMSG_DESC(ETHTOOL_MSG_CABLE_TEST_TDR_ACT, cable_test_tdr),
+ 	NLMSG_DESC(ETHTOOL_MSG_TUNNEL_INFO_GET, tunnel_info),
 +	NLMSG_DESC(ETHTOOL_MSG_PREEMPT_GET, preempt),
 +	NLMSG_DESC(ETHTOOL_MSG_PREEMPT_SET, preempt),
  };
  
  const unsigned int ethnl_umsg_n_desc = ARRAY_SIZE(ethnl_umsg_desc);
 diff --git a/netlink/extapi.h b/netlink/extapi.h
-index a35d5f2..99ddd8a 100644
+index 761cafb..b316655 100644
 --- a/netlink/extapi.h
 +++ b/netlink/extapi.h
-@@ -38,6 +38,8 @@ int nl_tsinfo(struct cmd_context *ctx);
- int nl_cable_test(struct cmd_context *ctx);
+@@ -39,6 +39,8 @@ int nl_cable_test(struct cmd_context *ctx);
  int nl_cable_test_tdr(struct cmd_context *ctx);
+ int nl_gtunnels(struct cmd_context *ctx);
  int nl_monitor(struct cmd_context *ctx);
 +int nl_get_preempt(struct cmd_context *ctx);
 +int nl_set_preempt(struct cmd_context *ctx);
  
  void nl_monitor_usage(void);
  
-@@ -84,6 +86,8 @@ static inline void nl_monitor_usage(void)
- #define nl_tsinfo		NULL
+@@ -87,6 +89,8 @@ static inline void nl_monitor_usage(void)
  #define nl_cable_test		NULL
  #define nl_cable_test_tdr	NULL
+ #define nl_gtunnels		NULL
 +#define nl_get_preempt		NULL
 +#define nl_set_preempt		NULL
  
@@ -247,7 +246,7 @@ index 0000000..976ae39
 +	nlctx->argc = ctx->argc;
 +	nlctx->devname = ctx->devname;
 +
-+	ret = nl_parser(nlctx, set_preempt_params, NULL, PARSER_GROUP_MSG);
++	ret = nl_parser(nlctx, set_preempt_params, NULL, PARSER_GROUP_MSG, NULL);
 +	if (ret < 0)
 +		return 1;
 +
