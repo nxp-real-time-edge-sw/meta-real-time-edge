@@ -4,32 +4,26 @@ plotting iPerf and ping traffic."
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=f17a9bec9db0496c87aec8b93aa0d3c6"
 
-SRC_URI = "file://client.js \
-           file://config.json \
-	   file://flows.json \
-	   file://index.html \
+SRC_URI = "npmsw://${THISDIR}/files/npm-shrinkwrap.json;dev=1 \
+	   file://client.js;subdir=${BP} \
+	   file://config.json;subdir=${BP} \
+	   file://flows.json;subdir=${BP} \
+	   file://index.html;subdir=${BP} \
 	   file://LICENSE \
-	   file://package.json \
-	   file://server.js \
+	   file://package.json;subdir=${BP} \
+	   file://server.js;subdir=${BP} \
 	   file://S95lbt \
 "
 
-DEPENDS = "nodejs nodejs-native feedgnuplot real-time-edge-prl"
+DEPENDS += "feedgnuplot real-time-edge-prl"
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/${BP}"
 
-do_install (){
-    install -d ${D}/${libdir}/node_modules/lbt
+inherit npm
+
+do_install_append() {
     install -d ${D}/${sysconfdir}/init.d/
-    install ${S}/server.js ${D}/${libdir}/node_modules/lbt/
-    install ${S}/client.js ${D}/${libdir}/node_modules/lbt/
-    install ${S}/index.html ${D}/${libdir}/node_modules/lbt/
-    install ${S}/config.json ${D}/${libdir}/node_modules/lbt/
-    install ${S}/package.json ${D}/${libdir}/node_modules/lbt/
-    install ${S}/S95lbt ${D}/${sysconfdir}/init.d/
-    cd ${D}/${libdir}/node_modules/lbt
-    npm install --only=production
-    chown -R root:root ${D}/${libdir}/node_modules/lbt
+    install ${WORKDIR}/S95lbt ${D}/${sysconfdir}/init.d/
 }
 
 FILES_${PN} += "${libdir}/node_modules/lbt/*"
