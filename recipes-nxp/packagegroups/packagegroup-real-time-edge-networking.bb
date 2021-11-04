@@ -35,6 +35,7 @@ RDEPENDS_${PN} = " \
     python3-websockets \
     rt-tests \
     iproute2-tc \
+    iproute2-devlink \
     tcpdump \
     ${genavbtsnimage} \
     ethtool \
