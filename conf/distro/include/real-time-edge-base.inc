@@ -45,7 +45,8 @@ KERNEL_DEVICETREE_append_ls1043ardb= " freescale/fsl-ls1043a-rdb-sdk-jailhouse.d
 KERNEL_DEVICETREE_append_ls1043ardb= " freescale/fsl-ls1043a-rdb-sdk-jailhouse-with-dpaa.dtb"
 KERNEL_DEVICETREE_append_ls1046ardb= " freescale/fsl-ls1046a-rdb-sdk-jailhouse.dtb"
 KERNEL_DEVICETREE_append_ls1046ardb= " freescale/fsl-ls1046a-rdb-sdk-jailhouse-with-dpaa.dtb"
-KERNEL_DEVICETREE_append_ls1028ardb= " freescale/fsl-ls1028a-rdb-jailhouse.dtb"
+KERNEL_DEVICETREE_append_ls1028ardb= " freescale/fsl-ls1028a-rdb-jailhouse.dtb \
+				       freescale/fsl-ls1028a-rdb-jailhouse-without-enetc.dtb"
 KERNEL_DEVICETREE_append_imx8mpevk = " freescale/imx8mp-evk-root.dtb"
 
 # opcua override default log level
