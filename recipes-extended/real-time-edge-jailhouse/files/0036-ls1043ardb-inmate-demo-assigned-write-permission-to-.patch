@@ -1,0 +1,28 @@
+From 8e33cba5f7a4234eb47d6335e1f8e1345c0e55d9 Mon Sep 17 00:00:00 2001
+From: Changming Huang <jerry.huang@nxp.com>
+Date: Fri, 5 Nov 2021 12:20:32 +0800
+Subject: [PATCH] ls1043ardb-inmate-demo: assigned write permission to address
+ 0xc050e000
+
+Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+---
+ configs/arm64/ls1043a-rdb-inmate-demo.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/configs/arm64/ls1043a-rdb-inmate-demo.c b/configs/arm64/ls1043a-rdb-inmate-demo.c
+index ec305acc..f562ceea 100644
+--- a/configs/arm64/ls1043a-rdb-inmate-demo.c
++++ b/configs/arm64/ls1043a-rdb-inmate-demo.c
+@@ -76,7 +76,8 @@ struct {
+ 			.phys_start = 0xc050e000,
+ 			.virt_start = 0xc050e000,
+ 			.size = 0x2000,
+-			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_ROOTSHARED,
+ 		},
+ 		/* DUART1 */ {
+ 			.phys_start = 0x21c0000,
+-- 
+2.25.1
+

@@ -62,6 +62,7 @@ SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
 	   file://0033-configs-arm64-ls1028a-add-LPI-tables-memory-region.patch \
 	   file://0034-ivshmem-demo-change-the-id-to-2-for-qoriq-platforms.patch \
 	   file://0035-ivshmem-demo-change-dev_id-to-2-for-imx8mp.patch \
+	   file://0036-ls1043ardb-inmate-demo-assigned-write-permission-to-.patch \
 "
 
 SRCREV = "9bd24e99c3afd7dea96c3cfb997c41beed84c87c"
