@@ -1,4 +1,4 @@
-From 802a6802694ad694dfcd952ac10b41395c41ad97 Mon Sep 17 00:00:00 2001
+From 381afd54c916f7e95ccbcb35a003de7cade24256 Mon Sep 17 00:00:00 2001
 From: Vinicius Costa Gomes <vinicius.gomes@intel.com>
 Date: Tue, 2 Nov 2021 11:01:35 +0800
 Subject: [PATCH 2/4] ethtool: add support for configuring frame preemption

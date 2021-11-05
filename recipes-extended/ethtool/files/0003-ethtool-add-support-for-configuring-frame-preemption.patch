@@ -1,4 +1,4 @@
-From 6f8d232c59f7a411fbc6003c2e2ccc799b07aad1 Mon Sep 17 00:00:00 2001
+From c02d4835f734592a57b8f86260f37004c2ce3208 Mon Sep 17 00:00:00 2001
 From: Vinicius Costa Gomes <vinicius.gomes@intel.com>
 Date: Tue, 2 Nov 2021 11:07:48 +0800
 Subject: [PATCH 3/4] ethtool: add support for configuring frame preemption via
@@ -12,9 +12,9 @@ Signed-off-by: Vinicius Costa Gomes <vinicius.gomes@intel.com>
  Makefile.am            |   1 +
  ethtool.c              |   2 +
  netlink/desc-ethtool.c |  13 ++++
- netlink/extapi.h       |   4 ++
- netlink/preempt.c      | 148 +++++++++++++++++++++++++++++++++++++++++
- 5 files changed, 168 insertions(+)
+ netlink/extapi.h       |   4 +
+ netlink/preempt.c      | 165 +++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 185 insertions(+)
  create mode 100644 netlink/preempt.c
 
 diff --git a/Makefile.am b/Makefile.am
@@ -102,10 +102,10 @@ index 761cafb..b316655 100644
  
 diff --git a/netlink/preempt.c b/netlink/preempt.c
 new file mode 100644
-index 0000000..976ae39
+index 0000000..6f66e43
 --- /dev/null
 +++ b/netlink/preempt.c
-@@ -0,0 +1,148 @@
+@@ -0,0 +1,165 @@
 +/*
 + * preempt.c - netlink implementation of frame preemption settings
 + *
@@ -238,6 +238,7 @@ index 0000000..976ae39
 +
 +int nl_set_preempt(struct cmd_context *ctx)
 +{
++	struct nl_msg_buff *msgbuffs[1] = {};
 +	struct nl_context *nlctx = ctx->nlctx;
 +	int ret;
 +
@@ -246,12 +247,28 @@ index 0000000..976ae39
 +	nlctx->argc = ctx->argc;
 +	nlctx->devname = ctx->devname;
 +
-+	ret = nl_parser(nlctx, set_preempt_params, NULL, PARSER_GROUP_MSG, NULL);
-+	if (ret < 0)
-+		return 1;
++	ret = nl_parser(nlctx, set_preempt_params, NULL, PARSER_GROUP_MSG, msgbuffs);
++	if (ret < 0) {
++		ret = 1;
++		goto out_free;
++	}
 +
-+	if (ret == 0)
-+		return 0;
++	struct nl_socket *nlsk = nlctx->ethnl_socket;
++
++	ret = nlsock_sendmsg(nlsk, msgbuffs[0]);
++	if (ret < 0)
++		goto out_free;
++
++	ret = nlsock_process_reply(nlsk, nomsg_reply_cb, NULL);
++	if (ret < 0)
++		goto out_free;
++
++out_free:
++	msgbuff_done(msgbuffs[0]);
++	free(msgbuffs[0]);
++
++	if (ret >= 0)
++		return ret;
 +	return nlctx->exit_code ?: 75;
 +}
 -- 
