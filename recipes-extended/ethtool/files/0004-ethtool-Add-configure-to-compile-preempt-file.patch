@@ -1,4 +1,4 @@
-From e3d0b68e2e17b0e4b06401a04f42f4aaaaa876b9 Mon Sep 17 00:00:00 2001
+From 5344de5feb820ea73c5a655155004a958d24eabc Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Tue, 2 Nov 2021 11:16:26 +0800
 Subject: [PATCH 4/4] ethtool: Add configure to compile preempt file
