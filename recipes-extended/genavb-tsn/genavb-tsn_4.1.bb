@@ -15,7 +15,7 @@ SRC_URI = "${GENAVB_TSN_URL};nobranch=1 \
     file://libgenavb.pc \
 "
 
-SRCREV = "bdc4d3942d993c19f704a817bcea86efcbf6e275"
+SRCREV = "4c87bc98c6795724654a58a38cff928233f22803"
 
 PR = "r0"
 
