@@ -71,7 +71,7 @@ do_install_append() {
 	fi
 }
 
-FILES_${PN} += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/* ${systemd_system_unitdir}/ethercat.servic ${bindir_native}/* ${sbindir_native}/* ${libdir_native}/* ${sysconfdir_native}/*"
+FILES_${PN} += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/* ${systemd_system_unitdir}/ethercat.service ${bindir_native}/* ${sbindir_native}/* ${libdir_native}/* ${sysconfdir_native}/*"
 SYSTEMD_SERVICE_ethercat = "ethercat.service"
 SYSTEMD_AUTO_ENABLE = "disable"
 
