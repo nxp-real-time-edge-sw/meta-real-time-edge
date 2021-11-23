@@ -22,7 +22,7 @@ UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2021.04"
 UBOOT_BAREMETAL_SRC ?= "git://bitbucket.sw.nxp.com/dnind/real-time-edge-uboot.git;protocol=ssh"
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
 
-SRCREV = "89da5b5977ac7a7ead829db277eda57e0f8e92bd"
+SRCREV = "68fc86656815052cd1cb941d01ef8e0e55f89ee7"
 
 S = "${WORKDIR}/git"
 B = "${S}"
