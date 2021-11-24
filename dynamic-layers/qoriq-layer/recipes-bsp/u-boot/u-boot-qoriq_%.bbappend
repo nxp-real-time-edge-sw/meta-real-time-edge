@@ -1,5 +1,5 @@
 
-UBOOT_SRC_real-time-edge = "git://bitbucket.sw.nxp.com/dnind/real-time-edge-uboot.git;protocol=ssh"
+UBOOT_SRC_real-time-edge = "git://github.com/real-time-edge-sw/real-time-edge-uboot.git;protocol=https;nobranch=1"
 UBOOT_BRANCH_real-time-edge = "uboot_v2021.04"
 SRCREV_real-time-edge = "ae6f725a51aec225c3cc688e9d9714f6d2e974f2"
 
