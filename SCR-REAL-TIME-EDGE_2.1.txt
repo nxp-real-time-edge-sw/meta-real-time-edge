@@ -1,10 +1,10 @@
 NXP Software Content Register
 
-Release - Real-time Edge Software 2.0
- July 2021
+Release - Real-time Edge Software 2.1
+ December 2021
 
 Yocto Project recipe manifest:
-repo init -u https://github.com/real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-gatesgarth -m real-time-edge-2.0.0.xml
+repo init -u https://github.com/real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-hardknott -m real-time-edge-2.1.0.xml
 
 --------------------------------------------
 BSP Packages
@@ -16,7 +16,7 @@ License File:                license.rst
 Package Category:            BSP
 Type of Content:             Source code
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/atf -b v1.5-lf-5.10.y-1.0.0
+Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/atf -b lf-5.10.52-2.1.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
@@ -28,7 +28,7 @@ License File:                license.rst
 Package Category:            BSP
 Type of Content:             Source code
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://source.codeaurora.org/external/imx/imx-atf -b rel_imx_5.10.9_1.0.0
+Release Location:            https://source.codeaurora.org/external/imx/imx-atf -b lf-5.10.52-2.1.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
@@ -51,7 +51,7 @@ License File:                COPYING
 Package Category:            BSP
 Type of Content:             source code
 Description and comments:    The Linux kernel with PREEMPT-RT enabled
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-linux -b linux_5.10.y
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-linux -b linux_5.10.52
 Origin:                      NXP (GPL-2.0)
                              kernel.org (GPL-2.0) - https://www.kernel.org/
 
@@ -63,7 +63,7 @@ License File:                COPYING
 Package Category:            BSP
 Type of Content:             Source code
 Description and comments:    Bootloader with Real-time Edge specific capabilities
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b uboot_v2020.04
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b uboot_v2021.04
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -77,7 +77,7 @@ License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             Source code
 Description and comments:    A partitioning Hypervisor based on Linux
-Release Location:            https://source.codeaurora.org/external/imx/imx-jailhouse -b rel_imx_5.10.9_1.0.0
+Release Location:            https://source.codeaurora.org/external/imx/imx-jailhouse -b lf-5.10.52-2.1.0
 Origin:                      NXP (GPL-2.0)
                              Siemens AG (GPL-2.0) - https://github.com/siemens/jailhouse
 
@@ -89,7 +89,7 @@ License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             Source code
 Description and comments:    A baremetal framework
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2020.04
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2021.04
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
