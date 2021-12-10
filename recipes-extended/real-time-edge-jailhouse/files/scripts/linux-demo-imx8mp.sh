@@ -2,6 +2,8 @@
 
 ./init_jailhouse_env.sh
 
+cp /run/media/mmcblk1p1/Image /usr/share/jailhouse/inmates/kernel/
+
 ../tools/jailhouse disable;
 
 ../tools/jailhouse enable ../cells/imx8mp.cell;

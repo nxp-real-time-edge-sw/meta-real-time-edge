@@ -2,6 +2,8 @@
 
 ./init_jailhouse_env.sh
 
+cp /run/media/mmcblk0p1/Image /usr/share/jailhouse/inmates/kernel/
+
 ../tools/jailhouse disable;
 
 ../tools/jailhouse enable ../cells/ls1028a-rdb.cell;
