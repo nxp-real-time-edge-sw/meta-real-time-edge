@@ -28,4 +28,7 @@ IMAGE_INSTALL_append_ls1028ardb = " \
 "
 IMAGE_INSTALL_append_imx = " \
     packagegroup-real-time-edge-multimedia \
+    packagegroup-real-time-edge-rtos \
 "
+
+# do_image[mcdepends] = "mc:imx8mpevk:evkmimx8mp:demo-hello-world:do_install"
