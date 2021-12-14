@@ -1,7 +1,7 @@
 # Copyright 2021 NXP
 # Released under the MIT license (see COPYING.MIT for the terms)
 
-real-time-edge-IMAGE_BASE_imx = "recipes-fsl/images/imx-image-core.bb"
+real-time-edge-IMAGE_BASE ?= "recipes-fsl/images/imx-image-core.bb"
 real-time-edge-IMAGE_BASE_qoriq = "recipes-fsl/images/fsl-image-networking.bb"
 
 require ${real-time-edge-IMAGE_BASE}
