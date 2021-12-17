@@ -19,10 +19,10 @@ PROVIDES = "real-time-edge-baremetal"
 DEPENDS_append = " libgcc dtc-native bison-native bc-native"
 
 UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2021.04"
-UBOOT_BAREMETAL_SRC ?= "git://github.com/real-time-edge-sw/real-time-edge-uboot.git;protocol=https;nobranch=1"
+UBOOT_BAREMETAL_SRC ?= "git://bitbucket.sw.nxp.com/dnind/real-time-edge-uboot.git;protocol=ssh;nobranch=1"
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
 
-SRCREV = "d8f33afaa3d697c0ede1fca482a36214f88964ae"
+SRCREV = "04feebc0495730ead6fd3d3b6c4edc83995e947c"
 
 S = "${WORKDIR}/git"
 B = "${S}"
