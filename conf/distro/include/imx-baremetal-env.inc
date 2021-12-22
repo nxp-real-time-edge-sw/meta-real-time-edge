@@ -11,5 +11,5 @@ UBOOT_BOOT_BAREMETAL_DEFCONFIG ?= ""
 UBOOT_BOOT_BAREMETAL_DEFCONFIG_imx8mpevk ?= "imx8mp_evk_baremetal_defconfig"
 UBOOT_BOOT_BAREMETAL_DEFCONFIG_imx8mmevk ?= "imx8mm_evk_baremetal_defconfig"
 
-UBOOT_CONFIG = "baremetal"
-UBOOT_CONFIG[baremetal] = "${UBOOT_BOOT_BAREMETAL_DEFCONFIG}"
+UBOOT_CONFIG = "tfa"
+UBOOT_CONFIG[tfa] = "${UBOOT_BOOT_BAREMETAL_DEFCONFIG}"

@@ -22,11 +22,11 @@ UBOOT_BOOT_BAREMETAL_DEFCONFIG_lx2160ardb-rev2 ?= "lx2160ardb_tfa_baremetal_defc
 UBOOT_BOOT_BINARY ?= "u-boot-dtb.bin"
 UBOOT_BOOT_BINARY_ls1021aiot ?= "u-boot-with-spl-pbl.bin"
 
-UBOOT_CONFIG = "baremetal"
-UBOOT_CONFIG[baremetal] = "${UBOOT_BOOT_BAREMETAL_DEFCONFIG},,${UBOOT_BOOT_BINARY}"
+UBOOT_CONFIG = "tfa"
+UBOOT_CONFIG[tfa] = "${UBOOT_BOOT_BAREMETAL_DEFCONFIG},,${UBOOT_BOOT_BINARY}"
 
-uboot_boot = "${DEPLOY_DIR_IMAGE}/u-boot.bin-baremetal"
-uboot = "${DEPLOY_DIR_IMAGE}/u-boot.bin-baremetal"
+uboot_boot = "${DEPLOY_DIR_IMAGE}/u-boot.bin-tfa"
+uboot = "${DEPLOY_DIR_IMAGE}/u-boot.bin-tfa"
 
 # sai
 RCWSD_ls1028ardb = "${@bb.utils.contains('DISTRO_FEATURES', 'sai', \
