@@ -148,7 +148,7 @@ UBOOT_FILE_ls1021atsn = "u-boot.bin-sdcard"
 # ls1021aiot
 UBOOT_FILE_ls1021aiot ?= "${@bb.utils.contains('DISTRO_FEATURES', \
                           'baremetal', \
-                          'u-boot.bin-baremetal', \
+                          'u-boot.bin', \
                           'u-boot.bin-sdcard', d)}"
 WKS_FILE_ls1021aiot ?= "qoriq-ls1021aiot.wks.in"
 
