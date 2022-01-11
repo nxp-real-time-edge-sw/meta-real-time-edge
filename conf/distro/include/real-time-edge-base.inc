@@ -3,7 +3,7 @@
 DISTRO = "nxp-real-time-edge"
 DISTROOVERRIDES = "real-time-edge"
 DISTRO_NAME = "NXP Real-time Edge Distro"
-DISTRO_VERSION = "2.1"
+DISTRO_VERSION = "2.2"
 
 DISTRO_FEATURES_remove_mx8m = " jailhouse"
 DISTRO_FEATURES_append_ls1043ardb = " real-time-edge-jailhouse"
