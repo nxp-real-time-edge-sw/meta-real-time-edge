@@ -39,6 +39,7 @@ RDEPENDS_${PN} = " \
     tcpdump \
     ${genavbtsnimage} \
     ethtool \
+    ebtables \
     iproute2 \
     ${cantools} \
     openssh-sftp-server \
