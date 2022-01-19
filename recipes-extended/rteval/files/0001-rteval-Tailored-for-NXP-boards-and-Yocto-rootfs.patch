@@ -1,0 +1,257 @@
+From f7c83211679c1199540a5a6707eafb3582f10e8d Mon Sep 17 00:00:00 2001
+From: Tao Yang <Tao.Yang1@nxp.com>
+Date: Tue, 18 Jan 2022 11:07:04 +0800
+Subject: [PATCH] rteval: Tailored for NXP boards and Yocto rootfs
+
+---
+ rteval-cmd                               |  8 +-------
+ rteval/__init__.py                       |  1 -
+ rteval/modules/loads/hackbench.py        |  9 +++------
+ rteval/modules/loads/kcompile.py         | 12 +++---------
+ rteval/modules/measurement/cyclictest.py |  2 +-
+ rteval/rteval_text.xsl                   | 20 ++------------------
+ rteval/sysinfo/__init__.py               | 12 ++----------
+ rteval/sysinfo/osinfo.py                 | 14 +++++++-------
+ rteval/sysinfo/services.py               |  2 +-
+ 9 files changed, 20 insertions(+), 60 deletions(-)
+
+diff --git a/rteval-cmd b/rteval-cmd
+index 2c775ee..b2b1ed1 100755
+--- a/rteval-cmd
++++ b/rteval-cmd
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python3 -tt
++#!/usr/bin/python3
+ # -*- coding: utf-8 -*-
+ #
+ #   rteval - script for evaluating platform suitability for RT Linux
+@@ -127,9 +127,6 @@ def parse_options(cfg, parser, cmdargs):
+     parser.add_option("-i", "--installdir", dest="rteval___installdir",
+                       type="string", default=rtevcfg.installdir, metavar="DIRECTORY",
+                       help="place to locate installed templates (default: %default)")
+-    parser.add_option("-s", "--sysreport", dest="rteval___sysreport",
+-                      action="store_true", default=rtevcfg.sysreport,
+-                      help='run sysreport to collect system data (default: %default)')
+     parser.add_option("-D", '--debug', dest='rteval___debugging',
+                       action='store_true', default=rtevcfg.debugging,
+                       help='turn on debug prints (default: %default)')
+@@ -193,9 +190,6 @@ def parse_options(cfg, parser, cmdargs):
+ 
+ 
+ if __name__ == '__main__':
+-    from rteval.sysinfo import dmi
+-
+-    dmi.ProcessWarnings()
+ 
+     # set LD_BIND_NOW to resolve shared library symbols
+     # note: any string will do, nothing significant about 'rteval'
+diff --git a/rteval/__init__.py b/rteval/__init__.py
+index 22af8e8..d07cda1 100644
+--- a/rteval/__init__.py
++++ b/rteval/__init__.py
+@@ -293,6 +293,5 @@ class RtEval(rtevalReport):
+ 
+         if earlystop:
+             rtevalres = 1
+-        self._sysinfo.copy_dmesg(self.__reportdir)
+         self._tar_results()
+         return rtevalres
+diff --git a/rteval/modules/loads/hackbench.py b/rteval/modules/loads/hackbench.py
+index ddd1378..e4e5bb0 100644
+--- a/rteval/modules/loads/hackbench.py
++++ b/rteval/modules/loads/hackbench.py
+@@ -200,12 +200,9 @@ class Hackbench(CommandLineLoad):
+ 
+ 
+ def ModuleParameters():
+-    return {"jobspercore": {"descr": "Number of working threads per CPU core",
+-                            "default": 5,
+-                            "metavar": "NUM"},
+-            "runlowmem": {"descr": "Run hackbench on machines where low memory is detected",
+-                            "default": False,
+-                            "metavar": "True|False"}
++    return {"runlowmem": {"descr": "Run hackbench on machines where low memory is detected",
++                          "default": False,
++                          "metavar": "True|False"},
+             }
+ 
+ 
+diff --git a/rteval/modules/loads/kcompile.py b/rteval/modules/loads/kcompile.py
+index 8f97d38..ee6e93d 100644
+--- a/rteval/modules/loads/kcompile.py
++++ b/rteval/modules/loads/kcompile.py
+@@ -65,7 +65,7 @@ class KBuildJob:
+             self.jobs = self.calc_jobs_per_cpu() * len(self.node)
+ 
+         self.runcmd = f"make O={self.objdir} -C {self.kdir} -j{self.jobs}"
+-        self.cleancmd = f"make O={self.objdir} -C {self.kdir} clean allmodconfig"
++        self.cleancmd = f"make O={self.objdir} -C {self.kdir} clean defconfig"
+         if self.binder:
+             self.runcmd = self.binder + " " + self.runcmd
+             self.cleancmd = self.binder + " " + self.cleancmd
+@@ -94,7 +94,7 @@ class KBuildJob:
+         if ratio < 1.0 or ratio > 2.0:
+             mult = 1
+         self.log(Log.DEBUG, "memory/cores ratio on node %d: %f" % (int(self.node), ratio))
+-        self.log(Log.DEBUG, "returning jobs/core value of: %d" % int(ratio) * mult)
++        self.log(Log.DEBUG, "returning jobs/core value of: %d" % (int(ratio) * mult))
+         return int(int(ratio) * int(mult))
+ 
+     def clean(self, sin=None, sout=None, serr=None):
+@@ -320,13 +320,7 @@ class Kcompile(CommandLineLoad):
+ 
+ 
+ def ModuleParameters():
+-    return {"source":   {"descr": "Source tar ball",
+-                         "default": "linux-5.13.2.tar.xz",
+-                         "metavar": "TARBALL"},
+-            "jobspercore": {"descr": "Number of working threads per core",
+-                            "default": 2,
+-                            "metavar": "NUM"},
+-            }
++    return {}
+ 
+ 
+ 
+diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
+index cc74b46..f22ed78 100644
+--- a/rteval/modules/measurement/cyclictest.py
++++ b/rteval/modules/measurement/cyclictest.py
+@@ -281,7 +281,7 @@ class Cyclictest(rtevalModulePrototype):
+ 
+         self.__cmd = ['cyclictest',
+                       self.__interval,
+-                      '-qmu',
++                      '-qmun',
+                       '-h %d' % self.__buckets,
+                       "-p%d" % int(self.__priority),
+                       ]
+diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
+index c40063e..cdac39c 100644
+--- a/rteval/rteval_text.xsl
++++ b/rteval/rteval_text.xsl
+@@ -27,22 +27,6 @@
+ 
+     <xsl:text>   Tested node:  </xsl:text>
+     <xsl:value-of select="SystemInfo/uname/node|uname/node"/>
+-    <xsl:text>&#10;</xsl:text>
+-
+-    <xsl:text>   Model:        </xsl:text>
+-    <xsl:value-of select="SystemInfo/DMIinfo/HardwareInfo/GeneralInfo/Manufacturer|HardwareInfo/GeneralInfo/ProductName"/>
+-    <xsl:text> - </xsl:text><xsl:value-of select="SystemInfo/DMIinfo/HardwareInfo/GeneralInfo/ProductName|HardwareInfo/GeneralInfo/ProductName"/>
+-    <xsl:text>&#10;</xsl:text>
+-
+-    <xsl:text>   BIOS version: </xsl:text>
+-    <xsl:value-of select="SystemInfo/DMIinfo/HardwareInfo/BIOS|HardwareInfo/BIOS"/>
+-    <xsl:text> (ver: </xsl:text>
+-    <xsl:value-of select="SystemInfo/DMIinfo/HardwareInfo/BIOS/@Version|HardwareInfo/BIOS/@Version"/>
+-    <xsl:text>, rev :</xsl:text>
+-    <xsl:value-of select="SystemInfo/DMIinfo/HardwareInfo/BIOS/@BIOSrevision|HardwareInfo/BIOS/@BIOSrevision"/>
+-    <xsl:text>, release date: </xsl:text>
+-    <xsl:value-of select="SystemInfo/DMIinfo/HardwareInfo/BIOS/@ReleaseDate|HardwareInfo/BIOS/@ReleaseDate"/>
+-    <xsl:text>)</xsl:text>
+     <xsl:text>&#10;&#10;</xsl:text>
+ 
+     <xsl:text>   CPU cores:    </xsl:text>
+@@ -95,7 +79,7 @@
+ 
+     <xsl:text>   Kernel:       </xsl:text>
+     <xsl:value-of select="SystemInfo/uname/kernel|uname/kernel"/>
+-    <xsl:if test="SystemInfo/uname/kernel/@is_RT = '1' or uname/kernel/@is_RT = '1'">  (RT enabled)</xsl:if>
++    <xsl:if test="SystemInfo/uname/kernel/@is_RT = '1' or uname/kernel/@is_RT = '1'"> (RT enabled)</xsl:if>
+     <xsl:text>&#10;</xsl:text>
+ 
+     <xsl:text>   Base OS:      </xsl:text>
+@@ -137,7 +121,7 @@
+     </xsl:if>
+     <xsl:text>&#10;</xsl:text>
+ 
+-    <xsl:text> Cmdline:        </xsl:text>
++    <xsl:text>   Cmdline:      </xsl:text>
+     <xsl:value-of select="SystemInfo/cmdlineInfo/cmdline"/>
+     <xsl:text>&#10;</xsl:text>
+ 
+diff --git a/rteval/sysinfo/__init__.py b/rteval/sysinfo/__init__.py
+index 0436ebb..9a89b77 100644
+--- a/rteval/sysinfo/__init__.py
++++ b/rteval/sysinfo/__init__.py
+@@ -32,24 +32,18 @@ from rteval.sysinfo.services import SystemServices
+ from rteval.sysinfo.cputopology import CPUtopology
+ from rteval.sysinfo.memory import MemoryInfo
+ from rteval.sysinfo.osinfo import OSInfo
+-from rteval.sysinfo.network import NetworkInfo
+ from rteval.sysinfo.cmdline import cmdlineInfo
+-from rteval.sysinfo import dmi
+ 
+-class SystemInfo(KernelInfo, SystemServices, dmi.DMIinfo, CPUtopology,
+-                 MemoryInfo, OSInfo, NetworkInfo, cmdlineInfo):
++class SystemInfo(KernelInfo, SystemServices, CPUtopology,
++                 MemoryInfo, OSInfo, cmdlineInfo):
+     def __init__(self, config, logger=None):
+         self.__logger = logger
+         KernelInfo.__init__(self, logger=logger)
+         SystemServices.__init__(self, logger=logger)
+-        dmi.DMIinfo.__init__(self, config, logger=logger)
+         CPUtopology.__init__(self)
+         OSInfo.__init__(self, logger=logger)
+         cmdlineInfo.__init__(self, logger=logger)
+ 
+-        # Parse initial DMI decoding errors
+-        dmi.ProcessWarnings()
+-
+         # Parse CPU info
+         CPUtopology._parse(self)
+ 
+@@ -61,11 +55,9 @@ class SystemInfo(KernelInfo, SystemServices, dmi.DMIinfo, CPUtopology,
+         # Populate the report
+         report_n.addChild(OSInfo.MakeReport(self))
+         report_n.addChild(KernelInfo.MakeReport(self))
+-        report_n.addChild(NetworkInfo.MakeReport(self))
+         report_n.addChild(SystemServices.MakeReport(self))
+         report_n.addChild(CPUtopology.MakeReport(self))
+         report_n.addChild(MemoryInfo.MakeReport(self))
+-        report_n.addChild(dmi.DMIinfo.MakeReport(self))
+         report_n.addChild(cmdlineInfo.MakeReport(self))
+ 
+         return report_n
+diff --git a/rteval/sysinfo/osinfo.py b/rteval/sysinfo/osinfo.py
+index 7b7bfe9..7ae678a 100644
+--- a/rteval/sysinfo/osinfo.py
++++ b/rteval/sysinfo/osinfo.py
+@@ -39,13 +39,13 @@ class OSInfo:
+     def get_base_os(self):
+         '''record what userspace we're running on'''
+         distro = "unknown"
+-        for f in ('redhat-release', 'fedora-release'):
+-            p = os.path.join('/etc', f)
+-            if os.path.exists(p):
+-                f = open(p, 'r')
+-                distro = f.readline().strip()
+-                f.close()
+-                break
++        p = os.path.join('/etc', 'os-release')
++        if os.path.exists(p):
++            with open(p, 'r') as f:
++                for line in f:
++                    if 'PRETTY_NAME' in line:
++                        distro = line[12:].strip(' "\n')
++                        break
+         return distro
+ 
+ 
+diff --git a/rteval/sysinfo/services.py b/rteval/sysinfo/services.py
+index e5de22e..3824442 100644
+--- a/rteval/sysinfo/services.py
++++ b/rteval/sysinfo/services.py
+@@ -65,7 +65,7 @@ class SystemServices:
+                 c = subprocess.Popen(cmd, shell=True, text=True)
+                 c.wait()
+                 if c.returncode == 0:
+-                    cmd = ['env', '-i', 'LANG="%s"' % os.environ['LANG'], 'PATH="%s"' % os.environ['PATH'], 'TERM="%s"' % os.environ['TERM'], service, 'status']
++                    cmd = ['env', '-i', 'PATH="%s"' % os.environ['PATH'], 'TERM="%s"' % os.environ['TERM'], service, 'status']
+                     c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                     c.wait()
+                     if c.returncode == 0 and (c.stdout.read() or c.stderr.read()):
+-- 
+2.17.1
+
