@@ -44,6 +44,7 @@ PACKAGECONFIG[r8169]   = "--enable-r8169,--disable-r8169,"
 PACKAGECONFIG[fec]     = "--enable-fec,--disable-fec,"
 PACKAGECONFIG[enetc]   = "--enable-enetc,--disable-enetc,"
 PACKAGECONFIG[dpaa1]   = "--enable-dpaa1,--disable-dpaa1,"
+PACKAGECONFIG[backup]   = "--with-devices=2,--with-devices=1,"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
