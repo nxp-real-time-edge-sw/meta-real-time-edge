@@ -1,7 +1,7 @@
 # Copyright 2021 NXP
 # Released under the MIT license (see COPYING.MIT for the terms)
 
-real-time-edge-IMAGE_BASE_imx = "recipes-fsl/images/imx-image-core.bb"
+real-time-edge-IMAGE_BASE ?= "recipes-fsl/images/imx-image-core.bb"
 real-time-edge-IMAGE_BASE_qoriq = "recipes-fsl/images/fsl-image-networking.bb"
 
 require ${real-time-edge-IMAGE_BASE}
@@ -28,4 +28,7 @@ IMAGE_INSTALL_append_ls1028ardb = " \
 "
 IMAGE_INSTALL_append_imx = " \
     packagegroup-real-time-edge-multimedia \
+    packagegroup-real-time-edge-rtos \
 "
+
+# do_image[mcdepends] = "mc:imx8mpevk:evkmimx8mp:demo-hello-world:do_install"
