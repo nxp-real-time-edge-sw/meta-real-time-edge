@@ -28,6 +28,8 @@ SRC_URI += "\
     file://0016-enetc-adjust-the-link-status-dynamically-for-ec_mast.patch \
     file://0017-enetc-mq-is-useless-to-ndev-struct.patch \
     file://0018-enetc-add-enetc-support-on-scripts.patch \
+    file://0001-Add-support-for-NXP-DPAA1-ethercat-port.patch \
+    file://0002-igh_ethercat-fix-calltrace-issue-caused-by-ethercatc.patch \
 "
 S = "${WORKDIR}/ethercat-${PV}"
 
@@ -40,7 +42,8 @@ PACKAGECONFIG[e1000]   = "--enable-e1000,--disable-e1000,"
 PACKAGECONFIG[e1000e]  = "--enable-e1000e,--disable-e1000e,"
 PACKAGECONFIG[r8169]   = "--enable-r8169,--disable-r8169,"
 PACKAGECONFIG[fec]     = "--enable-fec,--disable-fec,"
-PACKAGECONFIG[enetc]     = "--enable-enetc,--disable-enetc,"
+PACKAGECONFIG[enetc]   = "--enable-enetc,--disable-enetc,"
+PACKAGECONFIG[dpaa1]   = "--enable-dpaa1,--disable-dpaa1,"
 
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
