@@ -12,6 +12,7 @@ SRC_URI_append_real-time-edge = " \
     file://linux-baremetal-ls1028a.config \
     file://linux-baremetal-lx2160a.config \
     file://linux-selinux.config \
+    file://linux-dpaa-ethercat.config \
 "
 
 do_configure_prepend_real-time-edge() {

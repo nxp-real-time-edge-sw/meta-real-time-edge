@@ -1,0 +1,408 @@
+From 6703a6182778b09358c831fc58572972e2046675 Mon Sep 17 00:00:00 2001
+From: "hongbo.wang" <hongbo.wang@nxp.com>
+Date: Mon, 13 Dec 2021 14:06:40 +0800
+Subject: [PATCH 1/2] Add support for NXP DPAA1 ethercat port
+
+if want to enable this feature, should add "--enable-dpaa1" in compile configuration.
+if want to support ethercat master and backup, should add "--with-devices=2" in configuration.
+
+Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+---
+ configure.ac                   |  25 +++++++
+ devices/Kbuild.in              |   4 ++
+ devices/Makefile.am            |   6 +-
+ devices/dpaa1/Kbuild.in        |  53 ++++++++++++++
+ devices/dpaa1/Makefile.am      |  39 +++++++++++
+ devices/dpaa1/dpaa1-ethercat.c | 124 +++++++++++++++++++++++++++++++++
+ devices/dpaa1/dpaa1-ethercat.h |  33 +++++++++
+ script/ethercat.conf           |   4 +-
+ script/ethercatctl.in          |   2 +
+ 9 files changed, 286 insertions(+), 4 deletions(-)
+ create mode 100644 devices/dpaa1/Kbuild.in
+ create mode 100644 devices/dpaa1/Makefile.am
+ create mode 100644 devices/dpaa1/dpaa1-ethercat.c
+ create mode 100644 devices/dpaa1/dpaa1-ethercat.h
+
+diff --git a/configure.ac b/configure.ac
+index f2c7cf5..2ebe153 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -257,6 +257,29 @@ AC_ARG_ENABLE([fec],
+ AM_CONDITIONAL(ENABLE_FEC, test "x$enable_fec" = "x1")
+ AC_SUBST(ENABLE_FEC,[$enable_fec])
+ 
++#------------------------------------------------------------------------------
++# NXP DPAA1 driver
++#------------------------------------------------------------------------------
++
++AC_ARG_ENABLE([dpaa1],
++    AS_HELP_STRING([--enable-dpaa1],
++                   [Enable nxp dpaa1 driver]),
++    [
++        case "${enableval}" in
++            yes) enable_dpaa1=1
++                ;;
++            no) enable_dpaa1=0
++                ;;
++            *) AC_MSG_ERROR([Invalid value for --enable-dpaa1])
++                ;;
++        esac
++    ],
++    [enable-dpaa1=0] # disabled by default
++)
++
++AM_CONDITIONAL(ENABLE_DPAA1, test "x$enable_dpaa1" = "x1")
++AC_SUBST(ENABLE_DPAA1,[$enable_dpaa1])
++
+ #------------------------------------------------------------------------------
+ # e100 driver
+ #------------------------------------------------------------------------------
+@@ -993,6 +1016,8 @@ AC_CONFIG_FILES([
+         devices/fec/Kbuild
+ 	devices/enetc/Makefile
+ 	devices/enetc/Kbuild
++        devices/dpaa1/Kbuild
++        devices/dpaa1/Makefile
+         ethercat.spec
+         examples/Kbuild
+         examples/Makefile
+diff --git a/devices/Kbuild.in b/devices/Kbuild.in
+index 821c618..d52b31d 100644
+--- a/devices/Kbuild.in
++++ b/devices/Kbuild.in
+@@ -44,6 +44,10 @@ ifeq (@ENABLE_GENERIC@,1)
+ 	CFLAGS_$(EC_GENERIC_OBJ) = -DREV=$(REV)
+ endif
+ 
++ifeq (@ENABLE_DPAA1@,1)
++       obj-m += dpaa1/
++endif
++
+ ifeq (@ENABLE_8139TOO@,1)
+ 	EC_8139TOO_OBJ := 8139too-@KERNEL_8139TOO@-ethercat.o
+ 	obj-m += ec_8139too.o
+diff --git a/devices/Makefile.am b/devices/Makefile.am
+index 9bd809e..f214e1f 100644
+--- a/devices/Makefile.am
++++ b/devices/Makefile.am
+@@ -30,12 +30,14 @@
+ SUBDIRS = \
+ 	e1000 \
+ 	e1000e \
+-	fec
++	fec \
++	dpaa1
+ 
+ DIST_SUBDIRS = \
+ 	e1000 \
+ 	e1000e \
+-	fec
++	fec \
++	dpaa1
+ 
+ # using HEADERS to enable tags target
+ noinst_HEADERS = \
+diff --git a/devices/dpaa1/Kbuild.in b/devices/dpaa1/Kbuild.in
+new file mode 100644
+index 0000000..10cffc3
+--- /dev/null
++++ b/devices/dpaa1/Kbuild.in
+@@ -0,0 +1,53 @@
++#------------------------------------------------------------------------------
++#
++#  $Id$
++#
++#  Copyright (C) 2006-2008  Florian Pose, Ingenieurgemeinschaft IgH
++#
++#  This file is part of the IgH EtherCAT Master.
++#
++#  The IgH EtherCAT Master is free software; you can redistribute it and/or
++#  modify it under the terms of the GNU General Public License version 2, as
++#  published by the Free Software Foundation.
++#
++#  The IgH EtherCAT Master is distributed in the hope that it will be useful,
++#  but WITHOUT ANY WARRANTY; without even the implied warranty of
++#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
++#  Public License for more details.
++#
++#  You should have received a copy of the GNU General Public License along
++#  with the IgH EtherCAT Master; if not, write to the Free Software
++#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++#  ---
++#
++#  The license mentioned above concerns the source code only. Using the
++#  EtherCAT technology and brand is only permitted in compliance with the
++#  industrial property and similar rights of Beckhoff Automation GmbH.
++#
++#  ---
++#
++#  vim: syntax=make
++#
++#------------------------------------------------------------------------------
++
++TOPDIR := $(src)/../..
++
++REV := $(shell if test -s $(TOPDIR)/revision; then \
++		cat $(TOPDIR)/revision; \
++	else \
++		hg id -i $(TOPDIR) 2>/dev/null || echo "unknown"; \
++	fi)
++
++ifeq (@ENABLE_DPAA1@,1)
++	EC_DPAA1_OBJ := dpaa1-ethercat.o
++	obj-m += ec_dpaa1.o
++	ec_dpaa1-objs := $(EC_DPAA1_OBJ)
++	CFLAGS_$(EC_DPAA1_OBJ) = -DREV=$(REV)
++endif
++
++KBUILD_EXTRA_SYMBOLS := \
++	@abs_top_builddir@/$(LINUX_SYMVERS) \
++	@abs_top_builddir@/master/$(LINUX_SYMVERS)
++
++#------------------------------------------------------------------------------
+diff --git a/devices/dpaa1/Makefile.am b/devices/dpaa1/Makefile.am
+new file mode 100644
+index 0000000..55231ab
+--- /dev/null
++++ b/devices/dpaa1/Makefile.am
+@@ -0,0 +1,39 @@
++#  published by the Free Software Foundation.
++#
++#  The IgH EtherCAT Master is distributed in the hope that it will be useful,
++#  but WITHOUT ANY WARRANTY; without even the implied warranty of
++#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
++#  Public License for more details.
++#
++#  You should have received a copy of the GNU General Public License along
++#  with the IgH EtherCAT Master; if not, write to the Free Software
++#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++#  ---
++#
++#  The license mentioned above concerns the source code only. Using the
++#  EtherCAT technology and brand is only permitted in compliance with the
++#  industrial property and similar rights of Beckhoff Automation GmbH.
++#
++#------------------------------------------------------------------------------
++
++EXTRA_DIST = \
++        Kbuild.in \
++        dpaa1-ethercat.h \
++        dpaa1-ethercat.c
++
++BUILT_SOURCES = \
++        Kbuild
++
++modules:
++	$(MAKE) -C "$(LINUX_SOURCE_DIR)" M="@abs_srcdir@" modules
++
++modules_install:
++	$(MAKE) -C "$(LINUX_SOURCE_DIR)" M="@abs_srcdir@" \
++                INSTALL_MOD_DIR="$(INSTALL_MOD_DIR)" modules_install
++
++clean-local:
++	$(MAKE) -C "$(LINUX_SOURCE_DIR)" M="@abs_srcdir@" clean
++
++#------------------------------------------------------------------------------
++
+diff --git a/devices/dpaa1/dpaa1-ethercat.c b/devices/dpaa1/dpaa1-ethercat.c
+new file mode 100644
+index 0000000..0a7a619
+--- /dev/null
++++ b/devices/dpaa1/dpaa1-ethercat.c
+@@ -0,0 +1,124 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT)
++/*
++ * Copyright 2021-2022 NXP
++ */
++
++#include "dpaa1-ethercat.h"
++
++static void *ec_dpaa_netdev_init(struct net_device *net_dev)
++{
++	struct module *module = NULL;
++	ec_device_t *ecdev = NULL;
++	int ret = 0;
++
++	module = ec_dpaa_get_module();
++	ecdev = ecdev_offer(net_dev, ec_dpaa_poll, module);
++	if (ecdev) {
++		ret = ecdev_open(ecdev);
++		if (ret) {
++			ecdev_withdraw(ecdev);
++			pr_info("%s: ecdev_open failed! ret=%d\n", __func__, ret);
++			return NULL;
++		}
++		pr_info("%s: ecdev_offer netdev %s ok!\n", __func__, net_dev->name);
++	} else {
++		pr_info("%s: ecdev_offer netdev %s failed!\n", __func__, net_dev->name);
++	}
++
++	return ecdev;
++}
++
++static int ec_dpaa_receive(void *pecdev, const void *data, size_t size)
++{
++	ecdev_receive((ec_device_t *)pecdev, data, size);
++	return 0;
++}
++
++static int ec_dpaa_link(void *pecdev, uint8_t link)
++{
++	ec_device_t *ecdev = (ec_device_t *)pecdev;
++
++	if (link == PHY_RUNNING) {
++		if (ecdev && !ecdev_get_link(ecdev))
++			ecdev_set_link(ecdev, 1);
++	} else {
++		if (ecdev && ecdev_get_link(ecdev))
++			ecdev_set_link(ecdev, 0);
++	}
++
++	return 0;
++}
++
++static int ec_dpaa_close(void *pecdev)
++{
++	ec_device_t *ecdev = (ec_device_t *)pecdev;
++
++	ecdev_close(ecdev);
++	ecdev_withdraw(ecdev);
++
++	return 0;
++}
++
++static int ec_dpaa_init(void)
++{
++	struct net_device *net_dev = NULL;
++	void *ecdev = NULL;
++	int i = 0;
++
++	ec_dpaa_set_func_cb(ec_dpaa_receive, ec_dpaa_link, ec_dpaa_close);
++
++	for (i = 0; i < MAX_EC_DPAA_NETDEV_CNT; i++) {
++		net_dev = ec_dpaa_get_netdev(i);
++		if (!net_dev)
++			break;
++
++		ecdev = ec_dpaa_netdev_init(net_dev);
++		if (ecdev)
++			ec_dpaa_set_ecdev(i, ecdev);
++	}
++
++	return 0;
++}
++
++static int ec_dpaa_clean(void)
++{
++	struct net_device *net_dev = NULL;
++	void *ecdev = NULL;
++	int i = 0;
++
++	ec_dpaa_set_func_cb(NULL, NULL, NULL);
++
++	for (i = 0; i < MAX_EC_DPAA_NETDEV_CNT; i++) {
++		net_dev = ec_dpaa_get_netdev(i);
++		if (!net_dev)
++			break;
++
++		ecdev = ec_dpaa_get_ecdev(i);
++		if (ecdev)
++			ec_dpaa_close(ecdev);
++
++		ec_dpaa_set_ecdev(i, NULL);
++	}
++
++	return 0;
++}
++
++static int __init ec_dpaa_init_module(void)
++{
++	int ret;
++
++	pr_info("%s\n", __func__);
++
++	ret = ec_dpaa_init();
++
++	return ret;
++}
++
++module_init(ec_dpaa_init_module);
++
++static void __exit ec_dpaa_exit_module(void)
++{
++	ec_dpaa_clean();
++}
++
++module_exit(ec_dpaa_exit_module);
+diff --git a/devices/dpaa1/dpaa1-ethercat.h b/devices/dpaa1/dpaa1-ethercat.h
+new file mode 100644
+index 0000000..2995599
+--- /dev/null
++++ b/devices/dpaa1/dpaa1-ethercat.h
+@@ -0,0 +1,33 @@
++/* SPDX-License-Identifier: (GPL-2.0 OR MIT) */
++/*
++ * Copyright 2021-2022 NXP
++ */
++
++#ifndef __NXP_DPAA1_ETHERCAT__
++#define __NXP_DPAA1_ETHERCAT__
++
++#include <linux/module.h>
++#include <linux/device.h>
++#include <linux/err.h>
++#include <linux/phy.h>
++
++#include "../../master/globals.h"
++#include "../../master/master.h"
++#include "../../master/device.h"
++
++#define MAX_EC_DPAA_NETDEV_CNT (16)
++
++typedef int (*ec_dpaa_receive_cb)(void *pecdev, const void *data, size_t size);
++typedef int (*ec_dpaa_link_cb)(void *pecdev, uint8_t link);
++typedef int (*ec_dpaa_close_cb)(void *pecdev);
++
++int ec_dpaa_set_func_cb(ec_dpaa_receive_cb recv, ec_dpaa_link_cb link, ec_dpaa_close_cb close);
++
++extern struct net_device *ec_dpaa_get_netdev(int idx);
++extern void ec_dpaa_poll(struct net_device *net_dev);
++extern int ec_dpaa_set_ecdev(int idx, void *ecdev);
++extern void *ec_dpaa_get_ecdev(int idx);
++extern struct module *ec_dpaa_get_module(void);
++extern int dpa_unregister_ethercat(struct net_device *net_dev);
++
++#endif
+diff --git a/script/ethercat.conf b/script/ethercat.conf
+index cd36002..718d4af 100644
+--- a/script/ethercat.conf
++++ b/script/ethercat.conf
+@@ -36,8 +36,8 @@ MASTER0_DEVICE=""
+ # the EtherCAT-capable ones. If a certain (EtherCAT-capable) driver is not
+ # found, a warning will appear.
+ #
+-# Possible values: 8139too, e100, e1000, e1000e, r8169, fec, enetc, generic. Separate
+-# multiple drivers with spaces.
++# Possible values: 8139too, e100, e1000, e1000e, r8169, fec, enetc, dpaa1, generic.
++# Separate multiple drivers with spaces.
+ #
+ # Note: The e100, e1000, e1000e, fec and r8169 drivers are not built by default.
+ # Enable them with the --enable-<driver> configure switches.
+diff --git a/script/ethercatctl.in b/script/ethercatctl.in
+index c57750c..826973a 100755
+--- a/script/ethercatctl.in
++++ b/script/ethercatctl.in
+@@ -192,6 +192,8 @@ stop)
+             continue
+         elif [ ${MODULE} == "generic" ]; then
+             continue
++        elif [ ${MODULE} == "dpaa1" ]; then
++            continue
+         fi
+         ${MODPROBE} ${MODPROBE_FLAGS} ${MODULE}
+     done
+-- 
+2.25.1
+

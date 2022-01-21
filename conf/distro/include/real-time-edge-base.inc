@@ -33,6 +33,8 @@ DELTA_KERNEL_DEFCONFIG_append = " \
 "
 DELTA_KERNEL_DEFCONFIG_append_mx8mm = " linux-fec.config"
 DELTA_KERNEL_DEFCONFIG_append_mx8m = " linux-imx8.config"
+DELTA_KERNEL_DEFCONFIG_append_ls1043ardb = " linux-dpaa-ethercat.config"
+DELTA_KERNEL_DEFCONFIG_append_ls1046ardb = " linux-dpaa-ethercat.config"
 
 REAL_TIME_EDGE_SYSREPO_ls1028ardb = ""
 REAL_TIME_EDGE_SYSREPO_ls1021atsn = "real-time-edge-sysrepo-tc"
