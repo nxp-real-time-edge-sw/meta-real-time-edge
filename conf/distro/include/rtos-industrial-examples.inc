@@ -3,10 +3,10 @@
 
 # board name
 RTOS-INDUSTRIAL-BOARD ?= ""
-RTOS-INDUSTRIAL-BOARD_mx8mm = "evkmimx8mm"
-RTOS-INDUSTRIAL-BOARD_mx8mn = "evkmimx8mn"
+# RTOS-INDUSTRIAL-BOARD_mx8mm = "evkmimx8mm"
+# RTOS-INDUSTRIAL-BOARD_mx8mn = "evkmimx8mn"
 RTOS-INDUSTRIAL-BOARD_mx8mp = "evkmimx8mp"
-RTOS-INDUSTRIAL-BOARD_mx8mq = "evkmimx8mq"
+# RTOS-INDUSTRIAL-BOARD_mx8mq = "evkmimx8mq"
 
 python () {
     if d.getVar('RTOS-INDUSTRIAL-BOARD', True):
@@ -15,6 +15,5 @@ python () {
 
 EXAMPLE_TARGET_TYPE = " \
     release \
-    flash_release \
     ddr_release \
 "
