@@ -11,7 +11,17 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 PACKAGES = "${PN}"
 
 RDEPENDS_${PN} = " \
+    packagegroup-core-buildessential \
+    packagegroup-core-full-cmdline \
     iperf3 e2fsprogs e2fsprogs-resize2fs \
     devmem2 \
+    rteval \
     ${@bb.utils.contains('DISTRO_FEATURES', 'feedgnuplot', 'feedgnuplot', '', d)} \
+"
+
+RDEPENDS_${PN}_append = " \
+    xz \
+    flex \
+    bison \
+    openssl-dev \
 "
