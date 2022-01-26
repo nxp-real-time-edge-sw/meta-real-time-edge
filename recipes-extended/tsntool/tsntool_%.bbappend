@@ -41,3 +41,5 @@ do_install:append() {
 }
 
 COMPATIBLE_MACHINE = "qoriq|imx"
+
+INSANE_SKIP:${PN} += "dev-deps"
