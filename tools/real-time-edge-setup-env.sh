@@ -2,7 +2,7 @@
 #
 # Real-time Edge Yocto Project Build Environment Setup Script
 #
-# Copyright 2021 NXP
+# Copyright 2021-2022 NXP
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -104,6 +104,10 @@ imx_add_layers()
 	    sed -e "s,meta-fsl-arm\s,meta-freescale ,g" -i $BUILD_DIR/conf/bblayers.conf
 	    sed -e "s,\$.BSPDIR./sources/meta-fsl-arm-extra\s,,g" -i $BUILD_DIR/conf/bblayers.conf
 	fi
+
+	echo "" >> $BUILD_DIR/conf/bblayers.conf
+	echo "# Harpoon layer" >> $BUILD_DIR/conf/bblayers.conf
+	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-harpoon\"" >> $BUILD_DIR/conf/bblayers.conf
 }
 
 qoriq_add_layers()
