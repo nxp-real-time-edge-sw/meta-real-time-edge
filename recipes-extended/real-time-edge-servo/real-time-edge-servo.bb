@@ -6,7 +6,7 @@ LICENSE = "GPL-2.0 & MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=ef58f855337069acd375717db0dbbb6d"
 RT_EDGE_SERVO_BRANCH = "master"
 SRC_URI = "git://git@bitbucket.sw.nxp.com/dnind/real-time-edge-servo.git;protocol=ssh;branch=${RT_EDGE_SERVO_BRANCH}"
-SRCREV = "262fc1f4b0ac36fd5d3a1dd1557ac68bc12812d7"
+SRCREV = "c1e7be56d9d4c08ab3b84f4364e4061679a35298"
 
 S = "${WORKDIR}/git"
 
