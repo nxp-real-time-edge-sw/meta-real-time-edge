@@ -8,7 +8,7 @@ GENAVB_TSN_URL = "git://bitbucket.sw.nxp.com/mss/gen_avb_sdk.git;protocol=ssh"
 
 SRC_URI = "${GENAVB_TSN_URL};nobranch=1 "
 
-SRCREV = "123b3f795b5a4ddc17376febcd0fd6ca4044efb9"
+SRCREV = "9a2c864f1d058cb1b6f653eacdb055a151150a1c"
 
 PV = "4.4+git${SRCPV}"
 
