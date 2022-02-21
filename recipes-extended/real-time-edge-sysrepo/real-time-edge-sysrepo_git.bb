@@ -3,7 +3,7 @@ DESCRIPTION = "A tool to configure TSN funtionalities in user space"
 LICENSE = "Apachev2"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
-SRC_URI = "git://github.com/real-time-edge-sw/real-time-edge-sysrepo.git;protocol=https;nobranch=1 \
+SRC_URI = "git://bitbucket.sw.nxp.com/dnind/real-time-edge-sysrepo.git;protocol=ssh;nobranch=1 \
            file://sysrepo-tsnd \
            file://sysrepo-init \
            file://sysrepo-tsn.service \
