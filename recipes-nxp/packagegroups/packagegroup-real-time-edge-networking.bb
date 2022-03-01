@@ -15,7 +15,7 @@ tsntoolimage_ls1028a = "tsntool"
 
 genavbtsnimage ?= ""
 genavbtsnimage_ls1028ardb = "genavb-tsn"
-genavbtsnimage_imx8mpevk = "genavb-tsn"
+genavbtsnimage_imx8mp-lpddr4-evk = "genavb-tsn"
 
 cantools ?=""
 cantools_ls1021aiot = "libsocketcan can-utils"

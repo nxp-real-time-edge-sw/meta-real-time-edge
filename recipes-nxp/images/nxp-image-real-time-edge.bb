@@ -32,4 +32,4 @@ IMAGE_INSTALL_append_imx = " \
     packagegroup-harpoon \
 "
 
-# do_image[mcdepends] = "mc:imx8mpevk:evkmimx8mp:demo-hello-world:do_install"
+# do_image[mcdepends] = "mc:imx8mp-lpddr4-evk:evkmimx8mp:demo-hello-world:do_install"

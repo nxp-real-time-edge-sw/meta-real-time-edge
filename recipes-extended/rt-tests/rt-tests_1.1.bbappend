@@ -8,11 +8,11 @@ SRC_URI_append_imx6ull14x14evk = "\
     file://pip_stress-De-constify-prio_min.patch \
 "
 
-SRC_URI_append_imx8mmevk = "\
+SRC_URI_append_imx8mm-lpddr4-evk = "\
     file://pip_stress-De-constify-prio_min.patch \
 "
 
-SRC_URI_append_imx8mpevk = "\
+SRC_URI_append_imx8mp-lpddr4-evk = "\
     file://pip_stress-De-constify-prio_min.patch \
 "
 
