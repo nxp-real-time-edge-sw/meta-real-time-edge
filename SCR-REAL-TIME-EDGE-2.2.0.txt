@@ -1,0 +1,414 @@
+NXP Software Content Register
+
+Release - Real-time Edge Software 2.2.0
+ March 2022
+
+Outgoing License:  LA_OPT_NXP_Software_License v34 February 2022 - Additional Distribution License granted - Section 2.3 applies
+License File:      EULA.txt
+
+Yocto Project recipe manifest:
+repo init -u https://github.com/real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-hardknott -m real-time-edge-2.2.0.xml
+
+Release tag: real-time-edge-2.2.0
+
+--------------------------------------------
+BSP Packages
+--------------------------------------------
+
+Package:                     atf.git
+Version:                     2.4
+Outgoing License:            BSD-3-Clause
+License File:                docs/license.rst
+Package Category:            BSP
+Type of Content:             source
+Description and comments:    ARM Trusted Firmware
+Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/atf -b lf-5.10.72-2.2.0
+Origin:                      NXP (BSD-3-clause)
+                             arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
+
+--------------------------------------------
+
+Package:                     imx-atf.git
+Version:                     2.4
+Outgoing License:            BSD-3-Clause
+License File:                docs/license.rst
+Package Category:            BSP
+Type of Content:             source
+Description and comments:    ARM Trusted Firmware
+Release Location:            https://source.codeaurora.org/external/imx/imx-atf -b rel_imx_5.10.72-2.2.0
+Origin:                      NXP (BSD-3-clause)
+                             arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
+
+--------------------------------------------
+
+Package:                     rcw
+Version:                     2021.08
+Outgoing License:            BSD
+License File:                LICENSE
+Package Category:            BSP
+Type of Content:             source
+Description and comments:    Reset Configuration Word
+Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/rcw -b lf-5.10.72-2.2.0
+Origin:                      NXP (BSD)
+
+--------------------------------------------
+
+Package:                     real-time-edge-linux.git
+Version:                     5.10
+Outgoing License:            GPL-2.0
+License File:                COPYING
+Package Category:            BSP
+Type of Content:             source
+Description and comments:    The Linux kernel with PREEMPT-RT enabled
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-linux -b linux_5.10.y
+Origin:                      NXP (GPL-2.0)
+                             kernel.org (GPL-2.0) - https://www.kernel.org/
+
+--------------------------------------------
+
+Package:                     real-time-edge-uboot.git
+Version:                     2021.04
+Outgoing License:            GPL-2.0
+License File:                COPYING
+Package Category:            BSP
+Type of Content:             source
+Description and comments:    Bootloader with Real-time Edge specific capabilities
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b uboot_v2021.04
+Origin:                      NXP (GPL-2.0)
+                             Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
+
+--------------------------------------------
+Real-time System Packages
+--------------------------------------------
+
+Package:                     imx-jailhouse.git
+Version:                     0.12
+Outgoing License:            GPL-2.0
+License File:                COPYING
+Package Category:            Real-time System
+Type of Content:             source
+Description and comments:    A partitioning Hypervisor based on Linux
+Release Location:            https://source.codeaurora.org/external/imx/imx-jailhouse -b lf-5.10.72-2.2.0
+Origin:                      NXP (GPL-2.0)
+                             Siemens AG (GPL-2.0) - https://github.com/siemens/jailhouse
+
+--------------------------------------------
+
+Package:                     real-time-edge-baremetal
+Version:                     2021.04
+Outgoing License:            GPL-2.0
+License File:                COPYING
+Package Category:            Real-time System
+Type of Content:             source
+Description and comments:    A baremetal framework
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2021.04
+Origin:                      NXP (GPL-2.0)
+                             Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
+
+--------------------------------------------
+
+Package:                     real-time-edge-icc
+Version:                     1.1
+Outgoing License:            GPL-2.0
+License File:                LICENSE
+Package Category:            Real-time System
+Type of Content:             source
+Description and comments:    Inter-core communication application
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-icc
+Origin:                      NXP (GPL-2.0)
+
+--------------------------------------------
+Real-time Networking Packages
+--------------------------------------------
+
+Package:                     avahi
+Version:                     0.8
+Outgoing License:            LGPLv-2.1
+License Files:               LICENSE
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    Service Discovery for Linux using mDNS/DNS-SD
+Release Location:            "https://github.com/lathiat/avahi/releases/download/v0.8/avahi-0.8.tar.gz
+Origin:                    Lathiat (LGPLv-2.1)
+
+--------------------------------------------
+
+Package:                     ethtool
+Version:                     5.8
+Outgoing License:            GPL-2.0
+License Files:               COPYING
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    Display or change ethernet card settings
+Release Location:            https://mirrors.edge.kernel.org/pub/software/network/ethtool/ethtool-5.8.tar.gz
+Origin:                      Michal Kubecek (GPL-2.0)
+
+--------------------------------------------
+
+Package:                     genavb-tsn
+Version:                     4.4
+Outgoing License:            nxp/EULA.txt, GPL-2.0, BSD-3-Clause
+License Files:               licenses/EULA.txt, licenses/COPYING, licenses/BSD-3-Clause
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    GenAVB/TSN Stack
+Release Location:            https://github.com/NXP/GenAVB_TSN.git
+Origin:                      NXP (nxp/EULA.txt, GPL-2.0, BSD-3-Clause)
+
+--------------------------------------------
+
+Package:                     iproute2
+Version:                     5.8.0
+Outgoing License:            GPL-2.0
+License Files:               COPYING
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    A collection of utilities for controlling networking and traffic
+Release Location:            https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/snapshot/iproute2-5.8.0.tar.gz
+Origin:                      Stephen Hemminger (GPL-2.0)
+
+--------------------------------------------
+
+Package:                     libnetconf2
+Version:                     0.12
+Outgoing License:            BSD-3-Clause
+License File:                LICENCE
+Package Category:            Real-time Networking
+Type of Content:             source
+Description and comments:    A NETCONF library
+Release Location:            https://github.com/CESNET/libnetconf2.git
+Origin:                      CESNET (BSD-3-Clause)
+
+--------------------------------------------
+
+Package:                     libredblack
+Version:
+Outgoing License:            LGPLv-2.1
+License Files:               COPYING
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    RedBlack Balanced Tree
+Release Location:            https://github.com/sysrepo/libredblack.git
+Origin:                      Sysrepo (LGPLv-2.1)
+
+--------------------------------------------
+
+Package:                     libyang
+Version:                     1.0
+Outgoing License:            BSD-3-Clause
+License Files:               LICENCE
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    YANG data modelling language parser and toolkit
+Release Location:            https://github.com/CESNET/libyang.git
+Origin:                      CESNET (BSD-3-Clause)
+
+--------------------------------------------
+
+Package:                     linuxptp
+Version:                     3.1.1
+Outgoing License:            GPL-2.0
+License Files:               COPYING
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    PTP IEEE 1588 stack for Linux
+Release Location:            http://sourceforge.net/projects/linuxptp/files/v3.1/linuxptp-3.1.tgz
+Origin:                      Rcochran (GPL-2.0)
+
+--------------------------------------------
+
+Package:                     lldpd
+Version:                     1.0.4
+Outgoing License:            ISC
+License Files:               LICENCE
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    Link Layer Discovery Protocol
+Release Location:            http://media.luffy.cx/files/lldpd/lldpd-1.0.4.tar.gz
+Origin:                      lldpd (ISC) - https://github.com/lldpd/lldpd.git
+
+--------------------------------------------
+
+Package:                     netopeer2
+Version:                     0.7
+Outgoing License:            BSD-3-Clause
+License Files:               LICENCE
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    A server for implementing network configuration management
+Release Location:            https://github.com/CESNET/netopeer2.git
+Origin:                      CESNET (BSD-3-Clause)
+
+--------------------------------------------
+
+Package:                     real-time-edge-sysrepo.git
+Version:
+Outgoing License:            Apache-2.0
+License Files:               LICENSE
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    Sysrepo for TSN cofiguration
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-sysrepo
+Origin:                      NXP (Apache-2.0)
+
+--------------------------------------------
+
+Package:                     sysrepo
+Version:                     0.7.8
+Outgoing License:            Apache-2.0
+License Files:               LICENSE
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    YANG-based configuration and operational state data store
+Release Location:            https://github.com/sysrepo/sysrepo.git
+Origin:                      Sysrepo (Apache-2.0)
+
+--------------------------------------------
+
+Package:                     tsn-scripts
+Version:
+Outgoing License:            GPL-2.0
+License Files:               COPYING
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    TSN test program
+Release Location:            https://github.com/vladimiroltean/tsn-scripts
+Origin:                      NXP (GPL-2.0)
+
+--------------------------------------------
+
+Package:                     tsntool.git
+Version:
+Outgoing License:            MIT or GPL-2.0
+License Files:               LICENSE
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    TSN configuration tool
+Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/tsntool/
+Origin:                      NXP (MIT or GPL-2.0)
+
+--------------------------------------------
+Industrial Packages
+--------------------------------------------
+
+Package:                     canFestival
+Version:
+Outgoing License:            GPL-2.0
+License Files:               LICENSE
+Package Category:            Industrial
+Type of content:             source
+Description and comments:    An OpenSource CANOpen framework
+Release Location:            http://sources.buildroot.net/canfestival/canfestival-7740ac6fdedc23e1ed6908d3d7db54833c88572b.tar.gz
+Origin:                      Lolitech (GPL-2.0)
+
+--------------------------------------------
+
+Package:                     igh-ethercat
+Version:                     1.5.1
+Outgoing License:            GPL-2.0
+License Files:               COPYING
+Package Category:            Industrial
+Type of content:             source
+Description and comments:    IgH EtherCAT Master for Linux
+Release Location:            https://etherlab.org/download/ethercat/ethercat-1.5.1.tar.bz2
+Origin:                      IgH (GPL-2.0)
+
+--------------------------------------------
+
+Package:                     linux_libnfc-nci
+Version:                     2.4
+Outgoing License:            Apache-2.0
+License File:                LICENCE.txt
+Package Category:            Industrial
+Type of Content:             source
+Description and comments:    Linux NFC stack for NCI
+Release Location:            https://github.com/NXPNFCLinux/linux_libnfc-nci.git
+Origin:                      NXP (Apache-2.0)
+
+--------------------------------------------
+
+Package:                     OPC UA (open62541)
+Version:                     1.2.2
+Outgoing License:            MPL-2.0
+License File:                LICENCE
+Package Category:            Industrial
+Type of Content:             source
+Description and comments:    An open source and free implementation of OPC UA
+Release Location:            https://github.com/open62541/open62541.git
+Origin:                      open62541.org (MPL-2.0)
+
+--------------------------------------------
+
+Package:                     real-time-edge-libbee
+Version:                     1.0
+Outgoing License:            GPL-2.0 or MIT
+License Files:               LICENSE
+Package Category:            Industrial
+Type of content:             source
+Description and comments:    A library for BEE click board
+Release Location:            Mirror
+Origin:                      NXP (GPL-2.0 or MIT) - meta-real-time-edge/recipes-extended/real-time-edge-libbee/files/
+
+--------------------------------------------
+
+Package:                     real-time-edge-libblep
+Version:                     1.0
+Outgoing License:            GPL-2.0 or MIT
+License Files:               LICENSE
+Package Category:            Industrial
+Type of content:             source
+Description and comments:    A library for BLEP click board
+Release Location:            Mirror
+Origin:                      NXP (GPL-2.0 or MIT) - meta-real-time-edge/recipes-extended/real-time-edge-libblep/files/
+
+--------------------------------------------
+
+Package:                     real-time-edge-servo
+Version:                     1.0
+Outgoing License:            GPL-2.0 or MIT
+License Files:               LICENSE
+Package Category:            Industrial
+Type of content:             source
+Description and comments:    A library for CiA402 profile framework
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-servo
+Origin:                      NXP (GPL-2.0 or MIT)
+
+--------------------------------------------
+Tools Packages
+--------------------------------------------
+
+Package:                     feedgnuplot
+Version:                     1.58
+Outgoing License:            Artisticv1 or GPL-1.0
+License Files:               LICENSE
+Package Category:            Tools
+Type of content:             source
+Description and comments:    General purpose pipe-oriented plotting tool
+Release Location:            https://github.com/dkogan/feedgnuplot.git
+Origin:                      dkogan ( Artisticv1 or GPL-1.0)
+
+--------------------------------------------
+
+Package:                     real-time-edge-nodejs-lbt
+Version:                     1.0
+Outgoing License:            MIT
+License Files:               LICENSE
+Package Category:            Tools
+Type of content:             source
+Description and comments:    Latency and Bandwidth Tester
+Release Location:            Mirror
+Origin:                      NXP (MIT) - meta-real-time-edge/recipes-extended/real-time-edge-nodejs-lbt/files/
+
+--------------------------------------------
+
+Package:                     real-time-edge-prl
+Version:                     1.0
+Outgoing License:            BSD-3-Clause
+License Files:               LICENSE
+Package Category:            Tools
+Type of content:             source
+Description and comments:    A program for pipeline manipulation
+Release Location:            Mirror
+Origin:                      NXP (BSD-3-Clause) - meta-real-time-edge/recipes-extended/real-time-edge-prl/files/
+
+--------------------------------------------

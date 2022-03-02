@@ -189,13 +189,7 @@ else
 	FSLDISTRO="$DISTRO"
 fi
 
-# Override the click-through in meta-freescale/EULA
-if [ "${PLATFORM}" = "imx" ]
-then
-	FSL_EULA_FILE=$ROOTDIR/sources/meta-imx/EULA.txt
-else
-	FSL_EULA_FILE=$ROOTDIR/sources/meta-freescale/EULA
-fi
+FSL_EULA_FILE=$ROOTDIR/sources/meta-real-time-edge/EULA.txt
 
 if test $fsl_setup_help; then
 	usage && clean_up && return 1
