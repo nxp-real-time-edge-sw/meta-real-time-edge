@@ -4,7 +4,7 @@ LIC_FILES_CHKSUM = "file://licenses/EULA.txt;md5=358cdbb1e99e9302cf3abc0152a1ade
                     file://licenses/BSD-3-Clause;md5=5cc0aa6b0086f08ef02006d8a2679704 \
 "
 
-GENAVB_TSN_URL = "git://bitbucket.sw.nxp.com/mss/gen_avb_sdk.git;protocol=ssh"
+GENAVB_TSN_URL = "git://github.com/NXP/GenAVB_TSN.git;protocol=http"
 
 SRC_URI = "${GENAVB_TSN_URL};nobranch=1 "
 
