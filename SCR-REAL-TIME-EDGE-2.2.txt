@@ -9,7 +9,7 @@ License File:      EULA.txt
 Yocto Project recipe manifest:
 repo init -u https://github.com/real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-hardknott -m real-time-edge-2.2.0.xml
 
-Release tag: real-time-edge-2.2.0
+Release tag: real-time-edge-2.2
 
 --------------------------------------------
 BSP Packages
@@ -88,7 +88,7 @@ License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A partitioning Hypervisor based on Linux
-Release Location:            https://source.codeaurora.org/external/imx/imx-jailhouse -b lf-5.10.72-2.2.0
+Release Location:            https://source.codeaurora.org/external/imx/imx-jailhouse -b lf-5.10.52_2.1.0
 Origin:                      NXP (GPL-2.0)
                              Siemens AG (GPL-2.0) - https://github.com/siemens/jailhouse
 
