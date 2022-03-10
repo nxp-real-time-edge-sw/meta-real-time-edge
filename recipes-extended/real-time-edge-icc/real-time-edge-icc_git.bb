@@ -2,7 +2,7 @@ SUMMARY = "real-time-edge ICC"
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=b8b124def019f141a27e002e0a4333cc"
 
-SRC_URI = "git://bitbucket.sw.nxp.com/dnind/real-time-edge-icc.git;protocol=ssh;nobranch=1"
+SRC_URI = "git:///github.com/real-time-edge-sw/real-time-edge-icc.git;protocol=https;nobranch=1"
 SRCREV = "1d58a1b578f54ac9d4a95f6d4181a1f24933e44d"
 PV = "1.1"
 
