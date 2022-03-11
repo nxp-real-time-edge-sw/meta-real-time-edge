@@ -10,7 +10,7 @@ inherit packagegroup
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 PACKAGES = "${PN}"
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     packagegroup-core-buildessential \
     packagegroup-core-full-cmdline \
     iperf3 e2fsprogs e2fsprogs-resize2fs \
@@ -19,7 +19,7 @@ RDEPENDS_${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'feedgnuplot', 'feedgnuplot', '', d)} \
 "
 
-RDEPENDS_${PN}_append = " \
+RDEPENDS:${PN}:append = " \
     xz \
     flex \
     bison \

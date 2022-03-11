@@ -10,12 +10,12 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 inherit packagegroup
 
 SOC_GPU= ""
-SOC_GPU_imxgpu = "libopencl-imx imx-gpu-viv-demos gtk+3-demo \
+SOC_GPU:imxgpu = "libopencl-imx imx-gpu-viv-demos gtk+3-demo \
                   packagegroup-fsl-tools-gpu packagegroup-imx-tools-audio"
-SOC_GPU_ls1028ardb = "libopencl-imx imx-gpu-viv-demos gtk+3-demo \
+SOC_GPU:ls1028ardb = "libopencl-imx imx-gpu-viv-demos gtk+3-demo \
                   packagegroup-fsl-tools-gpu packagegroup-imx-tools-audio"
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'wayland', ' weston weston-examples weston-init','', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libdrm', 'libdrm', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'imx-gpu-viv', 'imx-gpu-viv', '', d)} \

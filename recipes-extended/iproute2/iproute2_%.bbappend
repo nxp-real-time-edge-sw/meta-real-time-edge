@@ -1,3 +1,3 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRC_URI_append = " file://0001-taprio-add-hold-and-release-command.patch"
+SRC_URI:append = " file://0001-taprio-add-hold-and-release-command.patch"

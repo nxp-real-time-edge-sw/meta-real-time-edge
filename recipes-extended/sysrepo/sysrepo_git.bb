@@ -18,7 +18,7 @@ S = "${WORKDIR}/git"
 
 DEPENDS = "libyang protobuf protobuf-c protobuf-c-native libredblack libev libnetconf2"
 
-FILES_${PN} += "/usr/share/yang/* /run/sysrepo* /tmp/ /tmp/sysrepo*"
+FILES:${PN} += "/usr/share/yang/* /run/sysrepo* /tmp/ /tmp/sysrepo*"
 
 inherit cmake pkgconfig python3native python3-dir
 
@@ -27,7 +27,7 @@ EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE:String=Rel
 
 BBCLASSEXTEND = "native nativesdk"
 
-do_install_append () {
+do_install:append () {
     install -d ${D}/etc/sysrepo/data/notifications
     install -d ${D}/etc/sysrepo/yang
     install -d ${D}/etc/init.d

@@ -1,13 +1,13 @@
 DESCRIPTION = "A tool to configure TSN funtionalities in user space for industrial"
 
-SRC_URI_real-time-edge = "git://bitbucket.sw.nxp.com/dnind/tsntool.git;protocol=ssh;nobranch=1" 
+SRC_URI:real-time-edge = "git://bitbucket.sw.nxp.com/dnind/tsntool.git;protocol=ssh;nobranch=1" 
 
 SAVED_DIR := "${THISDIR}"
 
-SRCREV_qoriq = "61089b61feb6d5cd10b96bdeb3baa6338aba05b8"
-SRCREV_imx = "61089b61feb6d5cd10b96bdeb3baa6338aba05b8"
+SRCREV:qoriq = "61089b61feb6d5cd10b96bdeb3baa6338aba05b8"
+SRCREV:imx = "61089b61feb6d5cd10b96bdeb3baa6338aba05b8"
 
-FILES_${PN} += "/home/root/* /home/root/sample/* /home/root/samples/* \
+FILES:${PN} += "/home/root/* /home/root/sample/* /home/root/samples/* \
                /home/root/samples/gatescripts/* /home/root/samples/pktgen/* \
                /home/root/samples/cncdemo/* \
 	       /usr/* /usr/include/* /usr/include/linux/* /usr/include/tsn/* \
@@ -19,11 +19,11 @@ INCLUDEDIR ?= "${PREFIX}/include"
 LIBDIR ?= "${PREFIX}/lib"
 TSN_LIB_PC = "libtsn.pc"
 
-do_compile_append() {
+do_compile:append() {
     make ${TSN_LIB_PC}
 }
 
-do_install_append() {
+do_install:append() {
     install -d -m 0755 ${D}${BINDIR}
     install -d -m 0755 ${D}${LIBDIR}
     install -d -m 0755 ${D}${INCLUDEDIR}/tsn

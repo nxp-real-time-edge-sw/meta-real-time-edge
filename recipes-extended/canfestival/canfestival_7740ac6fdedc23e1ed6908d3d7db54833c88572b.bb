@@ -45,7 +45,7 @@ do_install() {
     ln -s -r ${D}/${libdir}/libcanfestival_can_socket.so.1.0 ${D}/${libdir}/libcanfestival_can_socket.so
 }
 
-INSANE_SKIP_${PN} = "ldflags"
-INSANE_SKIP_${PN}-dev = "ldflags"
+INSANE_SKIP:${PN} = "ldflags"
+INSANE_SKIP:${PN}-dev = "ldflags"
 
 FILES_SOLIBSDEV = "${libdir}/libcanfestival_can_socket.so"

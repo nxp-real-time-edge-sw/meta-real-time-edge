@@ -1,6 +1,6 @@
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
-SRC_URI_append = " \
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+SRC_URI:append = " \
     file://0001-Add-IEEE-802.1AS-2011-time-aware-bridge-support.patch \
     file://0002-Add-BMCA-support-for-IEEE-802.1AS-2011.patch \
     file://0003-port-drop-erroneous-neighbor-rate-ratio.patch \
@@ -27,7 +27,7 @@ SRC_URI_append = " \
     file://0024-ts2phc_slave-fix-memory-leak-in-ts2phc_slave_array_c.patch \
 "
 
-do_install_append () {
+do_install:append () {
     install -d ${D}/etc/ptp4l_cfg
     install ${S}/configs/* ${D}/etc/ptp4l_cfg
 

@@ -14,19 +14,19 @@ S = "${WORKDIR}/git"
 
 inherit setuptools3
 
-do_install_append () {
+do_install:append () {
         if [ -e ${D}/${sysconfdir}/rteval.conf ]; then
             sed -e '/stressng/d' -i ${D}/${sysconfdir}/rteval.conf
         fi
 }
 
-do_install_append_mx6ull () {
+do_install:append:mx6ull () {
         if [ -e ${D}/${sysconfdir}/rteval.conf ]; then
             sed -e '/kcompile/d' -i ${D}/${sysconfdir}/rteval.conf
         fi
 }
 
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     rt-tests \
     stress-ng \
     python3-core \

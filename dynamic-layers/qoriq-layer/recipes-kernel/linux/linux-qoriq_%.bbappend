@@ -1,10 +1,10 @@
 
-SRC_URI_real-time-edge = "git://bitbucket.sw.nxp.com/dnind/real-time-edge-linux.git;protocol=ssh;nobranch=1"
-KERNEL_BRANCH_real-time-edge = "linux_5.10.y"
+SRC_URI:real-time-edge = "git://bitbucket.sw.nxp.com/dnind/real-time-edge-linux.git;protocol=ssh;nobranch=1"
+KERNEL_BRANCH:real-time-edge = "linux_5.10.y"
 SRCREV_real-time-edge = "d1435e3ef8afbe9427ad4a332f9ff55d9defc4fb"
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
-SRC_URI_append_real-time-edge = " \
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
+SRC_URI:append:real-time-edge = " \
     file://linux-rt.config \
     file://linux-wifi.config \
     file://linux-baremetal-ls104xa.config \
@@ -15,7 +15,7 @@ SRC_URI_append_real-time-edge = " \
     file://linux-dpaa-ethercat.config \
 "
 
-do_configure_prepend_real-time-edge() {
+do_configure:prepend:real-time-edge() {
     mkdir -p ${WORKDIR}/source-date-epoch
     date '+%s' > ${WORKDIR}/source-date-epoch/__source_date_epoch.txt
 }

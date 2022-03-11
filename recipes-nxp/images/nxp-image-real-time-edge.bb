@@ -2,7 +2,7 @@
 # Released under the MIT license (see COPYING.MIT for the terms)
 
 real-time-edge-IMAGE_BASE ?= "recipes-fsl/images/imx-image-core.bb"
-real-time-edge-IMAGE_BASE_qoriq = "recipes-fsl/images/fsl-image-networking.bb"
+real-time-edge-IMAGE_BASE:qoriq = "recipes-fsl/images/fsl-image-networking.bb"
 
 require ${real-time-edge-IMAGE_BASE}
 
@@ -12,21 +12,21 @@ LICENSE = "MIT"
 
 export IMAGE_BASENAME = "nxp-image-real-time-edge"
 
-IMAGE_FSTYPES_qoriq = "${SOC_DEFAULT_IMAGE_FSTYPES}"
+IMAGE_FSTYPES:qoriq = "${SOC_DEFAULT_IMAGE_FSTYPES}"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-IMAGE_INSTALL_append = " \
+IMAGE_INSTALL:append = " \
     packagegroup-real-time-edge-networking \
     packagegroup-real-time-edge-system \
     packagegroup-real-time-edge-industrial \
     packagegroup-real-time-edge-tools \
 "
 
-IMAGE_INSTALL_append_ls1028ardb = " \
+IMAGE_INSTALL:append:ls1028ardb = " \
     packagegroup-real-time-edge-multimedia \
 "
-IMAGE_INSTALL_append_imx = " \
+IMAGE_INSTALL:append:imx = " \
     packagegroup-real-time-edge-multimedia \
     packagegroup-real-time-edge-rtos \
     packagegroup-harpoon \

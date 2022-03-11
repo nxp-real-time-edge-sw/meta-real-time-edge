@@ -10,7 +10,7 @@ inherit packagegroup
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 PACKAGES = "${PN}"
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rtos-industrial',  \
     '${RTOS_INDUSTRIAL_INSTALL}', '', d)} \
 "

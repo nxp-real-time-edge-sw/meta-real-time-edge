@@ -17,7 +17,7 @@ SRC_URI += " \
            "
 
 # rt-tests needs PI mutex support in libc
-COMPATIBLE_HOST_libc-musl = 'null'
+COMPATIBLE_HOST:libc-musl = 'null'
 
 # Do not install hwlatdetect
 EXTRA_OEMAKE += "PYLIB=''"
@@ -27,10 +27,10 @@ do_install() {
                            INCLUDEDIR=${includedir}
 }
 
-do_install_ptest() {
+do_install:ptest() {
         cp ${WORKDIR}/rt_bmark.py ${D}${PTEST_PATH}
 }
 
-RDEPENDS_${PN}-ptest += " stress-ng python3 python3-multiprocessing python3-datetime python3-misc"
+RDEPENDS:${PN}-ptest += " stress-ng python3 python3-multiprocessing python3-datetime python3-misc"
 
-FILES_${PN} += "${prefix}/src/backfire"
+FILES:${PN} += "${prefix}/src/backfire"

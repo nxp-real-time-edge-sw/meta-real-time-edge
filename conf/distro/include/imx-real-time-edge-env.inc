@@ -6,5 +6,5 @@ include conf/distro/include/libopen62541.inc
 include conf/distro/include/rtos-industrial-examples.inc
 
 # Remove conflicting backends
-DISTRO_FEATURES_remove = "directfb x11 "
-DISTRO_FEATURES_append = " wayland pam systemd"
+DISTRO_FEATURES:remove = "directfb x11 "
+DISTRO_FEATURES:append = " wayland pam systemd"

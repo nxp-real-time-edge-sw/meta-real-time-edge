@@ -53,12 +53,12 @@ inherit autotools-brokensep pkgconfig module-base
 EXTRA_OECONF += "--with-linux-dir=${STAGING_KERNEL_BUILDDIR}"
 EXTRA_OECONF += "--with-module-dir=kernel/ethercat"
 
-do_compile_append() {
+do_compile:append() {
 	oe_runmake modules
 }
 
 inherit systemd
-do_install_append() {
+do_install:append() {
 	oe_runmake MODLIB=${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION} modules_install
 	rm -rf ${D}${sysconfdir}/init.d/ethercat
 	if [ ! -z "${PACKAGECONFIG}" ]; then
@@ -75,8 +75,8 @@ do_install_append() {
 	fi
 }
 
-FILES_${PN} += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/* ${systemd_system_unitdir}/ethercat.service ${bindir_native}/* ${sbindir_native}/* ${libdir_native}/* ${sysconfdir_native}/*"
-SYSTEMD_SERVICE_ethercat = "ethercat.service"
+FILES:${PN} += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/* ${systemd_system_unitdir}/ethercat.service ${bindir_native}/* ${sbindir_native}/* ${libdir_native}/* ${sysconfdir_native}/*"
+SYSTEMD_SERVICE:ethercat = "ethercat.service"
 SYSTEMD_AUTO_ENABLE = "disable"
 
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"

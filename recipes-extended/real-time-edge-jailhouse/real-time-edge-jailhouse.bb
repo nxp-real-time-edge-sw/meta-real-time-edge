@@ -1,6 +1,6 @@
 require recipes-extended/jailhouse/jailhouse_0.12.bb
 
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRCBRANCH = "lf-5.10.52_2.1.0"
 RT_EDGE_JAILHOUSE_SRC ?= "git://source.codeaurora.org/external/imx/imx-jailhouse.git;protocol=ssh"
@@ -76,7 +76,7 @@ inherit module python3native bash-completion deploy setuptools3
 
 SCRIPT_DIR ?= "${JH_DATADIR}/scripts"
 
-do_install_append() {
+do_install:append() {
     install -d ${D}${SCRIPT_DIR}
     install ${S}/../scripts/*.sh ${D}${SCRIPT_DIR}/
 
@@ -99,16 +99,16 @@ do_install_append() {
 
 PACKAGE_BEFORE_PN = "kernel-module-jailhouse pyjailhouse"
 
-FILES_${PN} += "${nonarch_base_libdir}/firmware ${libexecdir} ${sbindir} ${JH_DATADIR}"
-FILES_pyjailhouse = "{PYTHON_SITEPACKAGES_DIR}/pyjailhouse"
+FILES:${PN} += "${nonarch_base_libdir}/firmware ${libexecdir} ${sbindir} ${JH_DATADIR}"
+FILES:pyjailhouse = "{PYTHON_SITEPACKAGES_DIR}/pyjailhouse"
 
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     python3-zipp \
     python3-ctypes \
     python3-fcntl \
 "
 
-RDEPENDS_pyjailhouse += " \
+RDEPENDS:pyjailhouse += " \
     python3-zipp \
 "
 

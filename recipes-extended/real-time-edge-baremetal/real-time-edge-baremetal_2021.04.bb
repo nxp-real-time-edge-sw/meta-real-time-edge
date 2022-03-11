@@ -16,7 +16,7 @@ LIC_FILES_CHKSUM = " \
 
 PROVIDES = "real-time-edge-baremetal"
 
-DEPENDS_append = " libgcc dtc-native bison-native bc-native"
+DEPENDS:append = " libgcc dtc-native bison-native bc-native"
 
 UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2021.04"
 UBOOT_BAREMETAL_SRC ?= "git://bitbucket.sw.nxp.com/dnind/real-time-edge-uboot.git;protocol=ssh;nobranch=1"

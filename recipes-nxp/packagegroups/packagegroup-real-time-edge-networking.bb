@@ -11,17 +11,17 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 PACKAGES = "${PN}"
 
 tsntoolimage ?= ""
-tsntoolimage_ls1028a = "tsntool"
+tsntoolimage:ls1028a = "tsntool"
 
 genavbtsnimage ?= ""
-genavbtsnimage_ls1028ardb = "genavb-tsn"
-genavbtsnimage_imx8mp-lpddr4-evk = "genavb-tsn"
+genavbtsnimage:ls1028ardb = "genavb-tsn"
+genavbtsnimage:imx8mp-lpddr4-evk = "genavb-tsn"
 
 cantools ?=""
-cantools_ls1021aiot = "libsocketcan can-utils"
-cantools_ls1028ardb = "libsocketcan can-utils"
+cantools:ls1021aiot = "libsocketcan can-utils"
+cantools:ls1028ardb = "libsocketcan can-utils"
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-sysrepo', 'real-time-edge-sysrepo', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'tsn-scripts', 'tsn-scripts', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'canfestival', 'canfestival', '', d)} \

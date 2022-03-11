@@ -4,25 +4,25 @@ require genavb-tsn.inc
 
 inherit cmake systemd update-rc.d
 
-SRC_URI_append = " \
+SRC_URI:append = " \
     file://genavb-tsn.service \
     file://libgenavb.pc \
 "
 
 PR = "r0"
 
-RDEPENDS_${PN} += "kernel-module-genavb-tsn"
+RDEPENDS:${PN} += "kernel-module-genavb-tsn"
 
 DEPENDS += "libopen62541 libbpf"
 
 PROVIDES += "libgenavb"
-RPROVIDES_${PN} = "libgenavb"
+RPROVIDES:${PN} = "libgenavb"
 
 INITSCRIPT_NAME = "genavb"
 INITSCRIPT_PARAMS = "defaults"
 
-SYSTEMD_SERVICE_${PN} = "genavb-tsn.service"
-SYSTEMD_AUTO_ENABLE_${PN} = "disable"
+SYSTEMD_SERVICE:${PN} = "genavb-tsn.service"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 GENAVB_TSN_DEMO_APPS = "1"
 
@@ -41,7 +41,7 @@ EXTRA_OECMAKE += " \
     -DBUILD_APPS=${@bb.utils.contains('GENAVB_TSN_DEMO_APPS', '1', 'ON', 'OFF', d)} \
 "
 
-do_install_append () {
+do_install:append () {
 	# Install startup scripts or services
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		install -d ${D}${systemd_system_unitdir}
@@ -67,9 +67,9 @@ do_install_append () {
 }
 
 # QA Issue: No GNU_HASH in the elf binary
-INSANE_SKIP_${PN}-dev = "ldflags"
-INSANE_SKIP_${PN} = "ldflags"
-INSANE_SKIP_${PN} += "dev-so"
+INSANE_SKIP:${PN}-dev = "ldflags"
+INSANE_SKIP:${PN} = "ldflags"
+INSANE_SKIP:${PN} += "dev-so"
 
 # Add the firmware directory to the package files
-FILES_${PN} += "/lib/firmware"
+FILES:${PN} += "/lib/firmware"

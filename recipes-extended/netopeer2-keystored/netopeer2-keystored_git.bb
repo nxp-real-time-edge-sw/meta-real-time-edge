@@ -15,7 +15,7 @@ S = "${WORKDIR}/git/keystored"
 
 DEPENDS = "libyang libnetconf2 sysrepo coreutils openssh openssl"
 
-FILES_${PN} += "/usr/lib/sysrepo/* /usr/share/*"
+FILES:${PN} += "/usr/lib/sysrepo/* /usr/share/*"
 
 inherit cmake pkgconfig
 

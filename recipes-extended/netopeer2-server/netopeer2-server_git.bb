@@ -23,14 +23,14 @@ S = "${WORKDIR}/git/server"
 B = "${WORKDIR}/git"
 
 DEPENDS = "libyang libnetconf2 sysrepo curl"
-RDEPENDS_${PN} += "bash curl"
+RDEPENDS:${PN} += "bash curl"
 
 inherit cmake pkgconfig
 
 # Specify any options you want to pass to cmake using EXTRA_OECMAKE:
 EXTRA_OECMAKE = " -DKEYSTORED_KEYS_DIR=/etc/keystored/keys -DSYSREPOCTL_ROOT_PERMS='-p 666' "
 
-do_install_append () {
+do_install:append () {
     install -d ${D}/usr/share/netopeer2-server
     install -d ${D}/etc/sysrepo/yang
     install -d ${D}/etc/Netopeer2/modules

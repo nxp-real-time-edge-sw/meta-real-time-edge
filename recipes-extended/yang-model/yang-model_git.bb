@@ -12,9 +12,9 @@ SRCREV = "b1df41d72ecbfb38c13e96eff42d8f027997baed"
 S = "${WORKDIR}/git"
 
 DEPENDS = ""
-RDEPENDS_${PN} += "bash curl"
+RDEPENDS:${PN} += "bash curl"
 
-do_install_append () {
+do_install:append () {
     install -d ${D}/etc/yang-model/
 
     install -m 0775 ${S}/standard/ietf/RFC/ietf-interfaces@2014-05-08.yang ${D}/etc/yang-model/

@@ -15,7 +15,7 @@ BAREMETAL_INSTALL = " \
     real-time-edge-icc \
 "
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'baremetal',  \
     '${BAREMETAL_INSTALL}', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-jailhouse',  \

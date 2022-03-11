@@ -1,18 +1,18 @@
-FILESEXTRAPATHS_prepend_qoriq := "${THISDIR}/${BPN}:"
+FILESEXTRAPATHS:prepend:qoriq := "${THISDIR}/${BPN}:"
 
-SRC_URI_append_qoriq = "\
+SRC_URI:append:qoriq = "\
     file://pip_stress-De-constify-prio_min.patch \
 "
 
-SRC_URI_append_imx6ull14x14evk = "\
+SRC_URI:append:imx6ull14x14evk = "\
     file://pip_stress-De-constify-prio_min.patch \
 "
 
-SRC_URI_append_imx8mm-lpddr4-evk = "\
+SRC_URI:append:imx8mm-lpddr4-evk = "\
     file://pip_stress-De-constify-prio_min.patch \
 "
 
-SRC_URI_append_imx8mp-lpddr4-evk = "\
+SRC_URI:append:imx8mp-lpddr4-evk = "\
     file://pip_stress-De-constify-prio_min.patch \
 "
 

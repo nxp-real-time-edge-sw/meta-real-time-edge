@@ -30,5 +30,5 @@ do_install() {
     install ${S}/nfcDemoApp ${D}/${sbindir}
 }
 
-INSANE_SKIP_${PN} += "ldflags"
-FILES_${PN} += "data/nfc/*"
+INSANE_SKIP:${PN} += "ldflags"
+FILES:${PN} += "data/nfc/*"

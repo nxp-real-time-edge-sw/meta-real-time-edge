@@ -21,9 +21,9 @@ S = "${WORKDIR}/${BP}"
 
 inherit npm
 
-do_install_append() {
+do_install:append() {
     install -d ${D}/${sysconfdir}/init.d/
     install ${WORKDIR}/S95lbt ${D}/${sysconfdir}/init.d/
 }
 
-FILES_${PN} += "${libdir}/node_modules/lbt/*"
+FILES:${PN} += "${libdir}/node_modules/lbt/*"
