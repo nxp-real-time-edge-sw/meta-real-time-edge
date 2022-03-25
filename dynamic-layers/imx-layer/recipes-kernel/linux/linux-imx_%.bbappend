@@ -1,6 +1,6 @@
 
-KERNEL_SRC_real-time-edge = "git://github.com/real-time-edge-sw/real-time-edge-linux.git;protocol=https;nobranch=1"
-SRCBRANCH_real-time-edge = "linux_5.10.72"
+KERNEL_SRC_real-time-edge = "git://bitbucket.sw.nxp.com/dnind/real-time-edge-linux.git;protocol=ssh;nobranch=1"
+SRCBRANCH_real-time-edge = "linux_5.10.y"
 SRCREV_real-time-edge = "d1435e3ef8afbe9427ad4a332f9ff55d9defc4fb"
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
