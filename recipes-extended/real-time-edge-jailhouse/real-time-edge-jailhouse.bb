@@ -2,8 +2,8 @@ require recipes-extended/jailhouse/jailhouse_0.12.bb
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRCBRANCH = "lf-5.10.52_2.1.0"
-RT_EDGE_JAILHOUSE_SRC ?= "git://source.codeaurora.org/external/imx/imx-jailhouse.git;protocol=ssh"
+SRCBRANCH = "lf-5.15.5_1.0.0"
+RT_EDGE_JAILHOUSE_SRC ?= "git://source.codeaurora.org/external/imx/imx-jailhouse.git;protocol=https"
 
 SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://scripts/init_jailhouse_env.sh \
@@ -66,7 +66,7 @@ SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
 	   file://0037-ls1028ardb-remove-gic-distributor-region-from-linux-.patch \
 "
 
-SRCREV = "9bd24e99c3afd7dea96c3cfb997c41beed84c87c"
+SRCREV = "114b4fad14869598d364086d64c205372bd6df17"
 
 DEPENDS += " \
     python3-zipp \
