@@ -27,6 +27,8 @@ do_install () {
     cp -r ${S}/stock_key_config.xml ${D}/usr/share/netopeer2-keystored/
     install -d ${D}/etc/sysrepo/yang
     cp -r ${S}/../modules/ietf-keystore.yang ${D}/etc/sysrepo/yang/
+    install -d ${D}/usr/lib/sysrepo/plugins
+    install -m 0755 ${WORKDIR}/build/libkeystored.so ${D}/usr/lib/sysrepo/plugins/
 
 #    install -d ${D}/etc/init.d
 #    install -m 0755 ${WORKDIR}/netopeer2-keystored ${D}/etc/init.d/
