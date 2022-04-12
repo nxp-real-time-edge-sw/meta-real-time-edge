@@ -30,6 +30,7 @@ SRC_URI += "\
     file://0018-enetc-add-enetc-support-on-scripts.patch \
     file://0001-Add-support-for-NXP-DPAA1-ethercat-port.patch \
     file://0002-igh_ethercat-fix-calltrace-issue-caused-by-ethercatc.patch \
+    file://0001-enetc-fix-the-compile-errors-when-upgrading-to-Linux.patch \
 "
 S = "${WORKDIR}/ethercat-${PV}"
 
