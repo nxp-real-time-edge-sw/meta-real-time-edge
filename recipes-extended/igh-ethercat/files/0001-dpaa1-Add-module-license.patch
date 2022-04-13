@@ -1,0 +1,22 @@
+From b5ed6728689dd55e3c41c9d4bad1f88110f04b46 Mon Sep 17 00:00:00 2001
+From: Wenbin Song <wenbin.song@nxp.com>
+Date: Wed, 13 Apr 2022 18:54:00 +0800
+Subject: [PATCH] dpaa1: Add module license
+
+Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+---
+ devices/dpaa1/dpaa1-ethercat.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/devices/dpaa1/dpaa1-ethercat.c b/devices/dpaa1/dpaa1-ethercat.c
+index 45b9592..6aff8af 100644
+--- a/devices/dpaa1/dpaa1-ethercat.c
++++ b/devices/dpaa1/dpaa1-ethercat.c
+@@ -120,3 +120,4 @@ static void __exit ec_dpaa_exit_module(void)
+ }
+ 
+ module_exit(ec_dpaa_exit_module);
++MODULE_LICENSE("GPL");
+-- 
+2.25.1
+
