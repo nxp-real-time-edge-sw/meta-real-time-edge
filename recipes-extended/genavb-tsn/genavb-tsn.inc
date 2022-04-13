@@ -4,11 +4,11 @@ LIC_FILES_CHKSUM = "file://licenses/EULA.txt;md5=358cdbb1e99e9302cf3abc0152a1ade
                     file://licenses/BSD-3-Clause;md5=5cc0aa6b0086f08ef02006d8a2679704 \
 "
 
-GENAVB_TSN_URL = "git://github.com/NXP/GenAVB_TSN.git;protocol=http"
+GENAVB_TSN_URL = "git://bitbucket.sw.nxp.com/mss/gen_avb_sdk.git;protocol=ssh"
 
 SRC_URI = "${GENAVB_TSN_URL};nobranch=1 "
 
-SRCREV = "32c2550d163ceb76e21941fb7297f12a18dbe319"
+SRCREV = "1eab655f62864b03158376c625bc606139870d16"
 
 PV = "4.4+git${SRCPV}"
 
