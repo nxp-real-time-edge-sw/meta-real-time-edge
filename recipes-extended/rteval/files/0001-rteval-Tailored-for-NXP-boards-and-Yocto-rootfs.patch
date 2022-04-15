@@ -1,19 +1,18 @@
-From f7c83211679c1199540a5a6707eafb3582f10e8d Mon Sep 17 00:00:00 2001
+From 98222773ba4c02815cb398a7db2121620ecdd33c Mon Sep 17 00:00:00 2001
 From: Tao Yang <Tao.Yang1@nxp.com>
-Date: Tue, 18 Jan 2022 11:07:04 +0800
+Date: Fri, 15 Apr 2022 10:37:16 +0800
 Subject: [PATCH] rteval: Tailored for NXP boards and Yocto rootfs
 
 ---
- rteval-cmd                               |  8 +-------
- rteval/__init__.py                       |  1 -
- rteval/modules/loads/hackbench.py        |  9 +++------
- rteval/modules/loads/kcompile.py         | 12 +++---------
- rteval/modules/measurement/cyclictest.py |  2 +-
- rteval/rteval_text.xsl                   | 20 ++------------------
- rteval/sysinfo/__init__.py               | 12 ++----------
- rteval/sysinfo/osinfo.py                 | 14 +++++++-------
- rteval/sysinfo/services.py               |  2 +-
- 9 files changed, 20 insertions(+), 60 deletions(-)
+ rteval-cmd                        |  8 +-------
+ rteval/__init__.py                |  1 -
+ rteval/modules/loads/hackbench.py |  9 +++------
+ rteval/modules/loads/kcompile.py  | 12 +++---------
+ rteval/rteval_text.xsl            | 20 ++------------------
+ rteval/sysinfo/__init__.py        | 12 ++----------
+ rteval/sysinfo/osinfo.py          | 14 +++++++-------
+ rteval/sysinfo/services.py        |  2 +-
+ 8 files changed, 19 insertions(+), 59 deletions(-)
 
 diff --git a/rteval-cmd b/rteval-cmd
 index 2c775ee..b2b1ed1 100755
@@ -113,19 +112,6 @@ index 8f97d38..ee6e93d 100644
  
  
  
-diff --git a/rteval/modules/measurement/cyclictest.py b/rteval/modules/measurement/cyclictest.py
-index cc74b46..f22ed78 100644
---- a/rteval/modules/measurement/cyclictest.py
-+++ b/rteval/modules/measurement/cyclictest.py
-@@ -281,7 +281,7 @@ class Cyclictest(rtevalModulePrototype):
- 
-         self.__cmd = ['cyclictest',
-                       self.__interval,
--                      '-qmu',
-+                      '-qmun',
-                       '-h %d' % self.__buckets,
-                       "-p%d" % int(self.__priority),
-                       ]
 diff --git a/rteval/rteval_text.xsl b/rteval/rteval_text.xsl
 index c40063e..cdac39c 100644
 --- a/rteval/rteval_text.xsl
