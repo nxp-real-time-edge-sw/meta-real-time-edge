@@ -1,0 +1,53 @@
+From 428b31483e0235f1932c134a06d787fdd48fe3d2 Mon Sep 17 00:00:00 2001
+From: Wenbin Song <wenbin.song@nxp.com>
+Date: Wed, 20 Apr 2022 14:52:15 +0800
+Subject: [PATCH] fec: fix the compile error when upgrading to Linux-5.15.y
+
+Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+---
+ devices/fec/fec_main.c | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/devices/fec/fec_main.c b/devices/fec/fec_main.c
+index 3f01435..06c2099 100644
+--- a/devices/fec/fec_main.c
++++ b/devices/fec/fec_main.c
+@@ -1372,8 +1372,8 @@ void ecdev_fec_poll(struct net_device *ndev)
+ static int fec_get_mac(struct net_device *ndev)
+ {
+ 	struct fec_enet_private *fep = netdev_priv(ndev);
+-	struct fec_platform_data *pdata = dev_get_platdata(&fep->pdev->dev);
+ 	unsigned char *iap, tmpaddr[ETH_ALEN];
++	int ret;
+ 
+ 	/*
+ 	 * try to get mac address in following order:
+@@ -1389,11 +1389,11 @@ static int fec_get_mac(struct net_device *ndev)
+ 	if (!is_valid_ether_addr(iap)) {
+ 		struct device_node *np = fep->pdev->dev.of_node;
+ 		if (np) {
+-			const char *mac = of_get_mac_address(np);
+-			if (!IS_ERR(mac))
+-				iap = (unsigned char *) mac;
+-			else if (PTR_ERR(mac) == -EPROBE_DEFER)
+-				return -EPROBE_DEFER;
++			ret = of_get_mac_address(np, tmpaddr);
++			if (!ret)
++				iap = tmpaddr;
++			else if (ret == -EPROBE_DEFER)
++				return ret;
+ 		}
+ 	}
+ 
+@@ -1405,6 +1405,8 @@ static int fec_get_mac(struct net_device *ndev)
+ 		if (FEC_FLASHMAC)
+ 			iap = (unsigned char *)FEC_FLASHMAC;
+ #else
++		struct fec_platform_data *pdata = dev_get_platdata(&fep->pdev->dev);
++
+ 		if (pdata)
+ 			iap = (unsigned char *)&pdata->mac;
+ #endif
+-- 
+2.25.1
+
