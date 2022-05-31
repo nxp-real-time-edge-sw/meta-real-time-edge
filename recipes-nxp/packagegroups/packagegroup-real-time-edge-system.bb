@@ -20,4 +20,5 @@ RDEPENDS:${PN} = " \
     '${BAREMETAL_INSTALL}', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-jailhouse',  \
     'real-time-edge-jailhouse', '', d)} \
+    opencv-demo \
 "
