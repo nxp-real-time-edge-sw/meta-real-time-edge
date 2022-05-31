@@ -4,8 +4,8 @@ SRC_URI:real-time-edge = "git://bitbucket.sw.nxp.com/dnind/tsntool.git;protocol=
 
 SAVED_DIR := "${THISDIR}"
 
-SRCREV:qoriq = "61089b61feb6d5cd10b96bdeb3baa6338aba05b8"
-SRCREV:imx = "61089b61feb6d5cd10b96bdeb3baa6338aba05b8"
+SRCREV:qoriq = "e8672cbb01ee9cd286d9dff706444446a507fd27"
+SRCREV:imx = "e8672cbb01ee9cd286d9dff706444446a507fd27"
 
 FILES:${PN} += "/home/root/* /home/root/sample/* /home/root/samples/* \
                /home/root/samples/gatescripts/* /home/root/samples/pktgen/* \
