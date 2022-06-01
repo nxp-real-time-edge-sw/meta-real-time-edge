@@ -6,11 +6,12 @@ LIC_FILES_CHKSUM = "file://licenses/EULA.txt;md5=358cdbb1e99e9302cf3abc0152a1ade
 
 GENAVB_TSN_URL = "git://bitbucket.sw.nxp.com/mss/gen_avb_sdk.git;protocol=ssh"
 
-SRC_URI = "${GENAVB_TSN_URL};nobranch=1 "
+GENAVB_TSN_BRANCH = "dev/5_0"
+SRC_URI = "${GENAVB_TSN_URL};branch=${GENAVB_TSN_BRANCH}"
 
-SRCREV = "73e80a3140197a79ba877ce565670ed9d05e0bb7"
+SRCREV = "${AUTOREV}"
 
-PV = "4.4+git${SRCPV}"
+PV = "5.0+git${SRCPV}"
 
 S = "${WORKDIR}/git"
 
