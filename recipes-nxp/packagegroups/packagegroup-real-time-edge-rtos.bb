@@ -10,6 +10,9 @@ inherit packagegroup
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 PACKAGES = "${PN}"
 
+rpmsg-lite-examples ?= ""
+rpmsg-lite-examples:mx8mm = "rpmsg-lite-uart-sharing-rtos"
+
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rtos-industrial',  \
     '${RTOS_INDUSTRIAL_INSTALL}', '', d)} \
@@ -21,4 +24,5 @@ RTOS_INDUSTRIAL_INSTALL = " \
     freertos-hello \
     soem-gpio-pulse \
     freertos-soem-gpio-pulse \
+    ${rpmsg-lite-examples} \
 "
