@@ -27,6 +27,10 @@ LTTNGTOOLS:qoriq = ""
 LTTNGMODULES:qoriq = ""
 MACHINE_HAS_VIVANTE_KERNEL_DRIVER_SUPPORT = "1"
 
+RCWSD:ls1028ardb = "${@bb.utils.contains('DISTRO_FEATURES', 'sai', \
+                    'R_SQPP_0x85bb/rcw_1500_gpu600_sai', \
+                    'R_SQPP_0x85bb/rcw_1500_gpu600', d)}"
+
 SOC_DEFAULT_IMAGE_FSTYPES:append = " wic.bmap wic.bz2 tar.bz2"
 SOC_DEFAULT_IMAGE_FSTYPES:remove = " tar.gz ext2.gz.u-boot ext2.gz"
 SOC_DEFAULT_IMAGE_FSTYPES:append:ls1012a = " cpio.gz cpio.gz.u-boot"

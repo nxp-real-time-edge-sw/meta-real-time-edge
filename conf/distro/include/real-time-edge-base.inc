@@ -11,7 +11,7 @@ DISTRO_FEATURES:append:ls1046ardb = " real-time-edge-jailhouse"
 DISTRO_FEATURES:append:ls1028ardb = " real-time-edge-jailhouse real-time-edge-libbee \
 				      real-time-edge-libblep libnfc-nci \
 				      wayland-protocols weston imx-gpu-viv libdrm kmscube \
-				      real-time-edge-sysrepo tsn-scripts wayland"
+				      real-time-edge-sysrepo tsn-scripts wayland alsa"
 DISTRO_FEATURES:append:mx8mp = " real-time-edge-jailhouse real-time-edge-sysrepo"
 DISTRO_FEATURES:append:mx8m = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
 DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo real-time-edge-nodejs-lbt feedgnuplot tsn-scripts real-time-edge-prl"
