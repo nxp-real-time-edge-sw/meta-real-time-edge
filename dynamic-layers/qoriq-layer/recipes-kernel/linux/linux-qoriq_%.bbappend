@@ -5,7 +5,6 @@ SRCREV:real-time-edge = "756ad901320f9fbe4c392c49bfdec14c965731cc"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI:append:real-time-edge = " \
-    file://linux-rt.config \
     file://linux-wifi.config \
     file://linux-baremetal-ls104xa.config \
     file://linux-baremetal-ls1021a.config \
