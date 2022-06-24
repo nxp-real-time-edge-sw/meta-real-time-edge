@@ -45,7 +45,7 @@ enable_yang_module_feature() {
     fi
 }
 
-install_yang_module ietf-interfaces@2014-05-08
+install_yang_module ietf-interfaces
 install_yang_module ieee802-dot1q-types
 install_yang_module ieee802-dot1q-preemption
 enable_yang_module_feature ieee802-dot1q-preemption frame-preemption
@@ -53,18 +53,18 @@ enable_yang_module_feature ieee802-dot1q-preemption frame-preemption
 install_yang_module ieee802-dot1q-sched
 enable_yang_module_feature ieee802-dot1q-sched scheduled-traffic
 
-install_yang_module iana-if-type@2017-01-19
+install_yang_module iana-if-type@2020-01-10
 
 install_yang_module ieee802-dot1q-bridge
 install_yang_module ietf-yang-types
 install_yang_module ieee802-types
-install_yang_module ietf-inet-types@2013-07-15
 install_yang_module ieee802-dot1q-stream-filters-gates
 enable_yang_module_feature ieee802-dot1q-stream-filters-gates closed-gate-state
 install_yang_module ieee802-dot1q-psfp
-install_yang_module ieee802-dot1q-cb-stream-identification
+enable_yang_module_feature ieee802-dot1q-psfp psfp
+install_yang_module ieee802-dot1cb-stream-identification
 install_yang_module ieee802-dot1q-qci-augment
-install_yang_module ietf-ip@2014-06-16
+install_yang_module ietf-ip
 enable_yang_module_feature ietf-ip ipv4-non-contiguous-netmasks
 install_yang_module nxp-bridge-vlan-tc-flower
 install_yang_module ieee802-dot1cb-stream-identification-types
