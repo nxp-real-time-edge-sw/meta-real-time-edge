@@ -17,6 +17,7 @@ SOC_GPU:ls1028ardb = "libopencl-imx imx-gpu-viv-demos gtk+3-demo \
 
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'wayland', ' weston weston-examples weston-init','', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'chromium', 'chromium-ozone-wayland','', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libdrm', 'libdrm', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'imx-gpu-viv', 'imx-gpu-viv', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'wayland-protocols', 'wayland-protocols', '', d)} \
