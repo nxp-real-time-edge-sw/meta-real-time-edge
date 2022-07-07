@@ -1,7 +1,5 @@
 DESCRIPTION = "A tool to configure TSN funtionalities in user space for industrial"
 
-SRC_URI:real-time-edge = "git://bitbucket.sw.nxp.com/dnind/tsntool.git;protocol=ssh;nobranch=1" 
-
 SAVED_DIR := "${THISDIR}"
 
 SRCREV:qoriq = "e8517303a6d1d617423ea52276c9fdf00867dc86"
