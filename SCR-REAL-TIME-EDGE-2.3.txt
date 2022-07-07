@@ -1,15 +1,15 @@
 NXP Software Content Register
 
-Release - Real-time Edge Software 2.2.0
- March 2022
+Release - Real-time Edge Software 2.3
+ July 2022
 
 Outgoing License:  LA_OPT_NXP_Software_License v34 February 2022 - Additional Distribution License granted - Section 2.3 applies
 License File:      EULA.txt
 
 Yocto Project recipe manifest:
-repo init -u https://github.com/real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-hardknott -m real-time-edge-2.2.0.xml
+repo init -u https://github.com/real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-honister -m real-time-edge-2.3.0.xml
 
-Release tag: real-time-edge-2.2
+Release tag: Real-Time-Edge-v2.3-202207
 
 --------------------------------------------
 BSP Packages
@@ -22,7 +22,7 @@ License File:                docs/license.rst
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/atf -b lf-5.10.72-2.2.0
+Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/atf -b lf-5.15.5-1.0.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
@@ -35,7 +35,7 @@ License File:                docs/license.rst
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://source.codeaurora.org/external/imx/imx-atf -b rel_imx_5.10.72-2.2.0
+Release Location:            https://source.codeaurora.org/external/imx/imx-atf -b lf-5.15.5-1.0.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
@@ -54,7 +54,7 @@ Origin:                      NXP (BSD)
 --------------------------------------------
 
 Package:                     real-time-edge-linux.git
-Version:                     5.10
+Version:                     5.15
 Outgoing License:            GPL-2.0
 License File:                COPYING
 Package Category:            BSP
@@ -146,7 +146,7 @@ Origin:                      Michal Kubecek (GPL-2.0)
 --------------------------------------------
 
 Package:                     genavb-tsn
-Version:                     4.4
+Version:                     5.0
 Outgoing License:            nxp/EULA.txt, GPL-2.0, BSD-3-Clause
 License Files:               licenses/EULA.txt, licenses/COPYING, licenses/BSD-3-Clause
 Package Category:            Real-time Networking
@@ -158,7 +158,7 @@ Origin:                      NXP (nxp/EULA.txt, GPL-2.0, BSD-3-Clause)
 --------------------------------------------
 
 Package:                     iproute2
-Version:                     5.8.0
+Version:                     5.13.0
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Real-time Networking
@@ -218,7 +218,7 @@ Origin:                      Rcochran (GPL-2.0)
 --------------------------------------------
 
 Package:                     lldpd
-Version:                     1.0.4
+Version:                     1.0.8
 Outgoing License:            ISC
 License Files:               LICENCE
 Package Category:            Real-time Networking
@@ -304,7 +304,7 @@ Origin:                      Lolitech (GPL-2.0)
 --------------------------------------------
 
 Package:                     igh-ethercat
-Version:                     1.5.1
+Version:                     1.5.2
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Industrial
