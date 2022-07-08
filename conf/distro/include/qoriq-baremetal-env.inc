@@ -35,3 +35,5 @@ RCWSD:ls1028ardb = "${@bb.utils.contains('DISTRO_FEATURES', 'sai', \
 UBOOT_BAREMETAL_DEFCONFIG:ls1028ardb =  "${@bb.utils.contains('DISTRO_FEATURES', 'sai', \
                     'ls1028ardb_bm_sai_defconfig', \
                     'ls1028ardb_bm_defconfig', d)}"
+
+RCWSD:ls1046ardb = "RR_FFSSPPPH_1133_5559/rcw_1800_gpio2_sdboot"
