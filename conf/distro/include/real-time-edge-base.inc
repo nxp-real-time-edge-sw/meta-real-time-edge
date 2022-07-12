@@ -5,6 +5,8 @@ DISTROOVERRIDES = "real-time-edge"
 DISTRO_NAME = "NXP Real-time Edge Distro"
 DISTRO_VERSION = "2.2"
 
+CONNECTIVITY_CHECK_URIS ?= "https://yoctoproject.org/connectivity.html"
+
 DISTRO_FEATURES:remove:mx8m = " jailhouse"
 DISTRO_FEATURES:append:ls1043ardb = " real-time-edge-jailhouse"
 DISTRO_FEATURES:append:ls1046ardb = " real-time-edge-jailhouse"
