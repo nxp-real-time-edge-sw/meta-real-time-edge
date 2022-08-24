@@ -24,5 +24,6 @@ RTOS_INDUSTRIAL_INSTALL = " \
     freertos-hello \
     soem-gpio-pulse \
     freertos-soem-gpio-pulse \
+    rpmsg-lite-str-echo-rtos \
     ${rpmsg-lite-examples} \
 "

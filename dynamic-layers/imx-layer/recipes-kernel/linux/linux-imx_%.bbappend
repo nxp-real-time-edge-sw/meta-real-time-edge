@@ -10,6 +10,9 @@ SRC_URI:append:real-time-edge = " \
     file://linux-baremetal.config \
     file://linux-selinux.config \
     file://linux-fec.config \
+    file://0001-arm64-dts-imx8mm-evk-rpmsg-increase-the-reserved-mem.patch \
+    file://0002-virtio_rpmsg_bus-increase-buffer-size.patch \
+    file://0003-rpmsg-imx_rpmsg_tty-increase-the-max-buffer-size.patch \
 "
 
 do_configure:prepend:real-time-edge() {

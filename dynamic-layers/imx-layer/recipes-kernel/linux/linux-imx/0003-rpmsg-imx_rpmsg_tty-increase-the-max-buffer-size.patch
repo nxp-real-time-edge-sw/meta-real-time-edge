@@ -1,0 +1,63 @@
+From ce418fcfa7ca691972b3830d4f6fdee69c142d07 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Tue, 23 Aug 2022 10:09:24 +0800
+Subject: [PATCH 3/3] rpmsg: imx_rpmsg_tty: increase the max buffer size
+
+Signed-off-by: Biwen Li <biwen.li@nxp.com>
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+---
+ drivers/rpmsg/imx_rpmsg_tty.c | 23 +++++++++++++++++++++--
+ 1 file changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/rpmsg/imx_rpmsg_tty.c b/drivers/rpmsg/imx_rpmsg_tty.c
+index 6114c686c388..7f5152fa1524 100644
+--- a/drivers/rpmsg/imx_rpmsg_tty.c
++++ b/drivers/rpmsg/imx_rpmsg_tty.c
+@@ -13,8 +13,18 @@
+ #include <linux/tty_flip.h>
+ #include <linux/virtio.h>
+ 
++struct rpmsg_hdr {
++	__rpmsg32 src;
++	__rpmsg32 dst;
++	__rpmsg32 reserved;
++	__rpmsg16 len;
++	__rpmsg16 flags;
++	u8 data[];
++} __packed;
++
++#define MAX_RPMSG_BUF_SIZE	(512 * 2)
+ /* this needs to be less then (RPMSG_BUF_SIZE - sizeof(struct rpmsg_hdr)) */
+-#define RPMSG_MAX_SIZE		256
++#define RPMSG_MAX_SIZE		(MAX_RPMSG_BUF_SIZE - sizeof(struct rpmsg_hdr))
+ #define MSG		"hello world!"
+ 
+ /*
+@@ -133,6 +143,15 @@ static int rpmsg_tty_probe(struct rpmsg_device *rpdev)
+ 	int ret;
+ 	struct rpmsgtty_port *cport;
+ 	struct tty_driver *rpmsgtty_driver;
++	char buffer[1000] = {0};
++	int i;
++
++	for (i = 0; i < sizeof(buffer); i++) {
++		if (i == sizeof(buffer) - 1)
++			buffer[i] = '\0';
++		else
++			buffer[i] = 'A' + i % 26;
++	}
+ 
+ 	dev_info(&rpdev->dev, "new channel: 0x%x -> 0x%x!\n",
+ 			rpdev->src, rpdev->dst);
+@@ -176,7 +195,7 @@ static int rpmsg_tty_probe(struct rpmsg_device *rpdev)
+ 	 * send a message to our remote processor, and tell remote
+ 	 * processor about this channel
+ 	 */
+-	ret = rpmsg_send(rpdev->ept, MSG, strlen(MSG));
++	ret = rpmsg_send(rpdev->ept, buffer, strlen(buffer));
+ 	if (ret) {
+ 		dev_err(&rpdev->dev, "rpmsg_send failed: %d\n", ret);
+ 		goto error;
+-- 
+2.17.1
+
