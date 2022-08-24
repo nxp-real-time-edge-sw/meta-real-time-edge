@@ -12,7 +12,7 @@ SDK_NAME_PREFIX = "${DISTRO}"
 POKY_DEFAULT_DISTRO_FEATURES:remove = " ptest"
 DISTRO_FEATURES:append = " opengl pam virtualization polkit ipv6"
 
-LICENSE_FLAGS_WHITELIST = "non-commercial_netperf"
+LICENSE_FLAGS_ACCEPTED = "non-commercial_netperf"
 
 MKUBIFS_ARGS = "-m 512 -e 15360 -c 13000"
 UBINIZE_ARGS = "-m 512 -p 16KiB -s 512"
