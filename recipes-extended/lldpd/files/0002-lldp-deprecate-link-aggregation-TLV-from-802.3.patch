@@ -1,0 +1,68 @@
+From 952722e6072956d77d34f83470a0eb3e8bed9f9e Mon Sep 17 00:00:00 2001
+From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Date: Wed, 24 Aug 2022 16:01:46 +0800
+Subject: [PATCH 2/2] lldp: deprecate link aggregation TLV from 802.3
+
+Link Aggregation TLV has been deprecated from  IEEE Std 802.3 and is now
+standardized as IEEE Std 802.1AX, which is part of the IEEE 802.1. This
+patch update the type and subtype of link aggregation TLV.
+
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+---
+ src/daemon/lldp-tlv.h       |  1 +
+ src/daemon/protocols/lldp.c | 10 ++++------
+ 2 files changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/src/daemon/lldp-tlv.h b/src/daemon/lldp-tlv.h
+index 3bafcb8..acc33a0 100644
+--- a/src/daemon/lldp-tlv.h
++++ b/src/daemon/lldp-tlv.h
+@@ -41,6 +41,7 @@
+ #define LLDP_TLV_DOT1_PPVID	2
+ #define LLDP_TLV_DOT1_VLANNAME	3
+ #define LLDP_TLV_DOT1_PI	4
++#define LLDP_TLV_DOT1_LA	7
+ 
+ #define LLDP_TLV_DOT3_MAC	1
+ #define LLDP_TLV_DOT3_POWER	2
+diff --git a/src/daemon/protocols/lldp.c b/src/daemon/protocols/lldp.c
+index 49b1ee6..5337f42 100644
+--- a/src/daemon/protocols/lldp.c
++++ b/src/daemon/protocols/lldp.c
+@@ -270,20 +270,20 @@ static int _lldp_send(struct lldpd *global,
+ 		      POKE_END_LLDP_TLV))
+ 			goto toobig;
+ 	}
+-#endif
+ 
+-#ifdef ENABLE_DOT3
+ 	/* Aggregation status */
+ 	if (!(
+ 	      POKE_START_LLDP_TLV(LLDP_TLV_ORG) &&
+-	      POKE_BYTES(dot3, sizeof(dot3)) &&
+-	      POKE_UINT8(LLDP_TLV_DOT3_LA) &&
++	      POKE_BYTES(dot1, sizeof(dot1)) &&
++	      POKE_UINT8(LLDP_TLV_DOT1_LA) &&
+ 	      /* Bit 0 = capability ; Bit 1 = status */
+ 	      POKE_UINT8((port->p_aggregid) ? 3:1) &&
+ 	      POKE_UINT32(port->p_aggregid) &&
+ 	      POKE_END_LLDP_TLV))
+ 		goto toobig;
++#endif
+ 
++#ifdef ENABLE_DOT3
+ 	fp_tlv = port->p_fp.support | port->p_fp.status << 1 |
+ 		 port->p_fp.active << 2 | port->p_fp.frag_size << 3;
+ 	if (!(
+@@ -294,8 +294,6 @@ static int _lldp_send(struct lldpd *global,
+ 	      POKE_END_LLDP_TLV))
+ 		goto toobig;
+ 
+-
+-
+ 	/* MAC/PHY */
+ 	if (!(
+ 	      POKE_START_LLDP_TLV(LLDP_TLV_ORG) &&
+-- 
+2.17.1
+
