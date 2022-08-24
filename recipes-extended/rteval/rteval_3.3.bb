@@ -20,7 +20,7 @@ do_install:append () {
         fi
 }
 
-do_install:append:mx6ull () {
+do_install:append:mx6ull-nxp-bsp () {
         if [ -e ${D}/${sysconfdir}/rteval.conf ]; then
             sed -e '/kcompile/d' -i ${D}/${sysconfdir}/rteval.conf
         fi

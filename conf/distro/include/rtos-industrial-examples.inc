@@ -3,10 +3,10 @@
 
 # board name
 RTOS-INDUSTRIAL-BOARD ?= ""
-RTOS-INDUSTRIAL-BOARD:mx8mm = "evkmimx8mm"
-# RTOS-INDUSTRIAL-BOARD:mx8mn = "evkmimx8mn"
-RTOS-INDUSTRIAL-BOARD:mx8mp = "evkmimx8mp"
-# RTOS-INDUSTRIAL-BOARD:mx8mq = "evkmimx8mq"
+RTOS-INDUSTRIAL-BOARD:mx8mm-nxp-bsp = "evkmimx8mm"
+# RTOS-INDUSTRIAL-BOARD:mx8mn-nxp-bsp = "evkmimx8mn"
+RTOS-INDUSTRIAL-BOARD:mx8mp-nxp-bsp = "evkmimx8mp"
+# RTOS-INDUSTRIAL-BOARD:mx8mq-nxp-bsp = "evkmimx8mq"
 
 python () {
     if d.getVar('RTOS-INDUSTRIAL-BOARD', True):

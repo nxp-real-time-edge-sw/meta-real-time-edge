@@ -7,15 +7,15 @@ DISTRO_VERSION = "2.2"
 
 CONNECTIVITY_CHECK_URIS ?= "https://yoctoproject.org/connectivity.html"
 
-DISTRO_FEATURES:remove:mx8m = " jailhouse"
+DISTRO_FEATURES:remove:mx8m-nxp-bsp = " jailhouse"
 DISTRO_FEATURES:append:ls1043ardb = " real-time-edge-jailhouse"
 DISTRO_FEATURES:append:ls1046ardb = " real-time-edge-jailhouse"
 DISTRO_FEATURES:append:ls1028ardb = " real-time-edge-jailhouse real-time-edge-libbee \
 				      real-time-edge-libblep libnfc-nci \
 				      wayland-protocols weston imx-gpu-viv libdrm kmscube \
 				      real-time-edge-sysrepo tsn-scripts wayland alsa"
-DISTRO_FEATURES:append:mx8mp = " real-time-edge-jailhouse real-time-edge-sysrepo"
-DISTRO_FEATURES:append:mx8m = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
+DISTRO_FEATURES:append:mx8mp-nxp-bsp = " real-time-edge-jailhouse real-time-edge-sysrepo"
+DISTRO_FEATURES:append:mx8m-nxp-bsp = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
 DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo real-time-edge-nodejs-lbt feedgnuplot tsn-scripts real-time-edge-prl"
 DISTRO_FEATURES:append:ls1021aiot = " canfestival"
 
@@ -30,14 +30,14 @@ PREFERRED_PROVIDER_virtual/libgles2:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/egl:ls1028ardb  = "imx-gpu-viv"
 LICENSE_FLAGS_ACCEPTED:append:ls1028ardb = " commercial"
 
-DELTA_KERNEL_DEFCONFIG:append:mx8mm = " linux-fec.config"
-DELTA_KERNEL_DEFCONFIG:append:mx8m = " linux-imx8.config"
+DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = " linux-fec.config"
+DELTA_KERNEL_DEFCONFIG:append:mx8m-nxp-bsp = " linux-imx8.config"
 DELTA_KERNEL_DEFCONFIG:append:ls1043ardb = " linux-dpaa-ethercat.config"
 DELTA_KERNEL_DEFCONFIG:append:ls1046ardb = " linux-dpaa-ethercat.config"
 
 REAL_TIME_EDGE_SYSREPO:ls1028ardb = ""
 REAL_TIME_EDGE_SYSREPO:ls1021atsn = "real-time-edge-sysrepo-tc"
-REAL_TIME_EDGE_SYSREPO:mx8mp = "real-time-edge-sysrepo-tc"
+REAL_TIME_EDGE_SYSREPO:mx8mp-nxp-bsp = "real-time-edge-sysrepo-tc"
 PACKAGECONFIG:append:pn-real-time-edge-sysrepo = "${REAL_TIME_EDGE_SYSREPO}"
 
 # dtb for jailhouse

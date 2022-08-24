@@ -112,4 +112,4 @@ RDEPENDS:pyjailhouse += " \
     python3-zipp \
 "
 
-COMPATIBLE_MACHINE = "(qoriq|mx8)"
+COMPATIBLE_MACHINE = "(qoriq|mx8-nxp-bsp)"

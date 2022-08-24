@@ -11,7 +11,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 PACKAGES = "${PN}"
 
 rpmsg-lite-examples ?= ""
-rpmsg-lite-examples:mx8mm = "rpmsg-lite-uart-sharing-rtos"
+rpmsg-lite-examples:mx8mm-nxp-bsp = "rpmsg-lite-uart-sharing-rtos"
 
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rtos-industrial',  \

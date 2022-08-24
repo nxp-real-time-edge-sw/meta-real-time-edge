@@ -26,7 +26,7 @@ IMAGE_INSTALL:append = " \
 IMAGE_INSTALL:append:ls1028ardb = " \
     packagegroup-real-time-edge-multimedia \
 "
-IMAGE_INSTALL:append:imx = " \
+IMAGE_INSTALL:append:imx-nxp-bsp = " \
     packagegroup-real-time-edge-multimedia \
     packagegroup-real-time-edge-rtos \
     packagegroup-harpoon \
