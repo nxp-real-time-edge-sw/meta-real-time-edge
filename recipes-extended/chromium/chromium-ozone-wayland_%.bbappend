@@ -1,10 +1,10 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI += "\
-	    file://0013-Only-DRI-for-x11.patch \
+    file://0013-Only-DRI-for-x11.patch \
 "
-SRC_URI:append:ls1028ardb += "\
-	    file://0001-Fixed-chromium-flicker-with-g2d-renderer.patch \
+SRC_URI:append:ls1028ardb = "\
+    file://0001-Fixed-chromium-flicker-with-g2d-renderer.patch \
 "
 
 GN_ARGS_DISABLE_GBM     = ""
