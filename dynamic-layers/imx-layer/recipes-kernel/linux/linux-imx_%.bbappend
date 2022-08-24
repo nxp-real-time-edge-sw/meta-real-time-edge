@@ -1,7 +1,7 @@
 
 REAL_TIME_EDGE_LINUX_SRC ?= "git://github.com/real-time-edge-sw/real-time-edge-linux.git;protocol=https;nobranch=1"
-REAL_TIME_EDGE_LINUX_BRANCH ?= "linux_5.15.y"
-REAL_TIME_EDGE_LINUX_SRCREV ?= "be88a251b281cbe654728e45b9cb8cab14416355"
+REAL_TIME_EDGE_LINUX_BRANCH ?= "linux_5.15.52"
+REAL_TIME_EDGE_LINUX_SRCREV ?= "${AUTOREV}"
 
 SRC_URI:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRC};branch=${REAL_TIME_EDGE_LINUX_BRANCH}"
 SRCREV:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRCREV}"
