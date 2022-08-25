@@ -13,6 +13,9 @@ PACKAGES = "${PN}"
 rpmsg-lite-examples ?= ""
 rpmsg-lite-examples:mx8mm = "rpmsg-lite-uart-sharing-rtos"
 
+RS485-9bit-examples ?= ""
+RS485-9bit-examples:mx8mm = "9bit-uart-polling 9bit-uart-interrupt-transfer"
+
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rtos-industrial',  \
     '${RTOS_INDUSTRIAL_INSTALL}', '', d)} \
@@ -26,4 +29,5 @@ RTOS_INDUSTRIAL_INSTALL = " \
     freertos-soem-gpio-pulse \
     rpmsg-lite-str-echo-rtos \
     ${rpmsg-lite-examples} \
+    ${RS485-9bit-examples} \
 "
