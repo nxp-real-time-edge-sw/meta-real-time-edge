@@ -26,7 +26,7 @@ SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://scripts/gic-demo-imx8mp.sh \
            file://scripts/ivshmem-demo-imx8mp.sh \
            file://scripts/linux-demo-imx8mp.sh \
-           file://rootfs.cpio.gz \
+           file://rootfs.cpio.gz;unpack=0 \
            file://0001-tools-scripts-update-shebang-to-python3.patch \
            file://0002-configs-ls1046a-rdb-add-cell-configure-files.patch \
            file://0003-configs-ls1046a-rdb-Add-linux-inmate-dts-demo.patch \
