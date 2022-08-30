@@ -1,7 +1,7 @@
-From 381afd54c916f7e95ccbcb35a003de7cade24256 Mon Sep 17 00:00:00 2001
+From 7b7b0d088c2bbb7c4405b370074d9aef006cc8d8 Mon Sep 17 00:00:00 2001
 From: Vinicius Costa Gomes <vinicius.gomes@intel.com>
 Date: Tue, 2 Nov 2021 11:01:35 +0800
-Subject: [PATCH 2/4] ethtool: add support for configuring frame preemption
+Subject: [PATCH 2/3] ethtool: add support for configuring frame preemption
 
 The configuration knobs that can be set are:
   - enabling/disabling frame preemption per-device;
@@ -21,10 +21,10 @@ Signed-off-by: Vinicius Costa Gomes <vinicius.gomes@intel.com>
  1 file changed, 92 insertions(+)
 
 diff --git a/ethtool.c b/ethtool.c
-index 585aafa..9537aa4 100644
+index 064bc69..49f378f 100644
 --- a/ethtool.c
 +++ b/ethtool.c
-@@ -1599,6 +1599,28 @@ static void dump_fec(u32 fec)
+@@ -1612,6 +1612,28 @@ static void dump_fec(u32 fec)
  		fprintf(stdout, " LLRS");
  }
  
@@ -53,7 +53,7 @@ index 585aafa..9537aa4 100644
  #define N_SOTS 7
  
  static char *so_timestamping_labels[N_SOTS] = {
-@@ -5164,6 +5186,63 @@ static int do_gtunable(struct cmd_context *ctx)
+@@ -5179,6 +5201,63 @@ static int do_gtunable(struct cmd_context *ctx)
  	return 0;
  }
  
@@ -117,7 +117,7 @@ index 585aafa..9537aa4 100644
  static int do_get_phy_tunable(struct cmd_context *ctx)
  {
  	unsigned int argc = ctx->argc;
-@@ -5971,6 +6050,19 @@ static const struct option args[] = {
+@@ -6010,6 +6089,19 @@ static const struct option args[] = {
  		.help	= "Set FEC settings",
  		.xhelp	= "		[ encoding auto|off|rs|baser|llrs [...]]\n"
  	},
@@ -138,5 +138,5 @@ index 585aafa..9537aa4 100644
  		.opts	= "-Q|--per-queue",
  		.func	= do_perqueue,
 -- 
-2.27.0
+2.17.1
 

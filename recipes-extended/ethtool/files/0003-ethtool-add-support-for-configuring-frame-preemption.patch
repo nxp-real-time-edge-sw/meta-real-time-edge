@@ -1,21 +1,23 @@
-From 8038bf432655c293fdd89ef6cd0014b0cfef5769 Mon Sep 17 00:00:00 2001
+From 784d332f329f126137cc3ae54aadc88dee2df1c5 Mon Sep 17 00:00:00 2001
 From: Vinicius Costa Gomes <vinicius.gomes@intel.com>
-Date: Mon, 7 Feb 2022 15:35:32 +0800
-Subject: [PATCH 3/4] ethtool: add support for configuring frame preemption via
-  netlink
+Date: Tue, 30 Aug 2022 10:02:16 +0800
+Subject: [PATCH 3/3] ethtool: add support for configuring frame preemption via
+ netlink
 
 Adds the same functionality of the ETHTOOL_{G,S}FP commands, now via
 the ETHTOOL_MSG_PREEMPT_{GET,SET} netlink messages.
 
 Signed-off-by: Vinicius Costa Gomes <vinicius.gomes@intel.com>
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 ---
  Makefile.am            |   1 +
+ Makefile.in            |   8 +-
  ethtool.c              |   2 +
  netlink/desc-ethtool.c |  13 ++++
  netlink/extapi.h       |   4 +
  netlink/preempt.c      | 165 +++++++++++++++++++++++++++++++++++++++++
- 5 files changed, 185 insertions(+)
+ 6 files changed, 189 insertions(+), 4 deletions(-)
  create mode 100644 netlink/preempt.c
 
 diff --git a/Makefile.am b/Makefile.am
@@ -30,11 +32,51 @@ index dd357d0..c437830 100644
  		  uapi/linux/ethtool_netlink.h \
  		  uapi/linux/netlink.h uapi/linux/genetlink.h \
  		  uapi/linux/rtnetlink.h uapi/linux/if_link.h
+diff --git a/Makefile.in b/Makefile.in
+index c849d51..b5445f8 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -110,7 +110,7 @@ sbin_PROGRAMS = ethtool$(EXEEXT)
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  netlink/stats.c \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  netlink/desc-ethtool.c netlink/desc-genlctrl.c \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  netlink/module-eeprom.c \
+-@ETHTOOL_ENABLE_NETLINK_TRUE@		  netlink/desc-rtnl.c netlink/cable_test.c netlink/tunnels.c \
++@ETHTOOL_ENABLE_NETLINK_TRUE@		  netlink/desc-rtnl.c netlink/cable_test.c netlink/tunnels.c netlink/preempt.c \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  uapi/linux/ethtool_netlink.h \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  uapi/linux/netlink.h uapi/linux/genetlink.h \
+ @ETHTOOL_ENABLE_NETLINK_TRUE@		  uapi/linux/rtnetlink.h uapi/linux/if_link.h
+@@ -158,7 +158,7 @@ am__ethtool_SOURCES_DIST = ethtool.c uapi/linux/ethtool.h internal.h \
+ 	netlink/pause.c netlink/eee.c netlink/tsinfo.c netlink/fec.c \
+ 	netlink/stats.c netlink/desc-ethtool.c netlink/desc-genlctrl.c \
+ 	netlink/module-eeprom.c netlink/desc-rtnl.c \
+-	netlink/cable_test.c netlink/tunnels.c \
++	netlink/cable_test.c netlink/tunnels.c netlink/preempt.c \
+ 	uapi/linux/ethtool_netlink.h uapi/linux/netlink.h \
+ 	uapi/linux/genetlink.h uapi/linux/rtnetlink.h \
+ 	uapi/linux/if_link.h
+@@ -247,7 +247,7 @@ am__test_cmdline_SOURCES_DIST = test-cmdline.c test-common.c ethtool.c \
+ 	netlink/eee.c netlink/tsinfo.c netlink/fec.c netlink/stats.c \
+ 	netlink/desc-ethtool.c netlink/desc-genlctrl.c \
+ 	netlink/module-eeprom.c netlink/desc-rtnl.c \
+-	netlink/cable_test.c netlink/tunnels.c \
++	netlink/cable_test.c netlink/tunnels.c netlink/preempt.c \
+ 	uapi/linux/ethtool_netlink.h uapi/linux/netlink.h \
+ 	uapi/linux/genetlink.h uapi/linux/rtnetlink.h \
+ 	uapi/linux/if_link.h
+@@ -343,7 +343,7 @@ am__test_features_SOURCES_DIST = test-features.c test-common.c \
+ 	netlink/pause.c netlink/eee.c netlink/tsinfo.c netlink/fec.c \
+ 	netlink/stats.c netlink/desc-ethtool.c netlink/desc-genlctrl.c \
+ 	netlink/module-eeprom.c netlink/desc-rtnl.c \
+-	netlink/cable_test.c netlink/tunnels.c \
++	netlink/cable_test.c netlink/tunnels.c netlink/preempt.c \
+ 	uapi/linux/ethtool_netlink.h uapi/linux/netlink.h \
+ 	uapi/linux/genetlink.h uapi/linux/rtnetlink.h \
+ 	uapi/linux/if_link.h
 diff --git a/ethtool.c b/ethtool.c
-index 07a6703..a8c65ee 100644
+index 49f378f..5625878 100644
 --- a/ethtool.c
 +++ b/ethtool.c
-@@ -6076,11 +6076,13 @@ static const struct option args[] = {
+@@ -6092,11 +6092,13 @@ static const struct option args[] = {
  	{
  		.opts	= "--show-frame-preemption",
  		.func	= do_get_preempt,
@@ -49,11 +91,11 @@ index 07a6703..a8c65ee 100644
  		.xhelp	= "		[ fp on|off ]\n"
  			  "		[ preemptible-queues-mask %x ]\n"
 diff --git a/netlink/desc-ethtool.c b/netlink/desc-ethtool.c
-index d6fc4e2..8215eb4 100644
+index 69f6561..fba6799 100644
 --- a/netlink/desc-ethtool.c
 +++ b/netlink/desc-ethtool.c
-@@ -374,6 +374,17 @@ const struct pretty_nla_desc __module_eeprom_desc[] = {
- 	NLATTR_DESC_BINARY(ETHTOOL_A_MODULE_EEPROM_DATA)
+@@ -392,6 +392,17 @@ static const struct pretty_nla_desc __phc_vclocks_desc[] = {
+ 	NLATTR_DESC_BINARY(ETHTOOL_A_PHC_VCLOCKS_INDEX),
  };
  
 +static const struct pretty_nla_desc __preempt_desc[] = {
@@ -70,17 +112,17 @@ index d6fc4e2..8215eb4 100644
  const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
  	NLMSG_DESC_INVALID(ETHTOOL_MSG_USER_NONE),
  	NLMSG_DESC(ETHTOOL_MSG_STRSET_GET, strset),
-@@ -408,6 +419,8 @@ const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
+@@ -425,6 +436,8 @@ const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
+ 	NLMSG_DESC(ETHTOOL_MSG_FEC_GET, fec),
  	NLMSG_DESC(ETHTOOL_MSG_FEC_SET, fec),
- 	NLMSG_DESC(ETHTOOL_MSG_STATS_GET, stats),
  	NLMSG_DESC(ETHTOOL_MSG_MODULE_EEPROM_GET, module_eeprom),
 +	NLMSG_DESC(ETHTOOL_MSG_PREEMPT_GET, preempt),
 +	NLMSG_DESC(ETHTOOL_MSG_PREEMPT_SET, preempt),
+ 	NLMSG_DESC(ETHTOOL_MSG_STATS_GET, stats),
+ 	NLMSG_DESC(ETHTOOL_MSG_PHC_VCLOCKS_GET, phc_vclocks),
  };
- 
- const unsigned int ethnl_umsg_n_desc = ARRAY_SIZE(ethnl_umsg_desc);
 diff --git a/netlink/extapi.h b/netlink/extapi.h
-index 91bf02b..2489874 100644
+index 129e293..59811db 100644
 --- a/netlink/extapi.h
 +++ b/netlink/extapi.h
 @@ -44,6 +44,8 @@ int nl_sfec(struct cmd_context *ctx);
@@ -92,7 +134,7 @@ index 91bf02b..2489874 100644
  int nl_getmodule(struct cmd_context *ctx);
  
  void nl_monitor_usage(void);
-@@ -94,6 +96,8 @@ static inline void nl_monitor_usage(void)
+@@ -105,6 +107,8 @@ nl_get_eeprom_page(struct cmd_context *ctx __maybe_unused,
  #define nl_cable_test		NULL
  #define nl_cable_test_tdr	NULL
  #define nl_gtunnels		NULL
