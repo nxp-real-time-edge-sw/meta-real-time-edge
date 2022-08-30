@@ -22,6 +22,8 @@ FILES:${PN} += "/usr/share/yang/* /run/sysrepo* /tmp/ /tmp/sysrepo*"
 
 inherit cmake pkgconfig python3native python3-dir
 
+do_package_qa[noexec] = "1"
+
 # Specify any options you want to pass to cmake using EXTRA_OECMAKE:
 EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE:String=Release -DBUILD_EXAMPLES:String=False -DENABLE_TESTS:String=False -DREPOSITORY_LOC:PATH=/etc/sysrepo -DCALL_TARGET_BINS_DIRECTLY=False -DGEN_LANGUAGE_BINDINGS:String=False -DIS_DEVELOPER_CONFIGURATION=OFF -DGEN_PYTHON2_TESTS=OFF -DGEN_CPP_BINDINGS=OFF -DGEN_PYTHON_BINDINGS=OFF -DBUILD_CPP_EXAMPLES=OFF -DUSE_SR_MEM_MGMT=OFF "
 
