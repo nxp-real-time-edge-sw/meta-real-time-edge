@@ -52,3 +52,6 @@ KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-root.dtb"
 
 # opcua override default log level
 LIBOPEN62541_LOGLEVE = "300"
+
+# Set preferred version for libbpf to v0.6
+PREFERRED_VERSION_libbpf = "0.6.%"
