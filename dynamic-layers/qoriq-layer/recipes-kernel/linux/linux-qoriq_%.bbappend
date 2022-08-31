@@ -1,10 +1,12 @@
 
-REAL_TIME_EDGE_LINUX_SRC ?= "git://github.com/real-time-edge-sw/real-time-edge-linux.git;protocol=https;nobranch=1"
+REAL_TIME_EDGE_LINUX_SRC ?= "git://github.com/real-time-edge-sw/real-time-edge-linux.git;protocol=https;"
 REAL_TIME_EDGE_LINUX_BRANCH ?= "linux_5.15.52"
 REAL_TIME_EDGE_LINUX_SRCREV ?= "${AUTOREV}"
 
-SRC_URI:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRC};branch=${REAL_TIME_EDGE_LINUX_BRANCH}"
+KERNEL_SRC:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRC}"
+KERNEL_BRANCH:real-time-edge = "${REAL_TIME_EDGE_LINUX_BRANCH}"
 SRCREV:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRCREV}"
+SRC_URI = "${KERNEL_SRC};branch=${KERNEL_BRANCH}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI:append:real-time-edge = " \
