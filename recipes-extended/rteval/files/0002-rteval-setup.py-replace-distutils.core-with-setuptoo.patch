@@ -1,0 +1,24 @@
+From 4181b5cf82cca6d935e9ece2fb5699d0ca4c0518 Mon Sep 17 00:00:00 2001
+From: Tao Yang <Tao.Yang1@nxp.com>
+Date: Tue, 30 Aug 2022 21:36:25 -0500
+Subject: [PATCH] rteval: setup.py: replace distutils.core with setuptools
+
+---
+ setup.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/setup.py b/setup.py
+index 9a76ffb..d66aa57 100644
+--- a/setup.py
++++ b/setup.py
+@@ -1,6 +1,6 @@
+ #!/usr/bin/python3
+ from distutils.sysconfig import get_python_lib
+-from distutils.core import setup
++from setuptools import setup
+ from os.path import isfile, join
+ import glob, os, shutil, gzip
+ 
+-- 
+2.1.4
+

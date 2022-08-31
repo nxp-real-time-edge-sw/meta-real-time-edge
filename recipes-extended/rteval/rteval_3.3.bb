@@ -6,6 +6,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
 SRC_URI = "git://git.kernel.org/pub/scm/utils/rteval/rteval.git;nobranch=1 \
            file://0001-rteval-Tailored-for-NXP-boards-and-Yocto-rootfs.patch \
+           file://0002-rteval-setup.py-replace-distutils.core-with-setuptoo.patch \
 "
 
 SRCREV = "d83a407fb55bf2a759097f95a8e8337699b9dfa2"
