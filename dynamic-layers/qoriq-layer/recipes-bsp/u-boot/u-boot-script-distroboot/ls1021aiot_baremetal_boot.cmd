@@ -10,7 +10,7 @@ env exists baremetal_image || setenv baremetal_image bm-u-boot.bin;
 part uuid $devtype $devnum:$devpart_root partuuidr;
 setenv bootargs "console=ttyS0,115200 cma=64M@0x0-0xb0000000 root=PARTUUID=$partuuidr rw rootwait $othbootargs";
 load $devtype $devnum:$devpart_boot $baremetal_addr $baremetal_image;
-cpu 1 start ${baremetal_addr};
+cpu 1 release ${baremetal_addr};
 load $devtype $devnum:$devpart_boot $kernel_addr_r $kernel_image;
 load $devtype $devnum:$devpart_boot $fdt_addr_r $dtb;
 bootm $kernel_addr_r - $fdt_addr_r
