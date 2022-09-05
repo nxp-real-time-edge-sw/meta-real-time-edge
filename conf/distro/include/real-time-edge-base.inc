@@ -19,11 +19,11 @@ DISTRO_FEATURES:append:mx8m-nxp-bsp = " wayland-protocols weston imx-gpu-viv lib
 DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo real-time-edge-nodejs-lbt feedgnuplot tsn-scripts real-time-edge-prl"
 DISTRO_FEATURES:append:ls1021aiot = " canfestival"
 
-#For ls1028ardb
+# For ls1028ardb
 DISTRO_FEATURES:remove:ls1028ardb = " x11"
-PREFERRED_VERSION_weston:ls1028ardb = "9.0.0.imx"
-PREFERRED_VERSION_wayland-protocols:ls1028ardb = "1.20.imx"
-PREFERRED_VERSION_libdrm:ls1028ardb = "2.4.102.imx"
+PREFERRED_VERSION_weston:ls1028ardb = "10.0.1.imx"
+PREFERRED_VERSION_wayland-protocols:ls1028ardb = "1.25.imx"
+PREFERRED_VERSION_libdrm:ls1028ardb = "2.4.109.imx"
 PREFERRED_PROVIDER_virtual/libgl:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/libgles1:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/libgles2:ls1028ardb  = "imx-gpu-viv"
