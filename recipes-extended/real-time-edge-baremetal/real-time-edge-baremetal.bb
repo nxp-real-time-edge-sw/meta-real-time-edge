@@ -1,4 +1,4 @@
-# Copyright 2021 NXP
+# Copyright 2021-2022 NXP
 
 require recipes-bsp/u-boot/u-boot.inc
 require real-time-edge-baremetal-env.inc
@@ -19,10 +19,12 @@ PROVIDES = "real-time-edge-baremetal"
 DEPENDS:append = " libgcc dtc-native bison-native bc-native"
 
 UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2022.04"
-UBOOT_BAREMETAL_SRC ?= "git://github.com/real-time-edge-sw/real-time-edge-uboot.git;protocol=https;nobranch=1"
+UBOOT_BAREMETAL_SRC ?= "git://github.com/real-time-edge-sw/real-time-edge-uboot.git;protocol=https;"
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
 
 SRCREV = "${AUTOREV}"
+
+PV = "2022.04+git${SRCPV}"
 
 S = "${WORKDIR}/git"
 B = "${S}"
