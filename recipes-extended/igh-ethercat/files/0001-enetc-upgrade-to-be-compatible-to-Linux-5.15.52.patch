@@ -1,0 +1,131 @@
+From f128f67ee7bf0352ff989766bbe4e3e5064052e0 Mon Sep 17 00:00:00 2001
+From: Tao Yang <Tao.Yang1@nxp.com>
+Date: Tue, 6 Sep 2022 10:21:40 +0800
+Subject: [PATCH] enetc: upgrade to be compatible to Linux 5.15.52
+
+Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
+---
+ devices/enetc/enetc_pf.c  | 16 ++++++++++------
+ devices/enetc/enetc_pf.h  |  4 ++--
+ devices/enetc/enetc_qos.c |  6 +++---
+ 3 files changed, 15 insertions(+), 11 deletions(-)
+
+diff --git a/devices/enetc/enetc_pf.c b/devices/enetc/enetc_pf.c
+index 432f04f8..49dce232 100644
+--- a/devices/enetc/enetc_pf.c
++++ b/devices/enetc/enetc_pf.c
+@@ -6,6 +6,7 @@
+ #include <linux/fsl/enetc_mdio.h>
+ #include <linux/of_mdio.h>
+ #include <linux/of_net.h>
++#include <linux/pcs-lynx.h>
+ #include "enetc_pf.h"
+ #include "../ecdev.h"
+ 
+@@ -306,7 +307,7 @@ static int enetc_imdio_create(struct enetc_pf *pf)
+ {
+ 	struct device *dev = &pf->si->pdev->dev;
+ 	struct enetc_mdio_priv *mdio_priv;
+-	struct lynx_pcs *pcs_lynx;
++	struct phylink_pcs *phylink_pcs;
+ 	struct mdio_device *pcs;
+ 	struct mii_bus *bus;
+ 	int err;
+@@ -338,8 +339,8 @@ static int enetc_imdio_create(struct enetc_pf *pf)
+ 		goto unregister_mdiobus;
+ 	}
+ 
+-	pcs_lynx = lynx_pcs_create(pcs);
+-	if (!pcs_lynx) {
++	phylink_pcs = lynx_pcs_create(pcs);
++	if (!phylink_pcs) {
+ 		mdio_device_free(pcs);
+ 		err = -ENOMEM;
+ 		dev_err(dev, "cannot create lynx pcs (%d)\n", err);
+@@ -347,7 +348,7 @@ static int enetc_imdio_create(struct enetc_pf *pf)
+ 	}
+ 
+ 	pf->imdio = bus;
+-	pf->pcs = pcs_lynx;
++	pf->pcs = phylink_pcs;
+ 
+ 	return 0;
+ 
+@@ -360,8 +361,11 @@ free_mdio_bus:
+ 
+ static void enetc_imdio_remove(struct enetc_pf *pf)
+ {
++	struct mdio_device *mdio_device;
++
+ 	if (pf->pcs) {
+-		mdio_device_free(pf->pcs->mdio);
++		mdio_device = lynx_get_mdio_device(pf->pcs);
++		mdio_device_free(mdio_device);
+ 		lynx_pcs_destroy(pf->pcs);
+ 	}
+ 	if (pf->imdio) {
+@@ -461,7 +465,7 @@ static void enetc_pl_mac_config(struct phylink_config *config,
+ 
+ 	priv = netdev_priv(pf->si->ndev);
+ 	if (pf->pcs)
+-		phylink_set_pcs(priv->phylink, &pf->pcs->pcs);
++		phylink_set_pcs(priv->phylink, pf->pcs);
+ }
+ 
+ static void enetc_pl_mac_link_up(struct phylink_config *config,
+diff --git a/devices/enetc/enetc_pf.h b/devices/enetc/enetc_pf.h
+index 263946c5..c26bd66e 100644
+--- a/devices/enetc/enetc_pf.h
++++ b/devices/enetc/enetc_pf.h
+@@ -2,7 +2,7 @@
+ /* Copyright 2017-2019 NXP */
+ 
+ #include "enetc.h"
+-#include <linux/pcs-lynx.h>
++#include <linux/phylink.h>
+ 
+ #define ENETC_PF_NUM_RINGS	8
+ 
+@@ -46,7 +46,7 @@ struct enetc_pf {
+ 
+ 	struct mii_bus *mdio; /* saved for cleanup */
+ 	struct mii_bus *imdio;
+-	struct lynx_pcs *pcs;
++	struct phylink_pcs *pcs;
+ 
+ 	phy_interface_t if_mode;
+ 	struct phylink_config phylink_config;
+diff --git a/devices/enetc/enetc_qos.c b/devices/enetc/enetc_qos.c
+index dbceb99c..a47c661b 100644
+--- a/devices/enetc/enetc_qos.c
++++ b/devices/enetc/enetc_qos.c
+@@ -1179,7 +1179,7 @@ static int enetc_psfp_parse_clsflower(struct enetc_ndev_priv *priv,
+ 	}
+ 
+ 	/* parsing gate action */
+-	if (entryg->gate.index >= priv->psfp_cap.max_psfp_gate) {
++	if (entryg->hw_index >= priv->psfp_cap.max_psfp_gate) {
+ 		NL_SET_ERR_MSG_MOD(extack, "No Stream Gate resource!");
+ 		err = -ENOSPC;
+ 		goto free_filter;
+@@ -1199,7 +1199,7 @@ static int enetc_psfp_parse_clsflower(struct enetc_ndev_priv *priv,
+ 	}
+ 
+ 	refcount_set(&sgi->refcount, 1);
+-	sgi->index = entryg->gate.index;
++	sgi->index = entryg->hw_index;
+ 	sgi->init_ipv = entryg->gate.prio;
+ 	sgi->basetime = entryg->gate.basetime;
+ 	sgi->cycletime = entryg->gate.cycletime;
+@@ -1236,7 +1236,7 @@ static int enetc_psfp_parse_clsflower(struct enetc_ndev_priv *priv,
+ 			refcount_set(&fmi->refcount, 1);
+ 			fmi->cir = entryp->police.rate_bytes_ps;
+ 			fmi->cbs = entryp->police.burst;
+-			fmi->index = entryp->police.index;
++			fmi->index = entryp->hw_index;
+ 			filter->flags |= ENETC_PSFP_FLAGS_FMI;
+ 			filter->fmi_index = fmi->index;
+ 			sfi->meter_id = fmi->index;
+-- 
+2.17.1
+

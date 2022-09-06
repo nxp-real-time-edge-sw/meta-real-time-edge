@@ -33,6 +33,7 @@ SRC_URI += "\
     file://0001-enetc-fix-the-compile-errors-when-upgrading-to-Linux.patch \
     file://0001-dpaa1-Add-module-license.patch \
     file://0001-fec-fix-the-compile-error-when-upgrading-to-Linux-5..patch \
+    file://0001-enetc-upgrade-to-be-compatible-to-Linux-5.15.52.patch \
 "
 S = "${WORKDIR}/ethercat-${PV}"
 
