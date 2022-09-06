@@ -17,6 +17,7 @@ DISTRO_FEATURES:append:ls1028ardb = " real-time-edge-jailhouse real-time-edge-li
 DISTRO_FEATURES:append:mx8dxl-nxp-bsp = " real-time-edge-sysrepo"
 DISTRO_FEATURES:append:mx8mp-nxp-bsp = " real-time-edge-jailhouse real-time-edge-sysrepo"
 DISTRO_FEATURES:append:mx8m-nxp-bsp = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
+DISTRO_FEATURES:append:mx93-nxp-bsp = " real-time-edge-sysrepo"
 DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo real-time-edge-nodejs-lbt feedgnuplot tsn-scripts real-time-edge-prl"
 DISTRO_FEATURES:append:ls1021aiot = " canfestival"
 
@@ -40,6 +41,7 @@ REAL_TIME_EDGE_SYSREPO:ls1028ardb = ""
 REAL_TIME_EDGE_SYSREPO:ls1021atsn = "real-time-edge-sysrepo-tc"
 REAL_TIME_EDGE_SYSREPO:mx8dxl-nxp-bsp = "real-time-edge-sysrepo-tc"
 REAL_TIME_EDGE_SYSREPO:mx8mp-nxp-bsp = "real-time-edge-sysrepo-tc"
+REAL_TIME_EDGE_SYSREPO:mx93-nxp-bsp = "real-time-edge-sysrepo-tc"
 PACKAGECONFIG:append:pn-real-time-edge-sysrepo = "${REAL_TIME_EDGE_SYSREPO}"
 
 # dtb for jailhouse
