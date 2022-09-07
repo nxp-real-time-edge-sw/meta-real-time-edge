@@ -31,6 +31,7 @@ PREFERRED_PROVIDER_virtual/libgles1:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/libgles2:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/egl:ls1028ardb  = "imx-gpu-viv"
 LICENSE_FLAGS_ACCEPTED:append:ls1028ardb = " commercial"
+DISTROOVERRIDES:append:ls1028ardb = ":imxdrm"
 
 DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = " linux-fec.config"
 DELTA_KERNEL_DEFCONFIG:append:mx8m-nxp-bsp = " linux-imx8.config"
