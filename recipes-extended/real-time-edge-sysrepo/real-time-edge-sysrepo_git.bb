@@ -16,7 +16,7 @@ SRC_URI += " \
     file://scripts/sysrepo-cfg.sh \
 "
 
-SRCREV = "1ad055e8d24564dcb50c63b8b10fa362c55c3e9d"
+SRCREV = "a01b99fa1ee7fcf8445521bcb11c99859a17d6c1"
 
 S = "${WORKDIR}/git"
 
