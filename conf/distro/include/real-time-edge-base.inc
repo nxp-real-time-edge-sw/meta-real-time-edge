@@ -18,7 +18,7 @@ DISTRO_FEATURES:append:mx8dxl-nxp-bsp = " real-time-edge-sysrepo"
 DISTRO_FEATURES:append:mx8mp-nxp-bsp = " real-time-edge-jailhouse real-time-edge-sysrepo"
 DISTRO_FEATURES:append:mx8m-nxp-bsp = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
 DISTRO_FEATURES:append:mx93-nxp-bsp = " real-time-edge-sysrepo"
-DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo real-time-edge-nodejs-lbt feedgnuplot tsn-scripts real-time-edge-prl"
+DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo feedgnuplot tsn-scripts real-time-edge-prl"
 DISTRO_FEATURES:append:ls1021aiot = " canfestival"
 
 # For ls1028ardb
