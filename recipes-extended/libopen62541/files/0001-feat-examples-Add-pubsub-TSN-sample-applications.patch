@@ -1,6 +1,6 @@
-From 108f43ce8889014b4644175c6cca3f6b356f408e Mon Sep 17 00:00:00 2001
+From 1d4a4d26847443c396d92d4ae62b87f495dd7d49 Mon Sep 17 00:00:00 2001
 From: Tao Yang <Tao.Yang1@nxp.com>
-Date: Wed, 29 Sep 2021 17:18:54 +0800
+Date: Thu, 15 Sep 2022 13:21:11 +0800
 Subject: [PATCH] feat(examples): Add pubsub TSN sample applications
 
 ---
@@ -23,7 +23,7 @@ Subject: [PATCH] feat(examples): Add pubsub TSN sample applications
  create mode 100644 examples/pubsub_realtime/timestamp.h
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 9184b94..bb5a4c3 100644
+index 9184b943..bb5a4c3f 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -278,6 +278,11 @@ option(UA_ENABLE_PUBSUB_ETH_UADP_XDP "Enable Subscribe UADP over Ethernet using
@@ -39,7 +39,7 @@ index 9184b94..bb5a4c3 100644
  if(UA_ENABLE_PUBSUB_ETH_UADP)
      if(NOT CMAKE_SYSTEM MATCHES "Linux")
 diff --git a/examples/CMakeLists.txt b/examples/CMakeLists.txt
-index 70c8456..268e248 100644
+index 70c84560..268e2486 100644
 --- a/examples/CMakeLists.txt
 +++ b/examples/CMakeLists.txt
 @@ -199,7 +199,7 @@ add_subdirectory(nodeset)
@@ -76,7 +76,7 @@ index 70c8456..268e248 100644
          else(NOT UA_ENABLE_AMALGAMATION)
 diff --git a/examples/pubsub_realtime/opcua_pubsub_publisher.c b/examples/pubsub_realtime/opcua_pubsub_publisher.c
 new file mode 100644
-index 0000000..365e6ac
+index 00000000..9fc2802a
 --- /dev/null
 +++ b/examples/pubsub_realtime/opcua_pubsub_publisher.c
 @@ -0,0 +1,1029 @@
@@ -1111,7 +1111,7 @@ index 0000000..365e6ac
 +}
 diff --git a/examples/pubsub_realtime/opcua_pubsub_subscriber.c b/examples/pubsub_realtime/opcua_pubsub_subscriber.c
 new file mode 100644
-index 0000000..acda96d
+index 00000000..e046d67c
 --- /dev/null
 +++ b/examples/pubsub_realtime/opcua_pubsub_subscriber.c
 @@ -0,0 +1,1115 @@
@@ -2232,7 +2232,7 @@ index 0000000..acda96d
 +}
 diff --git a/examples/pubsub_realtime/thermal.c b/examples/pubsub_realtime/thermal.c
 new file mode 100644
-index 0000000..e0eb9f9
+index 00000000..dd11aa09
 --- /dev/null
 +++ b/examples/pubsub_realtime/thermal.c
 @@ -0,0 +1,42 @@
@@ -2262,25 +2262,25 @@ index 0000000..e0eb9f9
 +
 +    fd = open(SYSFS_THERMAL_ZONE0, O_RDONLY);
 +    if (fd < 0) {
-+        fprintf(stderr, "open %s: %s\n", SYSFS_THERMAL_ZONE0, strerror(errno));
-+        return -1;
++        return 0;
 +    }
++    else {
++        len = read(fd, buf, sizeof(buf)-1);
++        if (len < 0) {
++            fprintf(stderr, "read %s: %s\n", SYSFS_THERMAL_ZONE0, strerror(errno));
++        }
++        buf[len] = 0;
 +
-+    len = read(fd, buf, sizeof(buf)-1);
-+    if (len < 0) {
-+        fprintf(stderr, "read %s: %s\n", SYSFS_THERMAL_ZONE0, strerror(errno));
++        celsius = (double)atoi(buf) / 1000;
++
++        close(fd);
 +    }
-+    buf[len] = 0;
-+
-+    celsius = (double)atoi(buf) / 1000;
-+
-+    close(fd);
 +
 +    return celsius;
 +}
 diff --git a/examples/pubsub_realtime/thermal.h b/examples/pubsub_realtime/thermal.h
 new file mode 100644
-index 0000000..5aec2f8
+index 00000000..1ee4f6bb
 --- /dev/null
 +++ b/examples/pubsub_realtime/thermal.h
 @@ -0,0 +1,12 @@
@@ -2298,7 +2298,7 @@ index 0000000..5aec2f8
 +#endif /* _THERMAL_H_ */
 diff --git a/examples/pubsub_realtime/timestamp.c b/examples/pubsub_realtime/timestamp.c
 new file mode 100644
-index 0000000..4808f79
+index 00000000..1eb6a348
 --- /dev/null
 +++ b/examples/pubsub_realtime/timestamp.c
 @@ -0,0 +1,196 @@
@@ -2500,7 +2500,7 @@ index 0000000..4808f79
 +}
 diff --git a/examples/pubsub_realtime/timestamp.h b/examples/pubsub_realtime/timestamp.h
 new file mode 100644
-index 0000000..bed94e8
+index 00000000..db7682ec
 --- /dev/null
 +++ b/examples/pubsub_realtime/timestamp.h
 @@ -0,0 +1,16 @@
@@ -2521,7 +2521,7 @@ index 0000000..bed94e8
 +
 +#endif /* _TIMESTAMP_H_ */
 diff --git a/plugins/include/open62541/plugin/pubsub_ethernet.h b/plugins/include/open62541/plugin/pubsub_ethernet.h
-index cbf6268..f95c2b7 100644
+index cbf62683..f95c2b7a 100644
 --- a/plugins/include/open62541/plugin/pubsub_ethernet.h
 +++ b/plugins/include/open62541/plugin/pubsub_ethernet.h
 @@ -11,6 +11,10 @@
@@ -2536,7 +2536,7 @@ index cbf6268..f95c2b7 100644
  UA_PubSubTransportLayerEthernet(void);
  
 diff --git a/plugins/ua_pubsub_ethernet.c b/plugins/ua_pubsub_ethernet.c
-index ead8dff..7368468 100644
+index ead8dffa..73684685 100644
 --- a/plugins/ua_pubsub_ethernet.c
 +++ b/plugins/ua_pubsub_ethernet.c
 @@ -38,6 +38,10 @@ typedef struct {
