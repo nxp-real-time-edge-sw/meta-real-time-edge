@@ -1,10 +1,11 @@
 SUMMARY = "Real-Time performance evaluation"
 HOMEPAGE = "https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/rteval"
 
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
 SRC_URI = "git://git.kernel.org/pub/scm/utils/rteval/rteval.git;nobranch=1 \
+           file://rteval.conf \
            file://0001-rteval-Tailored-for-NXP-boards-and-Yocto-rootfs.patch \
            file://0002-rteval-setup.py-replace-distutils.core-with-setuptoo.patch \
 "
@@ -16,6 +17,9 @@ S = "${WORKDIR}/git"
 inherit setuptools3
 
 do_install:append () {
+        install -d ${D}/${sysconfdir}
+        install -m 0644 ${WORKDIR}/rteval.conf ${D}/${sysconfdir}/
+
         if [ -e ${D}/${sysconfdir}/rteval.conf ]; then
             sed -e '/stressng/d' -i ${D}/${sysconfdir}/rteval.conf
         fi
