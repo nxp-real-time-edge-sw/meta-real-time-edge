@@ -1,6 +1,6 @@
 SUMMARY = "yang model"
 DESCRIPTION = "yang model files for sysrepo netopeer2 and sysrepo-tsn"
-LICENSE = "Apachev2"
+LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://testall.sh;md5=b523c10b1e08d72d780d4414e0a1c125"
 
 SRC_URI = "git://github.com/YangModels/yang.git;protocol=https;nobranch=1 \

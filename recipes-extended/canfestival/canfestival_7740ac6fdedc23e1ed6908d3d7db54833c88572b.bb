@@ -1,5 +1,5 @@
 DESCRIPTION = "CanFestival is an OpenSource CANOpen framework."
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://LICENCE;md5=085e7fb76fb3fa8ba9e9ed0ce95a43f9"
 
 SRC_URI = "http://sources.buildroot.net/canfestival/canfestival-7740ac6fdedc23e1ed6908d3d7db54833c88572b.tar.gz \
