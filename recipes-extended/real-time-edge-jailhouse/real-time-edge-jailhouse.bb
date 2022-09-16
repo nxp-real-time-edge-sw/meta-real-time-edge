@@ -1,11 +1,11 @@
-require recipes-extended/jailhouse/jailhouse_0.12.bb
+require recipes-extended/jailhouse/jailhouse_0.2.bb
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRCBRANCH = "lf-5.15.5_1.0.0"
-RT_EDGE_JAILHOUSE_SRC ?= "git://source.codeaurora.org/external/imx/imx-jailhouse.git;protocol=https"
+SRCBRANCH = "lf-5.15.52_2.1.0"
+REAL_TIME_EDGE_JAILHOUSE_SRC ?= "git://github.com/nxp-imx/imx-jailhouse.git;protocol=https"
 
-SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
+SRC_URI = "${REAL_TIME_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://scripts/init_jailhouse_env.sh \
            file://scripts/uart-demo-ls1043ardb.sh \
            file://scripts/gic-demo-ls1043ardb.sh \
@@ -21,20 +21,12 @@ SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://scripts/gic-demo-ls1028ardb.sh \
            file://scripts/ivshmem-demo-ls1028ardb.sh \
            file://scripts/linux-demo-ls1028ardb.sh \
-	   file://scripts/linux-demo-ls1028ardb-enetc.sh \
+           file://scripts/linux-demo-ls1028ardb-enetc.sh \
            file://scripts/uart-demo-imx8mp.sh \
            file://scripts/gic-demo-imx8mp.sh \
            file://scripts/ivshmem-demo-imx8mp.sh \
            file://scripts/linux-demo-imx8mp.sh \
            file://rootfs.cpio.gz \
-           file://0001-tools-scripts-update-shebang-to-python3.patch \
-           file://0002-configs-ls1046a-rdb-add-cell-configure-files.patch \
-           file://0003-configs-ls1046a-rdb-Add-linux-inmate-dts-demo.patch \
-           file://0004-configs-ls1043a-rdb-add-cell-configure-files.patch \
-           file://0005-configs-ls1043a-rdb-Add-linux-inmate-dts-demo.patch \
-           file://0006-configs-ls1043a-rdb-add-DPAA-support-in-cell-configu.patch \
-           file://0007-configs-ls1043a-rdb-add-DPAA-fman-ucode-dtsi-file.patch \
-           file://0008-configs-ls1043a-rdb-add-DPAA-support-in-linux-inmate.patch \
            file://0009-configs-ls1043a-rdb-add-fman-ucode-memory-for-root-c.patch \
            file://0010-configs-ls1043ardb-Add-gpio1-in-non-root-config-and-.patch \
            file://0011-config-ls1046ardb-modify-memory-range-align-with-ls1.patch \
@@ -42,31 +34,21 @@ SRC_URI = "${RT_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://0013-configs-ls1046ardb-Add-fman-ucode-dtsi-file.patch \
            file://0014-configs-ls1046ardb-Add-dpaa-support-for-non-root-lin.patch \
            file://0015-configs-ls1046ardb-Add-gpio1-in-config-and-dts-file.patch \
-           file://0016-configs-arm64-Add-support-for-NXP-LS1028ARDB-platfor.patch \
-           file://0017-configs-arm64-Add-Linux-inmate-DTS-demo-for-NXP-LS10.patch \
            file://0018-update-ls1028a-rdb-config-and-dts-for-openil.patch \
-           file://0019-configs-arm64-Add-inmate-device-tree-for-the-i.MX8MP.patch \
-           file://0020-arm64-Make-sure-SMC-and-HVC-calls-don-t-have-side-ef.patch \
-           file://0021-arm-Make-sure-SMC-and-HVC-calls-don-t-have-side-effe.patch \
-           file://0022-arm-common-Account-for-SMCCC-versions-1.1.patch \
-           file://0023-arm-common-Add-handling-of-SMCCC_ARCH_WORKAROUND_2-r.patch \
-           file://0024-arm-common-Return-original-SMCCC_ARCH_WORKAROUND_-fe.patch \
-           file://0025-arm-arm64-Expand-return-type-of-smc-helpers-to-long.patch \
-           file://0026-arm-arm64-Add-further-smc-helpers.patch \
-	   file://0027-ls1028ardb-add-gpio3-for-linux-demo.patch \
-	   file://0028-ls1028ardb-enetc-support-in-jailhouse.patch \
-	   file://0029-add-back-virtual-pci-support-in-root-cell.patch \
-	   file://0030-configs-arm64-dts-Change-the-reserved-address-for-LP.patch \
-	   file://0031-configs-arm64-dts-Correct-the-StreamID-of-ls1028a-EN.patch \
-	   file://0032-configs-arm64-Add-GIC-distributor-and-re-distributor.patch \
-	   file://0033-configs-arm64-ls1028a-add-LPI-tables-memory-region.patch \
-	   file://0034-ivshmem-demo-change-the-id-to-2-for-qoriq-platforms.patch \
-	   file://0035-ivshmem-demo-change-dev_id-to-2-for-imx8mp.patch \
-	   file://0036-ls1043ardb-inmate-demo-assigned-write-permission-to-.patch \
-	   file://0037-ls1028ardb-remove-gic-distributor-region-from-linux-.patch \
+           file://0027-ls1028ardb-add-gpio3-for-linux-demo.patch \
+           file://0028-ls1028ardb-enetc-support-in-jailhouse.patch \
+           file://0029-add-back-virtual-pci-support-in-root-cell.patch \
+           file://0030-configs-arm64-dts-Change-the-reserved-address-for-LP.patch \
+           file://0031-configs-arm64-dts-Correct-the-StreamID-of-ls1028a-EN.patch \
+           file://0032-configs-arm64-Add-GIC-distributor-and-re-distributor.patch \
+           file://0033-configs-arm64-ls1028a-add-LPI-tables-memory-region.patch \
+           file://0034-ivshmem-demo-change-the-id-to-2-for-qoriq-platforms.patch \
+           file://0035-configs-arm64-add-ivshmem-demo-support-for-8mp.patch \
+           file://0036-ls1043ardb-inmate-demo-assigned-write-permission-to-.patch \
+           file://0037-ls1028ardb-remove-gic-distributor-region-from-linux-.patch \
 "
 
-SRCREV = "114b4fad14869598d364086d64c205372bd6df17"
+SRCREV = "da1b37baf48295bf1a4f25661220506f5bb948f2"
 
 DEPENDS += " \
     python3-zipp \
@@ -92,7 +74,7 @@ do_install:append() {
     install -d ${D}${INMATES_DIR}/kernel
 
     install ${B}/tools/jailhouse ${D}${JH_DATADIR}/tools
-    install ${B}/tools/ivshmem-demo ${D}${JH_DATADIR}/tools
+    install ${B}/tools/demos/ivshmem-demo ${D}${JH_DATADIR}/tools
     install -d ${D}${PYTHON_SITEPACKAGES_DIR}/pyjailhouse
     install -m 0644 ${S}/pyjailhouse/*.py ${D}${PYTHON_SITEPACKAGES_DIR}/pyjailhouse
 }
@@ -112,4 +94,4 @@ RDEPENDS:pyjailhouse += " \
     python3-zipp \
 "
 
-COMPATIBLE_MACHINE = "(qoriq|mx8-nxp-bsp)"
+COMPATIBLE_MACHINE = "(qoriq|mx8-nxp-bsp|mx93-nxp-bsp)"
