@@ -2,7 +2,8 @@ DESCRIPTION = "Linux NFC stack for NCI based NXP NFC Controllers."
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"
 
-SRC_URI = "git://github.com/NXPNFCLinux/linux_libnfc-nci.git;protocol=https \
+SRCBRANCH ?= "master"
+SRC_URI = "git://github.com/NXPNFCLinux/linux_libnfc-nci.git;protocol=https;branch=${SRCBRANCH} \
 	file://0001-set-configuration-for-libnfc-nci.patch \
 	file://0002-add-static-for-gphNxpExtns_Context.patch \
 	file://0003-add-static-for-fragmentation_enabled.patch \
