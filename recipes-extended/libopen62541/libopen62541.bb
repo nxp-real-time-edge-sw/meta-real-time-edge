@@ -4,7 +4,8 @@ SUMMARY = "OPC UA implementation"
 LICENSE = "MPL-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=815ca599c9df247a0c7f619bab123dad"
 
-SRC_URI = "gitsm://github.com/open62541/open62541.git;protocol=https \
+SRCBRANCH ?= "master"
+SRC_URI = "gitsm://github.com/open62541/open62541.git;protocol=https;branch=${SRCBRANCH} \
            file://0001-feat-examples-Add-pubsub-TSN-sample-applications.patch \
 "
 
