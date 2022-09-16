@@ -1,6 +1,6 @@
 SUMMARY = "tsn-scripts"
 DESCRIPTION = "tsn-scripts is a tool to test TSN features"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=8ca43cbc842c2336e835926c2166c28b"
 DEPENDS = "jq"
 

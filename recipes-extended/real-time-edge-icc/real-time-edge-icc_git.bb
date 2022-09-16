@@ -1,5 +1,5 @@
 SUMMARY = "real-time-edge ICC"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=b8b124def019f141a27e002e0a4333cc"
 
 SRC_URI = "git://github.com/real-time-edge-sw/real-time-edge-icc.git;protocol=https;nobranch=1"

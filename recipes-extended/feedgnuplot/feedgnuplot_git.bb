@@ -1,6 +1,6 @@
 DESCRIPTION = "General purpose pipe-oriented plotting tool."
 
-LICENSE = "Artisticv1 | GPLv1+"
+LICENSE = "Artistic-1.0 | GPL-1.0-or-later"
 
 LIC_FILES_CHKSUM = "file://LICENSE;md5=b7700a0c2f940e07a9a77c579e2f9841"
 

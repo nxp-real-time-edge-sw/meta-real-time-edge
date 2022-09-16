@@ -1,6 +1,6 @@
 SUMMARY = "Library for handling red-black tree searching algorithm"
 DESCRIPTION = "A library to provide the RedBlack balanced tree searching and sorting algorithm."
-LICENSE = "LGPLv2.1"
+LICENSE = "LGPL-2.1-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=de174fb5a92cdbe038c88dc4c4316f99"
 
 SRCBRANCH ?= "master"
