@@ -1,8 +1,5 @@
-require recipes-extended/jailhouse/jailhouse_0.2.bb
-
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRCBRANCH = "lf-5.15.52_2.1.0"
 REAL_TIME_EDGE_JAILHOUSE_SRC ?= "git://github.com/nxp-imx/imx-jailhouse.git;protocol=https"
 
 SRC_URI = "${REAL_TIME_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
@@ -48,19 +45,13 @@ SRC_URI = "${REAL_TIME_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://0037-ls1028ardb-remove-gic-distributor-region-from-linux-.patch \
 "
 
-SRCREV = "da1b37baf48295bf1a4f25661220506f5bb948f2"
-
 DEPENDS += " \
     python3-zipp \
 "
 
-inherit module python3native bash-completion deploy setuptools3
-
-SCRIPT_DIR ?= "${JH_DATADIR}/scripts"
-
 do_install:append() {
-    install -d ${D}${SCRIPT_DIR}
-    install ${S}/../scripts/*.sh ${D}${SCRIPT_DIR}/
+    install -d ${D}${JH_DATADIR}/scripts
+    install ${S}/../scripts/*.sh ${D}${JH_DATADIR}/scripts
 
     install -d ${D}${INMATES_DIR}/rootfs
     install ${S}/../rootfs.cpio ${D}${INMATES_DIR}/rootfs/
@@ -75,14 +66,7 @@ do_install:append() {
 
     install ${B}/tools/jailhouse ${D}${JH_DATADIR}/tools
     install ${B}/tools/demos/ivshmem-demo ${D}${JH_DATADIR}/tools
-    install -d ${D}${PYTHON_SITEPACKAGES_DIR}/pyjailhouse
-    install -m 0644 ${S}/pyjailhouse/*.py ${D}${PYTHON_SITEPACKAGES_DIR}/pyjailhouse
 }
-
-PACKAGE_BEFORE_PN = "kernel-module-jailhouse pyjailhouse"
-
-FILES:${PN} += "${nonarch_base_libdir}/firmware ${libexecdir} ${sbindir} ${JH_DATADIR}"
-FILES:pyjailhouse = "{PYTHON_SITEPACKAGES_DIR}/pyjailhouse"
 
 RDEPENDS:${PN} += " \
     python3-zipp \
