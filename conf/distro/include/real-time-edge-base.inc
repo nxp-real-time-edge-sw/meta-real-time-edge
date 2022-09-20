@@ -7,15 +7,14 @@ DISTRO_VERSION = "2.2"
 
 CONNECTIVITY_CHECK_URIS ?= "https://yoctoproject.org/connectivity.html"
 
-DISTRO_FEATURES:remove:mx8m-nxp-bsp = " jailhouse"
-DISTRO_FEATURES:append:ls1043ardb = " real-time-edge-jailhouse"
-DISTRO_FEATURES:append:ls1046ardb = " real-time-edge-jailhouse"
-DISTRO_FEATURES:append:ls1028ardb = " real-time-edge-jailhouse real-time-edge-libbee \
+DISTRO_FEATURES:append:ls1043ardb = " jailhouse"
+DISTRO_FEATURES:append:ls1046ardb = " jailhouse"
+DISTRO_FEATURES:append:ls1028ardb = " jailhouse real-time-edge-libbee \
 				      real-time-edge-libblep libnfc-nci \
 				      wayland-protocols weston imx-gpu-viv libdrm kmscube \
 				      real-time-edge-sysrepo tsn-scripts wayland alsa"
 DISTRO_FEATURES:append:mx8dxl-nxp-bsp = " real-time-edge-sysrepo"
-DISTRO_FEATURES:append:mx8mp-nxp-bsp = " real-time-edge-jailhouse real-time-edge-sysrepo"
+DISTRO_FEATURES:append:mx8mp-nxp-bsp = " real-time-edge-sysrepo"
 DISTRO_FEATURES:append:mx8m-nxp-bsp = " wayland-protocols weston imx-gpu-viv libdrm kmscube"
 DISTRO_FEATURES:append:mx93-nxp-bsp = " real-time-edge-sysrepo"
 DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo feedgnuplot tsn-scripts real-time-edge-prl"
