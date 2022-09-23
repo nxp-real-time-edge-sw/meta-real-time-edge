@@ -9,4 +9,4 @@
 ../tools/jailhouse cell load 1 ../inmates/ivshmem-demo.bin
 ../tools/jailhouse cell start 1
 
-../tools/ivshmem-demo /dev/uio0 2
+../tools/ivshmem-demo -d /dev/uio0 -t 2
