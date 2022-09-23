@@ -2,7 +2,7 @@
 
 ./init_jailhouse_env.sh
 
-cp /run/media/mmcblk0p1/Image /usr/share/jailhouse/inmates/kernel/
+cp /run/media/boot-mmcblk0p1/Image /usr/share/jailhouse/inmates/kernel/
 
 ../tools/jailhouse disable;
 

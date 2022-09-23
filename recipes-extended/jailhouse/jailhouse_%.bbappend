@@ -40,7 +40,6 @@ SRC_URI = "${REAL_TIME_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://0032-configs-arm64-Add-GIC-distributor-and-re-distributor.patch \
            file://0033-configs-arm64-ls1028a-add-LPI-tables-memory-region.patch \
            file://0034-ivshmem-demo-change-the-id-to-2-for-qoriq-platforms.patch \
-           file://0035-configs-arm64-add-ivshmem-demo-support-for-8mp.patch \
            file://0036-ls1043ardb-inmate-demo-assigned-write-permission-to-.patch \
            file://0037-ls1028ardb-remove-gic-distributor-region-from-linux-.patch \
 "

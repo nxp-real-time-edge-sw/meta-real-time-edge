@@ -5,6 +5,6 @@
 ../tools/jailhouse disable
 
 ../tools/jailhouse enable ../cells/imx8mp.cell;
-../tools/jailhouse cell create ../cells/imx8mp-gic-demo.cell;
+../tools/jailhouse cell create ../cells/imx8mp-inmate-demo.cell;
 ../tools/jailhouse cell load 1 ../inmates/gic-demo.bin
 ../tools/jailhouse cell start 1
