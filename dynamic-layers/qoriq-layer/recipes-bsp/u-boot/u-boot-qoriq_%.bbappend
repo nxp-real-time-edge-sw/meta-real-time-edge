@@ -1,7 +1,7 @@
 
 SRC_URI:real-time-edge = "git://github.com/real-time-edge-sw/real-time-edge-uboot.git;protocol=https;nobranch=1"
-UBOOT_BRANCH:real-time-edge = "uboot_v2021.04"
-SRCREV:real-time-edge = "ebabb5117875949c38f3265e06c19e57a027b134"
+UBOOT_BRANCH:real-time-edge = "baremetal-uboot_v2021.04-gpio"
+SRCREV:real-time-edge = "2923fdeab3b07ec0bc40023bc3543a40abdc3eda"
 
 do_configure:prepend:real-time-edge() {
     mkdir -p ${WORKDIR}/source-date-epoch
