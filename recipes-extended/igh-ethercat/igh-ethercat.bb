@@ -34,6 +34,7 @@ SRC_URI += "\
     file://0001-dpaa1-Add-module-license.patch \
     file://0001-fec-fix-the-compile-error-when-upgrading-to-Linux-5..patch \
     file://0001-enetc-upgrade-to-be-compatible-to-Linux-5.15.52.patch \
+    file://0001-device-fec-rgmii_rxc_dly-is-set-to-true-on-i.mx8dxl.patch \
 "
 S = "${WORKDIR}/ethercat-${PV}"
 
