@@ -11,9 +11,13 @@ SRC_URI:append = " \
 
 PR = "r0"
 
-RDEPENDS:${PN} += "kernel-module-genavb-tsn"
+RDEPENDS:${PN}:append = " kernel-module-genavb-tsn"
 
-DEPENDS += "libopen62541 libbpf"
+# Add build and runtime dependency for libbpf
+RDEPENDS:${PN}:append:mx8-nxp-bsp = " libbpf"
+DEPENDS:mx8-nxp-bsp:append = " libbpf"
+
+DEPENDS:append = " libopen62541"
 
 PROVIDES += "libgenavb"
 RPROVIDES:${PN} = "libgenavb"
