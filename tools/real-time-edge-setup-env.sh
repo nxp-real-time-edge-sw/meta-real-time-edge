@@ -119,7 +119,6 @@ qoriq_add_layers()
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cloud-services\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security\"" >> $BUILD_DIR/conf/bblayers.conf
 
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-common\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qoriq\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-rtos-industrial\"" >> $BUILD_DIR/conf/bblayers.conf
