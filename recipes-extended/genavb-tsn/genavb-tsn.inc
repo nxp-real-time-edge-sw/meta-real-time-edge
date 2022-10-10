@@ -16,10 +16,10 @@ PV = "5.2+git${SRCPV}"
 S = "${WORKDIR}/git"
 
 GENAVB_TSN_CONFIG ?= "endpoint_tsn"
-GENAVB_TSN_CONFIG:imx8mp-lpddr4-evk = "endpoint_tsn"
-GENAVB_TSN_CONFIG:ls1028ardb = "bridge"
+GENAVB_TSN_CONFIG:mx8mp-nxp-bsp = "endpoint_tsn"
+GENAVB_TSN_CONFIG:ls1028a = "bridge"
 
 GENAVB_TSN_TARGET ?= "linux_imx8"
-GENAVB_TSN_TARGET:imx8mp-lpddr4-evk = "linux_imx8"
-GENAVB_TSN_TARGET:ls1028ardb = "linux_ls1028"
+GENAVB_TSN_TARGET:mx8mp-nxp-bsp = "linux_imx8"
+GENAVB_TSN_TARGET:ls1028a = "linux_ls1028"
 
