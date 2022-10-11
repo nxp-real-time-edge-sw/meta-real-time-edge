@@ -30,7 +30,10 @@ SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 GENAVB_TSN_DEMO_APPS = "1"
 
-export OPCUA_SUPPORT = "1"
+OPCUA_SUPPORT ?= "0"
+OPCUA_SUPPORT:mx8mp-nxp-bsp = "1"
+
+export OPCUA_SUPPORT
 
 # Use Make instead of the default ninja generator
 OECMAKE_GENERATOR = "Unix Makefiles"
