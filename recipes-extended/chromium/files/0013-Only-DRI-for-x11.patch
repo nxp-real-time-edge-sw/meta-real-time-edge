@@ -7,7 +7,7 @@ index 24d5825..742cfb8 100644
  
    # Use DRI on desktop Linux builds.
 -  if (current_cpu != "s390x" && current_cpu != "ppc64" && is_linux &&
-+  if (current_cpu != "s390x" && current_cpu != "ppc64" && use_x11 && is_linux &&
++  if (current_cpu != "s390x" && current_cpu != "ppc64" && ozone_platform_x11 && is_linux &&
        (!is_chromecast || is_cast_desktop_build)) {
      configs += [ "//build/config/linux/dri" ]
    }
