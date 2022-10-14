@@ -17,9 +17,11 @@ S = "${WORKDIR}/git"
 
 GENAVB_TSN_CONFIG ?= "endpoint_tsn"
 GENAVB_TSN_CONFIG:mx8mp-nxp-bsp = "endpoint_tsn"
+GENAVB_TSN_CONFIG:mx93-nxp-bsp = "endpoint_tsn"
 GENAVB_TSN_CONFIG:ls1028a = "bridge"
 
 GENAVB_TSN_TARGET ?= "linux_imx8"
 GENAVB_TSN_TARGET:mx8mp-nxp-bsp = "linux_imx8"
+GENAVB_TSN_TARGET:mx93-nxp-bsp = "linux_imx8"
 GENAVB_TSN_TARGET:ls1028a = "linux_ls1028"
 
