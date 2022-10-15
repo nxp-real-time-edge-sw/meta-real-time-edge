@@ -25,6 +25,7 @@ SRC_URI:append = " \
     file://0022-configs-increase-tx_timestamp_timeout-for-default-gP.patch \
     file://0023-configs-use-neighborPropDelayThresh-default-value-fo.patch \
     file://0024-ts2phc_slave-fix-memory-leak-in-ts2phc_slave_array_c.patch \
+    file://0025-Add-judgement-for-null-return-value.patch \
 "
 
 do_install:append () {
