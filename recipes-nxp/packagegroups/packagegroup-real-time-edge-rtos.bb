@@ -12,7 +12,11 @@ inherit packagegroup
 PACKAGES = "${PN}"
 
 rpmsg-lite-examples ?= ""
-rpmsg-lite-examples:mx8mm-nxp-bsp = "rpmsg-lite-uart-sharing-rtos"
+rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-uart-sharing-rtos"
+rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-str-echo-rtos"
+
+uart-examples ?= ""
+uart-examples:append:mx8mm-nxp-bsp = " 9bit-uart-interrupt-transfer 9bit-uart-polling"
 
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rtos-industrial',  \
@@ -26,4 +30,5 @@ RTOS_INDUSTRIAL_INSTALL = " \
     soem-gpio-pulse \
     freertos-soem-gpio-pulse \
     ${rpmsg-lite-examples} \
+    ${uart-examples} \
 "
