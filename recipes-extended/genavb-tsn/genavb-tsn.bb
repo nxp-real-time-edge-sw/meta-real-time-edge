@@ -11,9 +11,26 @@ SRC_URI:append = " \
 
 PR = "r0"
 
-RDEPENDS:${PN} += "kernel-module-genavb-tsn"
+GENAVB_TSN_DEMO_APPS = "1"
 
-DEPENDS += "libopen62541 libbpf"
+RDEPENDS:${PN}:append = " kernel-module-genavb-tsn"
+
+# Add build and runtime dependency for libbpf: for i.MX8 and i.MX93 SoCs
+ENDPOINT_TSN_STACK_DEPS = ""
+ENDPOINT_TSN_STACK_DEPS:mx8-nxp-bsp   = "libbpf"
+ENDPOINT_TSN_STACK_DEPS:mx93-nxp-bsp  = "libbpf"
+
+# Add build and runtime dependency for libopen62541: for i.MX8MP and i.MX93 SoCs
+ENDPOINT_TSN_APPS_DEPS = ""
+ENDPOINT_TSN_APPS_DEPS:mx8mp-nxp-bsp   = "libopen62541"
+ENDPOINT_TSN_APPS_DEPS:mx93-nxp-bsp  = "libopen62541"
+
+OPCUA_SUPPORT ?= "0"
+OPCUA_SUPPORT:mx8mp-nxp-bsp = "1"
+OPCUA_SUPPORT:mx93-nxp-bsp = "1"
+
+RDEPENDS:${PN}:append = " ${ENDPOINT_TSN_STACK_DEPS} ${@bb.utils.contains('GENAVB_TSN_DEMO_APPS', '1', '${ENDPOINT_TSN_APPS_DEPS}', '', d)}"
+DEPENDS:append = " ${ENDPOINT_TSN_STACK_DEPS} ${@bb.utils.contains('GENAVB_TSN_DEMO_APPS', '1', '${ENDPOINT_TSN_APPS_DEPS}', '', d)}"
 
 PROVIDES += "libgenavb"
 RPROVIDES:${PN} = "libgenavb"
@@ -24,9 +41,7 @@ INITSCRIPT_PARAMS = "defaults"
 SYSTEMD_SERVICE:${PN} = "genavb-tsn.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
-GENAVB_TSN_DEMO_APPS = "1"
-
-export OPCUA_SUPPORT = "1"
+export OPCUA_SUPPORT
 
 # Use Make instead of the default ninja generator
 OECMAKE_GENERATOR = "Unix Makefiles"
