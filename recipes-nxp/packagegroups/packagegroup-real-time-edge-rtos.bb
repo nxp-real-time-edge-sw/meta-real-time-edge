@@ -16,7 +16,7 @@ rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-uart-sharing-rtos"
 rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-str-echo-rtos"
 
 uart-examples ?= ""
-uart-examples:append:mx8mm-nxp-bsp = " 9bit-uart-interrupt-transfer 9bit-uart-polling"
+uart-examples:append:mx8mm-nxp-bsp = " 9bit-iuart-interrupt-transfer 9bit-iuart-polling"
 
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rtos-industrial',  \
