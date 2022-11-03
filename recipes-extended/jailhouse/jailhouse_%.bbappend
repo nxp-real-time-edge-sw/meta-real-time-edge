@@ -42,6 +42,7 @@ SRC_URI = "${REAL_TIME_EDGE_JAILHOUSE_SRC};branch=${SRCBRANCH} \
            file://0034-ivshmem-demo-change-the-id-to-2-for-qoriq-platforms.patch \
            file://0036-ls1043ardb-inmate-demo-assigned-write-permission-to-.patch \
            file://0037-ls1028ardb-remove-gic-distributor-region-from-linux-.patch \
+           file://0038-configs-arm64-ls1028a-Update-the-address-used-for-GI.patch \
 "
 
 DEPENDS += " \
