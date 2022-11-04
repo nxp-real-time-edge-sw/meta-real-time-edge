@@ -1,0 +1,46 @@
+From 4e878014f8e81e232d297267026a2d75fc3daaae Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Thu, 3 Nov 2022 22:02:54 +0800
+Subject: [PATCH] configs: arm64: ls1028a: Update the address used for GIC LPI
+ table
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+---
+ configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts | 5 +++--
+ configs/arm64/ls1028a-rdb-linux-enetc-demo.c   | 4 ++--
+ 2 files changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts b/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
+index 6b659992..7a49f0bb 100644
+--- a/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
++++ b/configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts
+@@ -46,8 +46,9 @@
+                 #size-cells = <2>;
+                 ranges;
+ 
+-                 lpi_reserved: lpi_rd_table@0x90000000 {
+-                         reg = <0 0x90000000 0 0x100000>;
++		gic_lpi_table: gic-lpi-table@0x90100000 {
++			compatible = "fsl,gic-lpi-table";
++			reg = <0 0x90100000 0 0x100000>;
+                  };
+          };
+ 
+diff --git a/configs/arm64/ls1028a-rdb-linux-enetc-demo.c b/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
+index 97914af6..05adcfa4 100644
+--- a/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
++++ b/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
+@@ -89,8 +89,8 @@ struct {
+ 		},
+ 
+ 		/* RAM: LPI tables */ {
+-			.phys_start = 0x90000000,
+-			.virt_start = 0x90000000,
++			.phys_start = 0x90100000,
++			.virt_start = 0x90100000,
+ 			.size = 0x100000,
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE,
+ 		},
+-- 
+2.17.1
+
