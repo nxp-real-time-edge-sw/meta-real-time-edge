@@ -1,79 +1,79 @@
 NXP Software Content Register
 
-Release - Real-time Edge Software 2.3
- July 2022
+Release - Real-time Edge Software 2.4
+ December 2022
 
-Outgoing License:  LA_OPT_NXP_Software_License v34 February 2022 - Additional Distribution License granted - Section 2.3 applies
-License File:      EULA.txt
+Outgoing License: LA_OPT_NXP_Software_License v39 August 2022 - Additional distribution license granted - Section 2.3 applies
+License File:     EULA.txt
 
 Yocto Project recipe manifest:
-repo init -u https://github.com/real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-honister -m real-time-edge-2.3.0.xml
+repo init -u https://github.com/real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-kirkstone -m real-time-edge-2.4.0.xml
 
-Release tag: Real-Time-Edge-v2.3-202207
+Release tag: Real-Time-Edge-v2.4-202212
 
 --------------------------------------------
 BSP Packages
 --------------------------------------------
 
-Package:                     atf.git
-Version:                     2.4
+Package:                     qoriq-atf.git
+Version:                     2.6
 Outgoing License:            BSD-3-Clause
 License File:                docs/license.rst
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/atf -b lf-5.15.5-1.0.0
+Release Location:            https://github.com/nxp-qoriq/atf.git -b lf_v2.6
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
 --------------------------------------------
 
 Package:                     imx-atf.git
-Version:                     2.4
+Version:                     2.6
 Outgoing License:            BSD-3-Clause
 License File:                docs/license.rst
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://source.codeaurora.org/external/imx/imx-atf -b lf-5.15.5-1.0.0
+Release Location:            https://github.com/nxp-imx/imx-atf -b lf-5.15.52-2.1.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
 --------------------------------------------
 
 Package:                     rcw
-Version:                     2021.08
+Version:                     lf-5.15.32-2.0.0
 Outgoing License:            BSD
 License File:                LICENSE
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Reset Configuration Word
-Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/rcw -b lf-5.10.72-2.2.0
+Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/rcw
 Origin:                      NXP (BSD)
 
 --------------------------------------------
 
 Package:                     real-time-edge-linux.git
-Version:                     5.15
+Version:                     5.15.52
 Outgoing License:            GPL-2.0
 License File:                COPYING
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    The Linux kernel with PREEMPT-RT enabled
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-linux -b linux_5.10.y
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-linux -b linux_5.15.52
 Origin:                      NXP (GPL-2.0)
                              kernel.org (GPL-2.0) - https://www.kernel.org/
 
 --------------------------------------------
 
 Package:                     real-time-edge-uboot.git
-Version:                     2021.04
+Version:                     2022.04
 Outgoing License:            GPL-2.0
 License File:                COPYING
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Bootloader with Real-time Edge specific capabilities
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b uboot_v2021.04
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b uboot_v2022.04
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -82,26 +82,26 @@ Real-time System Packages
 --------------------------------------------
 
 Package:                     imx-jailhouse.git
-Version:                     0.12
+Version:                     0.2
 Outgoing License:            GPL-2.0
 License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A partitioning Hypervisor based on Linux
-Release Location:            https://source.codeaurora.org/external/imx/imx-jailhouse -b lf-5.10.52_2.1.0
+Release Location:            https://github.com/nxp-imx/imx-jailhouse -b lf-5.15.52-2.1.0
 Origin:                      NXP (GPL-2.0)
                              Siemens AG (GPL-2.0) - https://github.com/siemens/jailhouse
 
 --------------------------------------------
 
 Package:                     real-time-edge-baremetal
-Version:                     2021.04
+Version:                     2022.04
 Outgoing License:            GPL-2.0
 License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A baremetal framework
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2021.04
+Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2022.04
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -129,24 +129,24 @@ Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    Service Discovery for Linux using mDNS/DNS-SD
 Release Location:            "https://github.com/lathiat/avahi/releases/download/v0.8/avahi-0.8.tar.gz
-Origin:                    Lathiat (LGPLv-2.1)
+Origin:                      Lathiat (LGPLv-2.1)
 
 --------------------------------------------
 
 Package:                     ethtool
-Version:                     5.8
+Version:                     5.16
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    Display or change ethernet card settings
-Release Location:            https://mirrors.edge.kernel.org/pub/software/network/ethtool/ethtool-5.8.tar.gz
+Release Location:            https://mirrors.edge.kernel.org/pub/software/network/ethtool/ethtool-5.16.tar.gz
 Origin:                      Michal Kubecek (GPL-2.0)
 
 --------------------------------------------
 
 Package:                     genavb-tsn
-Version:                     5.0
+Version:                     5.2
 Outgoing License:            nxp/EULA.txt, GPL-2.0, BSD-3-Clause
 License Files:               licenses/EULA.txt, licenses/COPYING, licenses/BSD-3-Clause
 Package Category:            Real-time Networking
@@ -182,7 +182,7 @@ Origin:                      CESNET (BSD-3-Clause)
 --------------------------------------------
 
 Package:                     libredblack
-Version:
+Version:                     1.0
 Outgoing License:            LGPLv-2.1
 License Files:               COPYING
 Package Category:            Real-time Networking
@@ -410,5 +410,17 @@ Type of content:             source
 Description and comments:    A program for pipeline manipulation
 Release Location:            Mirror
 Origin:                      NXP (BSD-3-Clause) - meta-real-time-edge/recipes-extended/real-time-edge-prl/files/
+
+--------------------------------------------
+
+Package:                     rteval
+Version:                     3.3
+Outgoing License:            GPL-2.0
+License Files:               COPYING
+Package Category:            Tools
+Type of content:             source
+Description and comments:    A python program to evaluate the performance of a RT kernel
+Release Location:            https://git.kernel.org/pub/scm/utils/rteval/rteval.git
+Origin:                      John Kacur (GPL-2.0)
 
 --------------------------------------------
