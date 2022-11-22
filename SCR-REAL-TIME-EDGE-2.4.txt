@@ -7,7 +7,7 @@ Outgoing License: LA_OPT_NXP_Software_License v39 August 2022 - Additional dist
 License File:     EULA.txt
 
 Yocto Project recipe manifest:
-repo init -u https://github.com/real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-kirkstone -m real-time-edge-2.4.0.xml
+repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-kirkstone -m real-time-edge-2.4.0.xml
 
 Release tag: Real-Time-Edge-v2.4-202212
 
@@ -60,7 +60,7 @@ License File:                COPYING
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    The Linux kernel with PREEMPT-RT enabled
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-linux -b linux_5.15.52
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-linux -b linux_5.15.52
 Origin:                      NXP (GPL-2.0)
                              kernel.org (GPL-2.0) - https://www.kernel.org/
 
@@ -73,7 +73,7 @@ License File:                COPYING
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Bootloader with Real-time Edge specific capabilities
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b uboot_v2022.04
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b uboot_v2022.04
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -101,7 +101,7 @@ License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A baremetal framework
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2022.04
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2022.04
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -114,7 +114,7 @@ License File:                LICENSE
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    Inter-core communication application
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-icc
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-icc
 Origin:                      NXP (GPL-2.0)
 
 --------------------------------------------
@@ -248,7 +248,7 @@ License Files:               LICENSE
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    Sysrepo for TSN cofiguration
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-sysrepo
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-sysrepo
 Origin:                      NXP (Apache-2.0)
 
 --------------------------------------------
@@ -370,7 +370,7 @@ License Files:               LICENSE
 Package Category:            Industrial
 Type of content:             source
 Description and comments:    A library for CiA402 profile framework
-Release Location:            https://github.com/real-time-edge-sw/real-time-edge-servo
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-servo
 Origin:                      NXP (GPL-2.0 or MIT)
 
 --------------------------------------------

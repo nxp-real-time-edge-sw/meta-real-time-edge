@@ -1,5 +1,5 @@
 
-REAL_TIME_EDGE_LINUX_SRC ?= "git://github.com/real-time-edge-sw/real-time-edge-linux.git;protocol=https"
+REAL_TIME_EDGE_LINUX_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-linux.git;protocol=https"
 REAL_TIME_EDGE_LINUX_BRANCH ?= "linux_5.15.52"
 REAL_TIME_EDGE_LINUX_SRCREV ?= "${AUTOREV}"
 

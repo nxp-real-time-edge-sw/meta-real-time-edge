@@ -2,8 +2,8 @@ DESCRIPTION = "A tool to configure TSN funtionalities in user space for industri
 
 SAVED_DIR := "${THISDIR}"
 
-SRCREV:qoriq = "2421a0733bdc66b82f33fedfe0b5b8d8788793ee"
-SRCREV:imx-nxp-bsp = "2421a0733bdc66b82f33fedfe0b5b8d8788793ee"
+SRCREV:qoriq = "4e655edf4453ab862c96cd47f4adeb67d76cc170"
+SRCREV:imx-nxp-bsp = "4e655edf4453ab862c96cd47f4adeb67d76cc170"
 
 FILES:${PN} += "/home/root/* /home/root/sample/* /home/root/samples/* \
                /home/root/samples/gatescripts/* /home/root/samples/pktgen/* \
