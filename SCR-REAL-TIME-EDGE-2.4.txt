@@ -48,7 +48,7 @@ License File:                LICENSE
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Reset Configuration Word
-Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/rcw
+Release Location:            https://github.com/nxp-qoriq/rcw
 Origin:                      NXP (BSD)
 
 --------------------------------------------
@@ -128,7 +128,7 @@ License Files:               LICENSE
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    Service Discovery for Linux using mDNS/DNS-SD
-Release Location:            "https://github.com/lathiat/avahi/releases/download/v0.8/avahi-0.8.tar.gz
+Release Location:            https://github.com/lathiat/avahi/releases/download/v0.8/avahi-0.8.tar.gz
 Origin:                      Lathiat (LGPLv-2.1)
 
 --------------------------------------------
@@ -284,7 +284,7 @@ License Files:               LICENSE
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    TSN configuration tool
-Release Location:            https://source.codeaurora.org/external/qoriq/qoriq-components/tsntool/
+Release Location:            https://github.com/nxp-qoriq/tsntool
 Origin:                      NXP (MIT or GPL-2.0)
 
 --------------------------------------------
@@ -385,7 +385,7 @@ Package Category:            Tools
 Type of content:             source
 Description and comments:    General purpose pipe-oriented plotting tool
 Release Location:            https://github.com/dkogan/feedgnuplot.git
-Origin:                      dkogan ( Artisticv1 or GPL-1.0)
+Origin:                      dkogan (Artisticv1 or GPL-1.0)
 
 --------------------------------------------
 
