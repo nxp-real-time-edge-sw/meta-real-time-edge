@@ -3,7 +3,7 @@ LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=b8b124def019f141a27e002e0a4333cc"
 
 SRC_URI = "git://github.com/nxp-real-time-edge-sw/real-time-edge-icc.git;protocol=https;nobranch=1"
-SRCREV = "57bd3403bd5254f20152f983e474b3ea155d6fa1"
+SRCREV = "ee0493120b91a7f5833f6378cdb2b45294e0b61d"
 PV = "1.1"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
