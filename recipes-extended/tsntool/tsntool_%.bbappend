@@ -2,6 +2,8 @@ DESCRIPTION = "A tool to configure TSN funtionalities in user space for industri
 
 SAVED_DIR := "${THISDIR}"
 
+SRC_URI = "git://github.com/nxp-qoriq/tsntool;protocol=https;nobranch=1"
+
 SRCREV:qoriq = "4e655edf4453ab862c96cd47f4adeb67d76cc170"
 SRCREV:imx-nxp-bsp = "4e655edf4453ab862c96cd47f4adeb67d76cc170"
 
