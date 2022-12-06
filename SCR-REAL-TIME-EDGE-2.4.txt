@@ -242,7 +242,7 @@ Origin:                      CESNET (BSD-3-Clause)
 --------------------------------------------
 
 Package:                     real-time-edge-sysrepo.git
-Version:
+Version:                     1.0
 Outgoing License:            Apache-2.0
 License Files:               LICENSE
 Package Category:            Real-time Networking
@@ -266,7 +266,7 @@ Origin:                      Sysrepo (Apache-2.0)
 --------------------------------------------
 
 Package:                     tsn-scripts
-Version:
+Version:                     0.1
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Real-time Networking
@@ -278,7 +278,7 @@ Origin:                      NXP (GPL-2.0)
 --------------------------------------------
 
 Package:                     tsntool.git
-Version:
+Version:                     1.0
 Outgoing License:            MIT or GPL-2.0
 License Files:               LICENSE
 Package Category:            Real-time Networking
@@ -292,7 +292,7 @@ Industrial Packages
 --------------------------------------------
 
 Package:                     canFestival
-Version:
+Version:                     NA
 Outgoing License:            GPL-2.0
 License Files:               LICENSE
 Package Category:            Industrial
