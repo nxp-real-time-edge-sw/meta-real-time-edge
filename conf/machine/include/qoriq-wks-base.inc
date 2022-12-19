@@ -93,6 +93,7 @@ FLASH_RAMDISKRFS_OFFSET  ?= "17408"
 
 # Defaualt Firmware setting
 PBL_FILE ?= "atf/bl2_sd.pbl"
+PBL_FILE:emmc-boot ?= "atf/bl2_emmc.pbl"
 FIP_FILE ?= "atf/fip_uboot.bin"
 DDR_PHY_FILE ?= ""
 QE_DP_FILE ?= ""
