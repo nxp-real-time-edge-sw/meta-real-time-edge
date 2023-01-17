@@ -17,6 +17,11 @@ SRC_URI:append:real-time-edge = " \
     file://linux-fec.config \
 "
 
+SRC_URI:append:real-time-edge-plc = " \
+    file://linux-fec-ecat.config \
+    file://0001-fec_ecat-add-fec-native-driver-for-raw-packet-proto.patch \
+"
+
 do_configure:prepend:real-time-edge() {
     mkdir -p ${WORKDIR}/source-date-epoch
     date '+%s' > ${WORKDIR}/source-date-epoch/__source_date_epoch.txt
