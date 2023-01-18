@@ -12,12 +12,12 @@ KERNEL_DEVICETREE:append:ls1046ardb = " freescale/fsl-ls1046a-rdb-sdk-bm.dtb"
 KERNEL_DEVICETREE:append:ls1028ardb = " freescale/fsl-ls1028a-rdb-sdk-bm.dtb"
 
 # uboot env
-UBOOT_BOOT_BAREMETAL_DEFCONFIG:ls1021aiot ?= "ls1021aiot_baremetal_defconfig"
-UBOOT_BOOT_BAREMETAL_DEFCONFIG:ls1043ardb ?= "ls1043ardb_tfa_baremetal_defconfig"
-UBOOT_BOOT_BAREMETAL_DEFCONFIG:ls1046ardb ?= "ls1046ardb_tfa_baremetal_defconfig"
-UBOOT_BOOT_BAREMETAL_DEFCONFIG:ls1028ardb ?= "ls1028ardb_tfa_baremetal_defconfig"
-UBOOT_BOOT_BAREMETAL_DEFCONFIG:lx2160ardb ?= "lx2160ardb_tfa_baremetal_defconfig"
-UBOOT_BOOT_BAREMETAL_DEFCONFIG:lx2160ardb-rev2 ?= "lx2160ardb_tfa_baremetal_defconfig"
+UBOOT_BOOT_BAREMETAL_DEFCONFIG:ls1021aiot ?= "ls1021aiot_baremetal_master_defconfig"
+UBOOT_BOOT_BAREMETAL_DEFCONFIG:ls1043ardb ?= "ls1043ardb_baremetal_master_defconfig"
+UBOOT_BOOT_BAREMETAL_DEFCONFIG:ls1046ardb ?= "ls1046ardb_baremetal_master_defconfig"
+UBOOT_BOOT_BAREMETAL_DEFCONFIG:ls1028ardb ?= "ls1028ardb_baremetal_master_defconfig"
+UBOOT_BOOT_BAREMETAL_DEFCONFIG:lx2160ardb ?= "lx2160ardb_baremetal_master_defconfig"
+UBOOT_BOOT_BAREMETAL_DEFCONFIG:lx2160ardb-rev2 ?= "lx2160ardb_baremetal_master_defconfig"
 
 UBOOT_BOOT_BINARY ?= "u-boot-dtb.bin"
 UBOOT_BOOT_BINARY:ls1021aiot ?= "u-boot-with-spl-pbl.bin"
