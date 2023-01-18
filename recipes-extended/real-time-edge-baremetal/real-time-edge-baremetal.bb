@@ -18,7 +18,7 @@ PROVIDES = "real-time-edge-baremetal"
 
 DEPENDS:append = " libgcc dtc-native bison-native bc-native"
 
-UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2022.04"
+UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2022.04-2.5.0"
 UBOOT_BAREMETAL_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-uboot.git;protocol=https;"
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
 

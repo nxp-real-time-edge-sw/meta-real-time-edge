@@ -32,8 +32,4 @@ uboot = "${DEPLOY_DIR_IMAGE}/u-boot.bin-tfa"
 RCWSD:ls1028ardb = "${@bb.utils.contains('DISTRO_FEATURES', 'sai', \
                     'R_SQPP_0x85bb/rcw_1500_gpu600_sai', \
                     'R_SQPP_0x85bb/rcw_1500_gpu600', d)}"
-UBOOT_BAREMETAL_DEFCONFIG:ls1028ardb =  "${@bb.utils.contains('DISTRO_FEATURES', 'sai', \
-                    'ls1028ardb_bm_sai_defconfig', \
-                    'ls1028ardb_bm_defconfig', d)}"
-
 RCWSD:ls1046ardb = "RR_FFSSPPPH_1133_5559/rcw_1800_gpio2_sdboot"
