@@ -18,6 +18,7 @@ genavbtsnimage ?= ""
 genavbtsnimage:ls1028ardb = "genavb-tsn"
 genavbtsnimage:imx8mp-lpddr4-evk = "genavb-tsn"
 genavbtsnimage:imx93evk = "genavb-tsn"
+genavbtsnimage:imx8dxlb0-lpddr4-evk = "genavb-tsn"
 
 cantools ?=""
 cantools:ls1021aiot = "libsocketcan can-utils"

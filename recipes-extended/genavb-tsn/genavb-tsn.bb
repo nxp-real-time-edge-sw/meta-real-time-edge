@@ -15,19 +15,22 @@ GENAVB_TSN_DEMO_APPS = "1"
 
 RDEPENDS:${PN}:append = " kernel-module-genavb-tsn"
 
-# Add build and runtime dependency for libbpf: for i.MX8 and i.MX93 SoCs
+# Add build and runtime dependency for libbpf: for i.MX8, i.MX93 and i.MX8DXL SoCs
 ENDPOINT_TSN_STACK_DEPS = ""
 ENDPOINT_TSN_STACK_DEPS:mx8-nxp-bsp   = "libbpf"
 ENDPOINT_TSN_STACK_DEPS:mx93-nxp-bsp  = "libbpf"
+ENDPOINT_TSN_STACK_DEPS:mx8dxl-nxp-bsp  = "libbpf"
 
-# Add build and runtime dependency for libopen62541: for i.MX8MP and i.MX93 SoCs
+# Add build and runtime dependency for libopen62541: for i.MX8MP, i.MX93 and i.MX8DXL SoCs
 ENDPOINT_TSN_APPS_DEPS = ""
 ENDPOINT_TSN_APPS_DEPS:mx8mp-nxp-bsp   = "libopen62541"
 ENDPOINT_TSN_APPS_DEPS:mx93-nxp-bsp  = "libopen62541"
+ENDPOINT_TSN_APPS_DEPS:mx8dxl-nxp-bsp  = "libopen62541"
 
 OPCUA_SUPPORT ?= "0"
 OPCUA_SUPPORT:mx8mp-nxp-bsp = "1"
 OPCUA_SUPPORT:mx93-nxp-bsp = "1"
+OPCUA_SUPPORT:mx8dxl-nxp-bsp = "1"
 
 RDEPENDS:${PN}:append = " ${ENDPOINT_TSN_STACK_DEPS} ${@bb.utils.contains('GENAVB_TSN_DEMO_APPS', '1', '${ENDPOINT_TSN_APPS_DEPS}', '', d)}"
 DEPENDS:append = " ${ENDPOINT_TSN_STACK_DEPS} ${@bb.utils.contains('GENAVB_TSN_DEMO_APPS', '1', '${ENDPOINT_TSN_APPS_DEPS}', '', d)}"
