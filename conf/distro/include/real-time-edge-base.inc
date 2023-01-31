@@ -59,6 +59,7 @@ KERNEL_DEVICETREE:append:ls1028ardb= " freescale/fsl-ls1028a-rdb-jailhouse.dtb \
 				       freescale/fsl-ls1028a-rdb-dsa-swp5-eno3.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-rpmsg-ca53.dtb"
 KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-root.dtb"
+KERNEL_DEVICETREE:append:mx93-nxp-bsp = " freescale/imx93-11x11-evk-rpmsg.dtb"
 
 # opcua override default log level
 LIBOPEN62541_LOGLEVE = "300"
