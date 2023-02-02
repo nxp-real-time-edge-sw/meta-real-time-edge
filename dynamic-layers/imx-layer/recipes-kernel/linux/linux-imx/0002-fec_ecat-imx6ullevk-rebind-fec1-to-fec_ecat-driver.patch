@@ -1,0 +1,26 @@
+From 88c18e51b7b087624eca3ecd4b944c4abeacf5dd Mon Sep 17 00:00:00 2001
+From: Wenbin Song <wenbin.song@nxp.com>
+Date: Mon, 5 Dec 2022 20:29:02 +0800
+Subject: [PATCH 2/2] fec_ecat/imx6ullevk: rebind fec1 to fec_ecat driver
+
+Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+---
+ arch/arm/boot/dts/imx6ul.dtsi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/boot/dts/imx6ul.dtsi b/arch/arm/boot/dts/imx6ul.dtsi
+index 354aff1fa7bf..539296b5219e 100644
+--- a/arch/arm/boot/dts/imx6ul.dtsi
++++ b/arch/arm/boot/dts/imx6ul.dtsi
+@@ -934,7 +934,7 @@ usbmisc: usbmisc@2184800 {
+ 			};
+ 
+ 			fec1: ethernet@2188000 {
+-				compatible = "fsl,imx6ul-fec", "fsl,imx6q-fec";
++				compatible = "fsl,imx6ul-fec-ecat", "fsl,imx6q-fec-ecat";
+ 				reg = <0x02188000 0x4000>;
+ 				interrupt-names = "int0", "pps";
+ 				interrupts = <GIC_SPI 118 IRQ_TYPE_LEVEL_HIGH>,
+-- 
+2.25.1
+
