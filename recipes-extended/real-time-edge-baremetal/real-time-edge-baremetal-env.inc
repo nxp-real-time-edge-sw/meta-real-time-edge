@@ -12,3 +12,4 @@ UBOOT_BAREMETAL_DEFCONFIG:ls1028ardb ?= "${@bb.utils.contains('DISTRO_FEATURES',
 # imx uboot
 UBOOT_BAREMETAL_DEFCONFIG:mx8mp-nxp-bsp ?= "imx8mp_evk_baremetal_slave_defconfig"
 UBOOT_BAREMETAL_DEFCONFIG:mx8mm-nxp-bsp ?= "imx8mm_evk_baremetal_slave_defconfig"
+UBOOT_BAREMETAL_DEFCONFIG:imx93evk ?= "imx93_11x11_evk_baremetal_slave_defconfig"
