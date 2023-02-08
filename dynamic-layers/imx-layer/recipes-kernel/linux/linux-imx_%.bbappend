@@ -15,6 +15,7 @@ SRC_URI:append:real-time-edge = " \
     file://linux-baremetal.config \
     file://linux-selinux.config \
     file://linux-fec.config \
+    file://linux-rpmsg-8m-buf.config \
 "
 
 SRC_URI:append:real-time-edge-plc = " \

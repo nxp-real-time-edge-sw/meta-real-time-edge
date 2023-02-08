@@ -36,6 +36,8 @@ DISTROOVERRIDES:append:ls1028ardb = ":imxdrm"
 
 DELTA_KERNEL_DEFCONFIG:append:mx8dxl-nxp-bsp = " linux-fec.config"
 DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = " linux-fec.config"
+DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = "${@bb.utils.contains('DISTRO_FEATURES', 'rpmsg_8m_buf', \
+		' linux-rpmsg-8m-buf.config', ' ', d)}"
 DELTA_KERNEL_DEFCONFIG:append:mx8dxl-nxp-bsp = " linux-imx8.config"
 DELTA_KERNEL_DEFCONFIG:append:mx8m-nxp-bsp = " linux-imx8.config"
 DELTA_KERNEL_DEFCONFIG:append:mx93-nxp-bsp = " linux-imx8.config"
@@ -58,6 +60,7 @@ KERNEL_DEVICETREE:append:ls1028ardb= " freescale/fsl-ls1028a-rdb-jailhouse.dtb \
 				       freescale/fsl-ls1028a-rdb-jailhouse-without-enetc.dtb \
 				       freescale/fsl-ls1028a-rdb-dsa-swp5-eno3.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-rpmsg-ca53.dtb"
+KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-rpmsg-8m-buf.dtb"
 KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-root.dtb"
 KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-rpmsg.dtb"
 
