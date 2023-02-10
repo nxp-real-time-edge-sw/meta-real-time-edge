@@ -18,6 +18,10 @@ rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-str-echo-rtos"
 uart-examples ?= ""
 uart-examples:append:mx8mm-nxp-bsp = " 9bit-iuart-interrupt-transfer 9bit-iuart-polling"
 
+heterogeneous-multicore-examples ?= ""
+heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " virtio-perf-ca virtio-perf-cm "
+heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " virtio-net-backend-ca virtio-net-backend-cm "
+
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rtos-industrial',  \
     '${RTOS_INDUSTRIAL_INSTALL}', '', d)} \
@@ -31,4 +35,5 @@ RTOS_INDUSTRIAL_INSTALL = " \
     freertos-soem-gpio-pulse \
     ${rpmsg-lite-examples} \
     ${uart-examples} \
+    ${heterogeneous-multicore-examples} \
 "
