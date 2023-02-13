@@ -31,6 +31,7 @@ RCWSD:ls1028ardb = "${@bb.utils.contains('DISTRO_FEATURES', 'sai', \
                     'R_SQPP_0x85bb/rcw_1500_gpu600_sai', \
                     'R_SQPP_0x85bb/rcw_1500_gpu600', d)}"
 RCWEMMC:ls1046ardb = "RR_FFSSPPPH_1133_5559/rcw_1800_emmcboot"
+RCWQSPI:ls1046ardb = "RR_FFSSPPPH_1133_5559/rcw_1600_qspiboot_emmc"
 
 SOC_DEFAULT_IMAGE_FSTYPES:append = " wic.bmap wic.zst tar.zst"
 SOC_DEFAULT_IMAGE_FSTYPES:remove = " tar.gz ext2.gz.u-boot ext2.gz wic.bz2"
