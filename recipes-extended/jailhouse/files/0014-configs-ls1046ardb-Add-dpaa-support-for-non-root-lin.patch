@@ -908,13 +908,13 @@ index 00000000..c97ac4ae
 +
 +	enet2: ethernet@e4000 {
 +		phy-handle = <&rgmii_phy1>;
-+		phy-connection-type = "rgmii-txid";
++		phy-connection-type = "rgmii-id";
 +		local-mac-address = [0e 09 00 01 03 07];
 +	};
 +
 +	enet3: ethernet@e6000 {
 +		phy-handle = <&rgmii_phy2>;
-+		phy-connection-type = "rgmii-txid";
++		phy-connection-type = "rgmii-id";
 +		local-mac-address = [0e 09 00 01 03 08];
 +	};
 +
