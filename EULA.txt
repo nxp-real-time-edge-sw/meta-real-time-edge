@@ -1,4 +1,4 @@
-LA_OPT_NXP_Software_License v39 August 2022
+LA_OPT_NXP_Software_License v43 February 2023
 IMPORTANT.  Read the following NXP Software License Agreement ("Agreement")
 completely. By selecting the "I Accept" button at the end of this page, or by
 downloading, installing, or using the Licensed Software, you indicate that you
@@ -91,14 +91,14 @@ Software Content Register, subject to the terms and conditions of this
 Agreement, NXP grants you a worldwide, personal, non-transferable,
 non-exclusive, non-sublicensable license solely in connection with your
 manufacturing and distribution of an Authorized System:
-(a)	to manufacture (or have manufactured), distribute, and market the
+(a) to manufacture (or have manufactured), distribute, and market the
 Licensed Software (and its Derivative Works prepared under the license in
 2.2(b)) in object code (machine readable format) only as part of, or embedded
 within, Authorized Systems and not on a standalone basis solely for use in
 combination with a NXP Product.  Notwithstanding the foregoing, those files
 marked as .h files ("Header files") may be distributed in source or object code
 form, but only as part of, or embedded within Authorized Systems; and
-(b)	to copy and distribute as needed, solely in connection with an
+(b) to copy and distribute as needed, solely in connection with an
 Authorized System and for use in combination with a NXP Product,
 non-confidential NXP information provided as part of the Licensed Software for
 the purpose of maintaining and supporting Authorized Systems with which the
@@ -288,7 +288,7 @@ assumes all risk related to use of the Licensed Software in Critical
 Applications and NXP SHALL NOT BE LIABLE FOR ANY SUCH USE IN CRITICAL
 APPLICATIONS BY LICENSEE. Accordingly, Licensee will indemnify and hold NXP
 harmless from any claims, liabilities, damages and associated costs and
-expenses (including attorneys' fees) that NXP may incur related to Licensee’s
+expenses (including attorneys' fees) that NXP may incur related to Licensee's
 incorporation of the Licensed Software in a Critical Application.
 15.        CHOICE OF LAW; VENUE.  This Agreement will be governed by,
 construed, and enforced in accordance with the laws of The Netherlands, without
@@ -343,13 +343,15 @@ examination or audit.
 22.        NOTICES.             All notices and communications under this
 Agreement will be made in writing, and will be effective when received at the
 following addresses:
-          NXP:          NXP B.V.
-                        High Tech Campus 60
-                        5656 AG Eindhoven
-                        The Netherlands
-                        ATTN: Legal Department
+       NXP:
+              NXP B.V.
+              High Tech Campus 60
+              5656 AG Eindhoven
+              The Netherlands
+              ATTN: Legal Department
 
-          You:          The address provided at registration will be used.
+       You:
+              The address provided at registration will be used.
 
 23.        RELATIONSHIP OF THE PARTIES.     The parties are independent
 contractors. Nothing in this Agreement will be construed to create any
@@ -357,17 +359,21 @@ partnership, joint venture, or similar relationship. Neither party is
 authorized to bind the other to any obligations with third parties.
 24.        SUCCESSION AND ASSIGNMENT.   This Agreement will be binding upon and
 inure to the benefit of the parties and their permitted successors and assigns.
- You may not assign this Agreement, or any part of this Agreement, without the
+You may not assign this Agreement, or any part of this Agreement, without the
 prior written approval of NXP, which approval will not be unreasonably withheld
 or delayed. NXP may assign this Agreement, or any part of this Agreement, in
 its sole discretion.
 25.	PRIVACY. By agreeing to this Agreement and/or utilizing the Licensed
 Software, Licensee consents to use of certain personal information, including
-but not limited to name, email address, and location, for the purpose of
-NXP’s internal analysis regarding future software offerings.  NXP’s
-complete Privacy Statement can be found at:
-https://www.nxp.com/company/our-company/about-nxp/privacy-statement:PRIVACYPRACT
-ICES.
+but not limited to name, email address, and location, for the purpose of NXP's
+internal analysis regarding future software offerings.  NXP's complete Privacy
+Statement can be found at:
+https://www.nxp.com/company/our-company/about-nxp/privacy-statement:PRIVACYPRACTICES.
+
+
+
+
+
 
 APPENDIX A
 Other License Grants and Restrictions:
@@ -382,15 +388,15 @@ Agreement:
 
 Airbiquity Inc.: The Airbiquity software may only be used in object code and
 Licensee may not sublicense the Airbiquity software to any third party.
-Licensee’s license to use the Airbiquity software expires on June 30, 2023.
+Licensee's license to use the Airbiquity software expires on June 30, 2023.
 
 Amazon: Use of the Amazon software constitutes your acceptance of the terms of
 the Amazon Program Materials License Agreement (including the AVS Component
 Schedule, if applicable), located at
 https://developer.amazon.com/support/legal/pml.  All Amazon software is hereby
 designated "Amazon confidential".  With the exception of the binary library of
-the Amazon Wake Word Engine for “Alexa”, all Amazon software is also hereby
-designated as “Restricted Program Materials”. Amazon is a third-party
+the Amazon Wake Word Engine for "Alexa", all Amazon software is also hereby
+designated as "Restricted Program Materials". Amazon is a third-party
 beneficiary to this Agreement with respect to the Amazon software.
 
 Amazon Web Services, Inc.: AWS is an intended third-party beneficiary to this
@@ -413,8 +419,8 @@ here: https://github.com/aws/aws-iot-fleetwise-edge/blob/main/LICENSE.
 Amphion Semiconductor Ltd.: Distribution of Amphion software must be a part of,
 or embedded within, Authorized Systems that include an Amphion Video Decoder.
 
-Apple MFi Software Development Kit: Use of Apple MFi Software and associated
-documentation is restricted to current Apple MFi licensees in accordance with
+Apple Mfi Software Development Kit: Use of Apple Mfi Software and associated
+documentation is restricted to current Apple Mfi licensees in accordance with
 the terms of their own valid and in-effect license from Apple.
 
 Aquantia Corp.: You may use Aquantia's API binaries solely to flash the API
@@ -453,6 +459,13 @@ distribution of one copy embedded in a single NXP Product. Your use of Cadence
 NatureDSP Libraries whether in source code or in binary is restricted to NXP
 SoC based systems or emulation enablement based on NXP SoC.
 
+CEVA D.S.P. Ltd. And CEVA Technologies Inc. ("CEVA"): The CEVA-SPF2 linear
+algebra, CEVA-SPF2 Neural Network Libraries, CEVA-SPF2 Core Libraries,
+CEVA-SPF2 OpenAMP and CEVA-SPF2 STL licensed modules are owned by CEVA and
+such materials may only be used in connection with an NXP product containing
+the S250 or S125 integrated circuits, whether or not the CEVA-SPF2 Core is
+physically implemented and/or enabled on such NXP product.
+
 Cirque Corporation: Use of Cirque Corporation technology is limited to
 evaluation, demonstration, or certification testing only. Permitted
 distributions must be similarly limited. Further rights, including but not
@@ -463,8 +476,12 @@ Coding Technologies (Dolby Labs): Use of CTS software is limited to evaluation
 and demonstration only.  Permitted distributions must be similarly limited.
 Further rights must be obtained from Dolby Laboratories.
 
+Coremark:  Use of the Coremark benchmarking software is subject to the
+following terms and conditions:
+https://github.com/eembc/coremark/blob/main/LICENSE.md
+
 CSR: Use of Cambridge Silicon Radio, Inc. ("CSR") software is limited to
-evaluation and demonstration only.  Permitted distributions must be similarly
+evaluation and demonstration only. Permitted distributions must be similarly
 limited.  Further rights must be obtained directly from CSR.
 
 Crank: Use of Crank Software Inc. software is limited to evaluation and
@@ -475,7 +492,7 @@ Cypress Semiconductor Corporation: WWD RTOS source code may only be used in
 accordance with the Cypress IOT Community License Agreement obtained directly
 from Cypress Semiconductor Corporation.
 
-Elektrobit Automotive GmbH (“EB”): EB software must be used consistent with
+Elektrobit Automotive GmbH ("EB"): EB software must be used consistent with
 the EB License Terms and Conditions, Version 1.4 (Dec 2019) found here:
 https://www.elektrobit.com/legal-notice/ .  Licensee is only granted an
 evaluation license for the EB software, defined as license to use the EB
@@ -594,10 +611,16 @@ commercial use and distribution of products containing the GStreamer Optimized
 Real Format Client Code implementation or OpenMax Optimized Real Format Client
 Code
 
+Real-Time Innovations, Inc.: Not withstanding anything in this Agreement,
+Real-Time Innovations, Inc. software must be used strictly in accordance with
+Real-Time Innovations, Inc.'s Automotive Software Evaluation License Agreement,
+available here: https://www.rti.com/hubfs/_Collateral/Services_and_Support/Automotive_Evaluation_SLA_90_dayNXP.pdf.
+Any other use is expressly prohibited.
+
 RivieraWaves SAS (a member of the CEVA, Inc. family of companies): You may not
 use the RivieraWaves intellectual property licensed under this Agreement if you
 develop, market, and/or license products similar to such RivieraWaves
-intellectual property.  Such use constitutes a breach of this Agreement.  Any
+intellectual property.  Such use constitutes a breach of this Agreement. Any
 such use rights must be obtained directly from RivieraWaves.
 
 SanDisk Corporation: If the Licensed Software includes software developed by
