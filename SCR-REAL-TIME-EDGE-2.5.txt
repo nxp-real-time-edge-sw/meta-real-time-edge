@@ -1,15 +1,15 @@
 NXP Software Content Register
 
-Release - Real-time Edge Software 2.4
- December 2022
+Release - Real-time Edge Software 2.5
+ March 2023
 
-Outgoing License: LA_OPT_NXP_Software_License v39 August 2022 - Additional distribution license granted - Section 2.3 applies
+Outgoing License: LA_OPT_NXP_Software_License v43 February 2023 - Additional distribution license granted - Section 2.3 applies
 License File:     EULA.txt
 
 Yocto Project recipe manifest:
-repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-kirkstone -m real-time-edge-2.4.0.xml
+repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-kirkstone -m real-time-edge-2.5.0.xml
 
-Release tag: Real-Time-Edge-v2.4-202212
+Release tag: Real-Time-Edge-v2.5-202303
 
 --------------------------------------------
 BSP Packages
@@ -35,7 +35,7 @@ License File:                docs/license.rst
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://github.com/nxp-imx/imx-atf -b lf-5.15.52-2.1.0
+Release Location:            https://github.com/nxp-imx/imx-atf -b lf-5.15.71-2.2.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
@@ -54,13 +54,13 @@ Origin:                      NXP (BSD)
 --------------------------------------------
 
 Package:                     real-time-edge-linux.git
-Version:                     5.15.52
+Version:                     5.15.72
 Outgoing License:            GPL-2.0
 License File:                COPYING
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    The Linux kernel with PREEMPT-RT enabled
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-linux -b linux_5.15.52
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-linux -b linux_5.15.72
 Origin:                      NXP (GPL-2.0)
                              kernel.org (GPL-2.0) - https://www.kernel.org/
 
@@ -73,7 +73,7 @@ License File:                COPYING
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Bootloader with Real-time Edge specific capabilities
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b uboot_v2022.04
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b uboot_v2022.04-2.5.0
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -88,7 +88,7 @@ License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A partitioning Hypervisor based on Linux
-Release Location:            https://github.com/nxp-imx/imx-jailhouse -b lf-5.15.52-2.1.0
+Release Location:            https://github.com/nxp-imx/imx-jailhouse -b lf-5.15.71-2.2.0
 Origin:                      NXP (GPL-2.0)
                              Siemens AG (GPL-2.0) - https://github.com/siemens/jailhouse
 
@@ -101,7 +101,7 @@ License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A baremetal framework
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2022.04
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2022.04-2.5.0
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -146,7 +146,7 @@ Origin:                      Michal Kubecek (GPL-2.0)
 --------------------------------------------
 
 Package:                     genavb-tsn
-Version:                     5.2
+Version:                     5.4
 Outgoing License:            nxp/EULA.txt, GPL-2.0, BSD-3-Clause
 License Files:               licenses/EULA.txt, licenses/COPYING, licenses/BSD-3-Clause
 Package Category:            Real-time Networking
@@ -158,13 +158,13 @@ Origin:                      NXP (nxp/EULA.txt, GPL-2.0, BSD-3-Clause)
 --------------------------------------------
 
 Package:                     iproute2
-Version:                     5.13.0
+Version:                     5.17.0
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    A collection of utilities for controlling networking and traffic
-Release Location:            https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/snapshot/iproute2-5.8.0.tar.gz
+Release Location:            https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/snapshot/iproute2-5.17.0.tar.gz
 Origin:                      Stephen Hemminger (GPL-2.0)
 
 --------------------------------------------
@@ -310,7 +310,7 @@ License Files:               COPYING
 Package Category:            Industrial
 Type of content:             source
 Description and comments:    IgH EtherCAT Master for Linux
-Release Location:            https://etherlab.org/download/ethercat/ethercat-1.5.1.tar.bz2
+Release Location:            https://etherlab.org/download/ethercat/ethercat-1.5.2.tar.bz2
 Origin:                      IgH (GPL-2.0)
 
 --------------------------------------------
