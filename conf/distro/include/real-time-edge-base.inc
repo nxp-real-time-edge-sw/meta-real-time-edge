@@ -59,7 +59,11 @@ KERNEL_DEVICETREE:append:ls1046ardb= " freescale/fsl-ls1046a-rdb-sdk-jailhouse-w
 KERNEL_DEVICETREE:append:ls1028ardb= " freescale/fsl-ls1028a-rdb-jailhouse.dtb \
 				       freescale/fsl-ls1028a-rdb-jailhouse-without-enetc.dtb \
 				       freescale/fsl-ls1028a-rdb-dsa-swp5-eno3.dtb"
-KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-rpmsg-ca53.dtb"
+KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-rpmsg-ca53.dtb \
+					       freescale/imx8mm-evk-virtio-perf-cm4.dtb \
+					       freescale/imx8mm-evk-virtio-net-cm4.dtb \
+					       freescale/imx8mm-evk-virtio-perf-ca53.dtb \
+					       freescale/imx8mm-evk-virtio-net-ca53.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-rpmsg-8m-buf.dtb"
 KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-root.dtb"
 KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-rpmsg.dtb"
