@@ -147,13 +147,13 @@ Origin:                      Michal Kubecek (GPL-2.0)
 
 Package:                     genavb-tsn
 Version:                     5.4
-Outgoing License:            nxp/EULA.txt, GPL-2.0, BSD-3-Clause
-License Files:               licenses/EULA.txt, licenses/COPYING, licenses/BSD-3-Clause
+Outgoing License:            GPL-2.0-or-later, BSD-3-Clause
+License Files:               licenses/COPYING, licenses/BSD-3-Clause
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    GenAVB/TSN Stack
 Release Location:            https://github.com/NXP/GenAVB_TSN.git
-Origin:                      NXP (nxp/EULA.txt, GPL-2.0, BSD-3-Clause)
+Origin:                      NXP (GPL-2.0-or-later, BSD-3-Clause)
 
 --------------------------------------------
 

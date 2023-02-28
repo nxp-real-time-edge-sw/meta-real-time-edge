@@ -1,6 +1,5 @@
-LICENSE = "NXP-Binary-EULA & GPL-2.0-only & BSD-3-Clause"
-LIC_FILES_CHKSUM = "file://licenses/EULA.txt;md5=50d7a10985de1383a0894d78e66a3459 \
-                    file://licenses/COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
+LICENSE = "GPL-2.0-or-later & BSD-3-Clause"
+LIC_FILES_CHKSUM = "file://licenses/COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://licenses/BSD-3-Clause;md5=5cc0aa6b0086f08ef02006d8a2679704 \
 "
 
