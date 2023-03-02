@@ -20,8 +20,6 @@ DISTRO_FEATURES:append:mx93-nxp-bsp = " real-time-edge-sysrepo"
 DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo feedgnuplot tsn-scripts real-time-edge-prl"
 DISTRO_FEATURES:append:ls1021aiot = " canfestival"
 
-PREFERRED_VERSION_imx-gpu-viv:mx8mm-nxp-bsp = "6.4.3.p4.2-aarch64"
-
 # For ls1028ardb
 DISTRO_FEATURES:remove:ls1028ardb = " x11"
 PREFERRED_VERSION_weston:ls1028ardb = "10.0.1.imx"
