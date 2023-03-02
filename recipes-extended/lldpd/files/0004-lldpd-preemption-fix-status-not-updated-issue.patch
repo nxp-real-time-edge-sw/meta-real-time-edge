@@ -1,0 +1,28 @@
+From d97f4d1007f1355d9ef4f0dc5df3b84e7e41ea1a Mon Sep 17 00:00:00 2001
+From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Date: Mon, 20 Feb 2023 16:09:31 +0800
+Subject: [PATCH 1/2] lldpd: preemption: fix status not updated issue
+
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+---
+ src/daemon/protocols/lldp.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/daemon/protocols/lldp.c b/src/daemon/protocols/lldp.c
+index 4e52379..1081f14 100644
+--- a/src/daemon/protocols/lldp.c
++++ b/src/daemon/protocols/lldp.c
+@@ -1008,8 +1008,9 @@ lldp_decode(struct lldpd *cfg, char *frame, int s,
+ 						ioctl(cfg->g_sock, SIOCETHTOOL, &ifr);
+ 
+ 						if (!port->p_fp.active) {
+-							lldpd_update_localports(cfg);
++							lport->p_fp.active = 1;
+ 							lldp_send(cfg, hardware);
++							lldpd_update_localports(cfg);
+ 						}
+ 					}
+ 					break;
+-- 
+2.17.1
+
