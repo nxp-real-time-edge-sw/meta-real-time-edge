@@ -1,0 +1,82 @@
+From 76d267fdcdbe1290438a6f427f95f14ab90694b1 Mon Sep 17 00:00:00 2001
+From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Date: Fri, 3 Mar 2023 10:29:29 +0800
+Subject: [PATCH] preemption: add disabled parameter
+
+Add disabled parameter to disable the preemption configuration.
+
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+---
+ ethtool.c                    | 4 +++-
+ netlink/preempt.c            | 7 +++++++
+ uapi/linux/ethtool.h         | 1 +
+ uapi/linux/ethtool_netlink.h | 1 +
+ 4 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/ethtool.c b/ethtool.c
+index 3d3a4d6..9743553 100644
+--- a/ethtool.c
++++ b/ethtool.c
+@@ -5233,6 +5233,7 @@ static int do_set_preempt(struct cmd_context *ctx)
+ 	int change = -1;
+ 	struct ethtool_fp fpcmd;
+ 	struct cmdline_info cmdline_fp[] = {
++		{"disabled", CMDL_BOOL, &lldp_v, &fpcmd.disabled},
+ 		{"lldp-verify", CMDL_BOOL, &lldp_v, &fpcmd.fp_supported},
+ 		{ "fp", CMDL_BOOL, &fp_c, &fpcmd.fp_enabled },
+ 		{ "preemptible-queues-mask", CMDL_U32, &preempt_queues_mask_c,
+@@ -6108,7 +6109,8 @@ static const struct option args[] = {
+ 		.func	= do_set_preempt,
+ 		.nlfunc	= nl_set_preempt,
+ 		.help	= "Set Frame Preemption settings",
+-		.xhelp	= "		[lldp-verify on|off]\n"
++		.xhelp	= "		[disabled]\n"
++			  "		[lldp-verify on|off]\n"
+ 			  "		[ fp on|off ]\n"
+ 			  "		[ preemptible-queues-mask %x ]\n"
+ 			  "		[ min-frag-size %d ]\n",
+diff --git a/netlink/preempt.c b/netlink/preempt.c
+index ee99bb1..e4c0166 100644
+--- a/netlink/preempt.c
++++ b/netlink/preempt.c
+@@ -108,6 +108,13 @@ static const struct lookup_entry_u8 fp_values[] = {
+ };
+ 
+ static const struct param_parser set_preempt_params[] = {
++	{
++		.arg		= "disabled",
++		.group		= ETHTOOL_MSG_PREEMPT_SET,
++		.type		= ETHTOOL_A_PREEMPT_DISABLED,
++		.handler	= nl_parse_flag,
++		.min_argc	= 0,
++	},
+ 	{
+ 		.arg		= "lldp-verify",
+ 		.group		= ETHTOOL_MSG_PREEMPT_SET,
+diff --git a/uapi/linux/ethtool.h b/uapi/linux/ethtool.h
+index 2962170..3296997 100644
+--- a/uapi/linux/ethtool.h
++++ b/uapi/linux/ethtool.h
+@@ -394,6 +394,7 @@ struct ethtool_eee {
+  */
+ struct ethtool_fp {
+ 	__u32	cmd;
++	__u8	disabled;
+ 	__u8	fp_supported;
+ 	__u8	fp_lldp_verify;
+ 	__u8	fp_enabled;
+diff --git a/uapi/linux/ethtool_netlink.h b/uapi/linux/ethtool_netlink.h
+index 20df436..2f232d2 100644
+--- a/uapi/linux/ethtool_netlink.h
++++ b/uapi/linux/ethtool_netlink.h
+@@ -548,6 +548,7 @@ enum {
+ enum {
+ 	ETHTOOL_A_PREEMPT_UNSPEC,		/* nest - _A_HEADER_* */
+ 	ETHTOOL_A_PREEMPT_HEADER,		/* u8 */
++	ETHTOOL_A_PREEMPT_DISABLED,		/* bool */
+ 	ETHTOOL_A_PREEMPT_SUPPORTED,		/* u8 */
+ 	ETHTOOL_A_PREEMPT_LLDP_VERIFY,		/* u8 */
+ 	ETHTOOL_A_PREEMPT_STATUS,		/* u8 */
+-- 
+2.17.1
+
