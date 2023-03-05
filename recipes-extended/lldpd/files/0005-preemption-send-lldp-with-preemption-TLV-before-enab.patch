@@ -1,7 +1,7 @@
-From ac14a4a70e8179b165a6993eefd9be3c48b1f05b Mon Sep 17 00:00:00 2001
-From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
-Date: Tue, 28 Feb 2023 16:00:48 +0800
-Subject: [PATCH 2/2] preemption: send lldp with preemption TLV before enable
+From af25bdee9afe09682bf4d98a97931c743997122d Mon Sep 17 00:00:00 2001
+From: Tao Yang <Tao.Yang1@nxp.com>
+Date: Sun, 5 Mar 2023 16:32:26 +0800
+Subject: [PATCH] preemption: send lldp with preemption TLV before enable
  hardware
 
 Some hardware like ENETC of LS1028a, verification time is too short, so
@@ -10,20 +10,19 @@ to send SMD-V/R.
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 ---
- src/daemon/protocols/lldp.c | 11 +++++------
- 1 file changed, 5 insertions(+), 6 deletions(-)
+ src/daemon/protocols/lldp.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/src/daemon/protocols/lldp.c b/src/daemon/protocols/lldp.c
-index 1081f14..52692d5 100644
+index 21cf671..52692d5 100644
 --- a/src/daemon/protocols/lldp.c
 +++ b/src/daemon/protocols/lldp.c
-@@ -1001,17 +1001,16 @@ lldp_decode(struct lldpd *cfg, char *frame, int s,
+@@ -1001,16 +1001,16 @@ lldp_decode(struct lldpd *cfg, char *frame, int s,
  					if (lport->p_fp.status &&
  					    port->p_fp.status &&
  					    !lport->p_fp.active) {
 -						strlcpy(ifr.ifr_name, hardware->h_ifname, sizeof(ifr.ifr_name));
 -						sfp.cmd = ETHTOOL_RFP;
--						sfp.fp_enabled = 1;
 -						ifr.ifr_data = (caddr_t)&sfp;
 -						ioctl(cfg->g_sock, SIOCETHTOOL, &ifr);
 -
