@@ -8,7 +8,7 @@ SRCREV:qoriq = "4e655edf4453ab862c96cd47f4adeb67d76cc170"
 SRCREV:imx-nxp-bsp = "4e655edf4453ab862c96cd47f4adeb67d76cc170"
 
 FILES:${PN} += "/home/root/* /home/root/sample/* /home/root/samples/* \
-               /home/root/samples/gatescripts/* /home/root/samples/pktgen/* \
+               /home/root/samples/gatescripts/* \
                /home/root/samples/cncdemo/* \
 	       /usr/* /usr/include/* /usr/include/linux/* /usr/include/tsn/* \
 	       /usr/lib/* /usr/lib/pkgconfig/* \
@@ -33,10 +33,8 @@ do_install:append() {
     install -D -m 644 ${TSN_LIB_PC} ${D}/${LIBDIR}/pkgconfig/libtsn.pc
     install -d ${D}/home/root/samples
     install -d ${D}/home/root/samples/gatescripts
-    install -d ${D}/home/root/samples/pktgen
     install -d ${D}/home/root/samples/cncdemo
     install -Dm 0755 ${SAVED_DIR}/samples/gatescripts/* ${D}/home/root/samples/gatescripts/
-    install -Dm 0755 ${SAVED_DIR}/samples/pktgen/* ${D}/home/root/samples/pktgen/
     install -Dm 0755 ${S}/demos/cnc/topoagent.py ${D}/home/root/samples/cncdemo/
 }
 
