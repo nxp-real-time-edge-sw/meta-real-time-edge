@@ -7,7 +7,7 @@ GENAVB_TSN_URL = "git://github.com/NXP/GenAVB_TSN.git;protocol=https"
 
 SRC_URI = "${GENAVB_TSN_URL};nobranch=1"
 
-SRCREV = "b0314e5da5fccc7b8b42411714adfdce9a8e2f5e"
+SRCREV = "157d8364d41f4fda90d3a041da1a02d929a97b4a"
 
 PV = "5.4+git${SRCPV}"
 
