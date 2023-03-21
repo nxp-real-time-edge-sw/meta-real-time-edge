@@ -13,7 +13,7 @@ SRC_URI += " \
     file://scripts/model-install.sh \
 "
 
-SRCREV = "02d5d6be8349edc6e54aac5b586495081b6bd746"
+SRCREV = "8c1252b1e0d7851188e7468f631a2e4a64e7f835"
 
 S = "${WORKDIR}/git"
 
