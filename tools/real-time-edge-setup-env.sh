@@ -58,6 +58,10 @@ change_conf()
         cp $BUILD_DIR/conf/local.conf.org $BUILD_DIR/conf/local.conf
     fi
 
+    echo "" >> $BUILD_DIR/conf/local.conf
+    echo "# Share cache" >> $BUILD_DIR/conf/local.conf
+    echo "SSTATE_DIR ?= \"\${BSPDIR}/sstate-cache\"" >> $BUILD_DIR/conf/local.conf
+
     echo >> $BUILD_DIR/conf/local.conf
     echo "# Switch to Debian packaging and include package-management in the image" >> $BUILD_DIR/conf/local.conf
     echo "PACKAGE_CLASSES = \"package_deb\"" >> $BUILD_DIR/conf/local.conf
