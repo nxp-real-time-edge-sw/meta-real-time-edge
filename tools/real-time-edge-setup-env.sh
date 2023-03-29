@@ -2,7 +2,7 @@
 #
 # Real-time Edge Yocto Project Build Environment Setup Script
 #
-# Copyright 2021-2022 NXP
+# Copyright 2021-2023 NXP
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,12 +36,12 @@ usage()
 echo "
     * [-b build-dir]: Build directory, if unspecified script uses 'build' as output directory
     * [-h]: help
-	"
+    "
 }
 
 clean_up()
 {
-    unset ROOTDIR BUILD_DIR FSLDISTRO FLATFORM
+    unset CWD BUILD_DIR FSLDISTRO
     unset fsl_setup_help fsl_setup_error fsl_setup_flag
     unset usage clean_up
     unset ARM_DIR META_FSL_BSP_RELEASE
@@ -50,100 +50,119 @@ clean_up()
 
 change_conf()
 {
-	# On the first script run, backup the local.conf file
-	# Consecutive runs, it restores the backup and changes are appended on this one.
-	if [ ! -e $BUILD_DIR/conf/local.conf.org ]; then
-	    cp $BUILD_DIR/conf/local.conf $BUILD_DIR/conf/local.conf.org
-	else
-	    cp $BUILD_DIR/conf/local.conf.org $BUILD_DIR/conf/local.conf
-	fi
+    # On the first script run, backup the local.conf file
+    # Consecutive runs, it restores the backup and changes are appended on this one.
+    if [ ! -e $BUILD_DIR/conf/local.conf.org ]; then
+        cp $BUILD_DIR/conf/local.conf $BUILD_DIR/conf/local.conf.org
+    else
+        cp $BUILD_DIR/conf/local.conf.org $BUILD_DIR/conf/local.conf
+    fi
 
-	echo >> $BUILD_DIR/conf/local.conf
-	echo "# Switch to Debian packaging and include package-management in the image" >> $BUILD_DIR/conf/local.conf
-	echo "PACKAGE_CLASSES = \"package_deb\"" >> $BUILD_DIR/conf/local.conf
-	echo "EXTRA_IMAGE_FEATURES += \"package-management\"" >> $BUILD_DIR/conf/local.conf
+    echo >> $BUILD_DIR/conf/local.conf
+    echo "# Switch to Debian packaging and include package-management in the image" >> $BUILD_DIR/conf/local.conf
+    echo "PACKAGE_CLASSES = \"package_deb\"" >> $BUILD_DIR/conf/local.conf
+    echo "EXTRA_IMAGE_FEATURES += \"package-management\"" >> $BUILD_DIR/conf/local.conf
 }
 
 imx_add_layers()
 {
-	. ${ROOTDIR}/sources/meta-imx/tools/setup-utils.sh
+    . ${ROOTDIR}/sources/meta-imx/tools/setup-utils.sh
 
-	META_FSL_BSP_RELEASE="${ROOTDIR}/sources/meta-imx/meta-bsp"
+META_FSL_BSP_RELEASE="${ROOTDIR}/sources/meta-imx/meta-bsp"
 
-	hook_in_layer meta-imx/meta-bsp
-	hook_in_layer meta-imx/meta-sdk
-	hook_in_layer meta-imx/meta-ml
-	hook_in_layer meta-imx/meta-v2x
-	hook_in_layer meta-nxp-demo-experience
+    hook_in_layer meta-imx/meta-bsp
+    hook_in_layer meta-imx/meta-sdk
+    hook_in_layer meta-imx/meta-ml
+    hook_in_layer meta-imx/meta-v2x
+    hook_in_layer meta-nxp-demo-experience
 
-	echo "" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-browser/meta-chromium\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-clang\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-gnome\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-networking\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-filesystems\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm\"" >> $BUILD_DIR/conf/bblayers.conf
+echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm-toolchain\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-browser/meta-chromium\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-clang\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-gnome\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-networking\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-filesystems\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qt6\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security/meta-parsec\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security/meta-tpm\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-virtualization\"" >> $BUILD_DIR/conf/bblayers.conf
 
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qt6\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-virtualization\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-rtos-industrial\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
 
-	# Support integrating community meta-freescale instead of meta-fsl-arm
-	if [ -d $ROOTDIR/sources/meta-freescale ]; then
-	    echo meta-freescale directory found
-	    # Change settings according to environment
-	    sed -e "s,meta-fsl-arm\s,meta-freescale ,g" -i $BUILD_DIR/conf/bblayers.conf
-	    sed -e "s,\$.BSPDIR./sources/meta-fsl-arm-extra\s,,g" -i $BUILD_DIR/conf/bblayers.conf
-	fi
+    echo "" >> $BUILD_DIR/conf/bblayers.conf
+    echo "# RTOS layer" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-rtos-industrial\"" >> $BUILD_DIR/conf/bblayers.conf
 
-	echo "" >> $BUILD_DIR/conf/bblayers.conf
-	echo "# Harpoon layer" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-harpoon\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "" >> $BUILD_DIR/conf/bblayers.conf
+    echo "# Harpoon layer" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-harpoon\"" >> $BUILD_DIR/conf/bblayers.conf
 
-	echo "" >> $BUILD_DIR/conf/bblayers.conf
-	echo "# AVB layer" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-avb\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "" >> $BUILD_DIR/conf/bblayers.conf
+    echo "# AVB layer" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-avb\"" >> $BUILD_DIR/conf/bblayers.conf
+
+    echo BSPDIR=$BSPDIR
+    echo BUILD_DIR=$BUILD_DIR
+
+    # Support integrating community meta-freescale instead of meta-fsl-arm
+    if [ -d ../sources/meta-freescale ]; then
+        echo meta-freescale directory found
+        # Change settings according to environment
+        sed -e "s,meta-fsl-arm\s,meta-freescale ,g" -i conf/bblayers.conf
+        sed -e "s,\$.BSPDIR./sources/meta-fsl-arm-extra\s,,g" -i conf/bblayers.conf
+    fi
 }
 
 qoriq_add_layers()
 {
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-browser/meta-chromium\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-clang\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-networking\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-gnome\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-filesystems\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-webserver\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-perl\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-browser/meta-chromium\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-clang\"" >> $BUILD_DIR/conf/bblayers.conf
 
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-virtualization\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cloud-services\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-networking\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-gnome\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-filesystems\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-webserver\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-perl\"" >> $BUILD_DIR/conf/bblayers.conf
 
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qoriq\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-rtos-industrial\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm\"" >> $BUILD_DIR/conf/bblayers.conf
+echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm-toolchain\"" >> $BUILD_DIR/conf/bblayers.conf
+
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-virtualization\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cloud-services\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security\"" >> $BUILD_DIR/conf/bblayers.conf
+
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-common\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qoriq\"" >> $BUILD_DIR/conf/bblayers.conf
+
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
+
+    echo "" >> $BUILD_DIR/conf/bblayers.conf
+    echo "# RTOS layer" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-rtos-industrial\"" >> $BUILD_DIR/conf/bblayers.conf
 }
 
 add_layers()
 {
-	if [ ! -e $BUILD_DIR/conf/bblayers.conf.org ]; then
-	    cp $BUILD_DIR/conf/bblayers.conf $BUILD_DIR/conf/bblayers.conf.org
-	else
-	    cp $BUILD_DIR/conf/bblayers.conf.org $BUILD_DIR/conf/bblayers.conf
-	fi
+    if [ ! -e $BUILD_DIR/conf/bblayers.conf.org ]; then
+        cp $BUILD_DIR/conf/bblayers.conf $BUILD_DIR/conf/bblayers.conf.org
+    else
+        cp $BUILD_DIR/conf/bblayers.conf.org $BUILD_DIR/conf/bblayers.conf
+    fi
 
-	echo "" >> $BUILD_DIR/conf/bblayers.conf
+    echo "" >> $BUILD_DIR/conf/bblayers.conf
 
-	if [ "${PLATFORM}" = "imx" ]
-	then
-		imx_add_layers
-	else
-		qoriq_add_layers
-	fi
+    if [ "${PLATFORM}" = "imx" ]
+    then
+        imx_add_layers
+    else
+        qoriq_add_layers
+    fi
 
-	echo "" >> $BUILD_DIR/conf/bblayers.conf
-	echo "# Real-time Edge Yocto Project Release layers" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-real-time-edge\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "" >> $BUILD_DIR/conf/bblayers.conf
+    echo "# Real-time Edge Yocto Project Release layers" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-real-time-edge\"" >> $BUILD_DIR/conf/bblayers.conf
 }
 
 # get command line options
@@ -152,46 +171,46 @@ unset FSLDISTRO
 
 while getopts "k:r:t:b:e:gh" fsl_setup_flag
 do
-	case $fsl_setup_flag in
-	b) BUILD_DIR="$OPTARG";
-		;;
-	h) fsl_setup_help='true';
-		;;
-	\?) fsl_setup_error='true';
-		;;
-	esac
+    case $fsl_setup_flag in
+    b) BUILD_DIR="$OPTARG";
+        ;;
+    h) fsl_setup_help='true';
+        ;;
+    \?) fsl_setup_error='true';
+        ;;
+    esac
 done
 
 shift $((OPTIND-1))
 if [ $# -ne 0 ]; then
-	fsl_setup_error=true
-	echo -e "Invalid command line ending: '$@'"
+    fsl_setup_error=true
+    echo -e "Invalid command line ending: '$@'"
 fi
 OPTIND=$OLD_OPTIND
 
 case $MACHINE in
 imx*)
-	PLATFORM="imx"
+    PLATFORM="imx"
 ;;
 *)
-	PLATFORM="qoriq"
+    PLATFORM="qoriq"
 ;;
 esac
 
 if [ -z "$DISTRO" ]; then
-	if [ -z "$FSLDISTRO" ]; then
-		FSLDISTRO='nxp-real-time-edge'
-		fi
+    if [ -z "$FSLDISTRO" ]; then
+        FSLDISTRO='nxp-real-time-edge'
+        fi
 else
-	FSLDISTRO="$DISTRO"
+    FSLDISTRO="$DISTRO"
 fi
 
-FSL_EULA_FILE=$ROOTDIR/sources/meta-real-time-edge/EULA.txt
+FSL_EULA_FILE=$ROOTDIR/sources/meta-real-time-edge/LICENSE.txt
 
 if test $fsl_setup_help; then
-	usage && clean_up && return 1
+    usage && clean_up && return 1
 elif test $fsl_setup_error; then
-	clean_up && return 1
+    clean_up && return 1
 fi
 
 # Set up the basic yocto environment
