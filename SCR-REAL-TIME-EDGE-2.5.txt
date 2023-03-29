@@ -54,13 +54,13 @@ Origin:                      NXP (BSD)
 --------------------------------------------
 
 Package:                     real-time-edge-linux.git
-Version:                     5.15.72
+Version:                     5.15.71
 Outgoing License:            GPL-2.0
 License File:                COPYING
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    The Linux kernel with PREEMPT-RT enabled
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-linux -b linux_5.15.72
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-linux -b linux_5.15.71
 Origin:                      NXP (GPL-2.0)
                              kernel.org (GPL-2.0) - https://www.kernel.org/
 
