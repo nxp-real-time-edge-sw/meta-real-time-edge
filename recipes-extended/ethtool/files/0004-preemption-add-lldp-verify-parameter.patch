@@ -1,7 +1,7 @@
-From bfd78eb0be708895d1b9d73fe51835bacab80227 Mon Sep 17 00:00:00 2001
+From 3d2dc2c6c455a8e53bb5f0b3b1f8200739b2fc9f Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Fri, 4 Nov 2022 10:47:06 +0800
-Subject: [PATCH] preemption: add lldp verify parameter
+Subject: [PATCH 4/5] preemption: add lldp verify parameter
 
 The preemption needs lldp verify process according to IEEE 802.3-2018,
 This patch add lldp verify parameter on ethtool preemption command.
@@ -15,10 +15,10 @@ Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
  4 files changed, 29 insertions(+), 3 deletions(-)
 
 diff --git a/ethtool.c b/ethtool.c
-index 5625878..3d3a4d6 100644
+index a9f0167..c45d63a 100644
 --- a/ethtool.c
 +++ b/ethtool.c
-@@ -1621,11 +1621,17 @@ static void dump_fpcmd(struct ethtool_fp *fpcmd)
+@@ -1648,11 +1648,17 @@ static void dump_fpcmd(struct ethtool_fp *fpcmd)
  		fprintf(stdout, "not supported\n");
  
  	fprintf(stdout, "	status: ");
@@ -37,7 +37,7 @@ index 5625878..3d3a4d6 100644
  	fprintf(stdout, "	supported queues: %#x\n",
  		fpcmd->supported_queues_mask);
  	fprintf(stdout, "	preemptible queues: %#x\n",
-@@ -5223,9 +5229,11 @@ static int do_get_preempt(struct cmd_context *ctx)
+@@ -5234,9 +5240,11 @@ static int do_get_preempt(struct cmd_context *ctx)
  static int do_set_preempt(struct cmd_context *ctx)
  {
  	int fp_c = -1, preempt_queues_mask_c = -1, min_frag_c = -1;
@@ -49,7 +49,7 @@ index 5625878..3d3a4d6 100644
  		{ "fp", CMDL_BOOL, &fp_c, &fpcmd.fp_enabled },
  		{ "preemptible-queues-mask", CMDL_U32, &preempt_queues_mask_c,
  		  &fpcmd.preemptible_queues_mask },
-@@ -6100,7 +6108,8 @@ static const struct option args[] = {
+@@ -6121,7 +6129,8 @@ static const struct option args[] = {
  		.func	= do_set_preempt,
  		.nlfunc	= nl_set_preempt,
  		.help	= "Set Frame Preemption settings",
@@ -90,10 +90,10 @@ index 6f66e43..ee99bb1 100644
  		.arg		= "fp",
  		.group		= ETHTOOL_MSG_PREEMPT_SET,
 diff --git a/uapi/linux/ethtool.h b/uapi/linux/ethtool.h
-index 6f15130..2962170 100644
+index 3bbeb26..8e89b74 100644
 --- a/uapi/linux/ethtool.h
 +++ b/uapi/linux/ethtool.h
-@@ -395,7 +395,10 @@ struct ethtool_eee {
+@@ -394,7 +394,10 @@ struct ethtool_eee {
  struct ethtool_fp {
  	__u32	cmd;
  	__u8	fp_supported;
@@ -105,10 +105,10 @@ index 6f15130..2962170 100644
  	__u32	preemptible_queues_mask;
  	__u32	min_frag_size;
 diff --git a/uapi/linux/ethtool_netlink.h b/uapi/linux/ethtool_netlink.h
-index a541e7d..20df436 100644
+index 02a4031..e519843 100644
 --- a/uapi/linux/ethtool_netlink.h
 +++ b/uapi/linux/ethtool_netlink.h
-@@ -549,7 +549,9 @@ enum {
+@@ -572,7 +572,9 @@ enum {
  	ETHTOOL_A_PREEMPT_UNSPEC,		/* nest - _A_HEADER_* */
  	ETHTOOL_A_PREEMPT_HEADER,		/* u8 */
  	ETHTOOL_A_PREEMPT_SUPPORTED,		/* u8 */
@@ -120,5 +120,5 @@ index a541e7d..20df436 100644
  	ETHTOOL_A_PREEMPT_QUEUES_SUPPORTED,	/* u32 */
  	ETHTOOL_A_PREEMPT_QUEUES_PREEMPTIBLE,	/* u32 */
 -- 
-2.17.1
+2.25.1
 

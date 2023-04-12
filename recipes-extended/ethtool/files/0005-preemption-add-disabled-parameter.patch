@@ -1,7 +1,7 @@
-From 76d267fdcdbe1290438a6f427f95f14ab90694b1 Mon Sep 17 00:00:00 2001
+From 4a4b2f29b70e8d511bac0d347f72d6c6ef2f7586 Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Fri, 3 Mar 2023 10:29:29 +0800
-Subject: [PATCH] preemption: add disabled parameter
+Subject: [PATCH 5/5] preemption: add disabled parameter
 
 Add disabled parameter to disable the preemption configuration.
 
@@ -14,10 +14,10 @@ Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
  4 files changed, 12 insertions(+), 1 deletion(-)
 
 diff --git a/ethtool.c b/ethtool.c
-index 3d3a4d6..9743553 100644
+index c45d63a..15e0a85 100644
 --- a/ethtool.c
 +++ b/ethtool.c
-@@ -5233,6 +5233,7 @@ static int do_set_preempt(struct cmd_context *ctx)
+@@ -5244,6 +5244,7 @@ static int do_set_preempt(struct cmd_context *ctx)
  	int change = -1;
  	struct ethtool_fp fpcmd;
  	struct cmdline_info cmdline_fp[] = {
@@ -25,7 +25,7 @@ index 3d3a4d6..9743553 100644
  		{"lldp-verify", CMDL_BOOL, &lldp_v, &fpcmd.fp_supported},
  		{ "fp", CMDL_BOOL, &fp_c, &fpcmd.fp_enabled },
  		{ "preemptible-queues-mask", CMDL_U32, &preempt_queues_mask_c,
-@@ -6108,7 +6109,8 @@ static const struct option args[] = {
+@@ -6129,7 +6130,8 @@ static const struct option args[] = {
  		.func	= do_set_preempt,
  		.nlfunc	= nl_set_preempt,
  		.help	= "Set Frame Preemption settings",
@@ -54,10 +54,10 @@ index ee99bb1..e4c0166 100644
  		.arg		= "lldp-verify",
  		.group		= ETHTOOL_MSG_PREEMPT_SET,
 diff --git a/uapi/linux/ethtool.h b/uapi/linux/ethtool.h
-index 2962170..3296997 100644
+index 8e89b74..0ec95b1 100644
 --- a/uapi/linux/ethtool.h
 +++ b/uapi/linux/ethtool.h
-@@ -394,6 +394,7 @@ struct ethtool_eee {
+@@ -393,6 +393,7 @@ struct ethtool_eee {
   */
  struct ethtool_fp {
  	__u32	cmd;
@@ -66,10 +66,10 @@ index 2962170..3296997 100644
  	__u8	fp_lldp_verify;
  	__u8	fp_enabled;
 diff --git a/uapi/linux/ethtool_netlink.h b/uapi/linux/ethtool_netlink.h
-index 20df436..2f232d2 100644
+index e519843..a43cbc0 100644
 --- a/uapi/linux/ethtool_netlink.h
 +++ b/uapi/linux/ethtool_netlink.h
-@@ -548,6 +548,7 @@ enum {
+@@ -571,6 +571,7 @@ enum {
  enum {
  	ETHTOOL_A_PREEMPT_UNSPEC,		/* nest - _A_HEADER_* */
  	ETHTOOL_A_PREEMPT_HEADER,		/* u8 */
@@ -78,5 +78,5 @@ index 20df436..2f232d2 100644
  	ETHTOOL_A_PREEMPT_LLDP_VERIFY,		/* u8 */
  	ETHTOOL_A_PREEMPT_STATUS,		/* u8 */
 -- 
-2.17.1
+2.25.1
 
