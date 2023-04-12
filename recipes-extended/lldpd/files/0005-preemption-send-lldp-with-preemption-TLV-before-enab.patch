@@ -1,7 +1,7 @@
-From af25bdee9afe09682bf4d98a97931c743997122d Mon Sep 17 00:00:00 2001
+From 019f91f15862a70b95b9d4eb6d1a06ba58fe1659 Mon Sep 17 00:00:00 2001
 From: Tao Yang <Tao.Yang1@nxp.com>
 Date: Sun, 5 Mar 2023 16:32:26 +0800
-Subject: [PATCH] preemption: send lldp with preemption TLV before enable
+Subject: [PATCH 5/6] preemption: send lldp with preemption TLV before enable
  hardware
 
 Some hardware like ENETC of LS1028a, verification time is too short, so
@@ -14,10 +14,10 @@ Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/src/daemon/protocols/lldp.c b/src/daemon/protocols/lldp.c
-index 21cf671..52692d5 100644
+index ef3da4e..8e0bb3e 100644
 --- a/src/daemon/protocols/lldp.c
 +++ b/src/daemon/protocols/lldp.c
-@@ -1001,16 +1001,16 @@ lldp_decode(struct lldpd *cfg, char *frame, int s,
+@@ -993,16 +993,16 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
  					if (lport->p_fp.status &&
  					    port->p_fp.status &&
  					    !lport->p_fp.active) {
@@ -40,5 +40,5 @@ index 21cf671..52692d5 100644
  					break;
  				case LLDP_TLV_DOT3_MAC:
 -- 
-2.17.1
+2.25.1
 

@@ -1,7 +1,7 @@
-From acc4a3b91faa37ac0b90be4ede639baed58786d0 Mon Sep 17 00:00:00 2001
+From 0f37b642b723f78ed31ea28c66046baccd6eb84a Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Wed, 24 Aug 2022 10:18:23 +0800
-Subject: [PATCH 1/2] lldpd: add additional ethernet capabilitie tlv
+Subject: [PATCH 1/6] lldpd: add additional ethernet capabilitie tlv
 
 Additional Ethernet capabilities TLV are defined in IEEE Std 802.3-2018.
 Its subtype is 7, and the first 4 bits indicate preemption capability
@@ -12,9 +12,9 @@ Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
  include/linux/ethtool.h       | 13 +++++++++++++
  src/daemon/interfaces-linux.c | 31 +++++++++++++++++++++++++++++++
  src/daemon/lldp-tlv.h         |  1 +
- src/daemon/protocols/lldp.c   | 13 +++++++++++++
+ src/daemon/protocols/lldp.c   | 11 +++++++++++
  src/lldpd-structs.h           |  9 +++++++++
- 5 files changed, 67 insertions(+)
+ 5 files changed, 65 insertions(+)
 
 diff --git a/include/linux/ethtool.h b/include/linux/ethtool.h
 index 6bfbb85..65201e2 100644
@@ -48,7 +48,7 @@ index 6bfbb85..65201e2 100644
  #define SPARC_ETH_GSET		ETHTOOL_GSET
  #define SPARC_ETH_SSET		ETHTOOL_SSET
 diff --git a/src/daemon/interfaces-linux.c b/src/daemon/interfaces-linux.c
-index 5f901e6..ef7f3ab 100644
+index 792b989..4a7e85d 100644
 --- a/src/daemon/interfaces-linux.c
 +++ b/src/daemon/interfaces-linux.c
 @@ -42,6 +42,8 @@
@@ -60,7 +60,7 @@ index 5f901e6..ef7f3ab 100644
  static int
  iflinux_eth_init(struct lldpd *cfg, struct lldpd_hardware *hardware)
  {
-@@ -545,6 +547,32 @@ end:
+@@ -519,6 +521,32 @@ end:
  	return rc;
  }
  
@@ -93,7 +93,7 @@ index 5f901e6..ef7f3ab 100644
  /* Fill up MAC/PHY for a given hardware port */
  static void
  iflinux_macphy(struct lldpd *cfg, struct lldpd_hardware *hardware)
-@@ -566,6 +594,9 @@ iflinux_macphy(struct lldpd *cfg, struct lldpd_hardware *hardware)
+@@ -547,6 +575,9 @@ iflinux_macphy(struct lldpd *cfg, struct lldpd_hardware *hardware)
  
  	log_debug("interfaces", "ask ethtool for the appropriate MAC/PHY for %s",
  	    hardware->h_ifname);
@@ -101,25 +101,25 @@ index 5f901e6..ef7f3ab 100644
 +	iflinux_ethtool_gfp(cfg, hardware->h_ifname, &port->p_fp);
 +
  	if (iflinux_ethtool_glink(cfg, hardware->h_ifname, &uset) == 0) {
- 		port->p_macphy.autoneg_support = iflinux_ethtool_link_mode_test_bit(
- 			ETHTOOL_LINK_MODE_Autoneg_BIT, uset.link_modes.supported);
+ 		port->p_macphy.autoneg_support =
+ 		    iflinux_ethtool_link_mode_test_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
 diff --git a/src/daemon/lldp-tlv.h b/src/daemon/lldp-tlv.h
-index a8016bb..3bafcb8 100644
+index a9bf7cf..9de9703 100644
 --- a/src/daemon/lldp-tlv.h
 +++ b/src/daemon/lldp-tlv.h
-@@ -46,6 +46,7 @@
- #define LLDP_TLV_DOT3_POWER	2
- #define LLDP_TLV_DOT3_LA	3
- #define LLDP_TLV_DOT3_MFS	4
-+#define LLDP_TLV_DOT3_FP       7
+@@ -67,6 +67,7 @@
+ #define LLDP_TLV_DOT3_POWER 2
+ #define LLDP_TLV_DOT3_LA 3
+ #define LLDP_TLV_DOT3_MFS 4
++#define LLDP_TLV_DOT3_FP 7
  
- #define LLDP_TLV_MED_CAP	1
- #define LLDP_TLV_MED_POLICY	2
+ #define LLDP_TLV_MED_CAP 1
+ #define LLDP_TLV_MED_POLICY 2
 diff --git a/src/daemon/protocols/lldp.c b/src/daemon/protocols/lldp.c
-index a74556a..49b1ee6 100644
+index 4f689a0..6c119ed 100644
 --- a/src/daemon/protocols/lldp.c
 +++ b/src/daemon/protocols/lldp.c
-@@ -81,6 +81,7 @@ static int _lldp_send(struct lldpd *global,
+@@ -77,6 +77,7 @@ _lldp_send(struct lldpd *global, struct lldpd_hardware *hardware, u_int8_t c_id_
  #endif
  #ifdef ENABLE_DOT3
  	const u_int8_t dot3[] = LLDP_TLV_ORG_DOT3;
@@ -127,8 +127,8 @@ index a74556a..49b1ee6 100644
  #endif
  #ifdef ENABLE_LLDPMED
  	int i;
-@@ -283,6 +284,18 @@ static int _lldp_send(struct lldpd *global,
- 	      POKE_END_LLDP_TLV))
+@@ -259,6 +260,16 @@ _lldp_send(struct lldpd *global, struct lldpd_hardware *hardware, u_int8_t c_id_
+ 		POKE_UINT32(port->p_aggregid) && POKE_END_LLDP_TLV))
  		goto toobig;
  
 +	fp_tlv = port->p_fp.support | port->p_fp.status << 1 |
@@ -141,38 +141,36 @@ index a74556a..49b1ee6 100644
 +	      POKE_END_LLDP_TLV))
 +		goto toobig;
 +
-+
-+
  	/* MAC/PHY */
- 	if (!(
- 	      POKE_START_LLDP_TLV(LLDP_TLV_ORG) &&
+ 	if (!(POKE_START_LLDP_TLV(LLDP_TLV_ORG) && POKE_BYTES(dot3, sizeof(dot3)) &&
+ 		POKE_UINT8(LLDP_TLV_DOT3_MAC) &&
 diff --git a/src/lldpd-structs.h b/src/lldpd-structs.h
-index 88d347c..f9b73cb 100644
+index 5647c83..e004a26 100644
 --- a/src/lldpd-structs.h
 +++ b/src/lldpd-structs.h
-@@ -142,6 +142,14 @@ struct lldpd_dot3_power {
- 	u_int8_t		pd_load;
- 	u_int16_t		pse_max;
+@@ -143,6 +143,14 @@ struct lldpd_dot3_power {
+ 	u_int16_t pse_max;
  };
+ MARSHAL(lldpd_dot3_power);
 +
 +struct lldpd_dot3_fp {
-+	u_int8_t		support;
-+	u_int8_t		status;
-+	u_int8_t		active;
-+	u_int8_t		frag_size;
++	u_int8_t support;
++	u_int8_t status;
++	u_int8_t active;
++	u_int8_t frag_size;
 +};
 +
- MARSHAL(lldpd_dot3_power);
  #endif
  
-@@ -282,6 +290,7 @@ struct lldpd_port {
- 	u_int32_t		 p_aggregid;
+ #if defined ENABLE_CDP || defined ENABLE_FDP
+@@ -277,6 +285,7 @@ struct lldpd_port {
+ 	u_int32_t p_aggregid;
  	struct lldpd_dot3_macphy p_macphy;
- 	struct lldpd_dot3_power	 p_power;
-+	struct lldpd_dot3_fp     p_fp;
+ 	struct lldpd_dot3_power p_power;
++	struct lldpd_dot3_fp p_fp;
  #endif
  
  #ifdef ENABLE_LLDPMED
 -- 
-2.17.1
+2.25.1
 

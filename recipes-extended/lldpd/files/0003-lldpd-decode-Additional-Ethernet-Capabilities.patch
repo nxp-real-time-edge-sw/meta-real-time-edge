@@ -1,7 +1,7 @@
-From 9457e9e6ac95bdb526f99cc695a39fc4cfa3106a Mon Sep 17 00:00:00 2001
+From 9847b0b015818d412e9c05bbd4ccac2d057c2963 Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Mon, 19 Sep 2022 15:37:08 +0800
-Subject: [PATCH] lldpd: decode Additional Ethernet Capabilities
+Subject: [PATCH 3/6] lldpd: decode Additional Ethernet Capabilities
 
 The preemption capability is enabled in the transmit direction only if
 it is determined that the link partner supports the preemption capability.
@@ -41,10 +41,10 @@ index 65201e2..d96aa63 100644
  /* compatibility with older code */
  #define SPARC_ETH_GSET		ETHTOOL_GSET
 diff --git a/src/daemon/interfaces-linux.c b/src/daemon/interfaces-linux.c
-index ef7f3ab..b0ea9e6 100644
+index 4a7e85d..8005ca5 100644
 --- a/src/daemon/interfaces-linux.c
 +++ b/src/daemon/interfaces-linux.c
-@@ -566,8 +566,8 @@ iflinux_ethtool_gfp(struct lldpd *cfg, const char *ifname, struct lldpd_dot3_fp
+@@ -540,8 +540,8 @@ iflinux_ethtool_gfp(struct lldpd *cfg, const char *ifname, struct lldpd_dot3_fp
  	}
  
  	p_fp->support = gfp.fp_supported;
@@ -56,7 +56,7 @@ index ef7f3ab..b0ea9e6 100644
  
  	return 0;
 diff --git a/src/daemon/protocols/lldp.c b/src/daemon/protocols/lldp.c
-index 5337f42..9a932b7 100644
+index 62c59a6..e8e0207 100644
 --- a/src/daemon/protocols/lldp.c
 +++ b/src/daemon/protocols/lldp.c
 @@ -24,6 +24,8 @@
@@ -68,7 +68,7 @@ index 5337f42..9a932b7 100644
  
  static int
  lldpd_af_to_lldp_proto(int af)
-@@ -641,6 +643,7 @@ lldp_decode(struct lldpd *cfg, char *frame, int s,
+@@ -607,6 +609,7 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
  {
  	struct lldpd_chassis *chassis;
  	struct lldpd_port *port;
@@ -76,7 +76,7 @@ index 5337f42..9a932b7 100644
  	char lldpaddr[ETHER_ADDR_LEN];
  	const char dot1[] = LLDP_TLV_ORG_DOT1;
  	const char dot3[] = LLDP_TLV_ORG_DOT3;
-@@ -665,6 +668,9 @@ lldp_decode(struct lldpd *cfg, char *frame, int s,
+@@ -632,6 +635,9 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
  #ifdef ENABLE_CUSTOM
  	struct lldpd_custom *custom = NULL;
  #endif
@@ -84,10 +84,10 @@ index 5337f42..9a932b7 100644
 +	struct ethtool_fp sfp;
 +	struct ifreq ifr = {};
  
- 	log_debug("lldp", "receive LLDP PDU on %s",
- 	    hardware->h_ifname);
-@@ -969,6 +975,11 @@ lldp_decode(struct lldpd *cfg, char *frame, int s,
- 					    pi, p_entries);
+ 	log_debug("lldp", "receive LLDP PDU on %s", hardware->h_ifname);
+ 
+@@ -961,6 +967,11 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
+ 					TAILQ_INSERT_TAIL(&port->p_pids, pi, p_entries);
  					pi = NULL;
  					break;
 +				case LLDP_TLV_DOT1_LA:
@@ -97,8 +97,8 @@ index 5337f42..9a932b7 100644
 +					break;
  				default:
  					/* Unknown Dot1 TLV, ignore it */
- 					hardware->h_rx_unrecognized_cnt++;
-@@ -980,6 +991,27 @@ lldp_decode(struct lldpd *cfg, char *frame, int s,
+ 					unrecognized = 1;
+@@ -972,6 +983,27 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
  #else
  				/* Dot3 */
  				switch (tlv_subtype) {
@@ -126,8 +126,8 @@ index 5337f42..9a932b7 100644
  				case LLDP_TLV_DOT3_MAC:
  					CHECK_TLV_SIZE(9, "MAC/PHY");
  					port->p_macphy.autoneg_support = PEEK_UINT8;
-@@ -991,11 +1023,6 @@ lldp_decode(struct lldpd *cfg, char *frame, int s,
- 					    PEEK_UINT16;
+@@ -982,11 +1014,6 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
+ 					port->p_macphy.autoneg_advertised = PEEK_UINT16;
  					port->p_macphy.mau_type = PEEK_UINT16;
  					break;
 -				case LLDP_TLV_DOT3_LA:
@@ -139,5 +139,5 @@ index 5337f42..9a932b7 100644
  					CHECK_TLV_SIZE(6, "MFS");
  					port->p_mfs = PEEK_UINT16;
 -- 
-2.17.1
+2.25.1
 

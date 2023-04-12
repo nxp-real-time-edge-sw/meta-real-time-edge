@@ -1,7 +1,7 @@
-From b4e729f40f42f8a835a417bbe8526debcf9a9934 Mon Sep 17 00:00:00 2001
+From 54137f246251ff10389a53be5c87256edc9a872f Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Tue, 21 Mar 2023 18:52:54 +0800
-Subject: [PATCH] header: ethtool: update ethtool_fp parameters
+Subject: [PATCH 6/6] header: ethtool: update ethtool_fp parameters
 
 The preemption of ethtool added a new disabled parameter in Linux,
 update it in ethtool.h on lldpd.
@@ -24,5 +24,5 @@ index d96aa63..2fde45b 100644
  	__u8    fp_lldp_verify;
  	__u8    fp_enabled;
 -- 
-2.17.1
+2.25.1
 
