@@ -1,7 +1,7 @@
-From a294af39188370adf4f5061302551826a5ebf47d Mon Sep 17 00:00:00 2001
+From 475ff49f4f64526e511ea30086e37b4d0a7234eb Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Sat, 27 Feb 2021 17:58:55 +0800
-Subject: [PATCH 09/20] configs: ls1043a-rdb: add fman ucode memory for root
+Subject: [PATCH 01/19] configs: ls1043a-rdb: add fman ucode memory for root
  cell
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
@@ -10,7 +10,7 @@ Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
  1 file changed, 9 insertions(+), 2 deletions(-)
 
 diff --git a/configs/arm64/ls1043a-rdb.c b/configs/arm64/ls1043a-rdb.c
-index 892dc444..3b68b606 100644
+index e1d3c48e..ab720876 100644
 --- a/configs/arm64/ls1043a-rdb.c
 +++ b/configs/arm64/ls1043a-rdb.c
 @@ -1,7 +1,7 @@
@@ -31,7 +31,7 @@ index 892dc444..3b68b606 100644
  	struct jailhouse_irqchip irqchips[2];
  	struct jailhouse_pci_device pci_devices[2];
  } __attribute__((packed)) config = {
-@@ -118,6 +118,13 @@ struct {
+@@ -119,6 +119,13 @@ struct {
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_EXECUTE,
  		},
@@ -46,5 +46,5 @@ index 892dc444..3b68b606 100644
  			.phys_start = 0xc0400000,
  			.virt_start = 0xc0400000,
 -- 
-2.17.1
+2.25.1
 

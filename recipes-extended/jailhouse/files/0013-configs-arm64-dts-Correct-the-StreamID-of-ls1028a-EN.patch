@@ -1,7 +1,7 @@
-From 917864684e7b626a543e827c231a86d860000582 Mon Sep 17 00:00:00 2001
+From 7dc2ced80c7cd12e9e526e97d63bdfcfc4f73459 Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 21 Oct 2021 17:50:38 +0800
-Subject: [PATCH 31/33] configs/arm64/dts: Correct the StreamID of ls1028a
+Subject: [PATCH 13/19] configs/arm64/dts: Correct the StreamID of ls1028a
  ENETC
 
 The Stream ID of ENETC is change to starting from 0x29 by U-Boot fixup,
@@ -28,5 +28,5 @@ index d23ffe43..6b659992 100644
  			ranges = <0x82000000 0x0 0x00000000  0x1 0xf8000000  0x0 0x160000
  				  /* PF0-6 BAR2 - prefetchable memory */
 -- 
-2.17.1
+2.25.1
 

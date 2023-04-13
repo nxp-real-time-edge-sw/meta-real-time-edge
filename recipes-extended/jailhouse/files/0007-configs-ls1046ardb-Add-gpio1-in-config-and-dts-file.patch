@@ -1,7 +1,7 @@
-From 13a66fce707d008c5077c65b24382e99c79dd2dd Mon Sep 17 00:00:00 2001
+From e1b7530834437df97e639a892868886a24e6b490 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Sun, 28 Feb 2021 08:45:46 +0800
-Subject: [PATCH 15/20] configs: ls1046ardb: Add gpio1 in config and dts file
+Subject: [PATCH 07/19] configs: ls1046ardb: Add gpio1 in config and dts file
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
 ---
@@ -10,7 +10,7 @@ Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
  2 files changed, 19 insertions(+), 2 deletions(-)
 
 diff --git a/configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts b/configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts
-index c97ac4ae..65fded70 100644
+index 23973e9d..4f55a461 100644
 --- a/configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts
 +++ b/configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts
 @@ -185,6 +185,16 @@
@@ -67,5 +67,5 @@ index a28e12f4..9754567c 100644
  			},
  		},
 -- 
-2.17.1
+2.25.1
 

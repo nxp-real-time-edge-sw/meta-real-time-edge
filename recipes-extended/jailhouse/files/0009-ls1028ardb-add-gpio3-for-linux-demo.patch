@@ -1,7 +1,7 @@
-From 9f0823d0ce965ea4eee423629c3fb485995f7fb1 Mon Sep 17 00:00:00 2001
+From 0c7abaf532dfe6b4a5f93e3fb868362ab47f908b Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Mon, 11 Oct 2021 17:53:02 +0800
-Subject: [PATCH 1/2] ls1028ardb: add gpio3 for linux demo
+Subject: [PATCH 09/19] ls1028ardb: add gpio3 for linux demo
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
 ---
@@ -32,7 +32,7 @@ index 52274a77..da5d12d5 100644
  
  	pci@c0700000 {
 diff --git a/configs/arm64/ls1028a-rdb-linux-demo.c b/configs/arm64/ls1028a-rdb-linux-demo.c
-index 1d4bff3e..4c1a3820 100644
+index 78322157..a9419872 100644
 --- a/configs/arm64/ls1028a-rdb-linux-demo.c
 +++ b/configs/arm64/ls1028a-rdb-linux-demo.c
 @@ -16,7 +16,7 @@
@@ -44,7 +44,7 @@ index 1d4bff3e..4c1a3820 100644
  	struct jailhouse_irqchip irqchips[2];
  	struct jailhouse_pci_device pci_devices[2];
  } __attribute__((packed)) config = {
-@@ -79,6 +79,13 @@ struct {
+@@ -80,6 +80,13 @@ struct {
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
  		},

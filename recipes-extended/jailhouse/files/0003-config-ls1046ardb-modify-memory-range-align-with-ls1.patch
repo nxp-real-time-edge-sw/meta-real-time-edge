@@ -1,7 +1,7 @@
-From ee6f5ebc59b803b03b0237579fe797eeca834167 Mon Sep 17 00:00:00 2001
+From 37ff032650d75984ba9c045c874ce10dc2a5e482 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Sat, 27 Feb 2021 18:46:49 +0800
-Subject: [PATCH 11/20] config: ls1046ardb: modify memory range, align with
+Subject: [PATCH 03/19] config: ls1046ardb: modify memory range, align with
  ls1043ardb
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
@@ -48,7 +48,7 @@ index f5fa9751..01e8e8be 100644
  	};
  
 diff --git a/configs/arm64/ls1046a-rdb-inmate-demo.c b/configs/arm64/ls1046a-rdb-inmate-demo.c
-index 6c992caa..5912ccad 100644
+index b98051da..e75f0809 100644
 --- a/configs/arm64/ls1046a-rdb-inmate-demo.c
 +++ b/configs/arm64/ls1046a-rdb-inmate-demo.c
 @@ -1,10 +1,11 @@
@@ -64,7 +64,7 @@ index 6c992caa..5912ccad 100644
   *
   * This work is licensed under the terms of the GNU GPL, version 2.  See
   * the COPYING file in the top-level directory.
-@@ -47,34 +48,34 @@ struct {
+@@ -48,34 +49,34 @@ struct {
  
  	.mem_regions = {
  		/* IVSHMEM shared memory region for 00:00.0 */ {
@@ -109,7 +109,7 @@ index 6c992caa..5912ccad 100644
  			.size = 0x2000,
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED,
  		},
-@@ -86,7 +87,7 @@ struct {
+@@ -87,7 +88,7 @@ struct {
  				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
  		},
  		/* RAM: Top at 2GB DRAM1 Space */ {
@@ -119,7 +119,7 @@ index 6c992caa..5912ccad 100644
  			.size = 0x00010000,
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
 diff --git a/configs/arm64/ls1046a-rdb-linux-demo.c b/configs/arm64/ls1046a-rdb-linux-demo.c
-index 6bba61fb..6f0fff74 100644
+index a2efa1b3..8263038e 100644
 --- a/configs/arm64/ls1046a-rdb-linux-demo.c
 +++ b/configs/arm64/ls1046a-rdb-linux-demo.c
 @@ -1,10 +1,11 @@
@@ -135,7 +135,7 @@ index 6bba61fb..6f0fff74 100644
   *
   * This work is licensed under the terms of the GNU GPL, version 2.  See
   * the COPYING file in the top-level directory.
-@@ -39,39 +40,39 @@ struct {
+@@ -40,39 +41,39 @@ struct {
  
  	.mem_regions = {
  		/* IVSHMEM shared memory region for 00:00.0 */ {
@@ -186,7 +186,7 @@ index 6bba61fb..6f0fff74 100644
  		/* DUART1 */ {
  			.phys_start = 0x21c0000,
  			.virt_start = 0x21c0000,
-@@ -94,16 +95,16 @@ struct {
+@@ -95,16 +96,16 @@ struct {
  				JAILHOUSE_MEM_IO,
  		},
  		/* RAM */ {
@@ -208,7 +208,7 @@ index 6bba61fb..6f0fff74 100644
  				JAILHOUSE_MEM_EXECUTE | JAILHOUSE_MEM_DMA |
  				JAILHOUSE_MEM_LOADABLE,
 diff --git a/configs/arm64/ls1046a-rdb.c b/configs/arm64/ls1046a-rdb.c
-index d05c1628..c4ecda24 100644
+index 7291fda7..82ab974b 100644
 --- a/configs/arm64/ls1046a-rdb.c
 +++ b/configs/arm64/ls1046a-rdb.c
 @@ -1,10 +1,11 @@
@@ -224,8 +224,8 @@ index d05c1628..c4ecda24 100644
   *
   * This work is licensed under the terms of the GNU GPL, version 2.  See
   * the COPYING file in the top-level directory.
-@@ -25,7 +26,7 @@ struct {
- 		.revision = JAILHOUSE_CONFIG_REVISION,
+@@ -26,7 +27,7 @@ struct {
+ 		.architecture = JAILHOUSE_ARM64,
  		.flags = JAILHOUSE_SYS_VIRTUAL_DEBUG_CONSOLE,
  		.hypervisor_memory = {
 -			.phys_start = 0xfba00000,
@@ -233,7 +233,7 @@ index d05c1628..c4ecda24 100644
  			.size =       0x00400000,
  		},
  		.debug_console = {
-@@ -36,7 +37,7 @@ struct {
+@@ -37,7 +38,7 @@ struct {
  				 JAILHOUSE_CON_REGDIST_1,
  		},
  		.platform_info = {
@@ -242,7 +242,7 @@ index d05c1628..c4ecda24 100644
  			.pci_mmconfig_end_bus = 0,
  			.pci_is_virtual = 1,
  			.pci_domain = -1,
-@@ -66,37 +67,37 @@ struct {
+@@ -67,37 +68,37 @@ struct {
  
  	.mem_regions = {
  		/* IVSHMEM shared memory region for 00:00.0 */ {
@@ -291,7 +291,7 @@ index d05c1628..c4ecda24 100644
  		/* RAM - 1GB at DRAM1 region - root cell */ {
  			.phys_start = 0x80000000,
  			.virt_start = 0x80000000,
-@@ -112,15 +113,15 @@ struct {
+@@ -113,15 +114,15 @@ struct {
  				JAILHOUSE_MEM_EXECUTE,
  		},
  		/* RAM: Inmate */ {
@@ -313,5 +313,5 @@ index d05c1628..c4ecda24 100644
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_EXECUTE,
 -- 
-2.17.1
+2.25.1
 

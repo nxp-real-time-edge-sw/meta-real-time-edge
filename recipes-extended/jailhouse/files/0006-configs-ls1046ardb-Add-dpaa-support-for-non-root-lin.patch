@@ -1,7 +1,7 @@
-From 34c5ea3d5e83d6b0596895d99da0df90d2be1391 Mon Sep 17 00:00:00 2001
+From 68e30435e397e4c16a9aa2291386ab3b92e87252 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Sun, 28 Feb 2021 08:31:53 +0800
-Subject: [PATCH 14/20] configs: ls1046ardb: Add dpaa support for non-root
+Subject: [PATCH 06/19] configs: ls1046ardb: Add dpaa support for non-root
  linux cell
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
@@ -14,7 +14,7 @@ Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
 
 diff --git a/configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts b/configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts
 new file mode 100644
-index 00000000..c97ac4ae
+index 00000000..23973e9d
 --- /dev/null
 +++ b/configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts
 @@ -0,0 +1,969 @@
@@ -1207,5 +1207,5 @@ index 00000000..a28e12f4
 +	},
 +};
 -- 
-2.17.1
+2.25.1
 

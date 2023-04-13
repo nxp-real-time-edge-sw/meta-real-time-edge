@@ -1,7 +1,7 @@
-From 42df19f0ba49c6d37d59ed8bb6966c26f463713d Mon Sep 17 00:00:00 2001
+From a437ce88918c99e17cc6a41df3a55143a29aafea Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Mon, 25 Oct 2021 16:52:55 +0800
-Subject: [PATCH] add back virtual pci support in root cell
+Subject: [PATCH 11/19] add back virtual pci support in root cell
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Changming Huang <jerry.huang@nxp.com>
  1 file changed, 63 insertions(+), 1 deletion(-)
 
 diff --git a/configs/arm64/ls1028a-rdb.c b/configs/arm64/ls1028a-rdb.c
-index 8f4cefd5..dea49a1f 100644
+index c27ab20e..917e8eb9 100644
 --- a/configs/arm64/ls1028a-rdb.c
 +++ b/configs/arm64/ls1028a-rdb.c
 @@ -16,8 +16,9 @@
@@ -23,7 +23,7 @@ index 8f4cefd5..dea49a1f 100644
  } __attribute__((packed)) config = {
  	.header = {
  		.signature = JAILHOUSE_SYSTEM_SIGNATURE,
-@@ -35,6 +36,11 @@ struct {
+@@ -36,6 +37,11 @@ struct {
  				 JAILHOUSE_CON_REGDIST_1,
  		},
  		.platform_info = {
@@ -35,7 +35,7 @@ index 8f4cefd5..dea49a1f 100644
  			.arm = {
  				.gic_version = 3,
  				.gicd_base = 0x6000000,
-@@ -44,6 +50,7 @@ struct {
+@@ -45,6 +51,7 @@ struct {
  		},
  		.root_cell = {
  			.name = "ls1028a",
@@ -43,7 +43,7 @@ index 8f4cefd5..dea49a1f 100644
  			.cpu_set_size = sizeof(config.cpus),
  			.num_memory_regions = ARRAY_SIZE(config.mem_regions),
  			.num_irqchips = ARRAY_SIZE(config.irqchips),
-@@ -56,6 +63,38 @@ struct {
+@@ -57,6 +64,38 @@ struct {
  	},
  
  	.mem_regions = {
@@ -82,7 +82,7 @@ index 8f4cefd5..dea49a1f 100644
  		/* RAM - 1GB - root cell */ {
  			.phys_start = 0x80000000,
  			.virt_start = 0x80000000,
-@@ -613,4 +652,27 @@ struct {
+@@ -614,4 +653,27 @@ struct {
  			},
  		},
  	},

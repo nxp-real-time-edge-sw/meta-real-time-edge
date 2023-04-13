@@ -1,8 +1,8 @@
-From 4e878014f8e81e232d297267026a2d75fc3daaae Mon Sep 17 00:00:00 2001
+From 62b7fd0d1e32d72ce7b3c8bb6f97e2facc55327a Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 3 Nov 2022 22:02:54 +0800
-Subject: [PATCH] configs: arm64: ls1028a: Update the address used for GIC LPI
- table
+Subject: [PATCH 19/19] configs: arm64: ls1028a: Update the address used for
+ GIC LPI table
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 ---
@@ -42,5 +42,5 @@ index 97914af6..05adcfa4 100644
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE,
  		},
 -- 
-2.17.1
+2.25.1
 

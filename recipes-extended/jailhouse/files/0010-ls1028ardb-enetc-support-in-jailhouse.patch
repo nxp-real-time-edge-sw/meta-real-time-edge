@@ -1,7 +1,7 @@
-From 2b1f3873e5b95c79441dfc9566beb7ef707d3372 Mon Sep 17 00:00:00 2001
+From 7ce9ede36066ce56d9d90f743beff6a68c3e83b6 Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Tue, 12 Oct 2021 11:13:24 +0800
-Subject: [PATCH 2/2] ls1028ardb: enetc support in jailhouse
+Subject: [PATCH 10/19] ls1028ardb: enetc support in jailhouse
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
 ---
@@ -523,7 +523,7 @@ index 00000000..44614643
 +	},
 +};
 diff --git a/configs/arm64/ls1028a-rdb.c b/configs/arm64/ls1028a-rdb.c
-index d721542a..8f4cefd5 100644
+index f4376ea6..c27ab20e 100644
 --- a/configs/arm64/ls1028a-rdb.c
 +++ b/configs/arm64/ls1028a-rdb.c
 @@ -16,9 +16,8 @@
@@ -537,7 +537,7 @@ index d721542a..8f4cefd5 100644
  } __attribute__((packed)) config = {
  	.header = {
  		.signature = JAILHOUSE_SYSTEM_SIGNATURE,
-@@ -36,11 +35,6 @@ struct {
+@@ -37,11 +36,6 @@ struct {
  				 JAILHOUSE_CON_REGDIST_1,
  		},
  		.platform_info = {
@@ -549,7 +549,7 @@ index d721542a..8f4cefd5 100644
  			.arm = {
  				.gic_version = 3,
  				.gicd_base = 0x6000000,
-@@ -50,7 +44,6 @@ struct {
+@@ -51,7 +45,6 @@ struct {
  		},
  		.root_cell = {
  			.name = "ls1028a",
@@ -557,7 +557,7 @@ index d721542a..8f4cefd5 100644
  			.cpu_set_size = sizeof(config.cpus),
  			.num_memory_regions = ARRAY_SIZE(config.mem_regions),
  			.num_irqchips = ARRAY_SIZE(config.irqchips),
-@@ -63,38 +56,6 @@ struct {
+@@ -64,38 +57,6 @@ struct {
  	},
  
  	.mem_regions = {
@@ -596,7 +596,7 @@ index d721542a..8f4cefd5 100644
  		/* RAM - 1GB - root cell */ {
  			.phys_start = 0x80000000,
  			.virt_start = 0x80000000,
-@@ -501,6 +462,13 @@ struct {
+@@ -502,6 +463,13 @@ struct {
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_IO,
  		},
@@ -610,7 +610,7 @@ index d721542a..8f4cefd5 100644
  		/* pwm0 */ {
  			.phys_start = 0x02800000,
  			.virt_start = 0x02800000,
-@@ -592,13 +560,6 @@ struct {
+@@ -593,13 +561,6 @@ struct {
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_EXECUTE,
  		},
@@ -624,7 +624,7 @@ index d721542a..8f4cefd5 100644
  		/* for root cell */ {
  			.phys_start = 0x700100000,
  			.virt_start = 0x700100000,
-@@ -652,27 +613,4 @@ struct {
+@@ -653,27 +614,4 @@ struct {
  			},
  		},
  	},

@@ -1,8 +1,8 @@
-From 3eefe8de88b7a1e225252b14b25e5eac4f6c7f6c Mon Sep 17 00:00:00 2001
+From 8ee17e11b827b3f20acd403b45a5ccebf5dd62c7 Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Wed, 17 Nov 2021 18:49:18 +0800
-Subject: [PATCH] ls1028ardb: remove gic distributor region from linux-enetc
- demo
+Subject: [PATCH 18/19] ls1028ardb: remove gic distributor region from
+ linux-enetc demo
 
 when this region is enabled in inmate cell,
 there are some commands (related to hardware) can't be implemented.

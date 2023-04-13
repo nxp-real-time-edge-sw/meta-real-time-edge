@@ -1,10 +1,10 @@
-From 20a9618bb4ba2a97f66c3b7cd749dd293938ac68 Mon Sep 17 00:00:00 2001
+From 15226b07653b506b306a3263ee5b5aece37cc7cd Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Wed, 3 Nov 2021 19:02:08 +0800
-Subject: [PATCH] ivshmem demo: change dev_id to 2 for qoriq platforms
+Subject: [PATCH 16/19] ivshmem demo: change dev_id to 2 for qoriq platforms
 
 According to the calculation express in file inmates/demos/ivshmem-demo.c:
-	target = d->id < 2 ? (d->id + 1) : 0 
+	target = d->id < 2 ? (d->id + 1) : 0
 When dev_id is 1, the inmate cell will send the IRQ to device 2, instead
 of root cell 0.
 
@@ -16,10 +16,10 @@ Signed-off-by: Changming Huang <jerry.huang@nxp.com>
  3 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/configs/arm64/ls1028a-rdb-inmate-demo.c b/configs/arm64/ls1028a-rdb-inmate-demo.c
-index b5ddb3e2..d39ac29f 100644
+index 7a1786e4..fa5d5d24 100644
 --- a/configs/arm64/ls1028a-rdb-inmate-demo.c
 +++ b/configs/arm64/ls1028a-rdb-inmate-demo.c
-@@ -120,7 +120,7 @@ struct {
+@@ -121,7 +121,7 @@ struct {
  			.bdf = 0 << 3,
  			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
  			.shmem_regions_start = 0,
@@ -29,10 +29,10 @@ index b5ddb3e2..d39ac29f 100644
  			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_UNDEFINED,
  		},
 diff --git a/configs/arm64/ls1043a-rdb-inmate-demo.c b/configs/arm64/ls1043a-rdb-inmate-demo.c
-index 25645745..ec305acc 100644
+index 53a65e3c..5f895022 100644
 --- a/configs/arm64/ls1043a-rdb-inmate-demo.c
 +++ b/configs/arm64/ls1043a-rdb-inmate-demo.c
-@@ -130,7 +130,7 @@ struct {
+@@ -131,7 +131,7 @@ struct {
  			.bdf = 0 << 3,
  			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
  			.shmem_regions_start = 0,
@@ -42,10 +42,10 @@ index 25645745..ec305acc 100644
  			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_UNDEFINED,
  		},
 diff --git a/configs/arm64/ls1046a-rdb-inmate-demo.c b/configs/arm64/ls1046a-rdb-inmate-demo.c
-index 3e9a5521..e85d77ea 100644
+index a26d387a..35c8d955 100644
 --- a/configs/arm64/ls1046a-rdb-inmate-demo.c
 +++ b/configs/arm64/ls1046a-rdb-inmate-demo.c
-@@ -131,7 +131,7 @@ struct {
+@@ -132,7 +132,7 @@ struct {
  			.bdf = 0 << 3,
  			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
  			.shmem_regions_start = 0,

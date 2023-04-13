@@ -1,7 +1,7 @@
-From 25f9918e9ccaa91ea0b7f8cf2acef2eca549be60 Mon Sep 17 00:00:00 2001
+From 698d17e8eb9c89c84e2725f533d45e0cf1482046 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Sat, 27 Feb 2021 18:58:09 +0800
-Subject: [PATCH 12/20] configs: ls1046ardb: add memory for root cell, fix
+Subject: [PATCH 04/19] configs: ls1046ardb: add memory for root cell, fix
  bandrate issue
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
@@ -11,10 +11,10 @@ Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
  2 files changed, 16 insertions(+), 2 deletions(-)
 
 diff --git a/configs/arm64/ls1046a-rdb-inmate-demo.c b/configs/arm64/ls1046a-rdb-inmate-demo.c
-index 5912ccad..3e9a5521 100644
+index e75f0809..a26d387a 100644
 --- a/configs/arm64/ls1046a-rdb-inmate-demo.c
 +++ b/configs/arm64/ls1046a-rdb-inmate-demo.c
-@@ -35,7 +35,7 @@ struct {
+@@ -36,7 +36,7 @@ struct {
  
  		.console = {
  			.address = 0x21c0600,	/* Uart1 in DUART1 */
@@ -24,7 +24,7 @@ index 5912ccad..3e9a5521 100644
  			.flags = JAILHOUSE_CON_ACCESS_MMIO |
  				JAILHOUSE_CON_REGDIST_1,
 diff --git a/configs/arm64/ls1046a-rdb.c b/configs/arm64/ls1046a-rdb.c
-index c4ecda24..b6d66a57 100644
+index 82ab974b..84963c3b 100644
 --- a/configs/arm64/ls1046a-rdb.c
 +++ b/configs/arm64/ls1046a-rdb.c
 @@ -17,7 +17,7 @@
@@ -36,7 +36,7 @@ index c4ecda24..b6d66a57 100644
  	struct jailhouse_irqchip irqchips[2];
  	struct jailhouse_pci_device pci_devices[2];
  } __attribute__((packed)) config = {
-@@ -119,6 +119,20 @@ struct {
+@@ -120,6 +120,20 @@ struct {
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_EXECUTE,
  		},
@@ -58,5 +58,5 @@ index c4ecda24..b6d66a57 100644
  			.phys_start = 0xc0400000,
  			.virt_start = 0xc0400000,
 -- 
-2.17.1
+2.25.1
 

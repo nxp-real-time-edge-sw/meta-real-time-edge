@@ -1,7 +1,7 @@
-From 9be7bacea5982603b1f300b96f18f2985dbe5c3c Mon Sep 17 00:00:00 2001
+From 18d7bd376fb8695faaa68a88d2ddbedc536a3311 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Mon, 29 Mar 2021 10:38:47 +0800
-Subject: [PATCH 18/20] update ls1028a-rdb config and dts for openil
+Subject: [PATCH 08/19] update ls1028a-rdb config and dts for openil
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
 ---
@@ -34,7 +34,7 @@ index bf196b92..52274a77 100644
  	};
  
 diff --git a/configs/arm64/ls1028a-rdb-inmate-demo.c b/configs/arm64/ls1028a-rdb-inmate-demo.c
-index 8b45a9ed..b5ddb3e2 100644
+index 1b1bedc1..7a1786e4 100644
 --- a/configs/arm64/ls1028a-rdb-inmate-demo.c
 +++ b/configs/arm64/ls1028a-rdb-inmate-demo.c
 @@ -16,8 +16,8 @@
@@ -48,7 +48,7 @@ index 8b45a9ed..b5ddb3e2 100644
  	struct jailhouse_pci_device pci_devices[1];
  } __attribute__((packed)) config = {
  	.cell = {
-@@ -47,31 +47,37 @@ struct {
+@@ -48,31 +48,37 @@ struct {
  
  	.mem_regions = {
  		/* IVSHMEM shared memory region for 00:00.0 */ {
@@ -94,7 +94,7 @@ index 8b45a9ed..b5ddb3e2 100644
  		/* DUART1 */ {
  			.phys_start = 0x21c0000,
  			.virt_start = 0x21c0000,
-@@ -80,7 +86,7 @@ struct {
+@@ -81,7 +87,7 @@ struct {
  				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
  		},
  		/* RAM */ {
@@ -104,7 +104,7 @@ index 8b45a9ed..b5ddb3e2 100644
  			.size = 0x00010000,
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
 diff --git a/configs/arm64/ls1028a-rdb-linux-demo.c b/configs/arm64/ls1028a-rdb-linux-demo.c
-index e2cb01af..1d4bff3e 100644
+index c965fa4f..78322157 100644
 --- a/configs/arm64/ls1028a-rdb-linux-demo.c
 +++ b/configs/arm64/ls1028a-rdb-linux-demo.c
 @@ -16,7 +16,7 @@
@@ -116,7 +116,7 @@ index e2cb01af..1d4bff3e 100644
  	struct jailhouse_irqchip irqchips[2];
  	struct jailhouse_pci_device pci_devices[2];
  } __attribute__((packed)) config = {
-@@ -39,33 +39,39 @@ struct {
+@@ -40,33 +40,39 @@ struct {
  
  	.mem_regions = {
  		/* IVSHMEM shared memory region for 00:00.0 */ {
@@ -166,7 +166,7 @@ index e2cb01af..1d4bff3e 100644
  		/* DUART1 */ {
  			.phys_start = 0x21c0000,
  			.virt_start = 0x21c0000,
-@@ -81,16 +87,16 @@ struct {
+@@ -82,16 +88,16 @@ struct {
  				JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED,
  		},
  		/* RAM */ {
@@ -189,7 +189,7 @@ index e2cb01af..1d4bff3e 100644
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_EXECUTE | JAILHOUSE_MEM_DMA |
  				JAILHOUSE_MEM_LOADABLE,
-@@ -124,8 +130,8 @@ struct {
+@@ -125,8 +131,8 @@ struct {
  			.bdf = 0 << 3,
  			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
  			.shmem_regions_start = 0,
@@ -200,7 +200,7 @@ index e2cb01af..1d4bff3e 100644
  			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_UNDEFINED,
  		},
  		{ /* IVSHMEM 00:01.0 */
-@@ -133,7 +139,7 @@ struct {
+@@ -134,7 +140,7 @@ struct {
  			.domain = 0,
  			.bdf = 1 << 3,
  			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
@@ -210,7 +210,7 @@ index e2cb01af..1d4bff3e 100644
  			.shmem_peers = 2,
  			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_VETH,
 diff --git a/configs/arm64/ls1028a-rdb.c b/configs/arm64/ls1028a-rdb.c
-index 6027772b..d721542a 100644
+index 2feec366..f4376ea6 100644
 --- a/configs/arm64/ls1028a-rdb.c
 +++ b/configs/arm64/ls1028a-rdb.c
 @@ -16,8 +16,8 @@
@@ -224,8 +224,8 @@ index 6027772b..d721542a 100644
  	struct jailhouse_pci_device pci_devices[2];
  } __attribute__((packed)) config = {
  	.header = {
-@@ -25,7 +25,7 @@ struct {
- 		.revision = JAILHOUSE_CONFIG_REVISION,
+@@ -26,7 +26,7 @@ struct {
+ 		.architecture = JAILHOUSE_ARM64,
  		.flags = JAILHOUSE_SYS_VIRTUAL_DEBUG_CONSOLE,
  		.hypervisor_memory = {
 -			.phys_start = 0xfba00000,
@@ -233,7 +233,7 @@ index 6027772b..d721542a 100644
  			.size =       0x00400000,
  		},
  		.debug_console = {
-@@ -36,7 +36,7 @@ struct {
+@@ -37,7 +37,7 @@ struct {
  				 JAILHOUSE_CON_REGDIST_1,
  		},
  		.platform_info = {
@@ -242,7 +242,7 @@ index 6027772b..d721542a 100644
  			.pci_mmconfig_end_bus = 0,
  			.pci_is_virtual = 1,
  			.pci_domain = -1,
-@@ -54,7 +54,7 @@ struct {
+@@ -55,7 +55,7 @@ struct {
  			.cpu_set_size = sizeof(config.cpus),
  			.num_memory_regions = ARRAY_SIZE(config.mem_regions),
  			.num_irqchips = ARRAY_SIZE(config.irqchips),
@@ -251,7 +251,7 @@ index 6027772b..d721542a 100644
  		},
  	},
  
-@@ -64,31 +64,37 @@ struct {
+@@ -65,31 +65,37 @@ struct {
  
  	.mem_regions = {
  		/* IVSHMEM shared memory region for 00:00.0 */ {
@@ -298,7 +298,7 @@ index 6027772b..d721542a 100644
  		/* RAM - 1GB - root cell */ {
  			.phys_start = 0x80000000,
  			.virt_start = 0x80000000,
-@@ -103,10 +109,17 @@ struct {
+@@ -104,10 +110,17 @@ struct {
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_EXECUTE,
  		},
@@ -320,7 +320,7 @@ index 6027772b..d721542a 100644
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_EXECUTE,
  		},
-@@ -390,6 +403,13 @@ struct {
+@@ -391,6 +404,13 @@ struct {
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_IO,
  		},
@@ -334,7 +334,7 @@ index 6027772b..d721542a 100644
  		/* gic its */ {
  			.phys_start = 0x06020000,
  			.virt_start = 0x06020000,
-@@ -565,6 +585,48 @@ struct {
+@@ -566,6 +586,48 @@ struct {
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_IO,
  		},
@@ -383,7 +383,7 @@ index 6027772b..d721542a 100644
  	},
  
  	.irqchips = {
-@@ -582,6 +644,13 @@ struct {
+@@ -583,6 +645,13 @@ struct {
  				0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
  			},
  		},
@@ -397,7 +397,7 @@ index 6027772b..d721542a 100644
  	},
  
  	.pci_devices = {
-@@ -592,7 +661,7 @@ struct {
+@@ -593,7 +662,7 @@ struct {
  			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
  			.shmem_regions_start = 0,
  			.shmem_dev_id = 0,
@@ -406,7 +406,7 @@ index 6027772b..d721542a 100644
  			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_UNDEFINED,
  		},
  		{ /* IVSHMEM 00:01.0 */
-@@ -600,7 +669,7 @@ struct {
+@@ -601,7 +670,7 @@ struct {
  			.domain = 0,
  			.bdf = 1 << 3,
  			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
@@ -416,5 +416,5 @@ index 6027772b..d721542a 100644
  			.shmem_peers = 2,
  			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_VETH,
 -- 
-2.17.1
+2.25.1
 
