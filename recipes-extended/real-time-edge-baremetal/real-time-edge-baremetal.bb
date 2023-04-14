@@ -1,6 +1,5 @@
-# Copyright 2021-2022 NXP
+# Copyright 2021-2023 NXP
 
-require recipes-bsp/u-boot/u-boot.inc
 require real-time-edge-baremetal-env.inc
 inherit fsl-u-boot-localversion
 
@@ -13,11 +12,6 @@ LIC_FILES_CHKSUM = " \
     file://Licenses/lgpl-2.0.txt;md5=4cf66a4984120007c9881cc871cf49db \
     file://Licenses/lgpl-2.1.txt;md5=4fbd65380cdd255951079008b364516c \
 "
-
-PROVIDES = "real-time-edge-baremetal"
-
-DEPENDS:append = " libgcc dtc-native bison-native bc-native"
-
 UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2022.04-2.5.0"
 UBOOT_BAREMETAL_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-uboot.git;protocol=https;"
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
@@ -26,8 +20,12 @@ SRCREV = "9c383729197af50fbb041fc107335c73870b4db8"
 
 PV = "2022.04+git${SRCPV}"
 
+PROVIDES = "real-time-edge-baremetal"
+
 S = "${WORKDIR}/git"
-B = "${S}"
+B = "${WORKDIR}/build"
+
+FILES:${PN} = "/boot"
 
 UBOOT_BAREMETAL_DEFCONFIG ?= ""
 DELTA_UBOOT_BAREMETAL_DEFCONFIG ?= ""
@@ -35,6 +33,13 @@ UBOOT_BAREMETAL_MAKE_TARGET ?= "all"
 UBOOT_BAREMETAL_BINARY ?= "u-boot.bin"
 UBOOT_BAREMETAL_RENAME ?= "bm-${UBOOT_BAREMETAL_BINARY}"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
+
+DEPENDS = "kern-tools-native swig-native"
+DEPENDS += "dtc-native bison-native bc-native"
+
+EXTRA_OEMAKE = 'CROSS_COMPILE=${TARGET_PREFIX} CC="${TARGET_PREFIX}gcc ${TOOLCHAIN_OPTIONS}" V=1'
+EXTRA_OEMAKE += 'HOSTCC="${BUILD_CC} ${BUILD_CFLAGS} ${BUILD_LDFLAGS}"'
+EXTRA_OEMAKE += 'STAGING_INCDIR=${STAGING_INCDIR_NATIVE} STAGING_LIBDIR=${STAGING_LIBDIR_NATIVE}'
 
 do_configure () {
     if [ -n "${UBOOT_BAREMETAL_DEFCONFIG}" ]; then
@@ -50,8 +55,12 @@ do_configure () {
 }
 
 do_compile () {
+    unset LDFLAGS
+    unset CFLAGS
+    unset CPPFLAGS
+
     if [ -n "${UBOOT_BAREMETAL_DEFCONFIG}" ]; then
-        oe_runmake -C ${S} ${UBOOT_MAKE_TARGET}
+        oe_runmake -C ${S} O=${B} ${UBOOT_BAREMETAL_MAKE_TARGET}
         cp ${B}/${UBOOT_BINARY} ${B}/${UBOOT_BAREMETAL_RENAME}
     fi
 }
