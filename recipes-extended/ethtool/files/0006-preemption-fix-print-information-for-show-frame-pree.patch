@@ -1,0 +1,27 @@
+From ea61938ae8882ed5c8d56e36b7d1d301a9634650 Mon Sep 17 00:00:00 2001
+From: Tao Yang <Tao.Yang1@nxp.com>
+Date: Fri, 21 Apr 2023 21:13:40 +0800
+Subject: [PATCH 6/6] preemption: fix print information for
+ --show-frame-preemption
+
+Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
+---
+ netlink/preempt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/netlink/preempt.c b/netlink/preempt.c
+index e4c0166..0a725be 100644
+--- a/netlink/preempt.c
++++ b/netlink/preempt.c
+@@ -77,7 +77,7 @@ int preempt_get_reply_cb(const struct nlmsghdr *nlhdr, void *data)
+ 		uint32_t queues = mnl_attr_get_u32(
+ 			tb[ETHTOOL_A_PREEMPT_QUEUES_PREEMPTIBLE]);
+ 
+-		printf("\tsupported queues: %#x\n", queues);
++		printf("\tpreemptible queues: %#x\n", queues);
+ 
+ 	}
+ 	if (tb[ETHTOOL_A_PREEMPT_MIN_FRAG_SIZE]) {
+-- 
+2.25.1
+

@@ -1,7 +1,7 @@
-From 3d2dc2c6c455a8e53bb5f0b3b1f8200739b2fc9f Mon Sep 17 00:00:00 2001
+From 9b6528198a88114155be0996f0bbebef165a0ef6 Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
-Date: Fri, 4 Nov 2022 10:47:06 +0800
-Subject: [PATCH 4/5] preemption: add lldp verify parameter
+Date: Fri, 21 Apr 2023 10:08:44 +0800
+Subject: [PATCH 4/6] preemption: add lldp verify parameter
 
 The preemption needs lldp verify process according to IEEE 802.3-2018,
 This patch add lldp verify parameter on ethtool preemption command.
@@ -15,7 +15,7 @@ Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
  4 files changed, 29 insertions(+), 3 deletions(-)
 
 diff --git a/ethtool.c b/ethtool.c
-index a9f0167..c45d63a 100644
+index a9f0167..80802ce 100644
 --- a/ethtool.c
 +++ b/ethtool.c
 @@ -1648,11 +1648,17 @@ static void dump_fpcmd(struct ethtool_fp *fpcmd)
@@ -45,7 +45,7 @@ index a9f0167..c45d63a 100644
  	int change = -1;
  	struct ethtool_fp fpcmd;
  	struct cmdline_info cmdline_fp[] = {
-+		{"lldp-verify", CMDL_BOOL, &lldp_v, &fpcmd.fp_supported},
++		{ "lldp-verify", CMDL_BOOL, &lldp_v, &fpcmd.fp_supported },
  		{ "fp", CMDL_BOOL, &fp_c, &fpcmd.fp_enabled },
  		{ "preemptible-queues-mask", CMDL_U32, &preempt_queues_mask_c,
  		  &fpcmd.preemptible_queues_mask },
@@ -54,7 +54,7 @@ index a9f0167..c45d63a 100644
  		.nlfunc	= nl_set_preempt,
  		.help	= "Set Frame Preemption settings",
 -		.xhelp	= "		[ fp on|off ]\n"
-+		.xhelp	= "		[lldp-verify on|off]\n"
++		.xhelp	= "		[ lldp-verify on|off ]\n"
 +			  "		[ fp on|off ]\n"
  			  "		[ preemptible-queues-mask %x ]\n"
  			  "		[ min-frag-size %d ]\n",
@@ -90,7 +90,7 @@ index 6f66e43..ee99bb1 100644
  		.arg		= "fp",
  		.group		= ETHTOOL_MSG_PREEMPT_SET,
 diff --git a/uapi/linux/ethtool.h b/uapi/linux/ethtool.h
-index 3bbeb26..8e89b74 100644
+index 3bbeb26..55ef5ce 100644
 --- a/uapi/linux/ethtool.h
 +++ b/uapi/linux/ethtool.h
 @@ -394,7 +394,10 @@ struct ethtool_eee {
@@ -99,8 +99,8 @@ index 3bbeb26..8e89b74 100644
  	__u8	fp_supported;
 +	__u8	fp_lldp_verify;
  	__u8	fp_enabled;
-+	__u8    fp_status;
-+	__u8    fp_active;
++	__u8	fp_status;
++	__u8	fp_active;
  	__u32	supported_queues_mask;
  	__u32	preemptible_queues_mask;
  	__u32	min_frag_size;

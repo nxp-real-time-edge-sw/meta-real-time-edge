@@ -1,7 +1,7 @@
-From ad360bf911c19b2700e229037459ad309428eb1f Mon Sep 17 00:00:00 2001
+From 45a0cdad4b513109a1e2b1fcdba6389bde2cad30 Mon Sep 17 00:00:00 2001
 From: Vinicius Costa Gomes <vinicius.gomes@intel.com>
-Date: Tue, 2 Nov 2021 11:01:35 +0800
-Subject: [PATCH 2/5] ethtool: add support for configuring frame preemption
+Date: Fri, 21 Apr 2023 09:44:53 +0800
+Subject: [PATCH 2/6] ethtool: add support for configuring frame preemption
 
 The configuration knobs that can be set are:
   - enabling/disabling frame preemption per-device;

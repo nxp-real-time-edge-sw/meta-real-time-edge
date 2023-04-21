@@ -1,7 +1,7 @@
-From a970233dcc08a8533bfbda3da9a5aedef83e8b71 Mon Sep 17 00:00:00 2001
+From a1efca86b6644cbf8c876d866a27596adaf03147 Mon Sep 17 00:00:00 2001
 From: Vinicius Costa Gomes <vinicius.gomes@intel.com>
-Date: Tue, 30 Aug 2022 10:02:16 +0800
-Subject: [PATCH 3/5] ethtool: add support for configuring frame preemption via
+Date: Fri, 21 Apr 2023 20:49:14 +0800
+Subject: [PATCH 3/6] ethtool: add support for configuring frame preemption via
  netlink
 
 Adds the same functionality of the ETHTOOL_{G,S}FP commands, now via

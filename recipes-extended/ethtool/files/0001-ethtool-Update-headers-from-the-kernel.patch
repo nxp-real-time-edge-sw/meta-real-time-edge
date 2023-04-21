@@ -1,7 +1,7 @@
-From b658f13832786c07187925c723cc20f39caf4b44 Mon Sep 17 00:00:00 2001
+From b1ef4cd0c46f1c2267aabd45265a48081eb70551 Mon Sep 17 00:00:00 2001
 From: Vinicius Costa Gomes <vinicius.gomes@intel.com>
-Date: Mon, 7 Feb 2022 16:05:43 +0800
-Subject: [PATCH 1/5] ethtool: Update headers from the kernel
+Date: Fri, 21 Apr 2023 11:40:27 +0800
+Subject: [PATCH 1/6] ethtool: Update headers from the kernel
 
 Add preempt header from kernel.
 
