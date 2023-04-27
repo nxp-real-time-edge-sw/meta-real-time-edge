@@ -6,6 +6,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=b1f886606973edff74d729043d78afef"
 
 SRC_URI = "git://github.com/CESNET/libnetconf2.git;protocol=https;nobranch=1\
 	   file://0001-libnetconf2-fix-the-issue-of-sprintf.patch \
+	   file://0002-libnetconf2-fix-compile-issue-for-LIBSSH_VERSION_MAJ.patch \
 "
 
 #PV = "0.12.55+git${SRCPV}"
