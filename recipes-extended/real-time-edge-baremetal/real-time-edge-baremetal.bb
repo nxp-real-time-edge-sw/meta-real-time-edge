@@ -61,7 +61,7 @@ do_compile () {
 
     if [ -n "${UBOOT_BAREMETAL_DEFCONFIG}" ]; then
         oe_runmake -C ${S} O=${B} ${UBOOT_BAREMETAL_MAKE_TARGET}
-        cp ${B}/${UBOOT_BINARY} ${B}/${UBOOT_BAREMETAL_RENAME}
+        cp ${B}/${UBOOT_BAREMETAL_BINARY} ${B}/${UBOOT_BAREMETAL_RENAME}
     fi
 }
 
