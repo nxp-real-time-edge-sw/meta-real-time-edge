@@ -1,7 +1,7 @@
 # Copyright 2021-2023 NXP
 
 require real-time-edge-baremetal-env.inc
-inherit fsl-u-boot-localversion
+inherit fsl-u-boot-localversion deploy
 
 SUMMARY = "U-boot-baremetal provided by NXP"
 LICENSE = "GPL-2.0-only & BSD-3-Clause & BSD-2-Clause & LGPL-2.0-only & LGPL-2.1-only"
@@ -76,5 +76,6 @@ do_deploy () {
         install -D -m 644 ${B}/${UBOOT_BAREMETAL_RENAME} ${DEPLOYDIR}/${UBOOT_BAREMETAL_RENAME}
     fi
 }
+addtask deploy after do_install
 
 COMPATIBLE_MACHINE = "qoriq|imx"
