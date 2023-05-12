@@ -1,0 +1,97 @@
+From bc9b490bc72a51c46f5e21f3cf62e3ea9c7e848f Mon Sep 17 00:00:00 2001
+From: Tao Yang <Tao.Yang1@nxp.com>
+Date: Tue, 9 May 2023 15:40:20 +0800
+Subject: [PATCH 4/5] preemption: add ETHTOOL_A_PREEMPT_STATUS netlink
+ atrribute
+
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
+---
+ ethtool.c                    | 8 +++++++-
+ netlink/desc-ethtool.c       | 1 +
+ netlink/preempt.c            | 5 +++++
+ uapi/linux/ethtool.h         | 2 ++
+ uapi/linux/ethtool_netlink.h | 3 ++-
+ 5 files changed, 17 insertions(+), 2 deletions(-)
+
+diff --git a/ethtool.c b/ethtool.c
+index a9f0167..08221a4 100644
+--- a/ethtool.c
++++ b/ethtool.c
+@@ -1648,11 +1648,17 @@ static void dump_fpcmd(struct ethtool_fp *fpcmd)
+ 		fprintf(stdout, "not supported\n");
+ 
+ 	fprintf(stdout, "	status: ");
+-	if (fpcmd->fp_enabled)
++	if (fpcmd->fp_status)
+ 		fprintf(stdout, "enabled\n");
+ 	else
+ 		fprintf(stdout, "disabled\n");
+ 
++	fprintf(stdout, "	active: ");
++	if (fpcmd->fp_active)
++		fprintf(stdout, "active\n");
++	else
++		fprintf(stdout, "not active\n");
++
+ 	fprintf(stdout, "	supported queues: %#x\n",
+ 		fpcmd->supported_queues_mask);
+ 	fprintf(stdout, "	preemptible queues: %#x\n",
+diff --git a/netlink/desc-ethtool.c b/netlink/desc-ethtool.c
+index 68e5591..32bc3da 100644
+--- a/netlink/desc-ethtool.c
++++ b/netlink/desc-ethtool.c
+@@ -455,6 +455,7 @@ static const struct pretty_nla_desc __preempt_desc[] = {
+ 	NLATTR_DESC_INVALID(ETHTOOL_A_PREEMPT_UNSPEC),
+ 	NLATTR_DESC_NESTED(ETHTOOL_A_PREEMPT_HEADER, header),
+ 	NLATTR_DESC_U8(ETHTOOL_A_PREEMPT_SUPPORTED),
++	NLATTR_DESC_U8(ETHTOOL_A_PREEMPT_STATUS),
+ 	NLATTR_DESC_U8(ETHTOOL_A_PREEMPT_ACTIVE),
+ 	NLATTR_DESC_U32(ETHTOOL_A_PREEMPT_QUEUES_SUPPORTED),
+ 	NLATTR_DESC_U32(ETHTOOL_A_PREEMPT_QUEUES_PREEMPTIBLE),
+diff --git a/netlink/preempt.c b/netlink/preempt.c
+index 0e4695c..56b1817 100644
+--- a/netlink/preempt.c
++++ b/netlink/preempt.c
+@@ -56,6 +56,11 @@ int preempt_get_reply_cb(const struct nlmsghdr *nlhdr, void *data)
+ 		printf("\tsupport: %s\n",
+ 		       supported ? "supported" : "not supported");
+ 	}
++	if (tb[ETHTOOL_A_PREEMPT_STATUS]) {
++		int status = mnl_attr_get_u8(tb[ETHTOOL_A_PREEMPT_STATUS]);
++
++		printf("\tstatus: %s\n", status ? "enable" : "not enable");
++	}
+ 	if (tb[ETHTOOL_A_PREEMPT_ACTIVE]) {
+ 		int active = mnl_attr_get_u8(tb[ETHTOOL_A_PREEMPT_ACTIVE]);
+ 
+diff --git a/uapi/linux/ethtool.h b/uapi/linux/ethtool.h
+index 3bbeb26..446e68a 100644
+--- a/uapi/linux/ethtool.h
++++ b/uapi/linux/ethtool.h
+@@ -395,6 +395,8 @@ struct ethtool_fp {
+ 	__u32	cmd;
+ 	__u8	fp_supported;
+ 	__u8	fp_enabled;
++	__u8	fp_status;
++	__u8	fp_active;
+ 	__u32	supported_queues_mask;
+ 	__u32	preemptible_queues_mask;
+ 	__u32	min_frag_size;
+diff --git a/uapi/linux/ethtool_netlink.h b/uapi/linux/ethtool_netlink.h
+index 02a4031..7f6be8c 100644
+--- a/uapi/linux/ethtool_netlink.h
++++ b/uapi/linux/ethtool_netlink.h
+@@ -572,7 +572,8 @@ enum {
+ 	ETHTOOL_A_PREEMPT_UNSPEC,		/* nest - _A_HEADER_* */
+ 	ETHTOOL_A_PREEMPT_HEADER,		/* u8 */
+ 	ETHTOOL_A_PREEMPT_SUPPORTED,		/* u8 */
+-	ETHTOOL_A_PREEMPT_ACTIVE,		/* u32 */
++	ETHTOOL_A_PREEMPT_STATUS,		/* u8 */
++	ETHTOOL_A_PREEMPT_ACTIVE,		/* u8 */
+ 	ETHTOOL_A_PREEMPT_MIN_FRAG_SIZE,	/* u32 */
+ 	ETHTOOL_A_PREEMPT_QUEUES_SUPPORTED,	/* u32 */
+ 	ETHTOOL_A_PREEMPT_QUEUES_PREEMPTIBLE,	/* u32 */
+-- 
+2.25.1
+

@@ -1,7 +1,7 @@
-From a1efca86b6644cbf8c876d866a27596adaf03147 Mon Sep 17 00:00:00 2001
+From 7dcb9206c185ef90c59485ffa36f51bcb1794e1d Mon Sep 17 00:00:00 2001
 From: Vinicius Costa Gomes <vinicius.gomes@intel.com>
 Date: Fri, 21 Apr 2023 20:49:14 +0800
-Subject: [PATCH 3/6] ethtool: add support for configuring frame preemption via
+Subject: [PATCH 3/5] ethtool: add support for configuring frame preemption via
  netlink
 
 Adds the same functionality of the ETHTOOL_{G,S}FP commands, now via
@@ -13,10 +13,10 @@ Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 ---
  Makefile.am            |   1 +
  ethtool.c              |   2 +
- netlink/desc-ethtool.c |  13 ++++
+ netlink/desc-ethtool.c |  12 +++
  netlink/extapi.h       |   4 +
  netlink/preempt.c      | 165 +++++++++++++++++++++++++++++++++++++++++
- 5 files changed, 185 insertions(+)
+ 5 files changed, 184 insertions(+)
  create mode 100644 netlink/preempt.c
 
 diff --git a/Makefile.am b/Makefile.am
@@ -50,10 +50,10 @@ index 4a0b2ad..a9f0167 100644
  		.xhelp	= "		[ fp on|off ]\n"
  			  "		[ preemptible-queues-mask %x ]\n"
 diff --git a/netlink/desc-ethtool.c b/netlink/desc-ethtool.c
-index 737196f..7628817 100644
+index 737196f..68e5591 100644
 --- a/netlink/desc-ethtool.c
 +++ b/netlink/desc-ethtool.c
-@@ -451,6 +451,17 @@ static const struct pretty_nla_desc __rss_desc[] = {
+@@ -451,6 +451,16 @@ static const struct pretty_nla_desc __rss_desc[] = {
  	NLATTR_DESC_BINARY(ETHTOOL_A_RSS_HKEY),
  };
  
@@ -65,13 +65,12 @@ index 737196f..7628817 100644
 +	NLATTR_DESC_U32(ETHTOOL_A_PREEMPT_QUEUES_SUPPORTED),
 +	NLATTR_DESC_U32(ETHTOOL_A_PREEMPT_QUEUES_PREEMPTIBLE),
 +	NLATTR_DESC_U32(ETHTOOL_A_PREEMPT_MIN_FRAG_SIZE),
-+	NLATTR_DESC_BINARY(ETHTOOL_A_WOL_SOPASS),
 +};
 +
  const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
  	NLMSG_DESC_INVALID(ETHTOOL_MSG_USER_NONE),
  	NLMSG_DESC(ETHTOOL_MSG_STRSET_GET, strset),
-@@ -484,6 +495,8 @@ const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
+@@ -484,6 +494,8 @@ const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
  	NLMSG_DESC(ETHTOOL_MSG_FEC_GET, fec),
  	NLMSG_DESC(ETHTOOL_MSG_FEC_SET, fec),
  	NLMSG_DESC(ETHTOOL_MSG_MODULE_EEPROM_GET, module_eeprom),
@@ -104,7 +103,7 @@ index 9b6dd1a..a2735ab 100644
  #define nl_gstats_chk		NULL
 diff --git a/netlink/preempt.c b/netlink/preempt.c
 new file mode 100644
-index 0000000..6f66e43
+index 0000000..0e4695c
 --- /dev/null
 +++ b/netlink/preempt.c
 @@ -0,0 +1,165 @@
@@ -182,7 +181,7 @@ index 0000000..6f66e43
 +		uint32_t queues = mnl_attr_get_u32(
 +			tb[ETHTOOL_A_PREEMPT_QUEUES_PREEMPTIBLE]);
 +
-+		printf("\tsupported queues: %#x\n", queues);
++		printf("\tpreemptible queues: %#x\n", queues);
 +
 +	}
 +	if (tb[ETHTOOL_A_PREEMPT_MIN_FRAG_SIZE]) {
