@@ -4,7 +4,6 @@ SRC_URI:append = " \
 	file://0001-ethtool-Update-headers-from-the-kernel.patch \
 	file://0002-ethtool-add-support-for-configuring-frame-preemption.patch \
 	file://0003-ethtool-add-support-for-configuring-frame-preemption.patch \
-	file://0004-preemption-add-lldp-verify-parameter.patch \
+	file://0004-preemption-add-ETHTOOL_A_PREEMPT_STATUS-netlink-atrr.patch \
 	file://0005-preemption-add-disabled-parameter.patch \
-	file://0006-preemption-fix-print-information-for-show-frame-pree.patch \
 "
