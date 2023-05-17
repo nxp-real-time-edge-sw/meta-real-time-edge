@@ -20,6 +20,9 @@ DISTRO_FEATURES:append:mx93-nxp-bsp = " real-time-edge-sysrepo"
 DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo feedgnuplot tsn-scripts real-time-edge-prl"
 DISTRO_FEATURES:append:ls1021aiot = " canfestival"
 
+# For imx8dxlevk remove jailhouse feature until the board is added into jailhouse.
+DISTRO_FEATURES:remove:mx8dxl-nxp-bsp = " jailhouse"
+
 # For ls1028ardb
 DISTRO_FEATURES:remove:ls1028ardb = " x11"
 PREFERRED_VERSION_weston:ls1028ardb = "11.0.1.imx"
