@@ -36,6 +36,7 @@ SRC_URI += "\
     file://0001-enetc-upgrade-to-be-compatible-to-Linux-5.15.52.patch \
     file://0001-device-fec-rgmii_rxc_dly-is-set-to-true-on-i.mx8dxl.patch \
     file://0001-Fix-igh-ethercat-compile-failure-issue.patch \
+    file://0001-igh-fix-igh-compile-failed-on-ls1028.patch \
 "
 S = "${WORKDIR}/ethercat-${PV}"
 
