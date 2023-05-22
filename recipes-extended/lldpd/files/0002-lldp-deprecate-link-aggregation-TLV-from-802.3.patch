@@ -1,7 +1,7 @@
-From cf591827240a62bf0896bc9baaf8b32e22109af0 Mon Sep 17 00:00:00 2001
+From 0d725a6a37ffba8416ceab36e2865134c9936b37 Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Wed, 24 Aug 2022 16:01:46 +0800
-Subject: [PATCH 2/6] lldp: deprecate link aggregation TLV from 802.3
+Subject: [PATCH 2/4] lldp: deprecate link aggregation TLV from 802.3
 
 Link Aggregation TLV has been deprecated from  IEEE Std 802.3 and is now
 standardized as IEEE Std 802.1AX, which is part of the IEEE 802.1. This

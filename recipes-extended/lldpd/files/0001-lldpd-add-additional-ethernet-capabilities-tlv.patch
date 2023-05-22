@@ -1,9 +1,9 @@
-From 0f37b642b723f78ed31ea28c66046baccd6eb84a Mon Sep 17 00:00:00 2001
+From 585bac5a16369d356c2893496252243ac24abd83 Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Wed, 24 Aug 2022 10:18:23 +0800
-Subject: [PATCH 1/6] lldpd: add additional ethernet capabilitie tlv
+Subject: [PATCH 1/4] lldpd: add additional ethernet capabilities tlv
 
-Additional Ethernet capabilities TLV are defined in IEEE Std 802.3-2018.
+Additional Ethernet capabilities TLV is defined in IEEE Std 802.3-2018.
 Its subtype is 7, and the first 4 bits indicate preemption capability
 and status. The preemption status is got from ethtool ioctl in Linux.
 
