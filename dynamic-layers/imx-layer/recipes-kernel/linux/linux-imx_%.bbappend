@@ -22,9 +22,6 @@ SRC_URI:append:real-time-edge = " \
 SRC_URI:append:real-time-edge-plc = " \
     file://linux-fec-ecat.config \
     file://linux-imx6ullevk.config \
-    file://0001-fec_ecat-add-fec-native-driver-for-raw-packet-proto.patch \
-    file://0002-fec_ecat-imx6ullevk-rebind-fec1-to-fec_ecat-driver.patch \
-    file://0001-FEC_ECAT-rebind-fec-MAC-to-fec-native-driver-for-imx.patch \
 "
 
 do_configure:prepend:real-time-edge() {
