@@ -36,8 +36,6 @@ PREFERRED_PROVIDER_virtual/opencl-icd:ls1028ardb = "imx-gpu-viv"
 LICENSE_FLAGS_ACCEPTED:append:ls1028ardb = " commercial"
 DISTROOVERRIDES:append:ls1028ardb = ":imxdrm"
 
-DELTA_KERNEL_DEFCONFIG:append:mx8dxl-nxp-bsp = " linux-fec.config"
-DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = " linux-fec.config"
 DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = "${@bb.utils.contains('DISTRO_FEATURES', 'rpmsg_8m_buf', \
 		' linux-rpmsg-8m-buf.config', ' ', d)}"
 DELTA_KERNEL_DEFCONFIG:append:mx8dxl-nxp-bsp = " linux-imx8.config"
