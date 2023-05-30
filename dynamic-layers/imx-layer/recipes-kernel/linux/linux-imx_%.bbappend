@@ -20,7 +20,6 @@ SRC_URI:append:real-time-edge = " \
 "
 
 SRC_URI:append:real-time-edge-plc = " \
-    file://linux-fec-ecat.config \
     file://linux-imx6ullevk.config \
 "
 
