@@ -72,7 +72,7 @@ imx_add_layers()
 {
     . ${ROOTDIR}/sources/meta-imx/tools/setup-utils.sh
 
-META_FSL_BSP_RELEASE="${ROOTDIR}/sources/meta-imx/meta-bsp"
+    META_FSL_BSP_RELEASE="${ROOTDIR}/sources/meta-imx/meta-bsp"
 
     hook_in_layer meta-imx/meta-bsp
     hook_in_layer meta-imx/meta-sdk
@@ -107,9 +107,6 @@ echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm-toolchain\"" >> $BUILD_
     echo "# AVB layer" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-avb\"" >> $BUILD_DIR/conf/bblayers.conf
 
-    echo BSPDIR=$BSPDIR
-    echo BUILD_DIR=$BUILD_DIR
-
     # Support integrating community meta-freescale instead of meta-fsl-arm
     if [ -d ../sources/meta-freescale ]; then
         echo meta-freescale directory found
@@ -137,7 +134,6 @@ echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm-toolchain\"" >> $BUILD_
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cloud-services\"" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security\"" >> $BUILD_DIR/conf/bblayers.conf
 
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-common\"" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qoriq\"" >> $BUILD_DIR/conf/bblayers.conf
 
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
