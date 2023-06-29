@@ -1,7 +1,7 @@
-From 109021bc5083f65a85935374b802a7628b47b806 Mon Sep 17 00:00:00 2001
+From 074aeaaaa10b838bcc1791f762b7b5d0ad009c63 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Tue, 2 Mar 2021 11:22:22 +0800
-Subject: [PATCH 05/19] configs: ls1046ardb: Add fman ucode dtsi file
+Subject: [PATCH 05/20] configs: ls1046ardb: Add fman ucode dtsi file
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
 ---

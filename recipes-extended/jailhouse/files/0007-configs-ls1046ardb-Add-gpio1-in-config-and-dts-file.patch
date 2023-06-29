@@ -1,7 +1,7 @@
-From e1b7530834437df97e639a892868886a24e6b490 Mon Sep 17 00:00:00 2001
+From 8949b568fc04a2716509e7fb3dcea82f4ae1ce55 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Sun, 28 Feb 2021 08:45:46 +0800
-Subject: [PATCH 07/19] configs: ls1046ardb: Add gpio1 in config and dts file
+Subject: [PATCH 07/20] configs: ls1046ardb: Add gpio1 in config and dts file
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
 ---

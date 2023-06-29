@@ -1,7 +1,7 @@
-From 37ff032650d75984ba9c045c874ce10dc2a5e482 Mon Sep 17 00:00:00 2001
+From 66f5859b4d389877699b59bf2225c7af96298913 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Sat, 27 Feb 2021 18:46:49 +0800
-Subject: [PATCH 03/19] config: ls1046ardb: modify memory range, align with
+Subject: [PATCH 03/20] config: ls1046ardb: modify memory range, align with
  ls1043ardb
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>

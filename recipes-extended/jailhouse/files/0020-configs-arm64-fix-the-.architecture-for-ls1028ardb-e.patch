@@ -1,0 +1,26 @@
+From f099f3a6968694d2554d625e45d11c4002db9107 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Thu, 29 Jun 2023 15:32:12 +0800
+Subject: [PATCH 20/20] configs: arm64: fix the .architecture for ls1028ardb
+ enetc cell
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+---
+ configs/arm64/ls1028a-rdb-linux-enetc-demo.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configs/arm64/ls1028a-rdb-linux-enetc-demo.c b/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
+index 05adcfa4..aa9da2e6 100644
+--- a/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
++++ b/configs/arm64/ls1028a-rdb-linux-enetc-demo.c
+@@ -22,6 +22,7 @@ struct {
+ 	.cell = {
+ 		.signature = JAILHOUSE_CELL_DESC_SIGNATURE,
+ 		.revision = JAILHOUSE_CONFIG_REVISION,
++		.architecture = JAILHOUSE_ARM64,
+ 		.name = "linux-inmate-demo",
+ 		.flags = JAILHOUSE_CELL_PASSIVE_COMMREG,
+ 
+-- 
+2.25.1
+

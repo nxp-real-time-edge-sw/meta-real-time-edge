@@ -1,7 +1,7 @@
-From 7ce9ede36066ce56d9d90f743beff6a68c3e83b6 Mon Sep 17 00:00:00 2001
+From 8614b66f5629b810c0bdd59ca7e6d6d64583ef11 Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Tue, 12 Oct 2021 11:13:24 +0800
-Subject: [PATCH 10/19] ls1028ardb: enetc support in jailhouse
+Subject: [PATCH 10/20] ls1028ardb: enetc support in jailhouse
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
 ---

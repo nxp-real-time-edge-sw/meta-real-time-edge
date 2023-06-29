@@ -1,7 +1,7 @@
-From 92ede8749c8b5a0ee871a926c75ab433e3d99040 Mon Sep 17 00:00:00 2001
+From 094a177f8d63442ba3a410297f2b8bbfc711cf05 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Tue, 2 Mar 2021 11:51:34 +0800
-Subject: [PATCH 02/19] configs: ls1043ardb: Add gpio1 in non-root config and
+Subject: [PATCH 02/20] configs: ls1043ardb: Add gpio1 in non-root config and
  dts file
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>

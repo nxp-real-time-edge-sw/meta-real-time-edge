@@ -1,7 +1,7 @@
-From 62b7fd0d1e32d72ce7b3c8bb6f97e2facc55327a Mon Sep 17 00:00:00 2001
+From 65d99e181ca3dc11d7ab3cefd7db482b37cb321b Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 3 Nov 2022 22:02:54 +0800
-Subject: [PATCH 19/19] configs: arm64: ls1028a: Update the address used for
+Subject: [PATCH 19/20] configs: arm64: ls1028a: Update the address used for
  GIC LPI table
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>

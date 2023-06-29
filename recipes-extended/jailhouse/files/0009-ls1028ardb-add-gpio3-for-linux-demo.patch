@@ -1,7 +1,7 @@
-From 0c7abaf532dfe6b4a5f93e3fb868362ab47f908b Mon Sep 17 00:00:00 2001
+From 9d7f988da7e2c7e918916725fa1f95cb1f84cc05 Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Mon, 11 Oct 2021 17:53:02 +0800
-Subject: [PATCH 09/19] ls1028ardb: add gpio3 for linux demo
+Subject: [PATCH 09/20] ls1028ardb: add gpio3 for linux demo
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
 ---
