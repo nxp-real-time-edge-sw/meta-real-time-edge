@@ -63,14 +63,14 @@ KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-rpmsg-ca53.d
 					       freescale/imx8mm-evk-virtio-perf-cm4.dtb \
 					       freescale/imx8mm-evk-virtio-net-cm4.dtb \
 					       freescale/imx8mm-evk-virtio-perf-ca53.dtb \
-					       freescale/imx8mm-evk-virtio-net-ca53.dtb \
-					       freescale/imx8mp-evk-virtio-net-cm7.dtb \
-					       freescale/imx8mp-evk-virtio-net-ca53.dtb \
-					       freescale/imx93-11x11-evk-virtio-net-ca55.dtb \
-					       freescale/imx93-11x11-evk-virtio-net-cm33.dtb"
+					       freescale/imx8mm-evk-virtio-net-ca53.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-rpmsg-8m-buf.dtb"
-KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-root.dtb"
-KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-rpmsg.dtb"
+KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-root.dtb \
+					       freescale/imx8mp-evk-virtio-net-cm7.dtb \
+					       freescale/imx8mp-evk-virtio-net-ca53.dtb"
+KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-rpmsg.dtb \
+				      freescale/imx93-11x11-evk-virtio-net-ca55.dtb \
+				      freescale/imx93-11x11-evk-virtio-net-cm33.dtb"
 
 # dtb for plc
 KERNEL_DEVICETREE:append:imx6ull14x14evk = " imx6ul-14x14-evk-ecat.dtb"
