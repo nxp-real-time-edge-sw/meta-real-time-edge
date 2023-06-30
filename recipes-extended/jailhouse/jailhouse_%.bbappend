@@ -41,6 +41,7 @@ SRC_URI += " \
     file://0017-ls1043ardb-inmate-demo-assigned-write-permission-to-.patch \
     file://0018-ls1028ardb-remove-gic-distributor-region-from-linux-.patch \
     file://0019-configs-arm64-ls1028a-Update-the-address-used-for-GI.patch \
+    file://0020-configs-arm64-fix-the-.architecture-for-ls1028ardb-e.patch \
 "
 
 DEPENDS += " \
