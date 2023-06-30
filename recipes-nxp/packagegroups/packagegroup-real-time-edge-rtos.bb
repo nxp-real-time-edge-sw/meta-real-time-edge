@@ -36,10 +36,10 @@ uart-examples ?= ""
 uart-examples:append:mx8mm-nxp-bsp = " 9bit-iuart-interrupt-transfer 9bit-iuart-polling"
 
 heterogeneous-multicore-examples ?= ""
-heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " virtio-perf-ca virtio-perf-cm "
+heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " hello-world-ca virtio-perf-ca virtio-perf-cm "
 heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " virtio-net-backend-ca virtio-net-backend-cm "
-heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " virtio-net-backend-ca virtio-net-backend-cm "
-heterogeneous-multicore-examples:append:imx93evk = " virtio-net-backend-ca virtio-net-backend-cm "
+heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " hello-world-ca virtio-net-backend-ca virtio-net-backend-cm "
+heterogeneous-multicore-examples:append:imx93evk = " hello-world-ca virtio-net-backend-ca virtio-net-backend-cm "
 
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rtos-industrial',  \
