@@ -29,7 +29,7 @@ soem-examples:append:mx8mp-nxp-bsp = " soem-gpio-pulse freertos-soem-gpio-pulse"
 
 rpmsg-lite-examples ?= ""
 rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-uart-sharing-rtos"
-rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-str-echo-rtos rpmsg-lite-str-echo-rtos-m4-8m"
+rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-str-echo-rtos-ca rpmsg-lite-str-echo-rtos-8m-cm"
 rpmsg-lite-examples:append:imx93evk = "rpmsg-lite-uart-sharing-rtos-mcimx93evk"
 
 uart-examples ?= ""
