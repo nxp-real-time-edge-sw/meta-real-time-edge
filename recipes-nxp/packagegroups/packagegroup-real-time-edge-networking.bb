@@ -25,6 +25,8 @@ cantools ?=""
 cantools:ls1021aiot = "libsocketcan can-utils"
 cantools:ls1028ardb = "libsocketcan can-utils"
 
+virtioperftool:imx8mm-lpddr4-evk = "virtio-perf-tool"
+
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-sysrepo', 'real-time-edge-sysrepo', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'tsn-scripts', 'tsn-scripts', '', d)} \
@@ -49,4 +51,5 @@ RDEPENDS:${PN} = " \
     openssh-sftp-server \
     openssh-keygen \
     pktgen-scripts \
+    ${virtioperftool} \
 "
