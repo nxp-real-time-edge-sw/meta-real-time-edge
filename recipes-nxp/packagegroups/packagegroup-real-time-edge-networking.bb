@@ -25,6 +25,7 @@ cantools ?=""
 cantools:ls1021aiot = "libsocketcan can-utils"
 cantools:ls1028ardb = "libsocketcan can-utils"
 
+virtioperftool ?=""
 virtioperftool:imx8mm-lpddr4-evk = "virtio-perf-tool"
 
 RDEPENDS:${PN} = " \
