@@ -16,7 +16,7 @@ UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2023.04-2.6.0"
 UBOOT_BAREMETAL_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-uboot.git;protocol=https;"
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
 
-SRCREV = "fee29756dfdb0c38200a18239b98b25f3b31a852"
+SRCREV = "ed63ac8bd7448a83ade1ace0c85535545b05bf8f"
 
 PV = "2023.04+git${SRCPV}"
 
