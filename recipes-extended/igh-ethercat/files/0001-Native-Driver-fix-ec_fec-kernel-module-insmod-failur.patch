@@ -1,0 +1,41 @@
+From 1e87866560127571b40f6fa34faad544ef116961 Mon Sep 17 00:00:00 2001
+From: qizhang <jony.zhang@nxp.com>
+Date: Mon, 17 Jul 2023 23:22:24 +0800
+Subject: [PATCH] Native Driver: fix ec_fec kernel module insmod failure issue
+
+Signed-off-by: qizhang <jony.zhang@nxp.com>
+---
+ devices/fec/fec_main.c | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/devices/fec/fec_main.c b/devices/fec/fec_main.c
+index 214d80e..56f1cb5 100644
+--- a/devices/fec/fec_main.c
++++ b/devices/fec/fec_main.c
+@@ -1374,7 +1374,6 @@ static int fec_get_mac(struct net_device *ndev)
+ 	struct fec_enet_private *fep = netdev_priv(ndev);
+ 	unsigned char *iap, tmpaddr[ETH_ALEN];
+ 	int ret;
+-	unsigned char addr[ETH_ALEN];
+ 
+ 	/*
+ 	 * try to get mac address in following order:
+@@ -1436,14 +1435,8 @@ static int fec_get_mac(struct net_device *ndev)
+ 		return 0;
+ 	}
+ 
+-	memcpy(ndev->dev_addr, iap, ETH_ALEN);
+-
+ 	/* Adjust MAC if using macaddr */
+-	if (iap == macaddr)	
+-		 //ndev->dev_addr[ETH_ALEN-1] = macaddr[ETH_ALEN-1] + fep->dev_id;
+-		 memcpy(addr, ndev->dev_addr, ETH_ALEN);
+-		 addr[ETH_ALEN - 1] = macaddr[ETH_ALEN - 1] + fep->dev_id;
+-		 dev_addr_mod(ndev, 0, addr, ETH_ALEN);
++	eth_hw_addr_gen(ndev, iap, iap == macaddr ? fep->dev_id : 0);
+ 
+ 	return 0;
+ }
+-- 
+2.25.1
+

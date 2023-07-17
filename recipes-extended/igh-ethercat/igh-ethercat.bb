@@ -37,6 +37,7 @@ SRC_URI += "\
     file://0001-device-fec-rgmii_rxc_dly-is-set-to-true-on-i.mx8dxl.patch \
     file://0001-Fix-igh-ethercat-compile-failure-issue.patch \
     file://0001-igh-fix-igh-compile-failed-on-ls1028.patch \
+    file://0001-Native-Driver-fix-ec_fec-kernel-module-insmod-failur.patch \
 "
 S = "${WORKDIR}/ethercat-${PV}"
 
