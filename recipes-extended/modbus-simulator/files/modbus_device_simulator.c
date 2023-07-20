@@ -140,16 +140,14 @@ static int get_input_params(int argc, char **argv) {
 
 static int get_cpu_temperature() {
   FILE *fp = NULL;
+  // set a dummy value of temperature
   int temp = CPU_TEMPERATURE;
 
-  fp = fopen(CPU_TEMP_FILE0, "r");
-  if (fp == NULL) {
-    printf("ERROR: read cpu temperature %s %s\n", CPU_TEMP_FILE0,
-           strerror(errno));
-    return -EIO;
-  }
-  fscanf(fp, "%d", &temp);
-  fclose(fp);
+  if (access(CPU_TEMP_FILE0, F_OK) == 0) {
+    fp = fopen(CPU_TEMP_FILE0, "r");
+    fscanf(fp, "%d", &temp);
+    fclose(fp);
+  } 
   return temp / 10;
 }
 
