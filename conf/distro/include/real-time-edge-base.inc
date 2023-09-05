@@ -1,7 +1,7 @@
 # Real-time Edge base conf
 
 DISTRO = "nxp-real-time-edge"
-DISTROOVERRIDES = "real-time-edge"
+DISTROOVERRIDES:append = " :real-time-edge"
 DISTRO_NAME = "NXP Real-time Edge Distro"
 DISTRO_VERSION = "2.7"
 
