@@ -31,10 +31,11 @@ PREFERRED_VERSION_libdrm:ls1028ardb = "2.4.115.imx"
 PREFERRED_PROVIDER_virtual/libgl:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/libgles1:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/libgles2:ls1028ardb  = "imx-gpu-viv"
+PREFERRED_PROVIDER_virtual/libgles3:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/egl:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/opencl-icd:ls1028ardb = "imx-gpu-viv"
 LICENSE_FLAGS_ACCEPTED:append:ls1028ardb = " commercial"
-DISTROOVERRIDES:append:ls1028ardb = ":imxdrm"
+MACHINEOVERRIDES:append:ls1028ardb = ":imxdrm"
 
 DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = "${@bb.utils.contains('DISTRO_FEATURES', 'rpmsg_8m_buf', \
 		' linux-rpmsg-8m-buf.config', ' ', d)}"
