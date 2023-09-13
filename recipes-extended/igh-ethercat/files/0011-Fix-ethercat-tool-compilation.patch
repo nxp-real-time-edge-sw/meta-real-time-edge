@@ -1,33 +1,28 @@
-From 6246416e5cc7e0e74ed58498317446af673c638f Mon Sep 17 00:00:00 2001
-From: Anton Kikin <a.kikin@tano-systems.com>
-Date: Tue, 23 Jun 2020 17:08:25 +0300
-Subject: [PATCH 11/18] Fix ethercat tool compilation
+commit fc5f4b7145272d521536ea14a210422ce3c419dc
+Author: Anton Kikin <a.kikin@tano-systems.com>
+Date:   Tue Jun 23 17:08:25 2020 +0300
 
-Fixes compilation error:
-  /usr/bin/ld: error: ethercat uses VFP register arguments, ../master/soe_errors.o does not
-  /usr/bin/ld: failed to merge target specific data of file ../master/soe_errors.o
-  collect2: ld returned 1 exit status
-
-The error occurs due to different compiler options when building
-kernel modules and tools. When building the ethercat utility,
-the file soe_errors.o is linked directly from the kernel module
-build directory. To fix this problem, we just copy the source
-file soe_errors.c into the build directory of the ethercat utility
-and build it together with the utility.
-
-This is certainly not quite right, but it is a quick fix.
-
-Signed-off-by: Anton Kikin <a.kikin@tano-systems.com>
-Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
----
- tool/Makefile.am  |  2 +-
- tool/Makefile.in  | 20 +++++-----
- tool/soe_errors.c | 96 +++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 107 insertions(+), 11 deletions(-)
- create mode 100644 tool/soe_errors.c
+    Fix ethercat tool compilation
+    
+    Fixes compilation error:
+      /usr/bin/ld: error: ethercat uses VFP register arguments, ../master/soe_errors.o does not
+      /usr/bin/ld: failed to merge target specific data of file ../master/soe_errors.o
+      collect2: ld returned 1 exit status
+    
+    The error occurs due to different compiler options when building
+    kernel modules and tools. When building the ethercat utility,
+    the file soe_errors.o is linked directly from the kernel module
+    build directory. To fix this problem, we just copy the source
+    file soe_errors.c into the build directory of the ethercat utility
+    and build it together with the utility.
+    
+    This is certainly not quite right, but it is a quick fix.
+    
+    Signed-off-by: Anton Kikin <a.kikin@tano-systems.com>
+    Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
 
 diff --git a/tool/Makefile.am b/tool/Makefile.am
-index d2cc32a..80f61fd 100644
+index 3cf4ee06..9d551c7d 100644
 --- a/tool/Makefile.am
 +++ b/tool/Makefile.am
 @@ -36,7 +36,7 @@ EXTRA_DIST =
@@ -39,59 +34,9 @@ index d2cc32a..80f61fd 100644
  	Command.cpp \
  	CommandAlias.cpp \
  	CommandCStruct.cpp \
-diff --git a/tool/Makefile.in b/tool/Makefile.in
-index 64d551c..d069377 100644
---- a/tool/Makefile.in
-+++ b/tool/Makefile.in
-@@ -88,7 +88,7 @@ CONFIG_CLEAN_FILES =
- CONFIG_CLEAN_VPATH_FILES =
- am__installdirs = "$(DESTDIR)$(bindir)"
- PROGRAMS = $(bin_PROGRAMS)
--am__ethercat_SOURCES_DIST = ../master/soe_errors.c Command.cpp \
-+am__ethercat_SOURCES_DIST = soe_errors.c Command.cpp \
- 	CommandAlias.cpp CommandCStruct.cpp CommandConfig.cpp \
- 	CommandData.cpp CommandDebug.cpp CommandDomains.cpp \
- 	CommandDownload.cpp CommandFoeRead.cpp CommandFoeWrite.cpp \
-@@ -325,7 +325,7 @@ top_build_prefix = @top_build_prefix@
- top_builddir = @top_builddir@
- top_srcdir = @top_srcdir@
- EXTRA_DIST = $(am__append_2)
--ethercat_SOURCES = ../master/soe_errors.c Command.cpp CommandAlias.cpp \
-+ethercat_SOURCES = soe_errors.c Command.cpp CommandAlias.cpp \
- 	CommandCStruct.cpp CommandConfig.cpp CommandData.cpp \
- 	CommandDebug.cpp CommandDomains.cpp CommandDownload.cpp \
- 	CommandFoeRead.cpp CommandFoeWrite.cpp CommandGraph.cpp \
-@@ -505,19 +505,19 @@ distclean-compile:
- @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
- @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
- 
--soe_errors.o: ../master/soe_errors.c
--@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT soe_errors.o -MD -MP -MF $(DEPDIR)/soe_errors.Tpo -c -o soe_errors.o `test -f '../master/soe_errors.c' || echo '$(srcdir)/'`../master/soe_errors.c
-+soe_errors.o: soe_errors.c
-+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT soe_errors.o -MD -MP -MF $(DEPDIR)/soe_errors.Tpo -c -o soe_errors.o `test -f 'soe_errors.c' || echo '$(srcdir)/'`soe_errors.c
- @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/soe_errors.Tpo $(DEPDIR)/soe_errors.Po
--@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../master/soe_errors.c' object='soe_errors.o' libtool=no @AMDEPBACKSLASH@
-+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='soe_errors.c' object='soe_errors.o' libtool=no @AMDEPBACKSLASH@
- @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
--@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o soe_errors.o `test -f '../master/soe_errors.c' || echo '$(srcdir)/'`../master/soe_errors.c
-+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o soe_errors.o `test -f 'soe_errors.c' || echo '$(srcdir)/'`soe_errors.c
- 
--soe_errors.obj: ../master/soe_errors.c
--@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT soe_errors.obj -MD -MP -MF $(DEPDIR)/soe_errors.Tpo -c -o soe_errors.obj `if test -f '../master/soe_errors.c'; then $(CYGPATH_W) '../master/soe_errors.c'; else $(CYGPATH_W) '$(srcdir)/../master/soe_errors.c'; fi`
-+soe_errors.obj: soe_errors.c
-+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT soe_errors.obj -MD -MP -MF $(DEPDIR)/soe_errors.Tpo -c -o soe_errors.obj `if test -f 'soe_errors.c'; then $(CYGPATH_W) 'soe_errors.c'; else $(CYGPATH_W) '$(srcdir)/soe_errors.c'; fi`
- @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/soe_errors.Tpo $(DEPDIR)/soe_errors.Po
--@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../master/soe_errors.c' object='soe_errors.obj' libtool=no @AMDEPBACKSLASH@
-+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='soe_errors.c' object='soe_errors.obj' libtool=no @AMDEPBACKSLASH@
- @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
--@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o soe_errors.obj `if test -f '../master/soe_errors.c'; then $(CYGPATH_W) '../master/soe_errors.c'; else $(CYGPATH_W) '$(srcdir)/../master/soe_errors.c'; fi`
-+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o soe_errors.obj `if test -f 'soe_errors.c'; then $(CYGPATH_W) 'soe_errors.c'; else $(CYGPATH_W) '$(srcdir)/soe_errors.c'; fi`
- 
- .cpp.o:
- @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
 diff --git a/tool/soe_errors.c b/tool/soe_errors.c
 new file mode 100644
-index 0000000..cdc186f
+index 00000000..cdc186f2
 --- /dev/null
 +++ b/tool/soe_errors.c
 @@ -0,0 +1,96 @@
@@ -191,6 +136,3 @@ index 0000000..cdc186f
 +};
 +
 +/*****************************************************************************/
--- 
-2.25.1
-

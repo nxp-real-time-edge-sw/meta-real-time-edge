@@ -6,8 +6,8 @@ HOMEPAGE = "https://etherlab.org/en/ethercat/index.php"
 LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=59530bdf33659b29e73d4adb9f9f6552"
 
-SRC_URI = "http://etherlab.org/download/ethercat/ethercat-${PV}.tar.bz2"
-SRC_URI[md5sum] = "6b4001f8d975865d74a0b108b3bdda3d"
+SRC_URI = "git://gitlab.com/etherlab.org/ethercat.git;protocol=https;nobranch=1"
+SRCREV = "418dc4b24f4eeba78f644984894b740428da3e84"
 
 SRC_URI += "\
     file://0001-Fixed-compilation-error-for-the-EtherCat-drivers.patch \
@@ -39,7 +39,7 @@ SRC_URI += "\
     file://0001-igh-fix-igh-compile-failed-on-ls1028.patch \
     file://0001-Native-Driver-fix-ec_fec-kernel-module-insmod-failur.patch \
 "
-S = "${WORKDIR}/ethercat-${PV}"
+S = "${WORKDIR}/git"
 
 PACKAGECONFIG ??= "generic"
 
@@ -61,6 +61,10 @@ inherit autotools-brokensep pkgconfig module-base
 
 EXTRA_OECONF += "--with-linux-dir=${STAGING_KERNEL_BUILDDIR}"
 EXTRA_OECONF += "--with-module-dir=kernel/ethercat"
+
+do_configure:prepend() {
+    touch ChangeLog
+}
 
 do_compile:append() {
 	oe_runmake modules
