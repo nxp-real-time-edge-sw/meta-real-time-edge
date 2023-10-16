@@ -34,6 +34,10 @@ SRC_URI += " \
     file://scripts/gic-demo-imx8mp.sh \
     file://scripts/ivshmem-demo-imx8mp.sh \
     file://scripts/linux-demo-imx8mp.sh \
+    file://scripts/uart-demo-imx93.sh \
+    file://scripts/gic-demo-imx93.sh \
+    file://scripts/ivshmem-demo-imx93.sh \
+    file://scripts/linux-demo-imx93-9x9-qsb.sh \
     file://rootfs.cpio.gz \
     file://0001-configs-ls1043a-rdb-add-fman-ucode-memory-for-root-c.patch \
     file://0002-configs-ls1043ardb-Add-gpio1-in-non-root-config-and-.patch \
