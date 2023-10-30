@@ -1,4 +1,4 @@
-# Real-time Edge Software Project v2.6 Release
+# Real-time Edge Software Project v2.7 Release
 
 ======================================================
 
@@ -37,7 +37,7 @@ To download the Real-time Edge 2.6 release
 ```
 $ mkdir yocto-real-time-edge
 $ cd yocto-real-time-edge
-$ repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-mickledore -m real-time-edge-2.6.0.xml
+$ repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-mickledore -m real-time-edge-2.7.0.xml
 $ repo sync
 ```
 
