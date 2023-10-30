@@ -8,6 +8,7 @@ RTOS-INDUSTRIAL-BOARD:mx8mm-nxp-bsp = "evkmimx8mm"
 RTOS-INDUSTRIAL-BOARD:mx8mp-nxp-bsp = "evkmimx8mp"
 # RTOS-INDUSTRIAL-BOARD:mx8mq-nxp-bsp = "evkmimx8mq"
 RTOS-INDUSTRIAL-BOARD:imx93evk = "mcimx93evk"
+RTOS-INDUSTRIAL-BOARD:imx93qsb = "mcimx93qsb"
 
 # board name for heterogeneous multicore examples
 RTOS-INDUSTRIAL-BOARD-CA:mx8mm-nxp-bsp = "evkmimx8mm_ca53"
