@@ -10,13 +10,10 @@ SRC_URI = "${KERNEL_SRC};branch=${KERNEL_BRANCH}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI:append:real-time-edge = " \
-    file://linux-wifi.config \
     file://linux-baremetal-ls104xa.config \
     file://linux-baremetal-ls1021a.config \
     file://linux-baremetal-ls1028a.config \
     file://linux-baremetal-lx2160a.config \
-    file://linux-selinux.config \
-    file://linux-dpaa-ethercat.config \
 "
 
 do_configure:prepend:real-time-edge() {

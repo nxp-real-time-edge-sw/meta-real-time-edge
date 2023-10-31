@@ -39,9 +39,6 @@ MACHINEOVERRIDES:append:ls1028ardb = ":imxdrm"
 
 DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = "${@bb.utils.contains('DISTRO_FEATURES', 'rpmsg_8m_buf', \
 		' linux-rpmsg-8m-buf.config', ' ', d)}"
-DELTA_KERNEL_DEFCONFIG:append:mx8dxl-nxp-bsp = " linux-imx8.config"
-DELTA_KERNEL_DEFCONFIG:append:mx8m-nxp-bsp = " linux-imx8.config"
-DELTA_KERNEL_DEFCONFIG:append:mx93-nxp-bsp = " linux-imx8.config"
 DELTA_KERNEL_DEFCONFIG:append:ls1043ardb = " linux-dpaa-ethercat.config"
 DELTA_KERNEL_DEFCONFIG:append:ls1046ardb = " linux-dpaa-ethercat.config"
 

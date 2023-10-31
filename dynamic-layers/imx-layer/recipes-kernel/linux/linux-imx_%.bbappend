@@ -10,13 +10,8 @@ SRC_URI = "${KERNEL_SRC}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI:append:real-time-edge = " \
-    file://linux-imx8.config \
-    file://linux-wifi.config \
     file://linux-baremetal.config \
     file://linux-baremetal-imx93.config \
-    file://linux-selinux.config \
-    file://linux-fec.config \
-    file://linux-rpmsg-8m-buf.config \
 "
 
 do_configure:prepend:real-time-edge() {
