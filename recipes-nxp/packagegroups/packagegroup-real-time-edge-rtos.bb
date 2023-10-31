@@ -43,6 +43,9 @@ heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " hello-world-ca virtio-
 heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " lwip-ping-ca rpmsg-str-echo-ca rpmsg-str-echo-cm"
 heterogeneous-multicore-examples:append:imx93evk = " hello-world-ca virtio-net-backend-ca virtio-net-backend-cm "
 
+heterogeneous-multi-soc-examples ?= ""
+heterogeneous-multi-soc-examples:append:imx93evk = " dsa-switch-evkmimxrt1180-cm33 "
+
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rtos-industrial',  \
     '${RTOS_INDUSTRIAL_INSTALL}', '', d)} \
@@ -56,4 +59,5 @@ RTOS_INDUSTRIAL_INSTALL = " \
     ${rpmsg-lite-examples} \
     ${uart-examples} \
     ${heterogeneous-multicore-examples} \
+    ${heterogeneous-multi-soc-examples} \
 "
