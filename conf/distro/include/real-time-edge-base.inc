@@ -68,7 +68,8 @@ KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-root.dtb \
 					       freescale/imx8mp-evk-virtio-net-ca53.dtb"
 KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-uart-sharing-cm33.dtb \
 				      freescale/imx93-11x11-evk-virtio-net-ca55.dtb \
-				      freescale/imx93-11x11-evk-virtio-net-cm33.dtb"
+				      freescale/imx93-11x11-evk-virtio-net-cm33.dtb \
+				      freescale/imx93-11x11-evk-dsa.dtb"
 KERNEL_DEVICETREE:append:imx93-9x9-lpddr4-qsb = " freescale/imx93-9x9-qsb-inmate.dtb \
 						  freescale/imx93-9x9-qsb-root.dtb \
 						  freescale/imx93-9x9-qsb-uart-sharing-cm33.dtb"
