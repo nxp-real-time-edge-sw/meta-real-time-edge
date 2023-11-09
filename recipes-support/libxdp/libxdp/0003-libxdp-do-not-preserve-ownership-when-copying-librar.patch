@@ -1,0 +1,28 @@
+From f9ee996ae407141b5776caa45627c7a252d3edc4 Mon Sep 17 00:00:00 2001
+From: Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
+Date: Thu, 9 Nov 2023 10:45:39 +0100
+Subject: [PATCH] libxdp: do not preserve ownership when copying library files
+
+The preserve ownership option  will throw a QA issue warning:
+
+QA Issue: libxdp: /usr/lib/libxdp.so is owned by uid 1000, which is the same as the user running bitbake.
+This may be due to host contamination [host-user-contaminated]
+
+Signed-off-by: Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
+---
+ lib/libxdp/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/libxdp/Makefile b/lib/libxdp/Makefile
+index 6d0f1f5..eefa457 100644
+--- a/lib/libxdp/Makefile
++++ b/lib/libxdp/Makefile
+@@ -55,7 +55,7 @@ install: all
+ 	$(Q)install -d -m 0755 $(DESTDIR)$(LIBDIR)/pkgconfig
+ 	$(Q)install -m 0644 $(LIB_HEADERS) $(DESTDIR)$(HDRDIR)/
+ 	$(Q)install -m 0644 $(PC_FILE) $(DESTDIR)$(LIBDIR)/pkgconfig/
+-	$(Q)cp -fpR $(SHARED_LIBS) $(STATIC_LIBS) $(DESTDIR)$(LIBDIR)
++	$(Q)cp -fR $(SHARED_LIBS) $(STATIC_LIBS) $(DESTDIR)$(LIBDIR)
+ ifndef SKIP_XDP_OBJS_BUILD
+ 	$(Q)install -d -m 0755 $(DESTDIR)$(BPF_OBJECT_DIR)
+ 	$(Q)install -m 0644 $(XDP_OBJS) $(DESTDIR)$(BPF_OBJECT_DIR)

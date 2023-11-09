@@ -1,0 +1,49 @@
+From 9a89ecfeca1165b8f3873005d7bfe47eb37b8557 Mon Sep 17 00:00:00 2001
+From: Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
+Date: Thu, 9 Nov 2023 10:37:17 +0100
+Subject: [PATCH] libxdp: add option to skip building xdp (bpf) objects with
+ clang
+
+The Makefile rely on native clang to build XDP objects (xdp-dispatcher.o,
+xsk_def_xdp_prog.o and xsk_def_xdp_prog_5.3.o) to be used with libxdp.
+But with yocto, it seems we do not have a proper way to completely build these object files
+without relying on some host headers (<linux/types.h> or <asm/types.h> from gcc-multilib): and there is
+no native recipe that can provide all needed headers.
+So, let's avoid that kind of contamination for now, and disable building these BPF objects: the downside
+will be not able to load XDP programs from libxdp using xdp_attach_program() for example ...
+We still can use iproute2 to attach a single program.
+
+Signed-off-by: Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
+---
+ lib/libxdp/Makefile | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/lib/libxdp/Makefile b/lib/libxdp/Makefile
+index 9db5dc1..6d0f1f5 100644
+--- a/lib/libxdp/Makefile
++++ b/lib/libxdp/Makefile
+@@ -9,7 +9,9 @@ OBJDIR ?= .
+ SHARED_OBJDIR := $(OBJDIR)/sharedobjs
+ STATIC_OBJDIR := $(OBJDIR)/staticobjs
+ OBJS := libxdp.o xsk.o
++ifndef SKIP_XDP_OBJS_BUILD
+ XDP_OBJS := xdp-dispatcher.o xsk_def_xdp_prog.o xsk_def_xdp_prog_5.3.o
++endif
+ EMBEDDED_XDP_OBJS := $(addsuffix .embed.o,$(basename $(XDP_OBJS)))
+ SHARED_OBJS := $(addprefix $(SHARED_OBJDIR)/,$(OBJS))
+ STATIC_OBJS := $(addprefix $(STATIC_OBJDIR)/,$(OBJS)) $(EMBEDDED_XDP_OBJS)
+@@ -51,11 +53,13 @@ install: all
+ 	$(Q)install -d -m 0755 $(DESTDIR)$(HDRDIR)
+ 	$(Q)install -d -m 0755 $(DESTDIR)$(LIBDIR)
+ 	$(Q)install -d -m 0755 $(DESTDIR)$(LIBDIR)/pkgconfig
+-	$(Q)install -d -m 0755 $(DESTDIR)$(BPF_OBJECT_DIR)
+ 	$(Q)install -m 0644 $(LIB_HEADERS) $(DESTDIR)$(HDRDIR)/
+ 	$(Q)install -m 0644 $(PC_FILE) $(DESTDIR)$(LIBDIR)/pkgconfig/
+ 	$(Q)cp -fpR $(SHARED_LIBS) $(STATIC_LIBS) $(DESTDIR)$(LIBDIR)
++ifndef SKIP_XDP_OBJS_BUILD
++	$(Q)install -d -m 0755 $(DESTDIR)$(BPF_OBJECT_DIR)
+ 	$(Q)install -m 0644 $(XDP_OBJS) $(DESTDIR)$(BPF_OBJECT_DIR)
++endif
+ 	$(if $(MAN_FILES),$(Q)install -m 0755 -d $(DESTDIR)$(MANDIR)/man3)
+ 	$(if $(MAN_FILES),$(Q)install -m 0644 $(MAN_FILES) $(DESTDIR)$(MANDIR)/man3)
+ 

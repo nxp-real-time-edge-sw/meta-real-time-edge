@@ -1,0 +1,29 @@
+From 677c69a18e8a538e1313dc020dcf9e9158559d96 Mon Sep 17 00:00:00 2001
+From: Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
+Date: Thu, 9 Nov 2023 10:24:15 +0100
+Subject: [PATCH] configure: properly quote the toolchain tools variables
+ before the check
+
+Bitbake will declare toolchain tools variables with multiple options: use double quote
+to avoid the following error with $CC for example:
+
+*** ERROR: Cannot find tool -march=armv8-a+crc+crypto
+
+Signed-off-by: Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
+---
+ configure | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configure b/configure
+index 1c71ec9..26eeff9 100755
+--- a/configure
++++ b/configure
+@@ -73,7 +73,7 @@ check_toolchain()
+     CLANG=$(find_tool clang "$CLANG")
+     LLC=$(find_tool llc "$LLC")
+ 
+-    for TOOL in $PKG_CONFIG $CC $LD $OBJCOPY $CLANG $LLC $M4 $READELF; do
++    for TOOL in "$PKG_CONFIG" "$CC" "$LD" "$OBJCOPY" "$CLANG" "$LLC" "$M4" "$READELF"; do
+         if [ ! $(command -v ${TOOL} 2>/dev/null) ]; then
+             echo "*** ERROR: Cannot find tool ${TOOL}" ;
+             exit 1;
