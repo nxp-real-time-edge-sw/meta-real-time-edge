@@ -86,6 +86,3 @@ KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-ecat.dtb"
 
 # opcua override default log level
 LIBOPEN62541_LOGLEVE = "300"
-
-# Set preferred version for libbpf to v0.6
-PREFERRED_VERSION_libbpf = "0.6.%"
