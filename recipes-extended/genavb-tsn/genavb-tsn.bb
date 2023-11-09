@@ -15,11 +15,11 @@ GENAVB_TSN_DEMO_APPS = "1"
 
 RDEPENDS:${PN}:append = " kernel-module-genavb-tsn"
 
-# Add build and runtime dependency for libbpf: for i.MX8, i.MX93 and i.MX8DXL SoCs
+# Add build and runtime dependency for libbpf and libxdp: for i.MX8, i.MX93 and i.MX8DXL SoCs
 ENDPOINT_TSN_STACK_DEPS = ""
-ENDPOINT_TSN_STACK_DEPS:mx8-nxp-bsp   = "libbpf"
-ENDPOINT_TSN_STACK_DEPS:mx93-nxp-bsp  = "libbpf"
-ENDPOINT_TSN_STACK_DEPS:mx8dxl-nxp-bsp  = "libbpf"
+ENDPOINT_TSN_STACK_DEPS:mx8-nxp-bsp   = "libbpf libxdp"
+ENDPOINT_TSN_STACK_DEPS:mx93-nxp-bsp  = "libbpf libxdp"
+ENDPOINT_TSN_STACK_DEPS:mx8dxl-nxp-bsp  = "libbpf libxdp"
 
 # Add build and runtime dependency for libopen62541: for i.MX8MP, i.MX93 and i.MX8DXL SoCs
 ENDPOINT_TSN_APPS_DEPS = ""
