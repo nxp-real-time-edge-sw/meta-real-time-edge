@@ -147,7 +147,7 @@ Origin:                      Michal Kubecek (GPL-2.0)
 --------------------------------------------
 
 Package:                     genavb-tsn
-Version:                     5.7
+Version:                     5.10
 Outgoing License:            GPL-2.0-or-later, BSD-3-Clause
 License Files:               licenses/COPYING, licenses/BSD-3-Clause
 Package Category:            Real-time Networking
