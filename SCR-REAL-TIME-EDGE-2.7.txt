@@ -289,6 +289,30 @@ Release Location:            https://github.com/nxp-qoriq/tsntool
 Origin:                      NXP (MIT or GPL-2.0)
 
 --------------------------------------------
+
+Package:                     libbpf
+Version:                     1.2
+Outgoing License:            LGPL-2.1 OR BSD-2-Clause
+License Files:               LICENSE
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    Library for BPF handling
+Release Location:            https://github.com/libbpf/libbpf
+Origin:                      libbpf (https://github.com/libbpf/libbpf)
+
+--------------------------------------------
+
+Package:                     libxdp
+Version:                     1.4
+Outgoing License:            LGPL-2.1-or-later & GPL-2.0-or-later & BSD-2-Clause
+License Files:               LICENSE
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    Library for XDP handling
+Release Location:            https://github.com/xdp-project/xdp-tools
+Origin:                      xdp-project (https://github.com/xdp-project/xdp-tools)
+
+--------------------------------------------
 Industrial Packages
 --------------------------------------------
 
