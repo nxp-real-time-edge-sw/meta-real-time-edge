@@ -41,7 +41,7 @@ heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " hello-world-ca virtio-
 heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " virtio-net-backend-ca virtio-net-backend-cm "
 heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " hello-world-ca virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
 heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " lwip-ping-ca rpmsg-str-echo-ca rpmsg-str-echo-cm"
-heterogeneous-multicore-examples:append:imx93evk = " hello-world-ca virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
+heterogeneous-multicore-examples:append:imx93evk = " hello-world-ca hello-world-cm virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
 
 heterogeneous-multi-soc-examples ?= ""
 heterogeneous-multi-soc-examples:append:imx93evk = " dsa-switch-evkmimxrt1180-cm33 "
