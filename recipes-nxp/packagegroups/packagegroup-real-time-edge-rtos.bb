@@ -31,7 +31,7 @@ rpmsg-lite-examples ?= ""
 rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-uart-sharing-rtos "
 rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-str-echo-rtos-ca rpmsg-lite-str-echo-rtos-8m-cm "
 rpmsg-lite-examples:append:imx93evk = " rpmsg-lite-uart-sharing-rtos-mcimx93evk "
-rpmsg-lite-examples:append:imx93qsb = " rpmsg-lite-uart-sharing-rtos-mcimx93qsb "
+rpmsg-lite-examples:append:imx93-9x9-lpddr4-qsb = " rpmsg-lite-uart-sharing-rtos-mcimx93qsb "
 
 uart-examples ?= ""
 uart-examples:append:mx8mm-nxp-bsp = " 9bit-iuart-interrupt-transfer 9bit-iuart-polling "
