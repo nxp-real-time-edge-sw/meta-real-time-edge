@@ -1,0 +1,26 @@
+From 8f8170ca3679fe7590d2f3a1501f0af2267466fe Mon Sep 17 00:00:00 2001
+From: Tao Yang <Tao.Yang1@nxp.com>
+Date: Mon, 20 Nov 2023 20:54:26 +0800
+Subject: [PATCH] configs: arm64: fix the .architecture for ls1046ardb dpaa
+ cell
+
+Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
+---
+ configs/arm64/ls1046a-rdb-dpaa-linux-demo.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c b/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c
+index 9754567c..1f2f7110 100644
+--- a/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c
++++ b/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c
+@@ -24,6 +24,7 @@ struct {
+ 	.cell = {
+ 		.signature = JAILHOUSE_CELL_DESC_SIGNATURE,
+ 		.revision = JAILHOUSE_CONFIG_REVISION,
++		.architecture = JAILHOUSE_ARM64,
+ 		.name = "linux-inmate-demo",
+ 		.flags = JAILHOUSE_CELL_PASSIVE_COMMREG,
+ 
+-- 
+2.25.1
+
