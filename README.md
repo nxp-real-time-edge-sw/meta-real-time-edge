@@ -32,7 +32,7 @@ $ repo sync
 
 #### Examples
 
-To download the Real-time Edge 2.6 release
+To download the Real-time Edge 2.7 release
 
 ```
 $ mkdir yocto-real-time-edge
