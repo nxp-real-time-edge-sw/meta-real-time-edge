@@ -87,5 +87,8 @@ KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-ecat.dtb"
 KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-ecat.dtb"
 KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-ecat.dtb"
 
+# dtb for lpuart
+KERNEL_DEVICETREE:append:imx6ull14x14evk = " imx6ull-14x14-evk-lpuart.dtb"
+
 # opcua override default log level
 LIBOPEN62541_LOGLEVE = "300"
