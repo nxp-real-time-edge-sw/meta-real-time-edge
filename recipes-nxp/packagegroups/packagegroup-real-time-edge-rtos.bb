@@ -47,6 +47,7 @@ heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " rpmsg-perf-cm "
 heterogeneous-multicore-examples:append:imx93evk = " hello-world-ca hello-world-cm virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
 
 heterogeneous-multi-soc-examples ?= ""
+heterogeneous-multi-soc-examples:append:mx8mp-nxp-bsp = " dsa-switch-evkmimxrt1180-cm33 "
 heterogeneous-multi-soc-examples:append:imx93evk = " dsa-switch-evkmimxrt1180-cm33 "
 
 RDEPENDS:${PN} = " \
