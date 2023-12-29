@@ -12,11 +12,11 @@ LIC_FILES_CHKSUM = " \
     file://Licenses/lgpl-2.0.txt;md5=4cf66a4984120007c9881cc871cf49db \
     file://Licenses/lgpl-2.1.txt;md5=4fbd65380cdd255951079008b364516c \
 "
-UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2023.04-2.7.0"
+UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2023.04-2.8.0"
 UBOOT_BAREMETAL_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-uboot.git;protocol=https;"
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
 
-SRCREV = "2f66e30e89a0648884720e75c14b9b45a0dcf577"
+SRCREV = "${AUTOREV}"
 
 PV = "2023.04+git${SRCPV}"
 
