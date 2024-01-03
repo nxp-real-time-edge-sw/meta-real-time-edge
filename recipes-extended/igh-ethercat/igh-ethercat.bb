@@ -38,6 +38,8 @@ SRC_URI += "\
     file://0001-Fix-igh-ethercat-compile-failure-issue.patch \
     file://0001-igh-fix-igh-compile-failed-on-ls1028.patch \
     file://0001-Native-Driver-fix-ec_fec-kernel-module-insmod-failur.patch \
+    file://0001-net-enetc-use-lynx_pcs_create_mdiodev.patch \
+    file://0002-net-enetc-integrate-SerDes-phys-with-lynx-pcs.patch \
 "
 S = "${WORKDIR}/git"
 
