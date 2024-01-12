@@ -31,6 +31,16 @@ SRC_URI:append:real-time-edge-plc = " \
     file://0001-FEC_ECAT-rebind-fec-MAC-to-fec-native-driver-for-imx.patch \
 "
 
+SRC_URI:append:imx8mp-rfnm = " \
+    file://rfnm-0001-Add-imx8mp-rfnm-board-suppport.patch \
+    file://rfnm-0002-Basic-structure-for-a-bit-banging-ws2812b-LED-driver.patch \
+    file://rfnm-0003-Enable-IIO-subsystem.patch \
+    file://rfnm-0004-Add-delay-between-SPI-CS-and-clock-as-per-Granita-s-.patch \
+    file://rfnm-0005-Defer-PCIe-init-until-Si5510-is-providing-a-clock.patch \
+    file://rfnm-0006-Add-bootconfig-eeprom-driver.patch \
+    file://rfnm-0007-Hack-the-TCPM-driver-to-support-USB-PD-without-reque.patch \
+"
+
 do_configure:prepend:real-time-edge() {
     mkdir -p ${WORKDIR}/source-date-epoch
     date '+%s' > ${WORKDIR}/source-date-epoch/__source_date_epoch.txt
