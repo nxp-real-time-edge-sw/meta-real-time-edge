@@ -1,4 +1,4 @@
-# Copyright 2021 NXP
+# Copyright 2021, 2024 NXP
 
 PV = "1.5.2"
 DESCRIPTION = "IgH EtherCAT Master for Linux"
@@ -6,7 +6,7 @@ HOMEPAGE = "https://etherlab.org/en/ethercat/index.php"
 LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=59530bdf33659b29e73d4adb9f9f6552"
 
-SRC_URI = "http://etherlab.org/download/ethercat/ethercat-${PV}.tar.bz2"
+SRC_URI = "http://www.nxp.com/lgfiles/updates/other/ethercat-1.5.2.tar.bz2"
 SRC_URI[md5sum] = "6b4001f8d975865d74a0b108b3bdda3d"
 
 SRC_URI += "\
