@@ -63,6 +63,7 @@ change_conf()
 	echo "PACKAGE_CLASSES = \"package_deb\"" >> $BUILD_DIR/conf/local.conf
 	echo "EXTRA_IMAGE_FEATURES += \"package-management\"" >> $BUILD_DIR/conf/local.conf
 	echo "IMAGE_INSTALL:append += \" kernel-module-la9310 userapp-la9310 freertos-la9310\"" >> $BUILD_DIR/conf/local.conf
+	echo "IMAGE_INSTALL:remove += \" docker \"" >> $BUILD_DIR/conf/local.conf
 }
 
 imx_add_layers()
@@ -73,21 +74,14 @@ imx_add_layers()
 
 	hook_in_layer meta-imx/meta-bsp
 	hook_in_layer meta-imx/meta-sdk
-	hook_in_layer meta-imx/meta-ml
-	hook_in_layer meta-imx/meta-v2x
-	hook_in_layer meta-nxp-demo-experience
 
 	echo "" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-browser/meta-chromium\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-clang\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-gnome\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-networking\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-filesystems\"" >> $BUILD_DIR/conf/bblayers.conf
 
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qt6\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-virtualization\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-rtos-industrial\"" >> $BUILD_DIR/conf/bblayers.conf
 
 	# Support integrating community meta-freescale instead of meta-fsl-arm
 	if [ -d $ROOTDIR/sources/meta-freescale ]; then
@@ -98,17 +92,11 @@ imx_add_layers()
 	fi
 
 	echo "" >> $BUILD_DIR/conf/bblayers.conf
-	echo "# Harpoon layer" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-harpoon\"" >> $BUILD_DIR/conf/bblayers.conf
 
-	echo "" >> $BUILD_DIR/conf/bblayers.conf
-	echo "# AVB layer" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-avb\"" >> $BUILD_DIR/conf/bblayers.conf
 }
 
 qoriq_add_layers()
 {
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-browser/meta-chromium\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-clang\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-networking\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-gnome\"" >> $BUILD_DIR/conf/bblayers.conf
@@ -116,13 +104,10 @@ qoriq_add_layers()
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-webserver\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-perl\"" >> $BUILD_DIR/conf/bblayers.conf
 
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-virtualization\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cloud-services\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security\"" >> $BUILD_DIR/conf/bblayers.conf
 
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qoriq\"" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
-	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-rtos-industrial\"" >> $BUILD_DIR/conf/bblayers.conf
 }
 
 add_layers()
