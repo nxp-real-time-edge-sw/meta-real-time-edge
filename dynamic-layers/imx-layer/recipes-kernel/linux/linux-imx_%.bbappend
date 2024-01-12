@@ -1,7 +1,11 @@
 
-REAL_TIME_EDGE_LINUX_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-linux.git;protocol=https"
-REAL_TIME_EDGE_LINUX_BRANCH ?= "linux_5.15.71"
-REAL_TIME_EDGE_LINUX_SRCREV ?= "c36e774d0d9a6d996cfb1b34167a2c5db1689fef"
+#REAL_TIME_EDGE_LINUX_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-linux.git;protocol=https"
+#REAL_TIME_EDGE_LINUX_BRANCH ?= "linux_5.15.71"
+#REAL_TIME_EDGE_LINUX_SRCREV ?= "c36e774d0d9a6d996cfb1b34167a2c5db1689fef"
+#REAL_TIME_EDGE_LINUX_SRC ?= "git://git@bitbucket.sw.nxp.com/dn5g/5g-linux.git;protocol=ssh"
+REAL_TIME_EDGE_LINUX_SRC ?= "git://github.com/nxp-qoriq/linux.git;protocol=https"
+REAL_TIME_EDGE_LINUX_BRANCH ?= "la12xx-linux-5.15-rt"
+REAL_TIME_EDGE_LINUX_SRCREV ?= "2f07f238a3dd34a42b946ffd01d4866675da5be0"
 
 KERNEL_SRC:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRC};branch=${REAL_TIME_EDGE_LINUX_BRANCH}"
 SRCBRANCH:real-time-edge = "${REAL_TIME_EDGE_LINUX_BRANCH}"

@@ -2,7 +2,7 @@
 #
 # Real-time Edge Yocto Project Build Environment Setup Script
 #
-# Copyright 2021-2022 NXP
+# Copyright 2021-2024 NXP
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,6 +62,7 @@ change_conf()
 	echo "# Switch to Debian packaging and include package-management in the image" >> $BUILD_DIR/conf/local.conf
 	echo "PACKAGE_CLASSES = \"package_deb\"" >> $BUILD_DIR/conf/local.conf
 	echo "EXTRA_IMAGE_FEATURES += \"package-management\"" >> $BUILD_DIR/conf/local.conf
+	echo "IMAGE_INSTALL:append += \" kernel-module-la9310 userapp-la9310 freertos-la9310\"" >> $BUILD_DIR/conf/local.conf
 }
 
 imx_add_layers()
