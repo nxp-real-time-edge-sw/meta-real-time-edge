@@ -1,0 +1,47 @@
+From 6b53a133fc55cde82945a42be3cc67f4f38c8b3f Mon Sep 17 00:00:00 2001
+From: Minghuan Lian <Minghuan.Lian@nxp.com>
+Date: Tue, 16 Jan 2024 14:39:00 +0800
+Subject: [PATCH 3/3] Fix the compile error
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+error: ‘strncpy’ specified bound 64 equals
+destination size [-Werror=stringop-truncation]
+     strncpy(target, source, EC_IOCTL_STRING_SIZE);
+
+Signed-off-by: Minghuan Lian <Minghuan.Lian@nxp.com>
+---
+ master/ioctl.c  | 2 +-
+ master/master.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/master/ioctl.c b/master/ioctl.c
+index 0cd6b3f1..2ba6d0bb 100644
+--- a/master/ioctl.c
++++ b/master/ioctl.c
+@@ -67,7 +67,7 @@ static void ec_ioctl_strcpy(
+         )
+ {
+     if (source) {
+-        strncpy(target, source, EC_IOCTL_STRING_SIZE);
++        strncpy(target, source, EC_IOCTL_STRING_SIZE - 1);
+         target[EC_IOCTL_STRING_SIZE - 1] = 0;
+     } else {
+         target[0] = 0;
+diff --git a/master/master.c b/master/master.c
+index 9538ac3e..e530b5aa 100644
+--- a/master/master.c
++++ b/master/master.c
+@@ -2793,7 +2793,7 @@ int ecrt_master_get_slave(ec_master_t *master, uint16_t slave_position,
+     slave_info->sync_count = slave->sii.sync_count;
+     slave_info->sdo_count = ec_slave_sdo_count(slave);
+     if (slave->sii.name) {
+-        strncpy(slave_info->name, slave->sii.name, EC_MAX_STRING_LENGTH);
++        strncpy(slave_info->name, slave->sii.name, EC_MAX_STRING_LENGTH - 1);
+     } else {
+         slave_info->name[0] = 0;
+     }
+-- 
+2.25.1
+

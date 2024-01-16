@@ -1,0 +1,2946 @@
+From d319e3c76dad6bc09d44da65d930501b58546da3 Mon Sep 17 00:00:00 2001
+From: "hongbo.wang" <hongbo.wang@nxp.com>
+Date: Fri, 4 Aug 2023 16:59:41 +0800
+Subject: [PATCH 1/3] Add code to support userspace IGH-EtherCAT for v1.5.2
+
+This patch refers to the patches of Frank Heckenbach,
+Frank's patches are for EtherCAT_v1.5.0-7.
+
+link: https://fh-soft.de/src/ethercat-userspace.html
+
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+---
+ Makefile.am                     |   8 +-
+ configure.ac                    |  37 ++
+ devices/generic.c               |   7 +-
+ emulation/linux/cdev.h          |  15 +
+ emulation/linux/delay.h         |   6 +
+ emulation/linux/device.h        |   9 +
+ emulation/linux/err.h           |  16 +
+ emulation/linux/etherdevice.h   |   7 +
+ emulation/linux/fs.h            |   9 +
+ emulation/linux/hrtimer.h       |   4 +
+ emulation/linux/interrupt.h     |   6 +
+ emulation/linux/jiffies.h       |  52 +++
+ emulation/linux/kobject.h       |   6 +
+ emulation/linux/kthread.h       |  70 +++
+ emulation/linux/list.h          | 746 ++++++++++++++++++++++++++++++++
+ emulation/linux/mm.h            |   4 +
+ emulation/linux/module.h        |  29 ++
+ emulation/linux/netdevice.h     | 265 ++++++++++++
+ emulation/linux/printk.h        |  15 +
+ emulation/linux/semaphore.h     |  23 +
+ emulation/linux/skbuff.h        |  60 +++
+ emulation/linux/slab.h          |   6 +
+ emulation/linux/time.h          |   7 +
+ emulation/linux/timer.h         |   4 +
+ emulation/linux/vmalloc.h       |  19 +
+ emulation/linux/wait.h          |  38 ++
+ globals.h                       |  11 +
+ include/ecrt.h                  |  13 +-
+ lib/Makefile.am                 |   4 +
+ lib/common.c                    |  13 +-
+ lib/domain.c                    |   8 +-
+ lib/ioctl.h                     |  19 +
+ lib/libethercat.pc.in           |  10 +
+ lib/master.c                    |   8 +-
+ master/Makefile.am              |  73 ++++
+ master/cdev.c                   |  79 +++-
+ master/cdev.h                   |   4 +
+ master/device.h                 |   4 +
+ master/ethercat_master.c        | 106 +++++
+ master/ethernet.c               |  12 +-
+ master/foe_request.c            |   2 +-
+ master/foe_request.h            |   4 +-
+ master/fsm_coe.c                |   2 +-
+ master/fsm_foe.c                |   8 +-
+ master/fsm_foe.h                |   4 +-
+ master/fsm_slave_config.c       |   2 +
+ master/ioctl.c                  |   2 +-
+ master/ioctl.h                  |  30 +-
+ master/libethercat_master.pc.in |  10 +
+ master/master.c                 |  47 +-
+ master/master.h                 |   2 +-
+ master/module.c                 |  74 ++++
+ master/sdo_request.h            |   6 +
+ 53 files changed, 1976 insertions(+), 49 deletions(-)
+ create mode 100644 emulation/linux/cdev.h
+ create mode 100644 emulation/linux/delay.h
+ create mode 100644 emulation/linux/device.h
+ create mode 100644 emulation/linux/err.h
+ create mode 100644 emulation/linux/etherdevice.h
+ create mode 100644 emulation/linux/fs.h
+ create mode 100644 emulation/linux/hrtimer.h
+ create mode 100644 emulation/linux/interrupt.h
+ create mode 100644 emulation/linux/jiffies.h
+ create mode 100644 emulation/linux/kobject.h
+ create mode 100644 emulation/linux/kthread.h
+ create mode 100644 emulation/linux/list.h
+ create mode 100644 emulation/linux/mm.h
+ create mode 100644 emulation/linux/module.h
+ create mode 100644 emulation/linux/netdevice.h
+ create mode 100644 emulation/linux/printk.h
+ create mode 100644 emulation/linux/semaphore.h
+ create mode 100644 emulation/linux/skbuff.h
+ create mode 100644 emulation/linux/slab.h
+ create mode 100644 emulation/linux/time.h
+ create mode 100644 emulation/linux/timer.h
+ create mode 100644 emulation/linux/vmalloc.h
+ create mode 100644 emulation/linux/wait.h
+ create mode 100644 lib/libethercat.pc.in
+ create mode 100644 master/ethercat_master.c
+ create mode 100644 master/libethercat_master.pc.in
+
+diff --git a/Makefile.am b/Makefile.am
+index 38c8b699..64558032 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -32,8 +32,12 @@ ACLOCAL_AMFLAGS = -I m4
+ SUBDIRS = \
+ 	devices \
+ 	include \
+-	master \
+-	script
++	master
++
++if ENABLE_USERSPACE_MASTER
++else
++SUBDIRS += script
++endif
+ 
+ if BUILD_TOOL
+ SUBDIRS += tool
+diff --git a/configure.ac b/configure.ac
+index 8e924e8a..953af99d 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -56,10 +56,44 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+ AC_PROG_CXX
+ AC_PROG_LIBTOOL
+ 
++
++#------------------------------------------------------------------------------
++# Userspace EtherCAT library (optional)
++#------------------------------------------------------------------------------
++
++AC_MSG_CHECKING([whether to build Userspace EtherCAT library])
++
++AC_ARG_ENABLE([usecat],
++    AC_HELP_STRING([--enable-usecat],
++                   [Enable Userspace EtherCAT library (default: no)]),
++    [
++        case "${enableval}" in
++            yes) enable_usecat=1
++                ;;
++            no) enable_usecat=0
++                ;;
++            *) AC_MSG_ERROR([Invalid value for --enable-usecat])
++                ;;
++        esac
++    ],
++    [enable_usecat=0]
++)
++
++if test "x${enable_usecat}" = "x1"; then
++    AC_DEFINE([EC_USERSPACE_MASTER], [1], [Userspace EtherCAT library enabled])
++    AC_MSG_RESULT([yes])
++else
++    AC_MSG_RESULT([no])
++fi
++
++AM_CONDITIONAL(ENABLE_USERSPACE_MASTER, test "x$enable_usecat" = "x1")
++AC_SUBST(ENABLE_USERSPACE_MASTER,[$enable_usecat])
++
+ #------------------------------------------------------------------------------
+ # Linux sources
+ #------------------------------------------------------------------------------
+ 
++if test "x${enable_usecat}" = "x0"; then
+ AC_ARG_WITH([linux-dir],
+     AC_HELP_STRING(
+         [--with-linux-dir=<DIR>],
+@@ -115,6 +149,7 @@ linuxversion=`echo $kernelrelease | grep -oE "$regex"`
+ 
+ AC_SUBST(LINUX_SOURCE_DIR,[$sourcedir])
+ AC_MSG_RESULT([$LINUX_SOURCE_DIR (Kernel $linuxversion)])
++fi
+ 
+ #------------------------------------------------------------------------------
+ # Linux module installation subdirectory
+@@ -1037,9 +1072,11 @@ AC_CONFIG_FILES([
+         examples/xenomai_posix/Makefile
+         include/Makefile
+         lib/Makefile
++        lib/libethercat.pc
+         m4/Makefile
+         master/Kbuild
+         master/Makefile
++        master/libethercat_master.pc
+         script/Makefile
+         script/ethercat.service
+         script/ethercatctl
+diff --git a/devices/generic.c b/devices/generic.c
+index 4be3f449..8fb52ebd 100644
+--- a/devices/generic.c
++++ b/devices/generic.c
+@@ -54,6 +54,9 @@
+ int __init ec_gen_init_module(void);
+ void __exit ec_gen_cleanup_module(void);
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++static int init_net;
++#endif
+ /*****************************************************************************/
+ 
+ /** \cond */
+@@ -208,8 +211,8 @@ int ec_gen_device_create_socket(
+         return -ENOMEM;
+     }
+ 
+-	ret = sock_create_kern(&init_net, PF_PACKET, SOCK_RAW,
+-			htons(ETH_P_ETHERCAT), &dev->socket);
++    ret = sock_create_kern(&init_net, PF_PACKET, SOCK_RAW,
++            htons(ETH_P_ETHERCAT), &dev->socket);
+     if (ret) {
+         printk(KERN_ERR PFX "Failed to create socket (ret = %i).\n", ret);
+         return ret;
+diff --git a/emulation/linux/cdev.h b/emulation/linux/cdev.h
+new file mode 100644
+index 00000000..c23bfa58
+--- /dev/null
++++ b/emulation/linux/cdev.h
+@@ -0,0 +1,15 @@
++#ifndef _LINUX_CDEV_H
++#define _LINUX_CDEV_H
++
++#include <linux/err.h>
++
++struct cdev
++{
++    void *owner;
++};
++
++#define cdev_init(CDEV, FOPS)
++#define cdev_add(CDEV, DEV, COUNT) 0
++#define cdev_del(CDEV)
++
++#endif
+diff --git a/emulation/linux/delay.h b/emulation/linux/delay.h
+new file mode 100644
+index 00000000..3817ea68
+--- /dev/null
++++ b/emulation/linux/delay.h
+@@ -0,0 +1,6 @@
++#ifndef _LINUX_DELAY_H
++#define _LINUX_DELAY_H
++
++#include <linux/err.h>
++
++#endif
+diff --git a/emulation/linux/device.h b/emulation/linux/device.h
+new file mode 100644
+index 00000000..1c0164ff
+--- /dev/null
++++ b/emulation/linux/device.h
+@@ -0,0 +1,9 @@
++#ifndef _LINUX_DEVICE_H
++#define _LINUX_DEVICE_H
++
++#include <linux/list.h>
++#include <linux/skbuff.h>
++
++struct class;
++
++#endif
+diff --git a/emulation/linux/err.h b/emulation/linux/err.h
+new file mode 100644
+index 00000000..393b7e96
+--- /dev/null
++++ b/emulation/linux/err.h
+@@ -0,0 +1,16 @@
++#ifndef _LINUX_ERR_H
++#define _LINUX_ERR_H
++
++#include <stdint.h>
++#include <errno.h>
++
++#define likely(X) (X)
++#define unlikely(X) (X)
++
++#define MAX_ERRNO 4095
++#define IS_ERR_VALUE(X) ((X) >= (unsigned long) -MAX_ERRNO)
++#define IS_ERR(PTR) IS_ERR_VALUE((unsigned long)(PTR))
++#define ERR_PTR(ERR) ((void *) (intptr_t) (ERR))
++#define PTR_ERR(PTR) ((long) (PTR))
++
++#endif
+diff --git a/emulation/linux/etherdevice.h b/emulation/linux/etherdevice.h
+new file mode 100644
+index 00000000..b3f879fb
+--- /dev/null
++++ b/emulation/linux/etherdevice.h
+@@ -0,0 +1,7 @@
++#ifndef _LINUX_ETHERDEVICE_H
++#define _LINUX_ETHERDEVICE_H
++
++#include <unistd.h>
++#include <sys/ioctl.h>
++
++#endif
+diff --git a/emulation/linux/fs.h b/emulation/linux/fs.h
+new file mode 100644
+index 00000000..4dcfa600
+--- /dev/null
++++ b/emulation/linux/fs.h
+@@ -0,0 +1,9 @@
++#ifndef _LINUX_FS_H
++#define _LINUX_FS_H
++
++struct inode
++{
++    void *data;
++};
++
++#endif
+diff --git a/emulation/linux/hrtimer.h b/emulation/linux/hrtimer.h
+new file mode 100644
+index 00000000..d6c8a3ac
+--- /dev/null
++++ b/emulation/linux/hrtimer.h
+@@ -0,0 +1,4 @@
++#ifndef _LINUX_HRTIMER_H
++#define _LINUX_HRTIMER_H
++
++#endif
+diff --git a/emulation/linux/interrupt.h b/emulation/linux/interrupt.h
+new file mode 100644
+index 00000000..2d371020
+--- /dev/null
++++ b/emulation/linux/interrupt.h
+@@ -0,0 +1,6 @@
++#ifndef _LINUX_INTERRUPT_H
++#define _LINUX_INTERRUPT_H
++
++#include <linux/types.h>
++
++#endif
+diff --git a/emulation/linux/jiffies.h b/emulation/linux/jiffies.h
+new file mode 100644
+index 00000000..eb736b7a
+--- /dev/null
++++ b/emulation/linux/jiffies.h
+@@ -0,0 +1,52 @@
++#ifndef _LINUX_JIFFIES_H
++#define _LINUX_JIFFIES_H
++
++#include <stdint.h>
++#include <stdlib.h>
++#include <sys/time.h>
++#include <linux/types.h>
++
++typedef _Bool bool;
++#define false 0
++#define true 1
++
++typedef __s8  s8;
++typedef __s16 s16;
++typedef __s32 s32;
++typedef __s64 s64;
++typedef __u8  u8;
++typedef __u16 u16;
++typedef __u32 u32;
++typedef __u64 u64;
++
++#define min(x,y) ({ \
++    typeof(x) _x = (x);     \
++    typeof(y) _y = (y);     \
++    (void) (&_x == &_y);    \
++    _x < _y ? _x : _y; })
++
++#define max(x,y) ({ \
++    typeof(x) _x = (x);     \
++    typeof(y) _y = (y);     \
++    (void) (&_x == &_y);    \
++    _x > _y ? _x : _y; })
++
++static inline u32 do_div(u64 x, u32 y) { return x / y; }
++
++typedef u64 cycles_t;
++
++static const unsigned int cpu_khz = 1000;  // unit of get_cycles()
++
++static inline cycles_t get_cycles(void)
++{
++    struct timeval TVal;
++    // thanks to VDSO, gettimeofday() does not require a system call
++    if (gettimeofday (&TVal, NULL) < 0)
++        return -1;
++    return (cycles_t) TVal.tv_sec * 1000000 + TVal.tv_usec;
++}
++
++#define HZ 1000
++#define jiffies ((unsigned long) (get_cycles () / (cpu_khz * 1000 / HZ)))
++
++#endif
+diff --git a/emulation/linux/kobject.h b/emulation/linux/kobject.h
+new file mode 100644
+index 00000000..e82c255d
+--- /dev/null
++++ b/emulation/linux/kobject.h
+@@ -0,0 +1,6 @@
++#ifndef _LINUX_KOBJECT_H
++#define _LINUX_KOBJECT_H
++
++#include <linux/wait.h>
++
++#endif
+diff --git a/emulation/linux/kthread.h b/emulation/linux/kthread.h
+new file mode 100644
+index 00000000..82adf54a
+--- /dev/null
++++ b/emulation/linux/kthread.h
+@@ -0,0 +1,70 @@
++#ifndef _LINUX_KTHREAD_H
++#define _LINUX_KTHREAD_H
++
++#include <pthread.h>
++#include <signal.h>
++#include <string.h>
++#include <stdarg.h>
++#include <stdio.h>
++#include <sys/prctl.h>
++#include <linux/err.h>
++
++struct task_struct
++{
++    pthread_t thread;
++    int (*thread_func)(void *);
++    void *data;
++    char name[16];
++    int should_stop;
++};
++
++static __thread struct task_struct *current_task;
++
++static inline void dummy_signal_handler(int sig)
++{
++    (void) sig;
++}
++
++static inline void *task_run(void *arg)
++{
++    current_task = (struct task_struct *) arg;
++    prctl(PR_SET_NAME, current_task->name);
++    struct sigaction a;
++    memset(&a, 0, sizeof (a));
++    a.sa_handler = dummy_signal_handler;
++    sigemptyset(&a.sa_mask);
++    sigaction(SIGUSR1, &a, NULL);
++    current_task->thread_func(current_task->data);
++    return NULL;
++}
++
++static inline struct task_struct *kthread_run(int (*thread_func)(void *), void *data, const char *namefmt, ...)
++{
++    struct task_struct *task = malloc(sizeof(struct task_struct));
++    if (!task)
++        return ERR_PTR(-ENOMEM);
++    task->thread_func = thread_func;
++    task->data = data;
++    va_list args;
++    va_start(args, namefmt);
++    vsnprintf(task->name, sizeof(task->name), namefmt, args);
++    va_end(args);
++    task->should_stop = 0;
++    int ret = pthread_create(&task->thread, NULL, task_run, task);
++    if (ret == 0)
++        return task;
++    free(task);
++    return ERR_PTR(-ret);
++}
++
++static inline void kthread_stop(struct task_struct *task)
++{
++    pthread_kill(task->thread, SIGUSR1);  // interrupt blocking system calls
++    task->should_stop = 1;
++    pthread_join(task->thread, NULL);
++    free(task);
++}
++
++#define kthread_should_stop() (current_task->should_stop)
++
++#endif
+diff --git a/emulation/linux/list.h b/emulation/linux/list.h
+new file mode 100644
+index 00000000..6b505793
+--- /dev/null
++++ b/emulation/linux/list.h
+@@ -0,0 +1,746 @@
++#ifndef _LINUX_LIST_H
++#define _LINUX_LIST_H
++
++#ifdef __compiler_offsetof
++#define offsetof(TYPE,MEMBER) __compiler_offsetof(TYPE,MEMBER)
++#else
++#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
++#endif
++
++#define container_of(ptr, type, member) ({            \
++    const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
++    (type *)( (char *)__mptr - offsetof(type,member) );})
++
++//#include <linux/types.h>
++struct list_head {
++    struct list_head *next, *prev;
++};
++
++struct hlist_head {
++    struct hlist_node *first;
++};
++
++struct hlist_node {
++    struct hlist_node *next, **pprev;
++};
++
++//#include <linux/stddef.h>
++
++//#include <linux/poison.h>
++# define POISON_POINTER_DELTA 0
++#define LIST_POISON1  ((void *) 0x00100100 + POISON_POINTER_DELTA)
++#define LIST_POISON2  ((void *) 0x00200200 + POISON_POINTER_DELTA)
++
++//#include <linux/const.h>
++
++/*
++ * Simple doubly linked list implementation.
++ *
++ * Some of the internal functions ("__xxx") are useful when
++ * manipulating whole lists rather than single entries, as
++ * sometimes we already know the next/prev entries and we can
++ * generate better code by using them directly rather than
++ * using the generic single-entry routines.
++ */
++
++#define LIST_HEAD_INIT(name) { &(name), &(name) }
++
++#define LIST_HEAD(name) \
++    struct list_head name = LIST_HEAD_INIT(name)
++
++static inline void INIT_LIST_HEAD(struct list_head *list)
++{
++    list->next = list;
++    list->prev = list;
++}
++
++/*
++ * Insert a new entry between two known consecutive entries.
++ *
++ * This is only for internal list manipulation where we know
++ * the prev/next entries already!
++ */
++#ifndef CONFIG_DEBUG_LIST
++static inline void __list_add(struct list_head *new,
++                  struct list_head *prev,
++                  struct list_head *next)
++{
++    next->prev = new;
++    new->next = next;
++    new->prev = prev;
++    prev->next = new;
++}
++#else
++extern void __list_add(struct list_head *new,
++                  struct list_head *prev,
++                  struct list_head *next);
++#endif
++
++/**
++ * list_add - add a new entry
++ * @new: new entry to be added
++ * @head: list head to add it after
++ *
++ * Insert a new entry after the specified head.
++ * This is good for implementing stacks.
++ */
++static inline void list_add(struct list_head *new, struct list_head *head)
++{
++    __list_add(new, head, head->next);
++}
++
++
++/**
++ * list_add_tail - add a new entry
++ * @new: new entry to be added
++ * @head: list head to add it before
++ *
++ * Insert a new entry before the specified head.
++ * This is useful for implementing queues.
++ */
++static inline void list_add_tail(struct list_head *new, struct list_head *head)
++{
++    __list_add(new, head->prev, head);
++}
++
++/*
++ * Delete a list entry by making the prev/next entries
++ * point to each other.
++ *
++ * This is only for internal list manipulation where we know
++ * the prev/next entries already!
++ */
++static inline void __list_del(struct list_head * prev, struct list_head * next)
++{
++    next->prev = prev;
++    prev->next = next;
++}
++
++/**
++ * list_del - deletes entry from list.
++ * @entry: the element to delete from the list.
++ * Note: list_empty() on entry does not return true after this, the entry is
++ * in an undefined state.
++ */
++#ifndef CONFIG_DEBUG_LIST
++static inline void __list_del_entry(struct list_head *entry)
++{
++    __list_del(entry->prev, entry->next);
++}
++
++static inline void list_del(struct list_head *entry)
++{
++    __list_del(entry->prev, entry->next);
++    entry->next = LIST_POISON1;
++    entry->prev = LIST_POISON2;
++}
++#else
++extern void __list_del_entry(struct list_head *entry);
++extern void list_del(struct list_head *entry);
++#endif
++
++/**
++ * list_replace - replace old entry by new one
++ * @old : the element to be replaced
++ * @new : the new element to insert
++ *
++ * If @old was empty, it will be overwritten.
++ */
++static inline void list_replace(struct list_head *old,
++                struct list_head *new)
++{
++    new->next = old->next;
++    new->next->prev = new;
++    new->prev = old->prev;
++    new->prev->next = new;
++}
++
++static inline void list_replace_init(struct list_head *old,
++                    struct list_head *new)
++{
++    list_replace(old, new);
++    INIT_LIST_HEAD(old);
++}
++
++/**
++ * list_del_init - deletes entry from list and reinitialize it.
++ * @entry: the element to delete from the list.
++ */
++static inline void list_del_init(struct list_head *entry)
++{
++    __list_del_entry(entry);
++    INIT_LIST_HEAD(entry);
++}
++
++/**
++ * list_move - delete from one list and add as another's head
++ * @list: the entry to move
++ * @head: the head that will precede our entry
++ */
++static inline void list_move(struct list_head *list, struct list_head *head)
++{
++    __list_del_entry(list);
++    list_add(list, head);
++}
++
++/**
++ * list_move_tail - delete from one list and add as another's tail
++ * @list: the entry to move
++ * @head: the head that will follow our entry
++ */
++static inline void list_move_tail(struct list_head *list,
++                  struct list_head *head)
++{
++    __list_del_entry(list);
++    list_add_tail(list, head);
++}
++
++/**
++ * list_is_last - tests whether @list is the last entry in list @head
++ * @list: the entry to test
++ * @head: the head of the list
++ */
++static inline int list_is_last(const struct list_head *list,
++                const struct list_head *head)
++{
++    return list->next == head;
++}
++
++/**
++ * list_empty - tests whether a list is empty
++ * @head: the list to test.
++ */
++static inline int list_empty(const struct list_head *head)
++{
++    return head->next == head;
++}
++
++/**
++ * list_empty_careful - tests whether a list is empty and not being modified
++ * @head: the list to test
++ *
++ * Description:
++ * tests whether a list is empty _and_ checks that no other CPU might be
++ * in the process of modifying either member (next or prev)
++ *
++ * NOTE: using list_empty_careful() without synchronization
++ * can only be safe if the only activity that can happen
++ * to the list entry is list_del_init(). Eg. it cannot be used
++ * if another CPU could re-list_add() it.
++ */
++static inline int list_empty_careful(const struct list_head *head)
++{
++    struct list_head *next = head->next;
++    return (next == head) && (next == head->prev);
++}
++
++/**
++ * list_rotate_left - rotate the list to the left
++ * @head: the head of the list
++ */
++static inline void list_rotate_left(struct list_head *head)
++{
++    struct list_head *first;
++
++    if (!list_empty(head)) {
++        first = head->next;
++        list_move_tail(first, head);
++    }
++}
++
++/**
++ * list_is_singular - tests whether a list has just one entry.
++ * @head: the list to test.
++ */
++static inline int list_is_singular(const struct list_head *head)
++{
++    return !list_empty(head) && (head->next == head->prev);
++}
++
++static inline void __list_cut_position(struct list_head *list,
++        struct list_head *head, struct list_head *entry)
++{
++    struct list_head *new_first = entry->next;
++    list->next = head->next;
++    list->next->prev = list;
++    list->prev = entry;
++    entry->next = list;
++    head->next = new_first;
++    new_first->prev = head;
++}
++
++/**
++ * list_cut_position - cut a list into two
++ * @list: a new list to add all removed entries
++ * @head: a list with entries
++ * @entry: an entry within head, could be the head itself
++ *    and if so we won't cut the list
++ *
++ * This helper moves the initial part of @head, up to and
++ * including @entry, from @head to @list. You should
++ * pass on @entry an element you know is on @head. @list
++ * should be an empty list or a list you do not care about
++ * losing its data.
++ *
++ */
++static inline void list_cut_position(struct list_head *list,
++        struct list_head *head, struct list_head *entry)
++{
++    if (list_empty(head))
++        return;
++    if (list_is_singular(head) &&
++        (head->next != entry && head != entry))
++        return;
++    if (entry == head)
++        INIT_LIST_HEAD(list);
++    else
++        __list_cut_position(list, head, entry);
++}
++
++static inline void __list_splice(const struct list_head *list,
++                 struct list_head *prev,
++                 struct list_head *next)
++{
++    struct list_head *first = list->next;
++    struct list_head *last = list->prev;
++
++    first->prev = prev;
++    prev->next = first;
++
++    last->next = next;
++    next->prev = last;
++}
++
++/**
++ * list_splice - join two lists, this is designed for stacks
++ * @list: the new list to add.
++ * @head: the place to add it in the first list.
++ */
++static inline void list_splice(const struct list_head *list,
++                struct list_head *head)
++{
++    if (!list_empty(list))
++        __list_splice(list, head, head->next);
++}
++
++/**
++ * list_splice_tail - join two lists, each list being a queue
++ * @list: the new list to add.
++ * @head: the place to add it in the first list.
++ */
++static inline void list_splice_tail(struct list_head *list,
++                struct list_head *head)
++{
++    if (!list_empty(list))
++        __list_splice(list, head->prev, head);
++}
++
++/**
++ * list_splice_init - join two lists and reinitialise the emptied list.
++ * @list: the new list to add.
++ * @head: the place to add it in the first list.
++ *
++ * The list at @list is reinitialised
++ */
++static inline void list_splice_init(struct list_head *list,
++                    struct list_head *head)
++{
++    if (!list_empty(list)) {
++        __list_splice(list, head, head->next);
++        INIT_LIST_HEAD(list);
++    }
++}
++
++/**
++ * list_splice_tail_init - join two lists and reinitialise the emptied list
++ * @list: the new list to add.
++ * @head: the place to add it in the first list.
++ *
++ * Each of the lists is a queue.
++ * The list at @list is reinitialised
++ */
++static inline void list_splice_tail_init(struct list_head *list,
++                     struct list_head *head)
++{
++    if (!list_empty(list)) {
++        __list_splice(list, head->prev, head);
++        INIT_LIST_HEAD(list);
++    }
++}
++
++/**
++ * list_entry - get the struct for this entry
++ * @ptr:    the &struct list_head pointer.
++ * @type:    the type of the struct this is embedded in.
++ * @member:    the name of the list_struct within the struct.
++ */
++#define list_entry(ptr, type, member) \
++    container_of(ptr, type, member)
++
++/**
++ * list_first_entry - get the first element from a list
++ * @ptr:    the list head to take the element from.
++ * @type:    the type of the struct this is embedded in.
++ * @member:    the name of the list_struct within the struct.
++ *
++ * Note, that list is expected to be not empty.
++ */
++#define list_first_entry(ptr, type, member) \
++    list_entry((ptr)->next, type, member)
++
++/**
++ * list_for_each    -    iterate over a list
++ * @pos:    the &struct list_head to use as a loop cursor.
++ * @head:    the head for your list.
++ */
++#define list_for_each(pos, head) \
++    for (pos = (head)->next; pos != (head); pos = pos->next)
++
++/**
++ * __list_for_each    -    iterate over a list
++ * @pos:    the &struct list_head to use as a loop cursor.
++ * @head:    the head for your list.
++ *
++ * This variant doesn't differ from list_for_each() any more.
++ * We don't do prefetching in either case.
++ */
++#define __list_for_each(pos, head) \
++    for (pos = (head)->next; pos != (head); pos = pos->next)
++
++/**
++ * list_for_each_prev    -    iterate over a list backwards
++ * @pos:    the &struct list_head to use as a loop cursor.
++ * @head:    the head for your list.
++ */
++#define list_for_each_prev(pos, head) \
++    for (pos = (head)->prev; pos != (head); pos = pos->prev)
++
++/**
++ * list_for_each_safe - iterate over a list safe against removal of list entry
++ * @pos:    the &struct list_head to use as a loop cursor.
++ * @n:        another &struct list_head to use as temporary storage
++ * @head:    the head for your list.
++ */
++#define list_for_each_safe(pos, n, head) \
++    for (pos = (head)->next, n = pos->next; pos != (head); \
++        pos = n, n = pos->next)
++
++/**
++ * list_for_each_prev_safe - iterate over a list backwards safe against removal of list entry
++ * @pos:    the &struct list_head to use as a loop cursor.
++ * @n:        another &struct list_head to use as temporary storage
++ * @head:    the head for your list.
++ */
++#define list_for_each_prev_safe(pos, n, head) \
++    for (pos = (head)->prev, n = pos->prev; \
++         pos != (head); \
++         pos = n, n = pos->prev)
++
++/**
++ * list_for_each_entry    -    iterate over list of given type
++ * @pos:    the type * to use as a loop cursor.
++ * @head:    the head for your list.
++ * @member:    the name of the list_struct within the struct.
++ */
++#define list_for_each_entry(pos, head, member)                \
++    for (pos = list_entry((head)->next, typeof(*pos), member);    \
++         &pos->member != (head);     \
++         pos = list_entry(pos->member.next, typeof(*pos), member))
++
++/**
++ * list_for_each_entry_reverse - iterate backwards over list of given type.
++ * @pos:    the type * to use as a loop cursor.
++ * @head:    the head for your list.
++ * @member:    the name of the list_struct within the struct.
++ */
++#define list_for_each_entry_reverse(pos, head, member)            \
++    for (pos = list_entry((head)->prev, typeof(*pos), member);    \
++         &pos->member != (head);     \
++         pos = list_entry(pos->member.prev, typeof(*pos), member))
++
++/**
++ * list_prepare_entry - prepare a pos entry for use in list_for_each_entry_continue()
++ * @pos:    the type * to use as a start point
++ * @head:    the head of the list
++ * @member:    the name of the list_struct within the struct.
++ *
++ * Prepares a pos entry for use as a start point in list_for_each_entry_continue().
++ */
++#define list_prepare_entry(pos, head, member) \
++    ((pos) ? : list_entry(head, typeof(*pos), member))
++
++/**
++ * list_for_each_entry_continue - continue iteration over list of given type
++ * @pos:    the type * to use as a loop cursor.
++ * @head:    the head for your list.
++ * @member:    the name of the list_struct within the struct.
++ *
++ * Continue to iterate over list of given type, continuing after
++ * the current position.
++ */
++#define list_for_each_entry_continue(pos, head, member)         \
++    for (pos = list_entry(pos->member.next, typeof(*pos), member);    \
++         &pos->member != (head);    \
++         pos = list_entry(pos->member.next, typeof(*pos), member))
++
++/**
++ * list_for_each_entry_continue_reverse - iterate backwards from the given point
++ * @pos:    the type * to use as a loop cursor.
++ * @head:    the head for your list.
++ * @member:    the name of the list_struct within the struct.
++ *
++ * Start to iterate over list of given type backwards, continuing after
++ * the current position.
++ */
++#define list_for_each_entry_continue_reverse(pos, head, member)        \
++    for (pos = list_entry(pos->member.prev, typeof(*pos), member);    \
++         &pos->member != (head);    \
++         pos = list_entry(pos->member.prev, typeof(*pos), member))
++
++/**
++ * list_for_each_entry_from - iterate over list of given type from the current point
++ * @pos:    the type * to use as a loop cursor.
++ * @head:    the head for your list.
++ * @member:    the name of the list_struct within the struct.
++ *
++ * Iterate over list of given type, continuing from current position.
++ */
++#define list_for_each_entry_from(pos, head, member)             \
++    for (; &pos->member != (head);    \
++         pos = list_entry(pos->member.next, typeof(*pos), member))
++
++/**
++ * list_for_each_entry_safe - iterate over list of given type safe against removal of list entry
++ * @pos:    the type * to use as a loop cursor.
++ * @n:        another type * to use as temporary storage
++ * @head:    the head for your list.
++ * @member:    the name of the list_struct within the struct.
++ */
++#define list_for_each_entry_safe(pos, n, head, member)            \
++    for (pos = list_entry((head)->next, typeof(*pos), member),    \
++        n = list_entry(pos->member.next, typeof(*pos), member);    \
++         &pos->member != (head);                     \
++         pos = n, n = list_entry(n->member.next, typeof(*n), member))
++
++/**
++ * list_for_each_entry_safe_continue - continue list iteration safe against removal
++ * @pos:    the type * to use as a loop cursor.
++ * @n:        another type * to use as temporary storage
++ * @head:    the head for your list.
++ * @member:    the name of the list_struct within the struct.
++ *
++ * Iterate over list of given type, continuing after current point,
++ * safe against removal of list entry.
++ */
++#define list_for_each_entry_safe_continue(pos, n, head, member)         \
++    for (pos = list_entry(pos->member.next, typeof(*pos), member),         \
++        n = list_entry(pos->member.next, typeof(*pos), member);        \
++         &pos->member != (head);                        \
++         pos = n, n = list_entry(n->member.next, typeof(*n), member))
++
++/**
++ * list_for_each_entry_safe_from - iterate over list from current point safe against removal
++ * @pos:    the type * to use as a loop cursor.
++ * @n:        another type * to use as temporary storage
++ * @head:    the head for your list.
++ * @member:    the name of the list_struct within the struct.
++ *
++ * Iterate over list of given type from current point, safe against
++ * removal of list entry.
++ */
++#define list_for_each_entry_safe_from(pos, n, head, member)             \
++    for (n = list_entry(pos->member.next, typeof(*pos), member);        \
++         &pos->member != (head);                        \
++         pos = n, n = list_entry(n->member.next, typeof(*n), member))
++
++/**
++ * list_for_each_entry_safe_reverse - iterate backwards over list safe against removal
++ * @pos:    the type * to use as a loop cursor.
++ * @n:        another type * to use as temporary storage
++ * @head:    the head for your list.
++ * @member:    the name of the list_struct within the struct.
++ *
++ * Iterate backwards over list of given type, safe against removal
++ * of list entry.
++ */
++#define list_for_each_entry_safe_reverse(pos, n, head, member)        \
++    for (pos = list_entry((head)->prev, typeof(*pos), member),    \
++        n = list_entry(pos->member.prev, typeof(*pos), member);    \
++         &pos->member != (head);                     \
++         pos = n, n = list_entry(n->member.prev, typeof(*n), member))
++
++/**
++ * list_safe_reset_next - reset a stale list_for_each_entry_safe loop
++ * @pos:    the loop cursor used in the list_for_each_entry_safe loop
++ * @n:        temporary storage used in list_for_each_entry_safe
++ * @member:    the name of the list_struct within the struct.
++ *
++ * list_safe_reset_next is not safe to use in general if the list may be
++ * modified concurrently (eg. the lock is dropped in the loop body). An
++ * exception to this is if the cursor element (pos) is pinned in the list,
++ * and list_safe_reset_next is called after re-taking the lock and before
++ * completing the current iteration of the loop body.
++ */
++#define list_safe_reset_next(pos, n, member)                \
++    n = list_entry(pos->member.next, typeof(*pos), member)
++
++/*
++ * Double linked lists with a single pointer list head.
++ * Mostly useful for hash tables where the two pointer list head is
++ * too wasteful.
++ * You lose the ability to access the tail in O(1).
++ */
++
++#define HLIST_HEAD_INIT { .first = NULL }
++#define HLIST_HEAD(name) struct hlist_head name = {  .first = NULL }
++#define INIT_HLIST_HEAD(ptr) ((ptr)->first = NULL)
++static inline void INIT_HLIST_NODE(struct hlist_node *h)
++{
++    h->next = NULL;
++    h->pprev = NULL;
++}
++
++static inline int hlist_unhashed(const struct hlist_node *h)
++{
++    return !h->pprev;
++}
++
++static inline int hlist_empty(const struct hlist_head *h)
++{
++    return !h->first;
++}
++
++static inline void __hlist_del(struct hlist_node *n)
++{
++    struct hlist_node *next = n->next;
++    struct hlist_node **pprev = n->pprev;
++    *pprev = next;
++    if (next)
++        next->pprev = pprev;
++}
++
++static inline void hlist_del(struct hlist_node *n)
++{
++    __hlist_del(n);
++    n->next = LIST_POISON1;
++    n->pprev = LIST_POISON2;
++}
++
++static inline void hlist_del_init(struct hlist_node *n)
++{
++    if (!hlist_unhashed(n)) {
++        __hlist_del(n);
++        INIT_HLIST_NODE(n);
++    }
++}
++
++static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
++{
++    struct hlist_node *first = h->first;
++    n->next = first;
++    if (first)
++        first->pprev = &n->next;
++    h->first = n;
++    n->pprev = &h->first;
++}
++
++/* next must be != NULL */
++static inline void hlist_add_before(struct hlist_node *n,
++                    struct hlist_node *next)
++{
++    n->pprev = next->pprev;
++    n->next = next;
++    next->pprev = &n->next;
++    *(n->pprev) = n;
++}
++
++static inline void hlist_add_after(struct hlist_node *n,
++                    struct hlist_node *next)
++{
++    next->next = n->next;
++    n->next = next;
++    next->pprev = &n->next;
++
++    if(next->next)
++        next->next->pprev  = &next->next;
++}
++
++/* after that we'll appear to be on some hlist and hlist_del will work */
++static inline void hlist_add_fake(struct hlist_node *n)
++{
++    n->pprev = &n->next;
++}
++
++/*
++ * Move a list from one list head to another. Fixup the pprev
++ * reference of the first entry if it exists.
++ */
++static inline void hlist_move_list(struct hlist_head *old,
++                   struct hlist_head *new)
++{
++    new->first = old->first;
++    if (new->first)
++        new->first->pprev = &new->first;
++    old->first = NULL;
++}
++
++#define hlist_entry(ptr, type, member) container_of(ptr,type,member)
++
++#define hlist_for_each(pos, head) \
++    for (pos = (head)->first; pos ; pos = pos->next)
++
++#define hlist_for_each_safe(pos, n, head) \
++    for (pos = (head)->first; pos && ({ n = pos->next; 1; }); \
++         pos = n)
++
++/**
++ * hlist_for_each_entry    - iterate over list of given type
++ * @tpos:    the type * to use as a loop cursor.
++ * @pos:    the &struct hlist_node to use as a loop cursor.
++ * @head:    the head for your list.
++ * @member:    the name of the hlist_node within the struct.
++ */
++#define hlist_for_each_entry(tpos, pos, head, member)             \
++    for (pos = (head)->first;                     \
++         pos &&                             \
++        ({ tpos = hlist_entry(pos, typeof(*tpos), member); 1;}); \
++         pos = pos->next)
++
++/**
++ * hlist_for_each_entry_continue - iterate over a hlist continuing after current point
++ * @tpos:    the type * to use as a loop cursor.
++ * @pos:    the &struct hlist_node to use as a loop cursor.
++ * @member:    the name of the hlist_node within the struct.
++ */
++#define hlist_for_each_entry_continue(tpos, pos, member)         \
++    for (pos = (pos)->next;                         \
++         pos &&                             \
++        ({ tpos = hlist_entry(pos, typeof(*tpos), member); 1;}); \
++         pos = pos->next)
++
++/**
++ * hlist_for_each_entry_from - iterate over a hlist continuing from current point
++ * @tpos:    the type * to use as a loop cursor.
++ * @pos:    the &struct hlist_node to use as a loop cursor.
++ * @member:    the name of the hlist_node within the struct.
++ */
++#define hlist_for_each_entry_from(tpos, pos, member)             \
++    for (; pos &&                             \
++        ({ tpos = hlist_entry(pos, typeof(*tpos), member); 1;}); \
++         pos = pos->next)
++
++/**
++ * hlist_for_each_entry_safe - iterate over list of given type safe against removal of list entry
++ * @tpos:    the type * to use as a loop cursor.
++ * @pos:    the &struct hlist_node to use as a loop cursor.
++ * @n:        another &struct hlist_node to use as temporary storage
++ * @head:    the head for your list.
++ * @member:    the name of the hlist_node within the struct.
++ */
++#define hlist_for_each_entry_safe(tpos, pos, n, head, member)          \
++    for (pos = (head)->first;                     \
++         pos && ({ n = pos->next; 1; }) &&                  \
++        ({ tpos = hlist_entry(pos, typeof(*tpos), member); 1;}); \
++         pos = n)
++
++#endif
+diff --git a/emulation/linux/mm.h b/emulation/linux/mm.h
+new file mode 100644
+index 00000000..dbb8b71e
+--- /dev/null
++++ b/emulation/linux/mm.h
+@@ -0,0 +1,4 @@
++#ifndef _LINUX_MM_H
++#define _LINUX_MM_H
++
++#endif
+diff --git a/emulation/linux/module.h b/emulation/linux/module.h
+new file mode 100644
+index 00000000..385ba105
+--- /dev/null
++++ b/emulation/linux/module.h
+@@ -0,0 +1,29 @@
++#ifndef _LINUX_MODULE_H
++#define _LINUX_MODULE_H
++
++#include <string.h>
++#include <linux/printk.h>
++#include <linux/vmalloc.h>
++
++#define simple_strtoul strtoul
++
++#define THIS_MODULE NULL
++#define MODULE_AUTHOR(AUTHOR)
++#define MODULE_DESCRIPTION(DESCRIPTION)
++#define MODULE_LICENSE(LICENSE)
++#define MODULE_VERSION(VERSION)
++#define module_param_named(NAME, VALUE, TPYE, PERM)
++#define module_param_array(NAME, TYPE, NUMP, PERM)
++#define MODULE_PARM_DESC(PARM, DESC)
++#define __init
++#define __exit
++#define module_init(FUNC)
++#define module_exit(FUNC)
++#define EXPORT_SYMBOL(SYMBOL)
++
++struct module;
++
++#define try_module_get(MODULE) ((MODULE)==(MODULE))
++#define module_put(MODULE)  (void)((MODULE)==(MODULE))
++
++#endif
+diff --git a/emulation/linux/netdevice.h b/emulation/linux/netdevice.h
+new file mode 100644
+index 00000000..e79d2d79
+--- /dev/null
++++ b/emulation/linux/netdevice.h
+@@ -0,0 +1,265 @@
++#ifndef _LINUX_NETDEVICE_H
++#define _LINUX_NETDEVICE_H
++
++#include "globals.h"
++#include <stdint.h>
++#include <unistd.h>
++#include <sys/fcntl.h>
++#include <sys/ioctl.h>
++#include <ifaddrs.h>
++#include <net/if.h>
++#include <arpa/inet.h>
++#include <linux/types.h>
++#include <linux/module.h>
++#include <linux/device.h>
++#include <linux/if_arp.h>
++#include <linux/if_ether.h>
++#include <linux/if_packet.h>
++#include <linux/if_tun.h>
++
++# define errno (*__errno_location ())
++#define read_lock(LOCK)
++#define read_unlock(LOCK)
++
++#define ARPHRD_ETHER  1               /* Ethernet 10Mbps */
++#define NET_NAME_UNKNOWN  0
++
++struct net_device_stats
++{
++    unsigned long   rx_packets;
++    unsigned long   tx_packets;
++    unsigned long   rx_bytes;
++    unsigned long   tx_bytes;
++    unsigned long   rx_errors;
++    unsigned long   tx_errors;
++    unsigned long   rx_dropped;
++    unsigned long   tx_dropped;
++};
++
++struct net_device_ops
++{
++    int (*ndo_open)(struct net_device *dev);
++    int (*ndo_stop)(struct net_device *dev);
++    int (*ndo_start_xmit)(struct sk_buff *skb, struct net_device *dev);
++    struct net_device_stats *(*ndo_get_stats)(struct net_device *dev);
++};
++
++struct net_device
++{
++    char name[IFNAMSIZ];
++    int ifindex;
++    unsigned short type;
++    unsigned char dev_addr[ETH_ALEN];
++    int opened;
++    int tap_socket;
++    const struct net_device_ops *netdev_ops;
++    void *private_data;
++    unsigned char read_buffer[ETH_DATA_LEN];
++};
++
++static inline struct net_device *alloc_netdev(int priv_size, const char *name, unsigned char name_assign_type, void (*setup)(struct net_device *))
++{
++    struct net_device *r = malloc(sizeof(struct net_device));
++    if (!r)
++        return NULL;
++    memset(r, 0, sizeof(*r));
++    ec_strncpy(r->name, name, sizeof(r->name));
++    r->tap_socket = -1;
++    r->private_data = malloc(priv_size);
++    if (priv_size && !r->private_data) {
++        free(r);
++        return NULL;
++    }
++    setup(r);
++    return r;
++}
++
++static inline void ether_setup(struct net_device *netdev)
++{
++}
++
++static inline struct net_device *make_netdev(struct ifaddrs *a)
++{
++    if (!a->ifa_addr || a->ifa_addr->sa_family != PF_PACKET)
++        return NULL;
++    struct net_device *r = alloc_netdev(0, a->ifa_name, 0, ether_setup);
++    if (!r)
++        return NULL;
++    memcpy(r->dev_addr, a->ifa_addr->sa_data + 10, ETH_ALEN);
++    r->type = ARPHRD_ETHER;
++    r->ifindex = if_nametoindex(a->ifa_name);
++    return r;
++}
++
++#define for_each_netdev(DUMMY, DEV) \
++    struct ifaddrs *interfaces, *a; \
++    if (getifaddrs(&interfaces) == 0) \
++        for (a = interfaces; a || (freeifaddrs(interfaces), 0); a = a->ifa_next) \
++            if ((DEV = make_netdev(a)))
++
++static inline void free_netdev(struct net_device *dev)
++{
++    free(dev->private_data);
++    free(dev);
++}
++
++static inline void *netdev_priv(const struct net_device *dev)
++{
++    return dev->private_data;
++}
++
++#define NETDEV_TX_OK 0
++#define NETDEV_TX_BUSY 1
++
++#define netif_carrier_ok(DEV) 1
++#define netif_start_queue(DEV)
++#define netif_stop_queue(DEV)
++#define netif_wake_queue(DEV)
++
++static inline int register_netdev(struct net_device *dev)
++{
++    dev->tap_socket = open("/dev/net/tun", O_RDWR);
++    if (dev->tap_socket < 0)
++        return -errno;
++    int flags = fcntl(dev->tap_socket, F_GETFL, 0);
++    if (flags < 0
++        || fcntl(dev->tap_socket, F_SETFL, flags | O_NONBLOCK) < 0) {
++        close(dev->tap_socket);
++        return -errno;
++    }
++
++    struct ifreq ifr;
++    memset(&ifr, 0, sizeof(ifr));
++    ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
++    ec_strncpy(ifr.ifr_name, dev->name, sizeof(ifr.ifr_name));
++    if (ioctl(dev->tap_socket, TUNSETIFF, &ifr) < 0) {
++        close(dev->tap_socket);
++        return -errno;
++    }
++
++    return 0;
++}
++
++static inline void unregister_netdev(struct net_device *dev)
++{
++    if (dev->opened && dev->netdev_ops)
++        dev->netdev_ops->ndo_stop(dev);
++    dev->opened = 0;
++    if (dev->tap_socket >= 0) {
++        close(dev->tap_socket);
++        dev->tap_socket = -1;
++    }
++}
++
++/* Unlike actual kernel net devices, this function must be called
++   regularly to obtain packets to transmit. */
++static inline void netif_run(struct net_device *dev)
++{
++    if (!dev->netdev_ops || dev->tap_socket < 0)
++        return;
++    if (!dev->opened) {
++        dev->netdev_ops->ndo_open(dev);
++        dev->opened = 1;
++    }
++    ssize_t r = read(dev->tap_socket,dev->read_buffer,sizeof(dev->read_buffer));
++    if (r > 0) {
++        struct sk_buff *skb = dev_alloc_skb(r);
++        memcpy(skb_put(skb, r), dev->read_buffer, r);
++        int t = dev->netdev_ops->ndo_start_xmit(skb, dev);
++        (void)t;
++#if EOE_DEBUG_LEVEL >= 1 && defined(EC_DBG) && defined(__KERNEL__)
++        EC_DBG("%s: transmit packet of %zi bytes %s\n", dev->name, r,
++            t == NETDEV_TX_OK ? "OK" : "dropped");
++#if EOE_DEBUG_LEVEL >= 3
++        ec_print_data(dev->read_buffer, r);
++#endif
++#endif
++    }
++}
++
++static inline int netif_rx(struct sk_buff *skb)
++{
++    ssize_t r = write(skb->dev->tap_socket, skb->data, skb->len);
++#if EOE_DEBUG_LEVEL >= 1 && defined(EC_DBG) && defined(__KERNEL__)
++    EC_DBG("%s: received packet of %zi bytes %s\n", skb->dev->name, r,
++        r == skb->len ? "OK" : r > 0 ? "truncated" : "dropped");
++#if EOE_DEBUG_LEVEL >= 3
++    ec_print_data(skb->data, skb->len);
++#endif
++#endif
++    return r == skb->len ? 0 : -1;
++}
++
++struct socket
++{
++    int fd;
++};
++
++#define kvec iovec
++
++static inline int netif_up(struct socket *sock, const char *name)
++{
++    struct ifreq ifr;
++    ec_strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
++    if (ioctl(sock->fd, SIOCGIFFLAGS, &ifr) < 0)
++        return -errno;
++    ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
++    if (ioctl(sock->fd, SIOCSIFFLAGS, &ifr) < 0)
++        return -errno;
++    return 0;
++}
++
++static inline int sock_create_kern(void *p, int family, int type, int proto,
++                    struct socket **res)
++{
++    struct socket *r = malloc(sizeof(struct socket));
++    if (!r)
++        return -ENOMEM;
++    r->fd = socket(family, type, proto);
++    if (r->fd < 0) {
++        printk(KERN_ERR "socket: %s\n", strerror(errno));
++        free(r);
++        return -errno;
++    }
++    *res = r;
++    return 0;
++}
++
++static inline void sock_release(struct socket *sock)
++{
++    if (!sock)
++        return;
++    close(sock->fd);
++    free(sock);
++}
++
++static inline int kernel_bind(struct socket *sock, struct sockaddr *address, socklen_t size)
++{
++    struct sockaddr_ll *sa = (struct sockaddr_ll *)address;
++    sa->sll_hatype = ARPHRD_ETHER;
++    sa->sll_pkttype = PACKET_OTHERHOST;
++    sa->sll_halen = ETH_ALEN;
++    int r = bind(sock->fd, address, size);
++    return r < 0 ? -errno : r;
++}
++
++static inline int kernel_recvmsg(struct socket *sock, struct msghdr *msg,
++                    struct kvec *vec, size_t num, size_t len, int flags)
++{
++    msg->msg_iov = vec;
++    msg->msg_iovlen = num;
++    ssize_t r = recvmsg(sock->fd, msg, flags);
++    return r < 0 ? -errno : r;
++}
++
++static inline int kernel_sendmsg(struct socket *sock, struct msghdr *msg,
++                    struct kvec *vec, size_t num, size_t len)
++{
++    msg->msg_iov = vec;
++    msg->msg_iovlen = num;
++    ssize_t r = sendmsg(sock->fd, msg, 0);
++    return r < 0 ? -errno : r;
++}
++
++#undef errno
++#endif
+diff --git a/emulation/linux/printk.h b/emulation/linux/printk.h
+new file mode 100644
+index 00000000..7d55af7f
+--- /dev/null
++++ b/emulation/linux/printk.h
+@@ -0,0 +1,15 @@
++#ifndef _LINUX_PRINTK_H
++#define _LINUX_PRINTK_H
++
++#include <stdio.h>
++
++#define KERN_ERR	"[ERROR] "
++#define KERN_WARNING	"[WARNING] "
++#define KERN_INFO	"[INFO] "
++#define KERN_DEBUG	"[DEBUG] "
++
++#define printk(...) fprintf(stderr, __VA_ARGS__)
++
++#define printk_ratelimit() 1
++
++#endif
+diff --git a/emulation/linux/semaphore.h b/emulation/linux/semaphore.h
+new file mode 100644
+index 00000000..037feb39
+--- /dev/null
++++ b/emulation/linux/semaphore.h
+@@ -0,0 +1,23 @@
++#ifndef _LINUX_SEMAPHORE_H
++#define _LINUX_SEMAPHORE_H
++
++#include <pthread.h>
++
++struct semaphore
++{
++    pthread_mutex_t mutex;
++};
++
++#define sema_init(SEM, N) \
++    ((void) (void (*)(int[N == 1 ? 1 : -1])) NULL,  /* we only support N == 1 */ \
++     pthread_mutex_init(&(SEM)->mutex, NULL))
++#define down(SEM) pthread_mutex_lock(&(SEM)->mutex)
++#define down_interruptible(SEM) (down(SEM), 0)
++#define up(SEM) pthread_mutex_unlock(&(SEM)->mutex)
++
++typedef pthread_mutex_t spinlock_t;
++#define SPIN_LOCK_UNLOCKED (spinlock_t) PTHREAD_MUTEX_INITIALIZER
++#define spin_lock_bh pthread_mutex_lock
++#define spin_unlock_bh pthread_mutex_unlock
++
++#endif
+diff --git a/emulation/linux/skbuff.h b/emulation/linux/skbuff.h
+new file mode 100644
+index 00000000..569d5768
+--- /dev/null
++++ b/emulation/linux/skbuff.h
+@@ -0,0 +1,60 @@
++#ifndef _LINUX_SK_BUFF_H
++#define _LINUX_SK_BUFF_H
++
++#include <stdlib.h>
++
++#define CHECKSUM_UNNECESSARY 1
++
++struct sk_buff
++{
++    unsigned int        len;
++    unsigned char       *head, *data, *tail;
++    struct net_device   *dev;
++    int                 ip_summed;
++    uint16_t            protocol;
++};
++
++#define eth_type_trans(SKB, DEV) 0
++
++static inline struct sk_buff *dev_alloc_skb(unsigned int length)
++{
++    struct sk_buff *buf = malloc(sizeof(struct sk_buff));
++    if(!buf)
++        return buf;
++    buf->len = 0;
++    buf->data = buf->head = buf->tail = malloc(length);
++    if (!buf->head) {
++        free(buf);
++        return NULL;
++    }
++    return buf;
++}
++
++static inline void dev_kfree_skb(struct sk_buff *skb)
++{
++    free(skb->head);
++    free(skb);
++}
++
++static inline void skb_reserve(struct sk_buff *skb, int len)
++{
++    skb->data += len;
++    skb->tail += len;
++}
++
++static inline unsigned char *skb_push(struct sk_buff *skb, unsigned int len)
++{
++    skb->data -= len;
++    skb->len  += len;
++    return skb->data;
++}
++
++static inline unsigned char *skb_put(struct sk_buff *skb, unsigned int len)
++{
++    unsigned char *tmp = skb->tail;
++    skb->tail += len;
++    skb->len  += len;
++    return tmp;
++}
++
++#endif
+diff --git a/emulation/linux/slab.h b/emulation/linux/slab.h
+new file mode 100644
+index 00000000..cbd8b084
+--- /dev/null
++++ b/emulation/linux/slab.h
+@@ -0,0 +1,6 @@
++#ifndef _LINUX_SLAB_H
++#define _LINUX_SLAB_H
++
++#include <linux/vmalloc.h>
++
++#endif
+diff --git a/emulation/linux/time.h b/emulation/linux/time.h
+new file mode 100644
+index 00000000..32d499fb
+--- /dev/null
++++ b/emulation/linux/time.h
+@@ -0,0 +1,7 @@
++#ifndef _LINUX_TIME_H
++#define _LINUX_TIME_H
++
++#include <sys/time.h>
++#include <linux/jiffies.h>
++
++#endif
+diff --git a/emulation/linux/timer.h b/emulation/linux/timer.h
+new file mode 100644
+index 00000000..dabb2d1a
+--- /dev/null
++++ b/emulation/linux/timer.h
+@@ -0,0 +1,4 @@
++#ifndef _LINUX_TIMER_H
++#define _LINUX_TIMER_H
++
++#endif
+diff --git a/emulation/linux/vmalloc.h b/emulation/linux/vmalloc.h
+new file mode 100644
+index 00000000..0715569d
+--- /dev/null
++++ b/emulation/linux/vmalloc.h
+@@ -0,0 +1,19 @@
++#ifndef _LINUX_VMALLOC_H
++#define _LINUX_VMALLOC_H
++
++#include <linux/err.h>
++#include <linux/printk.h>
++#include <stdlib.h>
++#include <string.h>
++
++#define kmalloc(SIZE, MODE) malloc(SIZE)
++#define kfree free
++#define vmalloc malloc
++#define vfree free
++
++#define __user
++
++#define put_user(x, ptr) ((*ptr) = (x), 0)
++#define get_user(x, ptr) ((x) = (*ptr), 0)
++
++#endif
+diff --git a/emulation/linux/wait.h b/emulation/linux/wait.h
+new file mode 100644
+index 00000000..66df6f22
+--- /dev/null
++++ b/emulation/linux/wait.h
+@@ -0,0 +1,38 @@
++#ifndef _LINUX_WAIT_H
++#define _LINUX_WAIT_H
++
++#include <pthread.h>
++
++struct __wait_queue_head
++{
++    pthread_cond_t cond;
++    pthread_mutex_t mutex;
++};
++typedef struct __wait_queue_head wait_queue_head_t;
++
++static inline void init_waitqueue_head(wait_queue_head_t *queue)
++{
++    pthread_cond_init(&queue->cond, NULL);
++    pthread_mutex_init(&queue->mutex, NULL);
++}
++
++#define wait_event_interruptible wait_event
++#define wait_event(QUEUE, COND) \
++({ \
++    pthread_mutex_lock(&(QUEUE).mutex); \
++    while (!(COND)) \
++        pthread_cond_wait(&(QUEUE).cond, &(QUEUE).mutex); \
++    pthread_mutex_unlock(&(QUEUE).mutex); \
++    0; \
++})
++
++#define wake_up_interruptible wake_up
++#define wake_up_all wake_up
++static inline void wake_up (wait_queue_head_t *queue)
++{
++    pthread_mutex_lock(&queue->mutex);
++    pthread_cond_broadcast(&queue->cond);
++    pthread_mutex_unlock(&queue->mutex);
++};
++
++#endif
+diff --git a/globals.h b/globals.h
+index b5927729..3460e348 100644
+--- a/globals.h
++++ b/globals.h
+@@ -60,5 +60,16 @@
+ #define EC_MASTER_VERSION VERSION " " EC_STR(REV)
+ 
+ /*****************************************************************************/
++#ifdef EC_MASTER_IN_USERSPACE
++// Always 0-terminate dest; avoid newer GCC's warnings about strncpy when possibly truncating.
++static inline void ec_strncpy(char *dest, const char *src, unsigned long int n)
++{
++  char *end = dest + n;
++  while (dest + 1 < end && *src)
++    *dest++ = *src++;
++  while (dest < end)
++    *dest++ = 0;
++}
++#endif  /* EC_MASTER_IN_USERSPACE */
+ 
+ #endif
+diff --git a/include/ecrt.h b/include/ecrt.h
+index 283adf06..696ca3b3 100644
+--- a/include/ecrt.h
++++ b/include/ecrt.h
+@@ -540,6 +540,13 @@ typedef enum {
+ extern "C" {
+ #endif
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++int ecrt_init(unsigned int master_count_, const char *const *master_macs,
++              unsigned int backup_count_, const char *const *backup_macs,
++              unsigned int debug_level_);
++void ecrt_done(void);
++#endif
++
+ /** Returns the version magic of the realtime interface.
+  *
+  * \return Value of ECRT_VERSION_MAGIC() at EtherCAT master compile time.
+@@ -617,7 +624,7 @@ int ecrt_master_reserve(
+ 
+ #endif // #ifndef __KERNEL__
+ 
+-#ifdef __KERNEL__
++#if defined(__KERNEL__) || defined(EC_MASTER_IN_USERSPACE)
+ 
+ /** Sets the locking callbacks.
+  *
+@@ -1649,7 +1656,7 @@ size_t ecrt_domain_size(
+         const ec_domain_t *domain /**< Domain. */
+         );
+ 
+-#ifdef __KERNEL__
++#if defined(__KERNEL__) || defined(EC_MASTER_IN_USERSPACE)
+ 
+ /** Provide external memory to store the domain's process data.
+  *
+@@ -2057,7 +2064,7 @@ void ecrt_reg_request_read(
+  * Byte-swapping functions for user space
+  *****************************************************************************/
+ 
+-#ifndef __KERNEL__
++#if defined(EC_MASTER_IN_USERSPACE) || !defined(__KERNEL__)
+ 
+ #if __BYTE_ORDER == __LITTLE_ENDIAN
+ 
+diff --git a/lib/Makefile.am b/lib/Makefile.am
+index 1b08d93a..f062589c 100644
+--- a/lib/Makefile.am
++++ b/lib/Makefile.am
+@@ -53,6 +53,10 @@ noinst_HEADERS = \
+ libethercat_la_CFLAGS = -fno-strict-aliasing -Wall
+ libethercat_la_LDFLAGS = -version-info 1:0:0
+ 
++if ENABLE_USERSPACE_MASTER
++libethercat_la_CFLAGS += -DEC_MASTER_IN_USERSPACE
++endif
++
+ #------------------------------------------------------------------------------
+ 
+ if ENABLE_RTDM
+diff --git a/lib/common.c b/lib/common.c
+index 853f232c..1d37863d 100644
+--- a/lib/common.c
++++ b/lib/common.c
+@@ -41,6 +41,10 @@
+ #include "ioctl.h"
+ #include "master.h"
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++#include "master/ioctl.h"
++#endif
++
+ /*****************************************************************************/
+ 
+ unsigned int ecrt_version_magic(void)
+@@ -70,10 +74,12 @@ ec_master_t *ecrt_request_master(unsigned int master_index)
+ 
+ ec_master_t *ecrt_open_master(unsigned int master_index)
+ {
+-    char path[MAX_PATH_LEN];
+     ec_master_t *master = NULL;
++#ifndef EC_MASTER_IN_USERSPACE
++    char path[MAX_PATH_LEN];
+     ec_ioctl_module_t module_data;
+     int ret;
++#endif
+ 
+     master = malloc(sizeof(ec_master_t));
+     if (!master) {
+@@ -86,6 +92,10 @@ ec_master_t *ecrt_open_master(unsigned int master_index)
+     master->first_domain = NULL;
+     master->first_config = NULL;
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    master->fd = ioctl_usecat_open(master_index, NULL);
++    return master;
++#else
+     snprintf(path, MAX_PATH_LEN - 1,
+ #ifdef USE_RTDM
+             "EtherCAT%u",
+@@ -125,6 +135,7 @@ ec_master_t *ecrt_open_master(unsigned int master_index)
+ out_clear:
+     ec_master_clear(master);
+     free(master);
++#endif  /* EC_MASTER_IN_USERSPACE */
+     return 0;
+ }
+ 
+diff --git a/lib/domain.c b/lib/domain.c
+index 1ee838b8..0524d88f 100644
+--- a/lib/domain.c
++++ b/lib/domain.c
+@@ -80,7 +80,7 @@ size_t ecrt_domain_size(const ec_domain_t *domain)
+ {
+     int ret;
+ 
+-    ret = ioctl(domain->master->fd, EC_IOCTL_DOMAIN_SIZE, domain->index);
++    ret = ioctl_l(domain->master->fd, EC_IOCTL_DOMAIN_SIZE, domain->index);
+     if (EC_IOCTL_IS_ERROR(ret)) {
+         fprintf(stderr, "Failed to get domain size: %s\n",
+                 strerror(EC_IOCTL_ERRNO(ret)));
+@@ -96,7 +96,7 @@ uint8_t *ecrt_domain_data(ec_domain_t *domain)
+     if (!domain->process_data) {
+         int offset = 0;
+ 
+-        offset = ioctl(domain->master->fd, EC_IOCTL_DOMAIN_OFFSET,
++        offset = ioctl_l(domain->master->fd, EC_IOCTL_DOMAIN_OFFSET,
+                 domain->index);
+         if (EC_IOCTL_IS_ERROR(offset)) {
+             fprintf(stderr, "Failed to get domain offset: %s\n",
+@@ -116,7 +116,7 @@ void ecrt_domain_process(ec_domain_t *domain)
+ {
+     int ret;
+ 
+-    ret = ioctl(domain->master->fd, EC_IOCTL_DOMAIN_PROCESS, domain->index);
++    ret = ioctl_l(domain->master->fd, EC_IOCTL_DOMAIN_PROCESS, domain->index);
+     if (EC_IOCTL_IS_ERROR(ret)) {
+         fprintf(stderr, "Failed to process domain: %s\n",
+                 strerror(EC_IOCTL_ERRNO(ret)));
+@@ -129,7 +129,7 @@ void ecrt_domain_queue(ec_domain_t *domain)
+ {
+     int ret;
+ 
+-    ret = ioctl(domain->master->fd, EC_IOCTL_DOMAIN_QUEUE, domain->index);
++    ret = ioctl_l(domain->master->fd, EC_IOCTL_DOMAIN_QUEUE, domain->index);
+     if (EC_IOCTL_IS_ERROR(ret)) {
+         fprintf(stderr, "Failed to queue domain: %s\n",
+                 strerror(EC_IOCTL_ERRNO(ret)));
+diff --git a/lib/ioctl.h b/lib/ioctl.h
+index c79a9a26..dc28f374 100644
+--- a/lib/ioctl.h
++++ b/lib/ioctl.h
+@@ -45,6 +45,24 @@
+ 
+ /*****************************************************************************/
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++static inline int ioctl_us_ecat(int fd, unsigned int cmd, void *arg, int len, int flag)
++{
++    printf("%s: IOCTL haven't be supported!\n", __func__);
++
++    if (flag && arg)
++        memset(arg, 0, len);
++
++    return 0;
++}
++#define ioctl(x, y, z) ioctl_us_ecat(x, y, ((void*)(z)), sizeof(*z), 1)
++#define ioctl_l(x, y, z) ioctl_us_ecat(x, y, ((void*)(uint64_t)(z)), sizeof(z), 0)
++
++#define EC_IOCTL_IS_ERROR(X) ((X) == -1)
++#define EC_IOCTL_ERRNO(X) (X)
++#else /* EC_MASTER_IN_USERSPACE */
++
++#define ioctl_l ioctl
+ #ifdef USE_RTDM
+ 
+ #define ioctl rt_dev_ioctl
+@@ -64,6 +82,7 @@
+ #include <errno.h>
+ 
+ #endif
++#endif /* EC_MASTER_IN_USERSPACE */
+ 
+ /*****************************************************************************/
+ 
+diff --git a/lib/libethercat.pc.in b/lib/libethercat.pc.in
+new file mode 100644
+index 00000000..48efb05d
+--- /dev/null
++++ b/lib/libethercat.pc.in
+@@ -0,0 +1,10 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++libdir=@libdir@
++includedir=@includedir@
++
++Name: libethercat
++Description: EtherCAT userspace library
++Version: @VERSION@
++Libs: -L${libdir} -lethercat
++Cflags: -I${includedir} -fno-strict-aliasing -DEC_MASTER_IN_USERSPACE
+diff --git a/lib/master.c b/lib/master.c
+index b4809914..dc6f77ce 100644
+--- a/lib/master.c
++++ b/lib/master.c
+@@ -215,7 +215,7 @@ int ecrt_master_select_reference_clock(ec_master_t *master,
+         config_index = 0xFFFFFFFF;
+     }
+ 
+-    ret = ioctl(master->fd, EC_IOCTL_SELECT_REF_CLOCK, config_index);
++    ret = ioctl_l(master->fd, EC_IOCTL_SELECT_REF_CLOCK, config_index);
+     if (EC_IOCTL_IS_ERROR(ret)) {
+         fprintf(stderr, "Failed to select reference clock: %s\n",
+                 strerror(EC_IOCTL_ERRNO(ret)));
+@@ -547,6 +547,11 @@ int ecrt_master_activate(ec_master_t *master)
+     master->process_data_size = io.process_data_size;
+ 
+     if (master->process_data_size) {
++#ifdef EC_MASTER_IN_USERSPACE
++        master->process_data = MAP_FAILED;  // not yet supported
++        errno = EINVAL;
++        fprintf(stderr, "Failed! Not yet supported for Userspace Case!\n");
++#else  /* EC_MASTER_IN_USERSPACE */
+ #ifdef USE_RTDM
+         /* memory-mapping was already done in kernel. The user-space addess is
+          * provided in the ioctl data.
+@@ -563,6 +568,7 @@ int ecrt_master_activate(ec_master_t *master)
+             return -errno;
+         }
+ #endif
++#endif  /* EC_MASTER_IN_USERSPACE */
+ 
+         // Access the mapped region to cause the initial page fault
+         master->process_data[0] = 0x00;
+diff --git a/master/Makefile.am b/master/Makefile.am
+index ab855f61..e9cb23f5 100644
+--- a/master/Makefile.am
++++ b/master/Makefile.am
+@@ -91,3 +91,76 @@ clean-local:
+ 	$(MAKE) -C "$(LINUX_SOURCE_DIR)" M="@abs_srcdir@" clean
+ 
+ #------------------------------------------------------------------------------
++
++# user-space library
++if ENABLE_USERSPACE_MASTER
++
++lib_LTLIBRARIES = libethercat_master.la
++
++pkgconfigdir = $(libdir)/pkgconfig
++pkgconfig_DATA = libethercat_master.pc
++EXTRA_DIST += libethercat_master.pc.in
++
++libethercat_master_la_LDFLAGS = -version-info 1:0:0
++
++libethercat_master_la_CFLAGS = -I$(srcdir)/.. \
++	-I../emulation \
++	-D__KERNEL__ \
++	-DEC_HAVE_CYCLES \
++	-DEC_USE_HRTIMER \
++	-DEC_MASTER_IN_USERSPACE \
++	-Wall -Werror \
++	-fno-strict-aliasing
++
++libethercat_master_la_SOURCES = \
++	cdev.c \
++	coe_emerg_ring.c \
++	datagram.c \
++	datagram_pair.c \
++	device.c \
++	domain.c \
++	fmmu_config.c \
++	foe_request.c \
++	fsm_change.c \
++	fsm_coe.c \
++	fsm_foe.c \
++	fsm_master.c \
++	fsm_pdo.c \
++	fsm_pdo_entry.c \
++	fsm_sii.c \
++	fsm_slave.c \
++	fsm_slave_config.c \
++	fsm_slave_scan.c \
++	fsm_soe.c \
++	ioctl.c \
++	mailbox.c \
++	master.c \
++	module.c \
++	pdo.c \
++	pdo_entry.c \
++	pdo_list.c \
++	reg_request.c \
++	sdo.c \
++	sdo_entry.c \
++	sdo_request.c \
++	slave.c \
++	slave_config.c \
++	soe_errors.c \
++	soe_request.c \
++	sync.c \
++	sync_config.c \
++	voe_handler.c \
++	../devices/generic.c
++if ENABLE_EOE
++libethercat_master_la_SOURCES += ethernet.c
++endif
++
++# ethercat_master backend program
++bin_PROGRAMS = ethercat_master
++EXTRA_ethercat_master_DEPENDENCIES = $(lib_LTLIBRARIES)
++
++ethercat_master_SOURCES = ethercat_master.c
++ethercat_master_LDADD = -lethercat_master -lpthread
++ethercat_master_CFLAGS = -fno-strict-aliasing -DEC_MASTER_IN_USERSPACE -Wall -Werror
++
++endif
+diff --git a/master/cdev.c b/master/cdev.c
+index 7ded08e4..f16226e8 100644
+--- a/master/cdev.c
++++ b/master/cdev.c
+@@ -51,6 +51,50 @@
+ 
+ /*****************************************************************************/
+ 
++/** Private data structure for file handles.
++ */
++typedef struct {
++    ec_cdev_t *cdev; /**< Character device. */
++    ec_ioctl_context_t ctx; /**< Context. */
++} ec_cdev_priv_t;
++
++/*****************************************************************************/
++
++#ifdef EC_MASTER_IN_USERSPACE
++
++static ec_master_t *sec_masters[MAX_MASTER_NUM];
++static ec_cdev_priv_t sec_privs[MAX_MASTER_NUM];
++
++int ec_cdev_usecat_start(ec_master_t *master)
++{
++    ec_cdev_priv_t *priv = NULL;
++
++    if (master->index >= MAX_MASTER_NUM) {
++        printf("%s: invalid master index:%d!\n", __func__, master->index);
++        return -1;
++    }
++
++    priv = sec_privs + master->index;
++    sec_masters[master->index] = master;
++
++    priv->cdev = &master->cdev;
++    priv->ctx.writable = 1;
++    priv->ctx.requested = 0;
++    priv->ctx.process_data = NULL;
++    priv->ctx.process_data_size = 0;
++
++    return 0;
++}
++
++int ec_cdev_usecat_stop(ec_master_t *master)
++{
++    return 0;
++}
++
++#else /* EC_MASTER_IN_USERSPACE */
++
++/*****************************************************************************/
++
+ static int eccdev_open(struct inode *, struct file *);
+ static int eccdev_release(struct inode *, struct file *);
+ static long eccdev_ioctl(struct file *, unsigned int, unsigned long);
+@@ -90,16 +134,7 @@ struct vm_operations_struct eccdev_vm_ops = {
+ #endif
+ };
+ 
+-/*****************************************************************************/
+-
+-/** Private data structure for file handles.
+- */
+-typedef struct {
+-    ec_cdev_t *cdev; /**< Character device. */
+-    ec_ioctl_context_t ctx; /**< Context. */
+-} ec_cdev_priv_t;
+-
+-/*****************************************************************************/
++#endif /* EC_MASTER_IN_USERSPACE */
+ 
+ /** Constructor.
+  *
+@@ -136,6 +171,26 @@ void ec_cdev_clear(ec_cdev_t *cdev /**< EtherCAT XML device */)
+     cdev_del(&cdev->cdev);
+ }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++
++int eccdev_usecat_ioctl(int fd, unsigned int cmd, void *arg)
++{
++    ec_cdev_priv_t *priv = NULL;
++    ec_master_t *master = NULL;
++
++    if (fd >= MAX_MASTER_NUM) {
++        printf("%s: fd is invalid! fd:%d\n", __func__, fd);
++        return -1;
++    }
++
++    master = sec_masters[fd];
++    priv = sec_privs + fd;
++
++    return ec_ioctl(master, &priv->ctx, cmd, (void __user *) arg);
++}
++
++#else /* EC_MASTER_IN_USERSPACE */
++
+ /******************************************************************************
+  * File operations
+  *****************************************************************************/
+@@ -257,7 +312,7 @@ static unsigned int eccdev_vma_fault(
+         )
+ {
+     unsigned long offset = vmf->pgoff << PAGE_SHIFT;
+-	ec_cdev_priv_t *priv = (ec_cdev_priv_t *) vmf->vma->vm_private_data;
++    ec_cdev_priv_t *priv = (ec_cdev_priv_t *) vmf->vma->vm_private_data;
+     struct page *page;
+ 
+     if (offset >= priv->ctx.process_data_size) {
+@@ -313,4 +368,6 @@ struct page *eccdev_vma_nopage(
+ 
+ #endif
+ 
++#endif  /* EC_MASTER_IN_USERSPACE */
++
+ /*****************************************************************************/
+diff --git a/master/cdev.h b/master/cdev.h
+index a06bb1c9..1a7bd18a 100644
+--- a/master/cdev.h
++++ b/master/cdev.h
+@@ -52,6 +52,10 @@ typedef struct {
+ } ec_cdev_t;
+ 
+ /*****************************************************************************/
++#ifdef EC_MASTER_IN_USERSPACE
++int ec_cdev_usecat_start(ec_master_t *master);
++int ec_cdev_usecat_stop(ec_master_t *master);
++#endif
+ 
+ int ec_cdev_init(ec_cdev_t *, ec_master_t *, dev_t);
+ void ec_cdev_clear(ec_cdev_t *);
+diff --git a/master/device.h b/master/device.h
+index 0a0e889b..2a1b596a 100644
+--- a/master/device.h
++++ b/master/device.h
+@@ -48,7 +48,11 @@
+  * different memory regions, because otherwise the network device DMA could
+  * send the same data twice, if it is called twice.
+  */
++#ifdef EC_MASTER_IN_USERSPACE
++#define EC_TX_RING_SIZE 16
++#else
+ #define EC_TX_RING_SIZE 2
++#endif
+ 
+ #ifdef EC_DEBUG_IF
+ #include "debug.h"
+diff --git a/master/ethercat_master.c b/master/ethercat_master.c
+new file mode 100644
+index 00000000..c2d6fde9
+--- /dev/null
++++ b/master/ethercat_master.c
+@@ -0,0 +1,106 @@
++/* EtherCAT master with no application task
++
++   Copyright 2011-2015 Frank Heckenbach <f.heckenbach@fh-soft.de>
++
++   This program is free software: you can redistribute it and/or
++   modify it under the terms of the GNU General Public License as
++   published by the Free Software Foundation, either version 2 of
++   the License, or (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this program. If not, see <http://www.gnu.org/licenses/>. */
++
++#include <errno.h>
++#include <string.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <signal.h>
++#include "globals.h"
++
++volatile sig_atomic_t stop = 0;
++
++static void handler(int sig)
++{
++    (void)sig;
++    stop = 1;
++}
++
++void usage(FILE *f)
++{
++    fprintf(f, "Usage: ethercat_master [options] MASTER_MAC...\n"
++               "Options:\n"
++               "  -d VALUE  debug level\n"
++               "  -b MAC    backup MAC\n");
++}
++
++int main(int argc, const char **argv)
++{
++    /* Command-line argument handling. */
++    unsigned int debug_level = 0;
++    unsigned int master_count = 0;
++    unsigned int backup_count = 0;
++    const char **masters = alloca(argc * sizeof(const char *));
++    const char **backups = alloca(argc * sizeof(const char *));
++    int i;
++    for (i = 1; i < argc; i++) {
++        const char *s = argv[i];
++        if (strcmp(s, "--help") == 0) {
++            usage(stdout);
++            return EXIT_SUCCESS;
++        } else if (strcmp(s, "--version") == 0) {
++            printf("ethercat_master " EC_MASTER_VERSION "\n\n"
++                   "EtherCAT master with no application task\n\n"
++                   "This is free software; see the source for copying conditions.\n"
++                   "There is NO warranty; not even for MERCHANTABILITY or\n"
++                   "FITNESS FOR A PARTICULAR PURPOSE.\n\n"
++                   "For more information about these matters, see the file named\n"
++                   "COPYING.\n\n"
++                   "Report bugs to " PACKAGE_BUGREPORT ".\n");
++            return EXIT_SUCCESS;
++        } else if (strcmp(s, "-d") == 0 && i + 1 < argc)
++            debug_level = atoi(argv[++i]);
++        else if (!strncmp(s, "-d", 2))
++            debug_level = atoi(s + 2);
++        else if (strcmp(s, "-b") == 0 && i + 1 < argc)
++            backups[backup_count++] = argv[++i];
++        else if (!strncmp(s, "-b", 2))
++            backups[backup_count++] = s + 2;
++        else if (s[0] != '-')
++            masters[master_count++] = s;
++        else {
++            usage(stderr);
++            return EXIT_FAILURE;
++        }
++    }
++
++    /* Initialize. */
++    int r = ecrt_init(master_count, masters, backup_count, backups, debug_level);
++    if (r) {
++        fprintf(stderr, "*** Cannot initialize EtherCAT: %s.\n", strerror(-r));
++        return EXIT_FAILURE;
++    }
++
++    /* Verify each master was assigned a device. */
++    int j;
++    for (j = 0; j < master_count; j++) {
++        if (!ecrt_open_master(j)) {
++            fprintf(stderr, "*** Cannot open master %i.\n", j);
++            ecrt_done();
++            return EXIT_FAILURE;
++        }
++    }
++
++    /* Run until interrupted (no application task here). */
++    signal(SIGTERM, handler);
++    signal(SIGINT,  handler);
++    signal(SIGHUP,  handler);
++    while (!stop)
++        pause();
++    ecrt_done();
++    return EXIT_SUCCESS;
++}
+diff --git a/master/ethernet.c b/master/ethernet.c
+index ebec2cbc..30f5dfd1 100644
+--- a/master/ethernet.c
++++ b/master/ethernet.c
+@@ -146,11 +146,11 @@ int ec_eoe_init(
+                 "eoe%us%u", slave->master->index, slave->ring_position);
+     }
+ 
+-    snprintf(eoe->datagram.name, EC_DATAGRAM_NAME_SIZE, name);
++    snprintf(eoe->datagram.name, EC_DATAGRAM_NAME_SIZE, "%s", name);
+ 
+-	eoe->dev = alloc_netdev(sizeof(ec_eoe_t *), name, NET_NAME_UNKNOWN,
+-			ether_setup);
+-	if (!eoe->dev) {
++    eoe->dev = alloc_netdev(sizeof(ec_eoe_t *), name, NET_NAME_UNKNOWN,
++            ether_setup);
++    if (!eoe->dev) {
+         EC_SLAVE_ERR(slave, "Unable to allocate net_device %s"
+                 " for EoE handler!\n", name);
+         ret = -ENODEV;
+@@ -781,7 +781,9 @@ int ec_eoedev_open(struct net_device *dev /**< EoE net_device */)
+ #if EOE_DEBUG_LEVEL >= 2
+     EC_SLAVE_DBG(eoe->slave, 0, "%s opened.\n", dev->name);
+ #endif
++#ifndef EC_MASTER_IN_USERSPACE
+     ec_slave_request_state(eoe->slave, EC_SLAVE_STATE_OP);
++#endif
+     return 0;
+ }
+ 
+@@ -803,7 +805,9 @@ int ec_eoedev_stop(struct net_device *dev /**< EoE net_device */)
+ #if EOE_DEBUG_LEVEL >= 2
+     EC_SLAVE_DBG(eoe->slave, 0, "%s stopped.\n", dev->name);
+ #endif
++#ifndef EC_MASTER_IN_USERSPACE
+     ec_slave_request_state(eoe->slave, EC_SLAVE_STATE_PREOP);
++#endif
+     return 0;
+ }
+ 
+diff --git a/master/foe_request.c b/master/foe_request.c
+index 794d3d9c..afb0c358 100644
+--- a/master/foe_request.c
++++ b/master/foe_request.c
+@@ -56,7 +56,7 @@ void ec_foe_request_clear_data(ec_foe_request_t *);
+  */
+ void ec_foe_request_init(
+         ec_foe_request_t *req, /**< FoE request. */
+-        uint8_t* file_name /** filename */)
++        char* file_name /** filename */)
+ {
+     INIT_LIST_HEAD(&req->list);
+     req->buffer = NULL;
+diff --git a/master/foe_request.h b/master/foe_request.h
+index 25b9e638..d6ca8289 100644
+--- a/master/foe_request.h
++++ b/master/foe_request.h
+@@ -64,14 +64,14 @@ typedef struct {
+     unsigned long jiffies_start; /**< Jiffies, when the request was issued. */
+     unsigned long jiffies_sent; /**< Jiffies, when the upload/download
+                                      request was sent. */
+-    uint8_t *file_name; /**< Pointer to the filename. */
++    char *file_name; /**< Pointer to the filename. */
+     uint32_t result; /**< FoE request abort code. Zero on success. */
+     uint32_t error_code; /**< Error code from an FoE Error Request. */
+ } ec_foe_request_t;
+ 
+ /*****************************************************************************/
+ 
+-void ec_foe_request_init(ec_foe_request_t *, uint8_t *file_name);
++void ec_foe_request_init(ec_foe_request_t *, char *file_name);
+ void ec_foe_request_clear(ec_foe_request_t *);
+ 
+ int ec_foe_request_alloc(ec_foe_request_t *, size_t);
+diff --git a/master/fsm_coe.c b/master/fsm_coe.c
+index cea0b023..c38dade2 100644
+--- a/master/fsm_coe.c
++++ b/master/fsm_coe.c
+@@ -1139,7 +1139,7 @@ void ec_fsm_coe_dict_entry_response(
+         entry->write_access[EC_SDO_ENTRY_ACCESS_OP] = (word >> 5)  & 0x0001;
+ 
+         if (data_size) {
+-            uint8_t *desc;
++            char *desc;
+             if (!(desc = kmalloc(data_size + 1, GFP_KERNEL))) {
+                 EC_SLAVE_ERR(slave, "Failed to allocate SDO entry name!\n");
+                 fsm->state = ec_fsm_coe_error;
+diff --git a/master/fsm_foe.c b/master/fsm_foe.c
+index 26ccd79b..4ac13887 100644
+--- a/master/fsm_foe.c
++++ b/master/fsm_foe.c
+@@ -183,7 +183,7 @@ void ec_fsm_foe_transfer(
+         fsm->tx_buffer_size = fsm->request->data_size;
+         fsm->tx_buffer_offset = 0;
+ 
+-        fsm->tx_filename = fsm->request->file_name;
++        fsm->tx_filename = (char*)fsm->request->file_name;
+         fsm->tx_filename_len = strlen(fsm->tx_filename);
+ 
+         fsm->state = ec_fsm_foe_write_start;
+@@ -192,7 +192,7 @@ void ec_fsm_foe_transfer(
+         fsm->rx_buffer = fsm->request->buffer;
+         fsm->rx_buffer_size = fsm->request->buffer_size;
+ 
+-        fsm->rx_filename = fsm->request->file_name;
++        fsm->rx_filename = (char*)fsm->request->file_name;
+         fsm->rx_filename_len = strlen(fsm->rx_filename);
+ 
+         fsm->state = ec_fsm_foe_read_start;
+@@ -790,8 +790,8 @@ void ec_fsm_foe_state_data_read(
+         EC_SLAVE_ERR(slave, "Received FoE Error Request (code 0x%08x).\n",
+                 fsm->request->error_code);
+         if (rec_size > 6) {
+-            uint8_t text[256];
+-            strncpy(text, data + 6, min(rec_size - 6, sizeof(text)));
++            char text[256];
++            strncpy(text, (char*)(data + 6), min(rec_size - 6, sizeof(text)));
+             EC_SLAVE_ERR(slave, "FoE Error Text: %s\n", text);
+         }
+         ec_foe_set_rx_error(fsm, FOE_OPCODE_ERROR);
+diff --git a/master/fsm_foe.h b/master/fsm_foe.h
+index 91d6df54..37d7f4ac 100644
+--- a/master/fsm_foe.h
++++ b/master/fsm_foe.h
+@@ -67,7 +67,7 @@ struct ec_fsm_foe {
+     uint32_t tx_last_packet; /**< Current packet is last one to send. */
+     uint32_t tx_packet_no; /**< FoE packet number. */
+     uint32_t tx_current_size; /**< Size of current packet to send. */
+-    uint8_t *tx_filename; /**< Name of file to transmit. */
++    char *tx_filename; /**< Name of file to transmit. */
+     uint32_t tx_filename_len; /**< Lenth of transmit file name. */
+ 
+     uint8_t *rx_buffer; /**< Buffer for received data. */
+@@ -75,7 +75,7 @@ struct ec_fsm_foe {
+     uint32_t rx_buffer_offset; /**< Offset in receive buffer. */
+     uint32_t rx_expected_packet_no; /**< Expected receive packet number. */
+     uint32_t rx_last_packet; /**< Current packet is the last to receive. */
+-    uint8_t *rx_filename; /**< Name of the file to receive. */
++    char *rx_filename; /**< Name of the file to receive. */
+     uint32_t rx_filename_len; /**< Length of the receive file name. */
+ };
+ 
+diff --git a/master/fsm_slave_config.c b/master/fsm_slave_config.c
+index 2ca63f0c..10d11ef0 100644
+--- a/master/fsm_slave_config.c
++++ b/master/fsm_slave_config.c
+@@ -34,7 +34,9 @@
+ 
+ /*****************************************************************************/
+ 
++#ifndef EC_MASTER_IN_USERSPACE
+ #include <asm/div64.h>
++#endif
+ 
+ #include "globals.h"
+ #include "master.h"
+diff --git a/master/ioctl.c b/master/ioctl.c
+index 8565efb6..0cd6b3f1 100644
+--- a/master/ioctl.c
++++ b/master/ioctl.c
+@@ -1522,7 +1522,7 @@ static ATTRIBUTES int ec_ioctl_eoe_handler(
+     } else {
+         data.slave_position = 0xffff;
+     }
+-    snprintf(data.name, EC_DATAGRAM_NAME_SIZE, eoe->dev->name);
++    snprintf(data.name, EC_DATAGRAM_NAME_SIZE, "%s", eoe->dev->name);
+     data.open = eoe->opened;
+     data.rx_bytes = eoe->stats.tx_bytes;
+     data.rx_rate = eoe->tx_rate;
+diff --git a/master/ioctl.h b/master/ioctl.h
+index 105e54e9..185f04cc 100644
+--- a/master/ioctl.h
++++ b/master/ioctl.h
+@@ -279,7 +279,7 @@ typedef struct {
+     // outputs
+     uint16_t index;
+     uint8_t entry_count;
+-    int8_t name[EC_IOCTL_STRING_SIZE];
++    char name[EC_IOCTL_STRING_SIZE];
+ } ec_ioctl_slave_sync_pdo_t;
+ 
+ /*****************************************************************************/
+@@ -295,7 +295,7 @@ typedef struct {
+     uint16_t index;
+     uint8_t subindex;
+     uint8_t bit_length;
+-    int8_t name[EC_IOCTL_STRING_SIZE];
++    char name[EC_IOCTL_STRING_SIZE];
+ } ec_ioctl_slave_sync_pdo_entry_t;
+ 
+ /*****************************************************************************/
+@@ -355,7 +355,7 @@ typedef struct {
+     // outputs
+     uint16_t sdo_index;
+     uint8_t max_subindex;
+-    int8_t name[EC_IOCTL_STRING_SIZE];
++    char name[EC_IOCTL_STRING_SIZE];
+ } ec_ioctl_slave_sdo_t;
+ 
+ /*****************************************************************************/
+@@ -371,7 +371,7 @@ typedef struct {
+     uint16_t bit_length;
+     uint8_t read_access[EC_SDO_ENTRY_ACCESS_COUNT];
+     uint8_t write_access[EC_SDO_ENTRY_ACCESS_COUNT];
+-    int8_t description[EC_IOCTL_STRING_SIZE];
++    char description[EC_IOCTL_STRING_SIZE];
+ } ec_ioctl_slave_sdo_entry_t;
+ 
+ /*****************************************************************************/
+@@ -506,7 +506,7 @@ typedef struct {
+     // outputs
+     uint16_t index;
+     uint8_t entry_count;
+-    int8_t name[EC_IOCTL_STRING_SIZE];
++    char name[EC_IOCTL_STRING_SIZE];
+ } ec_ioctl_config_pdo_t;
+ 
+ /*****************************************************************************/
+@@ -522,7 +522,7 @@ typedef struct {
+     uint16_t index;
+     uint8_t subindex;
+     uint8_t bit_length;
+-    int8_t name[EC_IOCTL_STRING_SIZE];
++    char name[EC_IOCTL_STRING_SIZE];
+ } ec_ioctl_config_pdo_entry_t;
+ 
+ /*****************************************************************************/
+@@ -755,7 +755,23 @@ typedef struct {
+ 
+ /*****************************************************************************/
+ 
+-#ifdef __KERNEL__
++#ifdef EC_MASTER_IN_USERSPACE
++#define copy_from_user(DST, SRC, SIZE) (memcpy((DST), (SRC), (SIZE)), 0)
++#define copy_to_user(DST, SRC, SIZE) (memcpy((DST), (SRC), (SIZE)), 0)
++#define __copy_to_user copy_to_user
++#define MAX_MASTER_NUM (32)
++#define __user
++
++int eccdev_usecat_ioctl(int fd, unsigned int cmd, void *arg);
++
++/* Emulated ioctl via TCP connection for userspace master */
++static inline int ioctl_usecat_open(int master_index, const char *host)
++{
++    return master_index;
++}
++#endif  /* EC_MASTER_IN_USERSPACE */
++
++#if defined(__KERNEL__) || defined(EC_MASTER_IN_USERSPACE)
+ 
+ /** Context data structure for file handles.
+  */
+diff --git a/master/libethercat_master.pc.in b/master/libethercat_master.pc.in
+new file mode 100644
+index 00000000..6e5b8a87
+--- /dev/null
++++ b/master/libethercat_master.pc.in
+@@ -0,0 +1,10 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++libdir=@libdir@
++includedir=@includedir@
++
++Name: libethercat_master
++Description: EtherCAT userspace master library
++Version: @VERSION@
++Libs: -L${libdir} -lethercat_master -lpthread
++Cflags: -I${includedir} -fno-strict-aliasing -DEC_MASTER_IN_USERSPACE
+diff --git a/master/master.c b/master/master.c
+index 7a677228..e07c4a66 100644
+--- a/master/master.c
++++ b/master/master.c
+@@ -44,7 +44,9 @@
+ #include <linux/device.h>
+ #include <linux/version.h>
+ #include <linux/hrtimer.h>
++#ifndef EC_MASTER_IN_USERSPACE
+ #include <uapi/linux/sched/types.h>
++#endif
+ #include "globals.h"
+ #include "slave.h"
+ #include "slave_config.h"
+@@ -102,6 +104,15 @@ void ec_master_find_dc_ref_clock(ec_master_t *);
+ void ec_master_clear_device_stats(ec_master_t *);
+ void ec_master_update_device_stats(ec_master_t *);
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++void ec_master_nanosleep(const unsigned long nsecs)
++{
++    struct timespec t = { 0, nsecs }, r;
++    while (nanosleep(&t, &r) != 0)
++        t = r;
++}
++#endif
++
+ /*****************************************************************************/
+ 
+ /** Static variables initializer.
+@@ -312,6 +323,11 @@ int ec_master_init(ec_master_t *master, /**< EtherCAT master */
+     if (ret)
+         goto out_clear_sync_mon;
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    ret = ec_cdev_usecat_start(master);
++    if (ret)
++        goto out_clear_cdev;
++#else
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)
+     master->class_device = device_create(class, NULL,
+             MKDEV(MAJOR(device_number), master->index), NULL,
+@@ -342,6 +358,7 @@ int ec_master_init(ec_master_t *master, /**< EtherCAT master */
+         goto out_unregister_class_device;
+     }
+ #endif
++#endif  /* EC_MASTER_IN_USERSPACE */
+ 
+     return 0;
+ 
+@@ -384,6 +401,9 @@ void ec_master_clear(
+ {
+     unsigned int dev_idx, i;
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    ec_cdev_usecat_stop(master);
++#else
+ #ifdef EC_RTDM
+     ec_rtdm_dev_clear(&master->rtdm_dev);
+ #endif
+@@ -393,6 +413,7 @@ void ec_master_clear(
+ #else
+     class_device_unregister(master->class_device);
+ #endif
++#endif  /* EC_MASTER_IN_USERSPACE */
+ 
+     ec_cdev_clear(&master->cdev);
+ 
+@@ -590,7 +611,9 @@ void ec_master_thread_stop(
+         ec_master_t *master /**< EtherCAT master */
+         )
+ {
++#ifndef EC_MASTER_IN_USERSPACE
+     unsigned long sleep_jiffies;
++#endif
+ 
+     if (!master->thread) {
+         EC_MASTER_WARN(master, "%s(): Already finished!\n", __func__);
+@@ -607,9 +630,13 @@ void ec_master_thread_stop(
+         return;
+     }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    ec_master_nanosleep(10000000);
++#else
+     // wait for FSM datagram
+     sleep_jiffies = max(HZ / 100, 1); // 10 ms, at least 1 jiffy
+     schedule_timeout(sleep_jiffies);
++#endif
+ }
+ 
+ /*****************************************************************************/
+@@ -1301,7 +1328,7 @@ void ec_master_update_device_stats(
+     unsigned int i, dev_idx;
+ 
+     // frame statistics
+-    if (likely(jiffies - s->jiffies < HZ)) {
++    if (likely(jiffies - s->clk_jiffies < HZ)) {
+         return;
+     }
+ 
+@@ -1336,11 +1363,12 @@ void ec_master_update_device_stats(
+         ec_device_update_stats(&master->devices[dev_idx]);
+     }
+ 
+-    s->jiffies = jiffies;
++    s->clk_jiffies = jiffies;
+ }
+ 
+ /*****************************************************************************/
+ 
++#ifndef EC_MASTER_IN_USERSPACE
+ #ifdef EC_USE_HRTIMER
+ 
+ /*
+@@ -1413,6 +1441,7 @@ void ec_master_nanosleep(const unsigned long nsecs)
+ }
+ 
+ #endif // EC_USE_HRTIMER
++#endif /* EC_MASTER_IN_USERSPACE */
+ 
+ /*****************************************************************************/
+ 
+@@ -1659,6 +1688,7 @@ void ec_master_eoe_start(ec_master_t *master /**< EtherCAT master */)
+         master->eoe_thread = NULL;
+         return;
+     }
++#ifndef EC_MASTER_IN_USERSPACE
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+     sched_set_normal(master->eoe_thread, 19);
+ #else
+@@ -1666,6 +1696,7 @@ void ec_master_eoe_start(ec_master_t *master /**< EtherCAT master */)
+     sched_setscheduler(master->eoe_thread, SCHED_NORMAL, &param);
+ #endif
+     set_user_nice(master->eoe_thread, 0);
++#endif  /* EC_MASTER_IN_USERSPACE */
+ }
+ 
+ /*****************************************************************************/
+@@ -1699,6 +1730,11 @@ static int ec_master_eoe_thread(void *priv_data)
+         none_open = 1;
+         all_idle = 1;
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++        list_for_each_entry(eoe, &master->eoe_handlers, list) {
++            netif_run(eoe->dev);
++        }
++#endif
+         list_for_each_entry(eoe, &master->eoe_handlers, list) {
+             if (ec_eoe_is_open(eoe)) {
+                 none_open = 0;
+@@ -1734,12 +1770,19 @@ static int ec_master_eoe_thread(void *priv_data)
+         }
+ 
+ schedule:
++#ifdef EC_MASTER_IN_USERSPACE
++        if (all_idle)
++            ec_master_nanosleep(master->send_interval * 1000);
++        else
++            sched_yield();
++#else
+         if (all_idle) {
+             set_current_state(TASK_INTERRUPTIBLE);
+             schedule_timeout(1);
+         } else {
+             schedule();
+         }
++#endif  /* EC_MASTER_IN_USERSPACE */
+     }
+ 
+     EC_MASTER_DBG(master, 1, "EoE thread exiting...\n");
+diff --git a/master/master.h b/master/master.h
+index d3ea23b7..ad761067 100644
+--- a/master/master.h
++++ b/master/master.h
+@@ -176,7 +176,7 @@ typedef struct {
+                                         different statistics cycle periods. */
+     s32 loss_rates[EC_RATE_COUNT]; /**< Frame loss rates for different
+                                      statistics cycle periods. */
+-    unsigned long jiffies; /**< Jiffies of last statistic cycle. */
++    unsigned long clk_jiffies; /**< Jiffies of last statistic cycle. */
+ } ec_device_stats_t;
+ 
+ /*****************************************************************************/
+diff --git a/master/module.c b/master/module.c
+index 573a6949..66b6eb6d 100644
+--- a/master/module.c
++++ b/master/module.c
+@@ -103,6 +103,7 @@ int __init ec_init_module(void)
+ 
+     sema_init(&master_sem, 1);
+ 
++#ifndef EC_MASTER_IN_USERSPACE
+     if (master_count) {
+         if (alloc_chrdev_region(&device_number,
+                     0, master_count, "EtherCAT")) {
+@@ -118,6 +119,7 @@ int __init ec_init_module(void)
+         ret = PTR_ERR(class);
+         goto out_cdev;
+     }
++#endif
+ 
+     // zero MAC addresses
+     memset(macs, 0x00, sizeof(uint8_t) * MAX_MASTERS * 2 * ETH_ALEN);
+@@ -164,11 +166,13 @@ out_free_masters:
+         ec_master_clear(&masters[i]);
+     kfree(masters);
+ out_class:
++#ifndef EC_MASTER_IN_USERSPACE
+     class_destroy(class);
+ out_cdev:
+     if (master_count)
+         unregister_chrdev_region(device_number, master_count);
+ out_return:
++#endif
+     return ret;
+ }
+ 
+@@ -189,10 +193,12 @@ void __exit ec_cleanup_module(void)
+     if (master_count)
+         kfree(masters);
+ 
++#ifndef EC_MASTER_IN_USERSPACE
+     class_destroy(class);
+ 
+     if (master_count)
+         unregister_chrdev_region(device_number, master_count);
++#endif
+ 
+     EC_INFO("Master module cleaned up.\n");
+ }
+@@ -672,3 +678,71 @@ EXPORT_SYMBOL(ecrt_version_magic);
+ /** \endcond */
+ 
+ /*****************************************************************************/
++
++#ifdef EC_MASTER_IN_USERSPACE
++ec_master_t *ecrt_open_master(
++        unsigned int master_index /**< Master index. */
++        )
++{
++    unsigned int dev_idx = EC_DEVICE_MAIN;
++
++    if (master_index >= master_count) {
++        EC_ERR("Invalid master index %u.\n", master_index);
++        return NULL;
++    }
++
++    ec_master_t *master = &masters[master_index];
++    if (!master->devices[dev_idx].dev) {
++        EC_MASTER_ERR(master,"Master has no device attached.\n");
++        return NULL;
++    }
++    return master;
++}
++
++int __init ec_gen_init_module(void);
++void __exit ec_gen_cleanup_module(void);
++
++int ecrt_init(unsigned int master_count_, const char *const *master_macs,
++              unsigned int backup_count_, const char *const *backup_macs,
++              unsigned int debug_level_)
++{
++    int i, r;
++
++    if (!master_count_) {
++        EC_ERR("No masters defined.\n");
++        return -EINVAL;
++    }
++    if (master_count_ > MAX_MASTERS) {
++        EC_ERR("Too many masters (max. %i).\n", MAX_MASTERS);
++        return -EINVAL;
++    }
++    if (backup_count_ > master_count_) {
++        EC_ERR("Too many backups (more than masters).\n");
++        return -EINVAL;
++    }
++
++    /* Casting the const away is OK since the targets are use const.
++       They're not declared const only because of module_param_array. */
++    master_count = master_count_;
++    for (i = 0; i < master_count; i++)
++        main_devices[i] = (char *) master_macs[i];
++    backup_count = backup_count_;
++    for (i = 0; i < backup_count; i++)
++        backup_devices[i] = (char *) backup_macs[i];
++    debug_level = debug_level_;
++
++    r = ec_init_module();
++    if (r)
++        return r;
++    r = ec_gen_init_module();
++    if (r)
++        ec_cleanup_module();
++    return r;
++}
++
++void ecrt_done(void)
++{
++    ec_gen_cleanup_module();
++    ec_cleanup_module();
++}
++#endif
+diff --git a/master/sdo_request.h b/master/sdo_request.h
+index 80b1c101..16a0f2c5 100644
+--- a/master/sdo_request.h
++++ b/master/sdo_request.h
+@@ -41,6 +41,12 @@
+ 
+ #include "globals.h"
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++#ifdef errno
++#undef errno
++#endif
++#endif
++
+ /*****************************************************************************/
+ 
+ /** CANopen SDO request.
+-- 
+2.25.1
+

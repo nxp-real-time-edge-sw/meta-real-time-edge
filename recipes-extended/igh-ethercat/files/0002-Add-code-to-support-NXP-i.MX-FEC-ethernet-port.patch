@@ -1,0 +1,3644 @@
+From 5b5818635bf7ffad43d2de9b25b4832d71f3d8cd Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Thu, 23 Nov 2023 22:05:20 +0800
+Subject: [PATCH 2/3] Add code to support NXP i.MX FEC ethernet port
+
+the verified platform: i.MX8MP, i.MX8MM and i.MX93
+
+Readme_For_User_Space_IGH_EtherCAT.txt is document for this feature
+
+compilation steps:
+./bootstrap
+./configure --prefix=$PWD/ecat_build/ --enable-usecat=yes --enable-8139too=no --enable-tool=yes --enable-eoe=no --build=arm
+make
+make install
+
+Signed-off-by: Yuhang Wang <yuhang.wang@nxp.com>
+Signed-off-by: Lyrix Liu <lyrix.liu@nxp.com>
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+---
+ Readme_For_User_Space_IGH_EtherCAT.txt | 205 ++++++++++
+ configure.ac                           |   2 +-
+ devices/enet_fec/enet_ethdev.c         | 523 +++++++++++++++++++++++++
+ devices/enet_fec/enet_ethdev.h         | 227 +++++++++++
+ devices/enet_fec/enet_fec.c            | 331 ++++++++++++++++
+ devices/enet_fec/enet_fec.h            |  51 +++
+ devices/enet_fec/enet_main.c           | 289 ++++++++++++++
+ devices/enet_fec/enet_regs.h           | 116 ++++++
+ devices/enet_fec/enet_rxtx.c           | 183 +++++++++
+ devices/enet_fec/enet_uio.c            | 282 +++++++++++++
+ devices/enet_fec/enet_uio.h            |  74 ++++
+ emulation/linux/jiffies.h              |  15 +-
+ emulation/linux/kthread.h              |  39 +-
+ emulation/linux/wait.h                 |   2 +-
+ globals.h                              |   5 +-
+ include/ecrt.h                         |  18 +-
+ lib/common.c                           |   1 +
+ master/Makefile.am                     |   7 +-
+ master/cdev.c                          | 126 ++++--
+ master/cdev.h                          |   9 +-
+ master/datagram.h                      |   5 +-
+ master/device.c                        |  41 ++
+ master/device.h                        |  11 +-
+ master/ethercat_master.c               |  38 +-
+ master/globals.h                       |   4 +
+ master/ioctl.h                         |   3 +-
+ master/master.c                        |  87 +++-
+ master/master.h                        |  19 +-
+ master/module.c                        |  48 ++-
+ master/slave.h                         |  10 +
+ master/slave_config.c                  |  24 ++
+ tool/Makefile.am                       |   1 +
+ tool/MasterDevice.cpp                  | 126 +++++-
+ tool/MasterDevice.h                    |  16 +
+ 34 files changed, 2884 insertions(+), 54 deletions(-)
+ create mode 100644 Readme_For_User_Space_IGH_EtherCAT.txt
+ create mode 100644 devices/enet_fec/enet_ethdev.c
+ create mode 100644 devices/enet_fec/enet_ethdev.h
+ create mode 100644 devices/enet_fec/enet_fec.c
+ create mode 100644 devices/enet_fec/enet_fec.h
+ create mode 100644 devices/enet_fec/enet_main.c
+ create mode 100644 devices/enet_fec/enet_regs.h
+ create mode 100644 devices/enet_fec/enet_rxtx.c
+ create mode 100644 devices/enet_fec/enet_uio.c
+ create mode 100644 devices/enet_fec/enet_uio.h
+
+diff --git a/Readme_For_User_Space_IGH_EtherCAT.txt b/Readme_For_User_Space_IGH_EtherCAT.txt
+new file mode 100644
+index 00000000..9df955b6
+--- /dev/null
++++ b/Readme_For_User_Space_IGH_EtherCAT.txt
+@@ -0,0 +1,205 @@
++
++		Readme for user space IGH EtherCAT stack
++
++
++1. Why need user space IGH EtherCAT stack?
++
++  As we know, IGH EtherCAT stack has both code in kernel space and user space.
++In kernel space, it has integrated lots of drivers for different networking
++devices, in user space, it supplies one library(libetherat.so/.a) for user's
++application, user can set/get device's running parameters using API of this library,
++the API will write/read data via ioctl mechanism of Linux kernel.
++
++  Ioctl will invoke the routine implemented in master module(ec_master.ko),
++then master module will call the RX/TX function in different drivers. Ioctl is
++system call supplied by Linux, so the updates for running parameters will
++trigger system call of kernel, it will bring in more jitter of system.
++
++  On the other hand, there are mainly two importmant threads for using IGH EtherCAT
++stack, one is master operation thread running in kernel space, it's responsible
++for parsing the frames received from EtherCAT devices. another thread is RT
++thread implemented by user, it will trigger RX/TX functionality cyclically
++according to cycle time. Due to these two threads are running in different
++spaces, so it needs context switch between user space and kernel space, this will
++also increase system jitter and time latency.
++
++  In IGH EtherCAT stack, there are different drivers for devices, so it depends
++on the version of Linux kernel. When you want to compile IGH EtherCAT stack, you
++have to point out clearly the path of kernel, otherwise it will reports error.
++
++2. How to resolve the above issues in user space IGH EtherCAT stack?
++
++    For user space IGH EtherCAT stack, it's wholely running in user space, so
++it doesn't need ioctl, user can invoke the functions of master module directly,
++this can avoid system call, it can decrease jitter of system obviously.
++
++    From the perspective of threads, in user space stack, master operation
++thread is also running in user space, so we can refactor OP thread to one
++callback function, this callback function will be called in user's cyclic RT
++thread, so there is only one main thread in whole system, it will avoid context
++switch. This can also improve the performance, such as jitter and latency etc..
++
++    Regarding dependence on Linux kernel, user space IGH EtherCAT stack have no
++code that ran in kernel space, so it's wholely independent of any kernel version.
++
++3. New API of user space IGH EtherCAT stack
++
++3.1 ecus_init
++
++/*
++ * initialize the context for user space EtherCAT stack
++ *
++ * master_count:	the number of ethernet ports as EtherCAT master device
++ * master_macs:		the MAC list of ethernet ports as EtherCAT master device
++ * backup_count:	the number of ethernet ports as EtherCAT backup device
++ * backup_macs:		the MAC list of ethernet ports as EtherCAT backup device
++ * debug_level:		the level of debug, 0 in default
++ * cycle_ns:		the cycle time of user's RT thread, unit: nanoseconds
++ * core_mask:		the mask of CPU affinity, 0x01:core0, 0x02:core1, 0x0F:core0-3
++ *
++ * NOTE: user space stack only supports NXP FEC ethernet port currently
++ *	 The verified platform have i.MX8MP, i.MX8MM and i.MX93.
++ *
++ *	 the MAC address is fixed to "04:13:07:02:00:13"
++ *	 For core_mask, we can isolate this core from Linux, like "isolcpus=1" for Uboot
++ **/
++int ecus_init(uint32_t master_count, const char *const *master_macs,
++              uint32_t backup_count, const char *const *backup_macs,
++              uint32_t debug_level, uint32_t cycle_ns, uint32_t core_mask);
++
++3.2 ecus_done
++
++/*
++ * clean up the context for user space EtherCAT stack
++ **/
++int ecus_done(void);
++
++3.3 ecus_slave_is_ready
++
++/*
++ * Check whether the slave is in ready status (PREOP)
++ *
++ * master_index:	the index of the master that slave is attached
++ * alias:		the alias of the related slave
++ * position:		the position of the related slave
++ **/
++int ecus_slave_is_ready(uint32_t master_index, uint16_t alias, uint16_t position);
++
++3.4 ecus_master_operation_loop
++
++/*
++ * master operation callback function that should be invoked in user's RT thread
++ *
++ * master:	the pointer of the corresponding master
++ * cycle:	denote whether this calling will calculate jiffies for master FSM
++ *
++ * Note: this function should be called twice in one loop of RT thread,
++ *	 the first one is called after RX, the second one is called after TX.
++ *	 only the first one should set cycle = 1
++ **/
++int ecus_master_operation_loop(ec_master_t *master, int cycle);
++
++3.5 ecus_bind_cpu_core
++
++/*
++ * Set the CPU affinity for user's RT thread
++ *
++ * core_mask:		the mask of CPU affinity, 0x01:core0, 0x02:core1, 0x0F:core0-3
++ **/
++int ecus_bind_cpu_core(uint32_t core_mask);
++
++4. How to use user space EtherCAT stack?
++
++User space IGH EtherCAT stack will be compiled out a library named "libethercat_master.a",
++user's application should link this new library by "-lethercat_master",
++
++I will take the below code as example (cycle time: 1ms)
++
++static char *smaster_macs[1] = {
++	"04:13:07:02:00:13",
++};
++
++static void *user_cycle_thread(void *p)
++{
++	ec_master_t *ec_master;
++
++	/* ec_master = ... ; */
++
++	/* bind RT thread to CPU core 1 */
++	ecus_bind_cpu_core(0x02);
++
++	while (1) {
++		ecrt_master_receive(ec_master);
++
++		/* call operation function after RX */
++		ecus_master_operation_loop(ec_master, 1);
++
++		...
++
++		ecrt_master_send(ec_master);
++
++		/* call operation function after TX */
++		ecus_master_operation_loop(ec_master, 0);
++
++		usleep(1000);
++	}
++}
++
++int main()
++{
++	const char **masters = (const char **)smaster_macs;
++
++	/*
++	  initialize user space stack: one master, zero backup, cycle time:1ms,
++	  user's RT thread will run on core1
++	   */
++	ecus_init(1, masters, 0, NULL, 0, 1000000, 0x02);
++
++	/*  waiting for slave to be ready status */
++	for (...) {
++		ready = ecus_slave_is_ready(0, slave_alias, slave_position);
++		if (ready)
++			break;
++		sleep(1);
++	}
++
++	start user_cycle_thread as RT thread ...
++
++	waiting for user_cycle_thread to finish
++
++	/* exit user space EtherCAT */
++	ecus_done();
++
++	return 0;
++}
++
++5. How to run user's EtherCAT application
++
++Before running application, we should set hugepage related configuration:
++
++# mkdir -p /dev/hugepages
++# mount -t hugetlbfs hugetlbfs /dev/hugepages
++# echo 448 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
++
++Then we can start user's application:
++# ./user_app
++
++6. How to use EtherCAT tool to show EtherCAT device's information?
++
++Because EtherCAT tool(named ethercat) will invoke ioctl to scan and
++show EtherCAT devices, for conveniency of using EtherCAT tool, we have
++implemented one virtual ioctl interface to support this tool. one backend
++program(named ethercat_master) will supply the service for the tool.
++
++Firstly we should run the backend program:
++# mkdir -p /dev/hugepages
++# mount -t hugetlbfs hugetlbfs /dev/hugepages
++# echo 448 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
++# ./ethercat_master &
++
++Then we can run EtherCAT tool:
++# ./ethercat slaves -v
++
++or
++
++# ./ethercat cstruct
+diff --git a/configure.ac b/configure.ac
+index 953af99d..c007a46e 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -80,7 +80,7 @@ AC_ARG_ENABLE([usecat],
+ )
+ 
+ if test "x${enable_usecat}" = "x1"; then
+-    AC_DEFINE([EC_USERSPACE_MASTER], [1], [Userspace EtherCAT library enabled])
++    AC_DEFINE([EC_USERSPACE_MASTER_FEC], [1], [Userspace EtherCAT library enabled])
+     AC_MSG_RESULT([yes])
+ else
+     AC_MSG_RESULT([no])
+diff --git a/devices/enet_fec/enet_ethdev.c b/devices/enet_fec/enet_ethdev.c
+new file mode 100644
+index 00000000..0f23a198
+--- /dev/null
++++ b/devices/enet_fec/enet_ethdev.c
+@@ -0,0 +1,523 @@
++/* SPDX-License-Identifier: BSD-3-Clause
++ * Copyright 2020-2023 NXP
++ */
++
++#include <unistd.h>
++#include "enet_ethdev.h"
++#include "enet_regs.h"
++#include "enet_uio.h"
++
++#define ENETFEC_NAME_PMD                net_enetfec
++
++#define RTE_BIT32(nr) (UINT32_C(1) << (nr))
++
++/* FEC receive acceleration */
++#define ENETFEC_RACC_IPDIS		RTE_BIT32(1)
++#define ENETFEC_RACC_PRODIS		RTE_BIT32(2)
++#define ENETFEC_RACC_SHIFT16		RTE_BIT32(7)
++#define ENETFEC_RACC_OPTIONS		(ENETFEC_RACC_IPDIS | \
++						ENETFEC_RACC_PRODIS)
++
++#define ENETFEC_PAUSE_FLAG_AUTONEG	0x1
++#define ENETFEC_PAUSE_FLAG_ENABLE	0x2
++
++/* Pause frame field and FIFO threshold */
++#define ENETFEC_FCE			RTE_BIT32(5)
++#define ENETFEC_RSEM_V			0x84
++#define ENETFEC_RSFL_V			16
++#define ENETFEC_RAEM_V			0x8
++#define ENETFEC_RAFL_V			0x8
++#define ENETFEC_OPD_V			0xFFF0
++
++/* Extended buffer descriptor */
++#define ENETFEC_EXTENDED_BD		0
++#define NUM_OF_BD_QUEUES		6
++
++static struct enetfec_private sfec_priv_data;
++static struct rte_eth_dev_data sfec_eth_data;
++static int sfec_km_mode;  /* whether to enable 1000M MAC support */
++
++struct enetfec_private *enetfec_get_priv_data(void)
++{
++	return &sfec_priv_data;
++}
++
++int enetfec_set_km_mode(int mode)
++{
++	sfec_km_mode = !!(mode);
++	ENETFEC_PMD_INFO("%s(): 1000Mbps_mode:%d\n", __func__, sfec_km_mode);
++
++	return sfec_km_mode;
++}
++
++/*
++ * This function is called to start or restart the ENETFEC during a link
++ * change, transmit timeout, or to reconfigure the ENETFEC. The network
++ * packet processing for this device must be stopped before this call.
++ */
++void enetfec_restart(struct rte_eth_dev *dev)
++{
++	struct enetfec_private *fep = dev->data->dev_private;
++	uint32_t rcntl = OPT_FRAME_SIZE | 0x04;
++	uint32_t ecntl = ENETFEC_ETHEREN;
++	uint32_t val;
++	int i;
++
++	/* Clear any outstanding interrupt. */
++	writel(0xffffffff, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_EIR);
++	writel(0x00, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_EIMR);
++
++	/* Enable MII mode */
++	if (fep->full_duplex == FULL_DUPLEX) {
++		/* FD enable */
++		rte_write32(rte_cpu_to_le_32(0x04),
++			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_TCR);
++	} else {
++	/* No Rcv on Xmit */
++		rcntl |= 0x02;
++		rte_write32(0, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_TCR);
++	}
++
++	if (fep->quirks & QUIRK_RACC) {
++		val = rte_read32((uint8_t *)fep->hw_baseaddr_v + ENETFEC_RACC);
++		/* align IP header */
++		val |= ENETFEC_RACC_SHIFT16;
++		if (fep->flag_csum & RX_FLAG_CSUM_EN)
++			/* set RX checksum */
++			val |= ENETFEC_RACC_OPTIONS;
++		else
++			val &= ~ENETFEC_RACC_OPTIONS;
++		rte_write32(rte_cpu_to_le_32(val),
++			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_RACC);
++		rte_write32(rte_cpu_to_le_32(PKT_MAX_BUF_SIZE),
++			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_FRAME_TRL);
++	}
++
++	/*
++	 * The phy interface and speed need to get configured
++	 * differently on enet-mac.
++	 */
++	if (fep->quirks & QUIRK_HAS_ENETFEC_MAC) {
++		/* Enable flow control and length check */
++		rcntl |= 0x40000000 | 0x00000020;
++
++		/* RGMII, RMII or MII */
++		rcntl |= RTE_BIT32(6);
++
++		if (sfec_km_mode)  /* EtherCAT is working in 100Mbps mode in default */
++			ecntl |= RTE_BIT32(5);
++	}
++
++	/* enable pause frame*/
++	if ((fep->flag_pause & ENETFEC_PAUSE_FLAG_ENABLE) ||
++		((fep->flag_pause & ENETFEC_PAUSE_FLAG_AUTONEG)
++		/*&& ndev->phydev && ndev->phydev->pause*/)) {
++		rcntl |= ENETFEC_FCE;
++
++		/* set FIFO threshold parameter to reduce overrun */
++		rte_write32(rte_cpu_to_le_32(ENETFEC_RSEM_V),
++			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_R_FIFO_SEM);
++		rte_write32(rte_cpu_to_le_32(ENETFEC_RSFL_V),
++			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_R_FIFO_SFL);
++		rte_write32(rte_cpu_to_le_32(ENETFEC_RAEM_V),
++			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_R_FIFO_AEM);
++		rte_write32(rte_cpu_to_le_32(ENETFEC_RAFL_V),
++			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_R_FIFO_AFL);
++
++		/* OPD */
++		rte_write32(rte_cpu_to_le_32(ENETFEC_OPD_V),
++			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_OPD);
++	} else {
++		rcntl &= ~ENETFEC_FCE;
++	}
++
++	rte_write32(rte_cpu_to_le_32(rcntl),
++		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_RCR);
++
++	rte_write32(0, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_IAUR);
++	rte_write32(0, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_IALR);
++
++	if (fep->quirks & QUIRK_HAS_ENETFEC_MAC) {
++		/* enable ENETFEC endian swap */
++		ecntl |= (1 << 8);
++		/* enable ENETFEC store and forward mode */
++		rte_write32(rte_cpu_to_le_32(1 << 8),
++			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_TFWR);
++	}
++	if (fep->bufdesc_ex)
++		ecntl |= (1 << 4);
++	if (fep->quirks & QUIRK_SUPPORT_DELAYED_CLKS &&
++		fep->rgmii_txc_delay)
++		ecntl |= ENETFEC_TXC_DLY;
++	if (fep->quirks & QUIRK_SUPPORT_DELAYED_CLKS &&
++		fep->rgmii_rxc_delay)
++		ecntl |= ENETFEC_RXC_DLY;
++	/* Enable the MIB statistic event counters */
++	rte_write32(0, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_MIBC);
++
++	ecntl |= 0x70000000;
++	fep->enetfec_e_cntl = ecntl;
++	/* And last, enable the transmit and receive processing */
++	rte_write32(rte_cpu_to_le_32(ecntl),
++		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_ECR);
++
++	for (i = 0; i < fep->max_rx_queues; i++)
++		rte_write32(0, fep->rx_queues[i]->bd.active_reg_desc);
++	rte_delay_us(10);
++}
++
++void enet_free_buffers(struct rte_eth_dev *dev)
++{
++	struct enetfec_private *fep = dev->data->dev_private;
++	struct enetfec_priv_rx_q *rxq;
++	struct enetfec_priv_tx_q *txq;
++	unsigned int q = 0;
++
++	for (q = 0; q < dev->data->nb_rx_queues; q++) {
++		rxq = fep->rx_queues_base[q];
++		free(rxq);
++	}
++
++	for (q = 0; q < dev->data->nb_tx_queues; q++) {
++		txq = fep->tx_queues_base[q];
++		free(txq);
++	}
++
++	free(fep->dev);
++}
++
++int enetfec_eth_configure(struct rte_eth_dev *dev)
++{
++	return 0;
++}
++
++int enetfec_eth_start(struct rte_eth_dev *dev)
++{
++	enetfec_restart(dev);
++
++	return 0;
++}
++
++/* ENETFEC disable function.
++ * @param[in] base      ENETFEC base address
++ */
++void enetfec_disable(struct enetfec_private *fep)
++{
++	rte_write32(rte_read32((uint8_t *)fep->hw_baseaddr_v + ENETFEC_ECR)
++		    & ~(fep->enetfec_e_cntl),
++		    (uint8_t *)fep->hw_baseaddr_v + ENETFEC_ECR);
++}
++
++int enetfec_eth_stop(struct rte_eth_dev *dev)
++{
++	struct enetfec_private *fep = dev->data->dev_private;
++
++	enetfec_disable(fep);
++
++	return 0;
++}
++
++int enetfec_eth_close(struct rte_eth_dev *dev)
++{
++	struct enetfec_private *fep = dev->data->dev_private;
++
++	enet_free_buffers(dev);
++	enetfec_cleanup(fep);
++	return 0;
++}
++
++static inline void
++rte_ether_addr_copy(const struct rte_ether_addr *__restrict ea_from,
++		    struct rte_ether_addr *__restrict ea_to)
++{
++	memcpy(ea_to, ea_from, sizeof(struct rte_ether_addr));
++}
++
++/* Set a MAC change in hardware. */
++int enetfec_set_mac_address(struct rte_eth_dev *dev,
++		    struct rte_ether_addr *addr)
++{
++	struct enetfec_private *fep = dev->data->dev_private;
++
++	writel(addr->addr_bytes[3] | (addr->addr_bytes[2] << 8) |
++		(addr->addr_bytes[1] << 16) | (addr->addr_bytes[0] << 24),
++		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_PALR);
++	writel((addr->addr_bytes[5] << 16) | (addr->addr_bytes[4] << 24),
++		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_PAUR);
++
++	rte_ether_addr_copy(addr, &dev->data->mac_addrs);
++
++	return 0;
++}
++
++static const unsigned short offset_des_active_rxq[] = {
++	ENETFEC_RDAR_0, ENETFEC_RDAR_1, ENETFEC_RDAR_2
++};
++
++static const unsigned short offset_des_active_txq[] = {
++	ENETFEC_TDAR_0, ENETFEC_TDAR_1, ENETFEC_TDAR_2
++};
++
++extern struct enet_fec_bd_buf_t *enet_fec_get_bd_buf(void);
++
++int enetfec_tx_queue_setup(struct rte_eth_dev *dev, uint16_t queue_idx, uint16_t nb_desc)
++{
++	struct enet_fec_bd_buf_t *ptrb = enet_fec_get_bd_buf();
++	struct enetfec_private *fep = dev->data->dev_private;
++	unsigned int i;
++	struct bufdesc *bdp, *bd_base;
++	struct enetfec_priv_tx_q *txq;
++	unsigned int size;
++	unsigned int dsize = fep->bufdesc_ex ? sizeof(struct bufdesc_ex) :
++		sizeof(struct bufdesc);
++	unsigned int dsize_log2 = fls64(dsize);
++
++	/* allocate transmit queue */
++	txq = calloc(1, sizeof(*txq) + RTE_CACHE_LINE_SIZE);
++	if (txq == NULL) {
++		ENETFEC_PMD_ERR("transmit queue allocation failed");
++		return -ENOMEM;
++	}
++	fep->tx_queues_base[queue_idx] = txq;
++	txq = (struct enetfec_priv_tx_q *)RTE_ALIGN_CEIL((uint64_t)(txq), RTE_CACHE_LINE_SIZE);
++
++	if (nb_desc > MAX_TX_BD_RING_SIZE) {
++		nb_desc = MAX_TX_BD_RING_SIZE;
++		ENETFEC_PMD_WARN("modified the nb_desc to MAX_TX_BD_RING_SIZE");
++	}
++	txq->bd.ring_size = nb_desc;
++	fep->total_tx_ring_size += txq->bd.ring_size;
++	fep->tx_queues[queue_idx] = txq;
++
++	rte_write32(rte_cpu_to_le_32(fep->bd_addr_p_t[queue_idx]),
++		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_TD_START(queue_idx));
++
++	/* Set transmit descriptor base. */
++	txq = fep->tx_queues[queue_idx];
++	txq->fep = fep;
++	size = dsize * txq->bd.ring_size;
++	bd_base = (struct bufdesc *)fep->dma_baseaddr_t[queue_idx];
++	txq->bd.queue_id = queue_idx;
++	txq->bd.base = bd_base;
++	txq->bd.cur = bd_base;
++	txq->bd.d_size = dsize;
++	txq->bd.d_size_log2 = dsize_log2;
++	txq->bd.active_reg_desc = (uint8_t *)fep->hw_baseaddr_v +
++			offset_des_active_txq[queue_idx];
++	bd_base = (struct bufdesc *)(((uintptr_t)bd_base) + size);
++	txq->bd.last = (struct bufdesc *)(((uintptr_t)bd_base) - dsize);
++	bdp = txq->bd.base;
++	bdp = txq->bd.cur;
++
++	if ((ptrb->tx_buf_num != nb_desc) || (ptrb->tx_buf_num != MAX_TX_BD_RING_SIZE))
++		ENETFEC_PMD_ERR("nb_desc:%d tx_buf_num:%d, configure ERROR!\n", nb_desc, ptrb->tx_buf_num);
++
++	for (i = 0; i < txq->bd.ring_size; i++) {
++		/* Initialize the BD for every fragment in the page. */
++		rte_write16(rte_cpu_to_le_16(0), &bdp->bd_sc);
++
++		if (ptrb->tx_buf_num == MAX_TX_BD_RING_SIZE) {
++			rte_write32(rte_cpu_to_le_32(ptrb->tx_addr[i]), &bdp->bd_bufaddr);
++			txq->tx_addr[i] = ptrb->tx_addr[i];
++			txq->tx_buf[i] = ptrb->tx_buf[i];
++		} else {
++			rte_write32(0, &bdp->bd_bufaddr);
++		}
++
++		bdp = enet_get_nextdesc(bdp, &txq->bd);
++	}
++
++	/* Set the last buffer to wrap */
++	bdp = enet_get_prevdesc(bdp, &txq->bd);
++	rte_write16((rte_cpu_to_le_16(TX_BD_WRAP) |
++		rte_read16(&bdp->bd_sc)), &bdp->bd_sc);
++	txq->dirty_tx = bdp;
++
++	return 0;
++}
++
++int enetfec_rx_queue_setup(struct rte_eth_dev *dev, uint16_t queue_idx, uint16_t nb_rx_desc)
++{
++	struct enet_fec_bd_buf_t *ptrb = enet_fec_get_bd_buf();
++	struct enetfec_private *fep = dev->data->dev_private;
++	unsigned int i;
++	struct bufdesc *bd_base;
++	struct bufdesc *bdp;
++	struct enetfec_priv_rx_q *rxq;
++	unsigned int size;
++	unsigned int dsize = fep->bufdesc_ex ? sizeof(struct bufdesc_ex) :
++			sizeof(struct bufdesc);
++	unsigned int dsize_log2 = fls64(dsize);
++
++	if (queue_idx >= ENETFEC_MAX_Q) {
++		ENETFEC_PMD_ERR("Invalid queue id %u, max %d\n", queue_idx, ENETFEC_MAX_Q);
++		return -EINVAL;
++	}
++
++	/* allocate receive queue */
++	rxq = calloc(1, sizeof(*rxq) + RTE_CACHE_LINE_SIZE);
++	if (rxq == NULL) {
++		ENETFEC_PMD_ERR("receive queue allocation failed");
++		return -ENOMEM;
++	}
++	fep->rx_queues_base[queue_idx] = rxq;
++	rxq = (struct enetfec_priv_rx_q *)RTE_ALIGN_CEIL((uint64_t)(rxq), RTE_CACHE_LINE_SIZE);
++
++	if (nb_rx_desc > MAX_RX_BD_RING_SIZE) {
++		nb_rx_desc = MAX_RX_BD_RING_SIZE;
++		ENETFEC_PMD_WARN("modified the nb_desc to MAX_RX_BD_RING_SIZE");
++	}
++
++	rxq->bd.ring_size = nb_rx_desc;
++	fep->total_rx_ring_size += rxq->bd.ring_size;
++	fep->rx_queues[queue_idx] = rxq;
++
++	rte_write32(rte_cpu_to_le_32(fep->bd_addr_p_r[queue_idx]),
++		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_RD_START(queue_idx));
++	rte_write32(rte_cpu_to_le_32(PKT_MAX_BUF_SIZE),
++		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_MRB_SIZE(queue_idx));
++
++	/* Set receive descriptor base. */
++	rxq = fep->rx_queues[queue_idx];
++
++	size = dsize * rxq->bd.ring_size;
++	bd_base = (struct bufdesc *)fep->dma_baseaddr_r[queue_idx];
++	rxq->bd.queue_id = queue_idx;
++	rxq->bd.base = bd_base;
++	rxq->bd.cur = bd_base;
++	rxq->bd.d_size = dsize;
++	rxq->bd.d_size_log2 = dsize_log2;
++	rxq->bd.active_reg_desc = (uint8_t *)fep->hw_baseaddr_v +
++			offset_des_active_rxq[queue_idx];
++	bd_base = (struct bufdesc *)(((uintptr_t)bd_base) + size);
++	rxq->bd.last = (struct bufdesc *)(((uintptr_t)bd_base) - dsize);
++
++	rxq->fep = fep;
++	bdp = rxq->bd.base;
++	rxq->bd.cur = bdp;
++
++	if ((ptrb->rx_buf_num != nb_rx_desc) || (ptrb->rx_buf_num != MAX_RX_BD_RING_SIZE))
++		ENETFEC_PMD_ERR("nb_rx_desc:%d rx_buf_num:%d, configure ERROR!\n", nb_rx_desc, ptrb->rx_buf_num);
++
++	for (i = 0; i < nb_rx_desc; i++) {
++		if (ptrb->rx_buf_num == MAX_RX_BD_RING_SIZE) {
++			rte_write32(rte_cpu_to_le_32(ptrb->rx_addr[i]), &bdp->bd_bufaddr);
++			rxq->rx_addr[i] = ptrb->rx_addr[i];
++			rxq->rx_buf[i] = ptrb->rx_buf[i];
++		} else {
++			rte_write32(0, &bdp->bd_bufaddr);
++		}
++
++		rte_write16(rte_cpu_to_le_16(RX_BD_EMPTY), &bdp->bd_sc);
++
++		bdp = enet_get_nextdesc(bdp, &rxq->bd);
++	}
++
++	/* Initialize the receive buffer descriptors. */
++	bdp = rxq->bd.cur;
++	for (i = 0; i < rxq->bd.ring_size; i++) {
++		/* Initialize the BD for every fragment in the page. */
++		if (rte_read32(&bdp->bd_bufaddr) > 0)
++			rte_write16(rte_cpu_to_le_16(RX_BD_EMPTY),
++				&bdp->bd_sc);
++		else
++			rte_write16(rte_cpu_to_le_16(0), &bdp->bd_sc);
++
++		bdp = enet_get_nextdesc(bdp, &rxq->bd);
++	}
++
++	/* Set the last buffer to wrap */
++	bdp = enet_get_prevdesc(bdp, &rxq->bd);
++	rte_write16((rte_cpu_to_le_16(RX_BD_WRAP) |
++		rte_read16(&bdp->bd_sc)),  &bdp->bd_sc);
++	rte_write32(0, fep->rx_queues[queue_idx]->bd.active_reg_desc);
++	return 0;
++}
++
++int enetfec_eth_init(struct rte_eth_dev *dev)
++{
++	struct enetfec_private *fep = dev->data->dev_private;
++
++	fep->full_duplex = FULL_DUPLEX;
++
++	return 0;
++}
++
++int pmd_enetfec_probe(struct rte_vdev_device *vdev)
++{
++	const char *src_macaddr = "ethcat";
++	struct rte_eth_dev *dev = NULL;
++	struct rte_ether_addr macaddr;
++	struct enetfec_private *fep;
++	unsigned int bdsize;
++	int rc;
++	int i;
++
++	ENETFEC_PMD_LOG("[INFO] Initializing driver for enet_fec\n");
++
++	dev = calloc(1, sizeof(*dev));
++	if (dev == NULL)
++		return -ENOMEM;
++
++	memset(&sfec_eth_data, 0, sizeof(sfec_eth_data));
++	memset(&sfec_priv_data, 0, sizeof(sfec_priv_data));
++
++	sfec_eth_data.dev_private = &sfec_priv_data;
++	dev->data = &sfec_eth_data;
++
++	/* setup board info structure */
++	fep = dev->data->dev_private;
++	fep->dev = dev;
++
++	fep->max_rx_queues = ENETFEC_MAX_Q;
++	fep->max_tx_queues = ENETFEC_MAX_Q;
++	dev->data->nb_rx_queues = fep->max_rx_queues;
++	dev->data->nb_tx_queues = fep->max_tx_queues;
++	fep->quirks = QUIRK_HAS_ENETFEC_MAC | QUIRK_GBIT
++		| QUIRK_RACC;
++
++	vdev->dev = dev;
++
++	rc = enetfec_configure();
++	if (rc != 0)
++		return -ENOMEM;
++	rc = config_enetfec_uio(fep);
++	if (rc != 0)
++		return -ENOMEM;
++
++	/* Get the BD size for distributing among six queues */
++	bdsize = (fep->bd_size) / NUM_OF_BD_QUEUES;
++
++	for (i = 0; i < fep->max_tx_queues; i++) {
++		fep->dma_baseaddr_t[i] = fep->bd_addr_v;
++		fep->bd_addr_p_t[i] = fep->bd_addr_p;
++		fep->bd_addr_v = (uint8_t *)fep->bd_addr_v + bdsize;
++		fep->bd_addr_p = fep->bd_addr_p + bdsize;
++	}
++	for (i = 0; i < fep->max_rx_queues; i++) {
++		fep->dma_baseaddr_r[i] = fep->bd_addr_v;
++		fep->bd_addr_p_r[i] = fep->bd_addr_p;
++		fep->bd_addr_v = (uint8_t *)fep->bd_addr_v + bdsize;
++		fep->bd_addr_p = fep->bd_addr_p + bdsize;
++	}
++
++	/*
++	 * Set default mac address
++	 */
++	for (i = 0; i < 6; i++)
++		macaddr.addr_bytes[i] = src_macaddr[i] - 'a';
++
++	enetfec_set_mac_address(dev, &macaddr);
++
++	fep->bufdesc_ex = ENETFEC_EXTENDED_BD;
++	rc = enetfec_eth_init(dev);
++	if (rc)
++		goto failed_init;
++
++	return 0;
++
++failed_init:
++	ENETFEC_PMD_ERR("Failed to init");
++
++	return rc;
++}
+diff --git a/devices/enet_fec/enet_ethdev.h b/devices/enet_fec/enet_ethdev.h
+new file mode 100644
+index 00000000..0785e42d
+--- /dev/null
++++ b/devices/enet_fec/enet_ethdev.h
+@@ -0,0 +1,227 @@
++/* SPDX-License-Identifier: BSD-3-Clause
++ * Copyright 2020-2023 NXP
++ */
++
++#ifndef __ENETFEC_ETHDEV_H__
++#define __ENETFEC_ETHDEV_H__
++
++#include <stdio.h>
++#include <stdint.h>
++#include <stdbool.h>
++#include <stddef.h>
++#include <string.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <sys/mman.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <stdlib.h>
++#include <dirent.h>
++#include <errno.h>
++
++#include "enet_fec.h"
++
++
++/* full duplex */
++#define FULL_DUPLEX		0x00
++
++#define PKT_MAX_BUF_SIZE	1984
++#define OPT_FRAME_SIZE		(PKT_MAX_BUF_SIZE << 16)
++
++#define __iomem
++#define dcbf(p) { asm volatile("dc cvac, %0" : : "r"(p) : "memory"); }
++#define dcbf_64(p) dcbf(p)
++
++#define rte_wmb() asm volatile("dmb oshst" : : : "memory")
++#define rte_rmb() asm volatile("dmb oshld" : : : "memory")
++
++#define rte_delay_us usleep
++
++/*
++ * ENETFEC can support 1 rx and tx queue..
++ */
++#define ENETFEC_MAX_Q		(1)
++#define RTE_CACHE_LINE_SIZE (64)
++#define RTE_ETHER_ADDR_LEN (6)
++
++struct rte_ether_addr {
++	uint8_t addr_bytes[RTE_ETHER_ADDR_LEN]; /**< Addr bytes in tx order */
++};
++
++struct rte_eth_dev_data {
++	void *dev_private;
++	int nb_rx_queues;
++	int nb_tx_queues;
++	struct rte_ether_addr mac_addrs;
++};
++
++#define writel(v, p) ({*(volatile unsigned int *)(p) = (v); })
++
++#define __rte_always_inline inline __attribute__((always_inline))
++
++static __rte_always_inline uint32_t rte_read32(const volatile void *addr)
++{
++	return *(volatile uint32_t*)addr;
++}
++
++static __rte_always_inline uint16_t rte_read16(const volatile void *addr)
++{
++	return *(volatile uint16_t*)addr;
++}
++
++static __rte_always_inline void rte_write16(uint16_t value, volatile void *addr)
++{
++	*(volatile uint16_t*)addr = value;
++}
++
++static __rte_always_inline void rte_write32(uint32_t value, volatile void *addr)
++{
++        *(volatile uint32_t*)addr = value;
++}
++
++struct rte_eth_dev {
++	struct rte_eth_dev_data *data;
++	void *process_private; /**< Pointer to per-process device data */
++};
++
++#define RTE_STATIC_BSWAP16(v) \
++	((((uint16_t)(v) & UINT16_C(0x00ff)) << 8) | \
++	 (((uint16_t)(v) & UINT16_C(0xff00)) >> 8))
++
++#define rte_cpu_to_le_32(x) (x)
++#define rte_cpu_to_le_16(x) (x)
++#define rte_le_to_cpu_16(x) (x)
++
++struct rte_vdev_device {
++	struct rte_eth_dev *dev;
++};
++
++/**
++ * IO virtual address type.
++ * When the physical addressing mode (IOVA as PA) is in use,
++ * the translation from an IO virtual address (IOVA) to a physical address
++ * is a direct mapping, i.e. the same value.
++ * Otherwise, in virtual mode (IOVA as VA), an IOMMU may do the translation.
++ */
++typedef uint64_t rte_iova_t;
++#define RTE_BAD_IOVA ((rte_iova_t)-1)
++
++#define RTE_ALIGN_FLOOR(val, align) \
++	(typeof(val))((val) & (~((typeof(val))((align) - 1))))
++
++#define RTE_ALIGN_CEIL(val, align) \
++	RTE_ALIGN_FLOOR(((val) + ((typeof(val)) (align) - 1)), align)
++
++struct bufdesc {
++	uint16_t		bd_datlen;  /* buffer data length */
++	uint16_t		bd_sc;      /* buffer control & status */
++	uint32_t		bd_bufaddr; /* buffer address */
++} __attribute__((packed));
++
++struct bufdesc_ex {
++	struct			bufdesc desc;
++	uint32_t		bd_esc;
++	uint32_t		bd_prot;
++	uint32_t		bd_bdu;
++	uint32_t		ts;
++	uint16_t		res0[4];
++} __attribute__((packed));
++
++struct bufdesc_prop {
++	int			queue_id;
++	/* Addresses of Tx and Rx buffers */
++	struct bufdesc		*base;
++	struct bufdesc		*last;
++	struct bufdesc		*cur;
++	void __iomem		*active_reg_desc;
++	uint64_t		descr_baseaddr_p;
++	unsigned short		ring_size;
++	unsigned char		d_size;
++	unsigned char		d_size_log2;
++};
++
++struct enetfec_priv_tx_q {
++	struct bufdesc_prop	bd;
++	struct bufdesc		*dirty_tx;
++	struct enetfec_private	*fep;
++	uint8_t			*tx_buf[MAX_TX_BD_RING_SIZE];
++	uint32_t		tx_addr[MAX_TX_BD_RING_SIZE];
++};
++
++struct enetfec_priv_rx_q {
++	struct bufdesc_prop	bd;
++	struct enetfec_private	*fep;
++	uint8_t			*rx_buf[MAX_RX_BD_RING_SIZE];
++	uint32_t		rx_addr[MAX_RX_BD_RING_SIZE];
++};
++
++struct enetfec_private {
++	struct rte_eth_dev	*dev;
++	int			full_duplex;
++	int			flag_pause;
++	int			flag_csum;
++	uint32_t		quirks;
++	uint32_t		cbus_size;
++	uint32_t		enetfec_e_cntl;
++	uint16_t		max_rx_queues;
++	uint16_t		max_tx_queues;
++	unsigned int		total_tx_ring_size;
++	unsigned int		total_rx_ring_size;
++	unsigned int		reg_size;
++	unsigned int		bd_size;
++	bool			bufdesc_ex;
++	bool			rgmii_txc_delay;
++	bool			rgmii_rxc_delay;
++	void			*hw_baseaddr_v;
++	void			*bd_addr_v;
++	uint32_t		hw_baseaddr_p;
++	uint32_t		bd_addr_p;
++	uint32_t		bd_addr_p_r[ENETFEC_MAX_Q];
++	uint32_t		bd_addr_p_t[ENETFEC_MAX_Q];
++	void			*dma_baseaddr_r[ENETFEC_MAX_Q];
++	void			*dma_baseaddr_t[ENETFEC_MAX_Q];
++	struct enetfec_priv_rx_q *rx_queues[ENETFEC_MAX_Q];
++	struct enetfec_priv_tx_q *tx_queues[ENETFEC_MAX_Q];
++	struct enetfec_priv_rx_q *rx_queues_base[ENETFEC_MAX_Q];
++	struct enetfec_priv_tx_q *tx_queues_base[ENETFEC_MAX_Q];
++};
++
++static inline struct
++bufdesc *enet_get_nextdesc(struct bufdesc *bdp, struct bufdesc_prop *bd)
++{
++	return (bdp >= bd->last) ? bd->base
++		: (struct bufdesc *)(((uintptr_t)bdp) + bd->d_size);
++}
++
++static inline int
++fls64(unsigned long word)
++{
++	return (64 - __builtin_clzl(word)) - 1;
++}
++
++static inline struct
++bufdesc *enet_get_prevdesc(struct bufdesc *bdp, struct bufdesc_prop *bd)
++{
++	return (bdp <= bd->base) ? bd->last
++		: (struct bufdesc *)(((uintptr_t)bdp) - bd->d_size);
++}
++
++static inline int
++enet_get_bd_index(struct bufdesc *bdp, struct bufdesc_prop *bd)
++{
++	return ((const char *)bdp - (const char *)bd->base) >> bd->d_size_log2;
++}
++
++struct enetfec_private *enetfec_get_priv_data(void);
++int enetfec_set_km_mode(int mode);
++uint16_t enetfec_recv_pkts_ecat(uint32_t *pindex, uint16_t *plength);
++uint16_t enetfec_xmit_pkts_ecat(void *pbuffer, uint16_t length);
++int pmd_enetfec_probe(struct rte_vdev_device *vdev);
++int enetfec_eth_configure(struct rte_eth_dev *dev);
++int enetfec_rx_queue_setup(struct rte_eth_dev *dev, uint16_t queue_idx, uint16_t nb_rx_desc);
++int enetfec_tx_queue_setup(struct rte_eth_dev *dev, uint16_t queue_idx, uint16_t nb_desc);
++int enetfec_eth_start(struct rte_eth_dev *dev);
++int enetfec_eth_stop(struct rte_eth_dev *dev);
++int enetfec_eth_close(struct rte_eth_dev *dev);
++
++#endif /*__ENETFEC_ETHDEV_H__*/
+diff --git a/devices/enet_fec/enet_fec.c b/devices/enet_fec/enet_fec.c
+new file mode 100644
+index 00000000..56ffbe9b
+--- /dev/null
++++ b/devices/enet_fec/enet_fec.c
+@@ -0,0 +1,331 @@
++/* SPDX-License-Identifier: BSD-3-Clause
++ * Copyright 2021-2023 NXP
++ */
++
++#include <sys/mman.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++
++#include "enet_uio.h"
++#include "enet_ethdev.h"
++#include "enet_fec.h"
++
++
++static struct enet_fec_bd_buf_t senet_fec_bd_buf;
++
++#define HUGE_PAGE_MNT_PATH ("/dev/hugepages/ecat_hugepage")
++#define HUGE_PAGE_SIZE (0x200000)
++#define NUM_HUGE_PAGE (16)
++#define HP_DIR_LEN (256)
++
++static struct huge_page_info_t shp_info[NUM_HUGE_PAGE];
++static int shp_cnt;
++
++#define PFN_MASK_SIZE	8
++static struct rte_vdev_device sfec_vdev;
++
++phys_addr_t rte_mem_virt2phy(const void *virtaddr)
++{
++	int fd, retval;
++	uint64_t page, physaddr;
++	unsigned long virt_pfn;
++	int page_size;
++	off_t offset;
++
++	/* standard page size */
++	page_size = getpagesize();
++
++	fd = open("/proc/self/pagemap", O_RDONLY);
++	if (fd < 0) {
++		printf("INFO_EAL cannot open /proc/self/pagemap \n");
++		return RTE_BAD_IOVA;
++	}
++
++	virt_pfn = (unsigned long)virtaddr / page_size;
++	offset = sizeof(uint64_t) * virt_pfn;
++	if (lseek(fd, offset, SEEK_SET) == (off_t) -1) {
++		printf("INFO_EAL seek error in /proc/self/pagemap \n");
++		close(fd);
++		return RTE_BAD_IOVA;
++	}
++
++	retval = read(fd, &page, PFN_MASK_SIZE);
++	close(fd);
++	if (retval < 0) {
++		printf("INFO_EAL cannot read /proc/self/pagemap \n");
++		return RTE_BAD_IOVA;
++	} else if (retval != PFN_MASK_SIZE) {
++		printf("INFO_EAL read %d bytes from /proc/self/pagemap but expected %d \n", retval, PFN_MASK_SIZE);
++		return RTE_BAD_IOVA;
++	}
++
++	/*
++	 * the pfn (page frame number) are bits 0-54 (see
++	 * pagemap.txt in linux Documentation)
++	 */
++	if ((page & 0x7fffffffffffffULL) == 0)
++		return RTE_BAD_IOVA;
++
++	physaddr = ((page & 0x7fffffffffffffULL) * page_size)
++		+ ((unsigned long)virtaddr % page_size);
++
++	return physaddr;
++}
++
++void* enet_fec_mem_map(size_t length, uint32_t *pa, uint32_t align)
++{
++	struct huge_page_info_t *php = NULL;
++	char *hp_dir = NULL;
++	void *pbase = NULL;
++	void *pvirt = NULL;
++	off_t addr = 0;
++	int fd = 0;
++
++	if (length > HUGE_PAGE_SIZE) {
++		printf("%s(): out of hugepage size! length:0x%lX\n", __func__, length);
++		return NULL;
++	}
++
++	if (shp_cnt >= NUM_HUGE_PAGE) {
++		printf("%s(): out of hugepage number! shp_cnt:%d\n", __func__, shp_cnt);
++		return NULL;
++	}
++
++	hp_dir = (char *)malloc(HP_DIR_LEN);
++	if (!hp_dir) {
++		printf("%s(): malloc hp_dir failed! shp_cnt:%d\n", __func__, shp_cnt);
++		return NULL;
++	}
++
++	memset(hp_dir, 0, HP_DIR_LEN);
++	snprintf(hp_dir, HP_DIR_LEN - 1, "%s_%d", HUGE_PAGE_MNT_PATH, shp_cnt);
++
++	fd = open(hp_dir, O_CREAT | O_RDWR, 0600);
++	if (fd == -1) {
++		printf("%s(): open \"%s\" ERROR!\n", __func__, HUGE_PAGE_MNT_PATH);
++		free(hp_dir);
++		return NULL;
++	}
++
++	pbase = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
++	if (pbase == MAP_FAILED) {
++		printf("%s(): mmap failed! ret:%p\n", __func__, pbase);
++		free(hp_dir);
++		return NULL;
++	}
++
++	*(volatile int *)pbase = *(volatile int *)pbase;
++	addr = rte_mem_virt2phy(pbase);
++
++	php = shp_info + shp_cnt++;
++	memset(php, 0, sizeof(*php));
++
++	php->size = length;
++	php->virt = pbase;
++	php->dir = hp_dir;
++	php->fd = fd;
++
++	pvirt = (uint8_t*)RTE_ALIGN_CEIL((uint64_t)pbase, align);
++	if (pa)
++		*pa = addr + (off_t)(pvirt - pbase);
++
++	return pvirt;
++}
++
++int enet_fec_mem_unmap(void *va, size_t len)
++{
++	if ((va != NULL) && (len > 0))
++		munmap(va, len);
++
++	return 0;
++}
++
++static int enet_fec_init_bd_buf(void)
++{
++	struct enet_fec_bd_buf_t *ptrb = &senet_fec_bd_buf;
++	int i = 0;
++
++	shp_cnt = 0;
++	for (i = 0; i < NUM_HUGE_PAGE; i++) {
++		memset(shp_info + i, 0, sizeof(struct huge_page_info_t));
++		shp_info[i].fd = -1;
++	}
++
++	for (i = 0; i < MAX_RX_BD_RING_SIZE; i++)
++		ptrb->rx_buf[i] = NULL;
++
++	for (i = 0; i < MAX_TX_BD_RING_SIZE; i++)
++		ptrb->tx_buf[i] = NULL;
++
++	ptrb->rx_buf_num = 0;
++	ptrb->tx_buf_num = 0;
++
++	return 0;
++}
++
++static int enet_fec_clean_bd_buf(void)
++{
++	int i = 0;
++
++	for (i = 0; i < shp_cnt; i++) {
++		enet_fec_mem_unmap(shp_info[i].virt, shp_info[i].size);
++
++		if (shp_info[i].fd != -1) {
++			close(shp_info[i].fd);
++			shp_info[i].fd = -1;
++		}
++
++		if (shp_info[i].dir) {
++			unlink(shp_info[i].dir);
++			free(shp_info[i].dir);
++			shp_info[i].dir = NULL;
++		}
++	}
++	shp_cnt = 0;
++
++	return 0;
++}
++
++static int enet_fec_alloc_bd_buf(void)
++{
++	struct enet_fec_bd_buf_t *ptrb = &senet_fec_bd_buf;
++	uint32_t mm_addr = 0;
++	void *mm_virt = NULL;
++	size_t mm_size = 0;
++	int ret = 0;
++	int i = 0;
++
++	mm_size = (MAX_TX_BD_RING_SIZE + MAX_RX_BD_RING_SIZE) * FEC_BD_BUF_SIZE + RTE_CACHE_LINE_SIZE;
++
++	mm_virt = (uint8_t*)enet_fec_mem_map(mm_size, &mm_addr, RTE_CACHE_LINE_SIZE);
++	if (!mm_virt) {
++		printf("%s(): mem_map hugepage failed! size:0x%lX\n", __func__, mm_size);
++		ret = -1;
++		goto malloc_fail;
++	}
++
++	for (i = 0; i < MAX_TX_BD_RING_SIZE; i++) {
++		ptrb->tx_buf[i] = mm_virt;
++		ptrb->tx_addr[i] = mm_addr;
++
++		mm_virt += FEC_BD_BUF_SIZE;
++		mm_addr += FEC_BD_BUF_SIZE;
++	}
++	ptrb->tx_buf_len = FEC_BD_BUF_SIZE;
++	ptrb->tx_buf_oft = 0;
++	ptrb->tx_buf_num = MAX_TX_BD_RING_SIZE;
++
++	for (i = 0; i < MAX_RX_BD_RING_SIZE; i++) {
++		ptrb->rx_buf[i] = mm_virt;
++		ptrb->rx_addr[i] = mm_addr;
++		ptrb->rx_buf[i] += FEC_RX_BD_OFFSET;  /* FEC BD RING will add unused 2 Bytes, see QUIRK_RACC */
++
++		mm_virt += FEC_BD_BUF_SIZE;
++		mm_addr += FEC_BD_BUF_SIZE;
++	}
++	ptrb->rx_buf_len = FEC_BD_BUF_SIZE;
++	ptrb->rx_buf_oft = FEC_RX_BD_OFFSET;
++	ptrb->rx_buf_num = MAX_RX_BD_RING_SIZE;
++
++malloc_fail:
++
++	return ret;
++}
++
++uint8_t *enet_fec_get_tx_buf(int idx)
++{
++    struct enet_fec_bd_buf_t *ptrb = &senet_fec_bd_buf;
++
++    return ptrb->tx_buf[idx];
++}
++
++struct enet_fec_bd_buf_t *enet_fec_get_bd_buf(void)
++{
++	return &senet_fec_bd_buf;
++}
++
++int enet_fec_alloc_buffer(void)
++{
++	int ret = 0;
++
++	ret = enet_fec_init_bd_buf();
++	if (ret)
++		return ret;
++
++        ret = enet_fec_alloc_bd_buf();
++	if (ret)
++		return ret;
++
++	return 0;
++}
++
++int enet_fec_recv_no_copy(void *buf, uint16_t *plen, uint32_t *pindex)
++{
++	int nb_rx = 0;
++
++	nb_rx = enetfec_recv_pkts_ecat(pindex, plen);
++	return nb_rx;
++}
++
++int enet_fec_send_no_copy(void *buf, uint16_t len, uint32_t addr)
++{
++	uint16_t ret_len = 0;
++	int nb_tx = 0;
++
++	nb_tx = enetfec_xmit_pkts_ecat(buf, len);
++	if (nb_tx != 0)
++		ret_len = len;
++
++	return ret_len;
++}
++
++int enet_fec_dev_init(void)
++{
++	struct rte_eth_dev *dev = NULL;
++	int ret = 0;
++
++	pmd_enetfec_probe(&sfec_vdev);
++	dev = sfec_vdev.dev;
++
++	enetfec_eth_configure(dev);
++
++	/* init one RX queue */
++	ret = enetfec_rx_queue_setup(dev, 0, MAX_RX_BD_RING_SIZE);
++	if (ret)
++		goto err_tag;
++
++	/* init one TX queue */
++	ret = enetfec_tx_queue_setup(dev, 0, MAX_TX_BD_RING_SIZE);
++	if (ret)
++		goto err_tag;
++
++	/* Start device */
++	enetfec_eth_start(dev);
++	printf("Starting port for user space EtherCAT\n");
++
++err_tag:
++	if (ret)
++		printf("%s(): run failed! ret:%d\n", __func__, ret);
++
++	return ret;
++}
++
++int enet_fec_dev_quit(void)
++{
++	struct rte_eth_dev *dev = sfec_vdev.dev;
++	int ret = 0;
++
++	printf("Closing port for user space EtherCAT\n");
++	ret = enetfec_eth_stop(dev);
++	if (ret != 0)
++		printf("[ERR] rte_eth_dev_stop: err=%d" , ret);
++
++	enetfec_eth_close(dev);
++
++	enet_fec_clean_bd_buf();
++
++	return 0;
++}
+diff --git a/devices/enet_fec/enet_fec.h b/devices/enet_fec/enet_fec.h
+new file mode 100644
+index 00000000..580ca291
+--- /dev/null
++++ b/devices/enet_fec/enet_fec.h
+@@ -0,0 +1,51 @@
++/* SPDX-License-Identifier: BSD-3-Clause
++ * Copyright 2021-2023 NXP
++ */
++
++#ifndef __ENET_FEC_H__
++#define __ENET_FEC_H__
++
++struct huge_page_info_t {
++	size_t size;
++	void *virt;
++	char *dir;
++	int fd;
++};
++
++#define MAX_TX_BD_RING_SIZE	(16)  /* It should be power of 2 */
++#define MAX_RX_BD_RING_SIZE	(16)
++#define FEC_BD_BUF_SIZE (2048)
++#define FEC_RX_BD_OFFSET (2)
++
++struct enet_fec_bd_buf_t {
++	uint8_t *tx_buf[MAX_TX_BD_RING_SIZE];
++	uint32_t tx_addr[MAX_TX_BD_RING_SIZE];
++	uint16_t tx_buf_len;
++	uint16_t tx_buf_oft;
++	uint8_t tx_buf_num;
++
++	uint8_t *rx_buf[MAX_RX_BD_RING_SIZE];
++	uint32_t rx_addr[MAX_RX_BD_RING_SIZE];
++	uint16_t rx_buf_len;
++	uint16_t rx_buf_oft;
++	uint8_t rx_buf_num;
++} __attribute__((packed));
++
++typedef uint64_t phys_addr_t;
++
++phys_addr_t rte_mem_virt2phy(const void *virtaddr);
++
++int enet_fec_alloc_buffer(void);
++uint8_t *enet_fec_get_tx_buf(int idx);
++struct enet_fec_bd_buf_t *enet_fec_get_bd_buf(void);
++
++uint32_t ecus_get_core_mask(void);
++int ecus_bind_cpu_core(uint32_t core_mask);
++
++int enet_fec_recv_no_copy(void *buf, uint16_t *plen, uint32_t *pindex);
++int enet_fec_send_no_copy(void *buf, uint16_t len, uint32_t addr);
++
++int enet_fec_dev_init(void);
++int enet_fec_dev_quit(void);
++
++#endif
+diff --git a/devices/enet_fec/enet_main.c b/devices/enet_fec/enet_main.c
+new file mode 100644
+index 00000000..c0e4121e
+--- /dev/null
++++ b/devices/enet_fec/enet_main.c
+@@ -0,0 +1,289 @@
++/* SPDX-License-Identifier: BSD-3-Clause
++ * Copyright 2023 NXP
++ */
++
++#define _GNU_SOURCE
++#include <pthread.h>
++#include <linux/module.h>
++#include <linux/device.h>
++#include <linux/err.h>
++#include <linux/version.h>
++#include <linux/netdevice.h>
++#include <linux/if_arp.h> /* ARPHRD_ETHER */
++#include <linux/etherdevice.h>
++
++#include "../globals.h"
++#include "../ecdev.h"
++#include "device.h"
++#include "enet_fec.h"
++
++#define PFX "ec_enet_fec: "
++
++MODULE_DESCRIPTION("EtherCAT master enet-fec Ethernet device module");
++MODULE_LICENSE("GPL");
++MODULE_VERSION(EC_MASTER_VERSION);
++
++static uint32_t srx_idxs[MAX_RX_BD_RING_SIZE];
++static uint16_t srx_lens[MAX_RX_BD_RING_SIZE];
++static int srx_cnt;
++
++int __init ec_fec_init_module(void);
++void __exit ec_fec_cleanup_module(void);
++
++typedef struct {
++    struct net_device *netdev;
++    ec_device_t *ecdev;
++} ec_fec_device_t;
++
++static ec_fec_device_t sec_fec_dev;
++static uint32_t score_mask = 0x02;
++
++extern int ec_master_set_noop_mode(uint32_t cycle_ns);
++int ec_fec_device_xmit(ec_fec_device_t *, struct sk_buff *);
++void ec_fec_device_poll(ec_fec_device_t *);
++
++static int ecus_set_core_mask(uint32_t core_mask)
++{
++    if (core_mask == 0)
++        return -1;
++
++    score_mask = core_mask;
++    return 0;
++}
++
++uint32_t ecus_get_core_mask(void)
++{
++    return score_mask;
++}
++
++int ecus_bind_cpu_core(uint32_t core_mask)
++{
++    pthread_t thread;
++    cpu_set_t cpuset;
++    int ret = 0;
++    int i = 0;
++
++    thread = pthread_self();
++
++    CPU_ZERO(&cpuset);
++    for (i = 0; i < 32; i++) {
++        if (core_mask & (0x01 << i))
++            CPU_SET(i, &cpuset);
++    }
++
++    ret = pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
++    if (ret != 0)
++        printk(KERN_ERR PFX "pthread_setaffinity_np failed!\n");
++
++    return ret;
++}
++
++static int ec_fec_netdev_open(struct net_device *dev)
++{
++    return 0;
++}
++
++static int ec_fec_netdev_stop(struct net_device *dev)
++{
++    return 0;
++}
++
++static int ec_fec_netdev_xmit(struct sk_buff *skb, struct net_device *dev)
++{
++    ec_fec_device_t *fec_dev = &sec_fec_dev;
++
++    return ec_fec_device_xmit(fec_dev, skb);
++}
++
++void ec_fec_poll(struct net_device *dev)
++{
++    ec_fec_device_t *fec_dev = &sec_fec_dev;
++
++    return ec_fec_device_poll(fec_dev);
++}
++
++static const struct net_device_ops ec_fec_netdev_ops = {
++    .ndo_open       = ec_fec_netdev_open,
++    .ndo_stop       = ec_fec_netdev_stop,
++    .ndo_start_xmit = ec_fec_netdev_xmit,
++};
++
++static inline void ec_fec_ether_setup(struct net_device *netdev)
++{
++    uint8_t smac[6] = {0x04, 0x13, 0x07, 0x02, 0x00, 0x13};
++
++    memcpy(netdev->dev_addr, smac, 6);
++    netdev->type = ARPHRD_ETHER;
++    netdev->ifindex = 0;
++}
++
++/** Init enet-fec device.
++ */
++int ec_fec_device_init(ec_fec_device_t *dev)
++{
++    ec_fec_device_t **priv;
++
++    dev->ecdev = NULL;
++    dev->netdev = alloc_netdev(sizeof(ec_fec_device_t *), "ecat0", NET_NAME_UNKNOWN, ec_fec_ether_setup);
++    if (!dev->netdev)
++        return -ENOMEM;
++
++    dev->netdev->netdev_ops = &ec_fec_netdev_ops;
++
++    priv = netdev_priv(dev->netdev);
++    *priv = dev;
++
++    return 0;
++}
++
++/** Clear enet-fec device.
++ */
++void ec_fec_device_clear(ec_fec_device_t *dev)
++{
++    if (dev->ecdev) {
++        ecdev_close(dev->ecdev);
++        ecdev_withdraw(dev->ecdev);
++    }
++
++    free_netdev(dev->netdev);
++}
++
++/** Offer enet-fec device to master.
++ */
++int ec_fec_device_offer(ec_fec_device_t *dev)
++{
++    int ret = 0;
++
++    dev->ecdev = ecdev_offer(dev->netdev, ec_fec_poll, THIS_MODULE);
++    if (!dev->ecdev) {
++        printk("%s(): ecdev_offer failed!\n", __func__);
++        return -1;
++    }
++
++    ret = ecdev_open(dev->ecdev);
++    if (ret) {
++        ecdev_withdraw(dev->ecdev);
++        dev->ecdev = NULL;
++        return -2;
++    }
++
++    ecdev_set_link(dev->ecdev, netif_carrier_ok(dev->netdev));
++
++    return ret;
++}
++
++int ec_fec_device_xmit(ec_fec_device_t *dev, struct sk_buff *skb)
++{
++    size_t len = skb->len;
++    int ret = 0;
++
++    ret = enet_fec_send_no_copy(skb->data, skb->len, 0);
++    return (ret == len) ? NETDEV_TX_OK : NETDEV_TX_BUSY;
++}
++
++/** Polls the device.
++ */
++void ec_fec_device_poll(ec_fec_device_t *dev)
++{
++    struct enet_fec_bd_buf_t *ptrb = enet_fec_get_bd_buf();
++    uint8_t *rx_buf = NULL;
++    uint16_t rx_len = 0;
++    int i = 0;
++
++    srx_cnt = enet_fec_recv_no_copy(NULL, srx_lens, srx_idxs);
++    if (srx_cnt <= 0)
++        return;
++
++    for (i = 0; i < srx_cnt; i++) {
++        rx_buf = ptrb->rx_buf[srx_idxs[i]];
++        rx_len = srx_lens[i];
++
++        ecdev_receive(dev->ecdev, rx_buf, rx_len);
++    }
++
++    return;
++}
++
++/** Offer device.
++ */
++static int ec_fec_offer_device(ec_fec_device_t *fec_dev)
++{
++    int ret = 0;
++
++    ret = ec_fec_device_init(fec_dev);
++    if (ret)
++        return ret;
++
++    ret = ec_fec_device_offer(fec_dev);
++    return ret;
++}
++
++/** Clear devices.
++ */
++static void ec_fec_clear_devices(void)
++{
++    ec_fec_device_t *fec_dev = &sec_fec_dev;
++
++    ec_fec_device_clear(fec_dev);
++}
++
++/** Initialize FEC net devices.
++ * it should be called before ecus_init
++ */
++int ec_fec_net_init(uint32_t cycle_ns, uint32_t core_mask)
++{
++    int ret = 0;
++
++    ec_master_set_noop_mode(cycle_ns);
++
++    ecus_set_core_mask(core_mask);
++
++    ret = enet_fec_alloc_buffer();  /* should be called before enet_fec_dev_init */
++    if (ret)
++        goto err_tag;
++
++    ret = enet_fec_dev_init();
++    if (ret)
++        goto err_tag;
++
++    printf("%s(): cycle_ns:%d core_mask:0x%02X\n", __func__, cycle_ns, ecus_get_core_mask());
++
++err_tag:
++    if (ret)
++        printf("%s(): run failed! ret:%d\n", __func__, ret);
++
++    return ret;
++}
++
++/** Module initialization.
++ *
++ * Initializes \a master_count masters.
++ * \return 0 on success, else < 0
++ */
++int __init ec_fec_init_module(void)
++{
++    int ret = 0;
++
++    printk(KERN_INFO PFX "EtherCAT master driver, ver:%s\n", EC_MASTER_VERSION);
++
++    ret = ec_fec_offer_device(&sec_fec_dev);
++    if (ret) {
++        printk("%s(): offer fec device failed!\n", __func__);
++        ret = -1;
++    }
++
++    return ret;
++}
++
++/** Module cleanup.
++ *
++ * Clears all master instances.
++ */
++void __exit ec_fec_cleanup_module(void)
++{
++    ec_fec_clear_devices();
++    enet_fec_dev_quit();
++}
++
++module_init(ec_fec_init_module);
++module_exit(ec_fec_cleanup_module);
+diff --git a/devices/enet_fec/enet_regs.h b/devices/enet_fec/enet_regs.h
+new file mode 100644
+index 00000000..645c1249
+--- /dev/null
++++ b/devices/enet_fec/enet_regs.h
+@@ -0,0 +1,116 @@
++/* SPDX-License-Identifier: BSD-3-Clause
++ * Copyright 2020-2023 NXP
++ */
++
++#ifndef __ENETFEC_REGS_H
++#define __ENETFEC_REGS_H
++
++/* Ethernet receive use control and status of buffer descriptor
++ */
++#define RX_BD_TR	((ushort)0x0001) /* Truncated */
++#define RX_BD_OV	((ushort)0x0002) /* Over-run */
++#define RX_BD_CR	((ushort)0x0004) /* CRC or Frame error */
++#define RX_BD_SH	((ushort)0x0008) /* Reserved */
++#define RX_BD_NO	((ushort)0x0010) /* Rcvd non-octet aligned frame */
++#define RX_BD_LG	((ushort)0x0020) /* Rcvd frame length violation */
++#define RX_BD_FIRST	((ushort)0x0400) /* Reserved */
++#define RX_BD_LAST	((ushort)0x0800) /* last buffer in the frame */
++#define RX_BD_INT	0x00800000
++#define RX_BD_ICE	0x00000020
++#define RX_BD_PCR	0x00000010
++
++/*
++ * 0 The next BD in consecutive location
++ * 1 The next BD in ENETFECn_RDSR.
++ */
++#define RX_BD_WRAP	((ushort)0x2000)
++#define RX_BD_EMPTY	((ushort)0x8000) /* BD is empty */
++#define RX_BD_STATS	((ushort)0x013f) /* All buffer descriptor status bits */
++
++/* Ethernet receive use control and status of enhanced buffer descriptor */
++#define BD_ENETFEC_RX_VLAN	0x00000004
++
++#define RX_FLAG_CSUM_EN		(RX_BD_ICE | RX_BD_PCR)
++#define RX_FLAG_CSUM_ERR	(RX_BD_ICE | RX_BD_PCR)
++
++/* Ethernet transmit use control and status of buffer descriptor */
++#define TX_BD_TC	((ushort)0x0400) /* Transmit CRC */
++#define TX_BD_LAST	((ushort)0x0800) /* Last in frame */
++#define TX_BD_READY	((ushort)0x8000) /* Data is ready */
++#define TX_BD_STATS	((ushort)0x0fff) /* All buffer descriptor status bits */
++#define TX_BD_WRAP	((ushort)0x2000)
++
++/* Ethernet transmit use control and status of enhanced buffer descriptor */
++#define TX_BD_IINS		0x08000000
++#define TX_BD_PINS		0x10000000
++
++#define ENETFEC_RD_START(X)	(((X) == 1) ? ENETFEC_RD_START_1 : \
++				(((X) == 2) ? \
++				   ENETFEC_RD_START_2 : ENETFEC_RD_START_0))
++#define ENETFEC_TD_START(X)	(((X) == 1) ? ENETFEC_TD_START_1 : \
++				(((X) == 2) ? \
++				   ENETFEC_TD_START_2 : ENETFEC_TD_START_0))
++#define ENETFEC_MRB_SIZE(X)	(((X) == 1) ? ENETFEC_MRB_SIZE_1 : \
++				(((X) == 2) ? \
++				   ENETFEC_MRB_SIZE_2 : ENETFEC_MRB_SIZE_0))
++
++#define ENETFEC_ETHEREN		((uint)0x00000002)
++#define ENETFEC_TXC_DLY		((uint)0x00010000)
++#define ENETFEC_RXC_DLY		((uint)0x00020000)
++
++/* ENETFEC MAC is in controller */
++#define QUIRK_HAS_ENETFEC_MAC	(1 << 0)
++/* GBIT supported in controller */
++#define QUIRK_GBIT		(1 << 3)
++/* Controller support hardware checksum */
++#define QUIRK_CSUM		(1 << 5)
++/* Controller support hardware vlan */
++#define QUIRK_VLAN		(1 << 6)
++/* RACC register supported by controller */
++#define QUIRK_RACC		(1 << 12)
++/* i.MX8 ENETFEC IP version added the feature to generate the delayed TXC or
++ * RXC. For its implementation, ENETFEC uses synchronized clocks (250MHz) for
++ * generating delay of 2ns.
++ */
++#define QUIRK_SUPPORT_DELAYED_CLKS	(1 << 18)
++
++#define ENETFEC_EIR	0x004 /* Interrupt event register */
++#define ENETFEC_EIMR	0x008 /* Interrupt mask register */
++#define ENETFEC_RDAR_0	0x010 /* Receive descriptor active register ring0 */
++#define ENETFEC_TDAR_0	0x014 /* Transmit descriptor active register ring0 */
++#define ENETFEC_ECR	0x024 /* Ethernet control register */
++#define ENETFEC_MSCR	0x044 /* MII speed control register */
++#define ENETFEC_MIBC	0x064 /* MIB control and status register */
++#define ENETFEC_RCR	0x084 /* Receive control register */
++#define ENETFEC_TCR	0x0c4 /* Transmit Control register */
++#define ENETFEC_PALR	0x0e4 /* MAC address low 32 bits */
++#define ENETFEC_PAUR	0x0e8 /* MAC address high 16 bits */
++#define ENETFEC_OPD	0x0ec /* Opcode/Pause duration register */
++#define ENETFEC_IAUR	0x118 /* hash table 32 bits high */
++#define ENETFEC_IALR	0x11c /* hash table 32 bits low */
++#define ENETFEC_GAUR	0x120 /* grp hash table 32 bits high */
++#define ENETFEC_GALR	0x124 /* grp hash table 32 bits low */
++#define ENETFEC_TFWR	0x144 /* transmit FIFO water_mark */
++#define ENETFEC_RACC	0x1c4 /* Receive Accelerator function configuration*/
++#define ENETFEC_DMA1CFG	0x1d8 /* DMA class based configuration ring1 */
++#define ENETFEC_DMA2CFG	0x1dc /* DMA class based Configuration ring2 */
++#define ENETFEC_RDAR_1	0x1e0 /* Rx descriptor active register ring1 */
++#define ENETFEC_TDAR_1	0x1e4 /* Tx descriptor active register ring1 */
++#define ENETFEC_RDAR_2	0x1e8 /* Rx descriptor active register ring2 */
++#define ENETFEC_TDAR_2	0x1ec /* Tx descriptor active register ring2 */
++#define ENETFEC_RD_START_1	0x160 /* Receive descriptor ring1 start reg */
++#define ENETFEC_TD_START_1	0x164 /* Transmit descriptor ring1 start reg */
++#define ENETFEC_MRB_SIZE_1	0x168 /* Max receive buffer size reg ring1 */
++#define ENETFEC_RD_START_2	0x16c /* Receive descriptor ring2 start reg */
++#define ENETFEC_TD_START_2	0x170 /* Transmit descriptor ring2 start reg */
++#define ENETFEC_MRB_SIZE_2	0x174 /* Max receive buffer size reg ring2 */
++#define ENETFEC_RD_START_0	0x180 /* Receive descriptor ring0 start reg */
++#define ENETFEC_TD_START_0	0x184 /* Transmit descriptor ring0 start reg */
++#define ENETFEC_MRB_SIZE_0	0x188 /* Max receive buffer size reg ring0*/
++#define ENETFEC_R_FIFO_SFL	0x190 /* Rx FIFO full threshold */
++#define ENETFEC_R_FIFO_SEM	0x194 /* Rx FIFO empty threshold */
++#define ENETFEC_R_FIFO_AEM	0x198 /* Rx FIFO almost empty threshold */
++#define ENETFEC_R_FIFO_AFL	0x19c /* Rx FIFO almost full threshold */
++#define ENETFEC_FRAME_TRL	0x1b0 /* Frame truncation length */
++
++#endif /*__ENETFEC_REGS_H */
+diff --git a/devices/enet_fec/enet_rxtx.c b/devices/enet_fec/enet_rxtx.c
+new file mode 100644
+index 00000000..045e3038
+--- /dev/null
++++ b/devices/enet_fec/enet_rxtx.c
+@@ -0,0 +1,183 @@
++/* SPDX-License-Identifier: BSD-3-Clause
++ * Copyright 2021-2023 NXP
++ */
++
++#include "enet_regs.h"
++#include "enet_ethdev.h"
++
++#define dccivac(p) \
++        { asm volatile("dc civac, %0" : : "r"(p) : "memory"); }
++
++static inline void rte_prefetch0(const volatile void *p)
++{
++	asm volatile ("PRFM PLDL1KEEP, [%0]" : : "r" (p));
++}
++
++#define ENETFEC_DP_LOG(x, y) printf("[%s]: %s", #x, y)
++
++uint16_t enetfec_recv_pkts_ecat(uint32_t *pindex, uint16_t *plength)
++{
++	struct enetfec_private *fep = enetfec_get_priv_data();
++	struct enetfec_priv_rx_q *rxq = fep->rx_queues[0];
++	uint16_t nb_pkts = MAX_RX_BD_RING_SIZE / 2;
++	struct bufdesc *bdp = NULL;
++	unsigned int index = 0;
++	unsigned short pkt_len;
++	unsigned short status;
++	uint16_t ret_len = 0;
++	int pkt_received = 0;
++	unsigned int i = 0;
++	void *data = NULL;
++
++	bdp = rxq->bd.cur;
++
++	/* Process the incoming packet */
++	status = rte_le_to_cpu_16(rte_read16(&bdp->bd_sc));
++	while ((status & RX_BD_EMPTY) == 0) {
++		if (pkt_received >= nb_pkts)
++			break;
++
++		/* Check for errors. */
++		status ^= RX_BD_LAST;
++		if (status & (RX_BD_LG | RX_BD_SH | RX_BD_NO |
++			RX_BD_CR | RX_BD_OV | RX_BD_LAST |
++			RX_BD_TR)) {
++			if (status & RX_BD_OV) {
++				/* FIFO overrun */
++				/* enet_dump_rx(rxq); */
++				ENETFEC_DP_LOG(DEBUG, "rx_fifo_error");
++				goto rx_processing_done;
++			}
++			if (status & (RX_BD_LG | RX_BD_SH
++						| RX_BD_LAST)) {
++				/* Frame too long or too short. */
++				ENETFEC_DP_LOG(DEBUG, "rx_length_error");
++				if (status & RX_BD_LAST)
++					ENETFEC_DP_LOG(DEBUG, "rcv is not +last");
++			}
++			if (status & RX_BD_CR) {     /* CRC Error */
++				ENETFEC_DP_LOG(DEBUG, "rx_crc_errors");
++			}
++			/* Report late collisions as a frame error. */
++			if (status & (RX_BD_NO | RX_BD_TR))
++				ENETFEC_DP_LOG(DEBUG, "rx_frame_error");
++			goto rx_processing_done;
++		}
++
++		/* Process the incoming frame. */
++		pkt_len = rte_le_to_cpu_16(rte_read16(&bdp->bd_datlen));
++
++		/* shows data with respect to the data_off field. */
++		index = enet_get_bd_index(bdp, &rxq->bd);
++		data = rxq->rx_buf[index];
++
++		for (i = 0; i < pkt_len; i += RTE_CACHE_LINE_SIZE) {
++			dccivac((uint8_t*)data + i);
++			rte_prefetch0((uint8_t*)data + i);
++		}
++
++		ret_len = pkt_len - 4;
++		if (rxq->fep->quirks & QUIRK_RACC)
++			ret_len -= 2;
++
++		if (pindex)
++			pindex[pkt_received] = index;
++		if (plength)
++			plength[pkt_received] = ret_len;
++
++		pkt_received++;
++
++rx_processing_done:
++		/* when rx_processing_done clear the status flags
++		 * for this buffer
++		 */
++		status &= ~RX_BD_STATS;
++
++		/* Mark the buffer empty */
++		status |= RX_BD_EMPTY;
++
++		/* Make sure the updates to rest of the descriptor are
++		 * performed before transferring ownership.
++		 */
++		rte_wmb();
++		rte_write16(rte_cpu_to_le_16(status), &bdp->bd_sc);
++
++		/* Update BD pointer to next entry */
++		bdp = enet_get_nextdesc(bdp, &rxq->bd);
++
++		/* Doing this here will keep the FEC running while we process
++		 * incoming frames.
++		 */
++		rte_write32(0, rxq->bd.active_reg_desc);
++		status = rte_le_to_cpu_16(rte_read16(&bdp->bd_sc));
++	}
++	rxq->bd.cur = bdp;
++
++	return pkt_received;
++}
++
++uint16_t enetfec_xmit_pkts_ecat(void *pbuffer, uint16_t length)
++{
++	struct enetfec_private *fep = enetfec_get_priv_data();
++	struct enetfec_priv_tx_q *txq = fep->tx_queues[0];
++	unsigned int i = 0, pkt_transmitted = 0;
++	struct bufdesc *bdp, *last_bdp;
++	unsigned short status;
++	unsigned short buflen;
++	uint16_t nb_pkts = 1;
++	uint8_t *data = NULL;
++	int oerrors = 0;
++	int tx_st = 1;
++
++	while (tx_st) {
++		if (pkt_transmitted >= nb_pkts) {
++			tx_st = 0;
++			break;
++		}
++
++		bdp = txq->bd.cur;
++		status = rte_le_to_cpu_16(rte_read16(&bdp->bd_sc));
++
++		if (status & TX_BD_READY) {
++			oerrors++;
++			break;
++		}
++
++		/* Fill in a Tx ring entry */
++		last_bdp = bdp;
++		status &= ~TX_BD_STATS;
++
++		/* Set buffer length and buffer pointer */
++		buflen = length;
++
++		status |= (TX_BD_LAST);
++		data = pbuffer;
++		for (i = 0; i <= buflen; i += RTE_CACHE_LINE_SIZE)
++			dcbf(data + i);
++
++		rte_write16(rte_cpu_to_le_16(buflen), &bdp->bd_datlen);
++
++		/* Make sure the updates to rest of the descriptor are performed
++		 * before transferring ownership.
++		 */
++		status |= (TX_BD_READY | TX_BD_TC);
++		rte_wmb();
++		rte_write16(rte_cpu_to_le_16(status), &bdp->bd_sc);
++
++		/* Trigger transmission start */
++		rte_write32(0, txq->bd.active_reg_desc);
++		pkt_transmitted++;
++
++		/* If this was the last BD in the ring, start at the
++		 * beginning again.
++		 */
++		bdp = enet_get_nextdesc(last_bdp, &txq->bd);
++
++		/* Make sure the update to bdp and tx_skbuff are performed
++		 * before txq->bd.cur.
++		 */
++		txq->bd.cur = bdp;
++	}
++
++	return pkt_transmitted;
++}
+diff --git a/devices/enet_fec/enet_uio.c b/devices/enet_fec/enet_uio.c
+new file mode 100644
+index 00000000..e7a2aae8
+--- /dev/null
++++ b/devices/enet_fec/enet_uio.c
+@@ -0,0 +1,282 @@
++/* SPDX-License-Identifier: BSD-3-Clause
++ * Copyright 2021-2023 NXP
++ */
++
++#include <stdbool.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <stdlib.h>
++#include <dirent.h>
++#include <string.h>
++#include <sys/mman.h>
++#include <errno.h>
++#include <fcntl.h>
++
++#include "enet_uio.h"
++
++static struct uio_job enetfec_uio_job;
++static int enetfec_count;
++
++/** @brief Checks if a file name contains a certain substring.
++ * This function assumes a filename format of: [text][number].
++ * @param [in]  filename    File name
++ * @param [in]  match       String to match in file name
++ *
++ * @retval true if file name matches the criteria
++ * @retval false if file name does not match the criteria
++ */
++static bool
++file_name_match_extract(const char filename[], const char match[])
++{
++	char *substr = NULL;
++
++	substr = strstr(filename, match);
++	if (substr == NULL)
++		return false;
++
++	return true;
++}
++
++/*
++ * @brief Reads first line from a file.
++ * Composes file name as: root/subdir/filename
++ *
++ * @param [in]  root     Root path
++ * @param [in]  subdir   Subdirectory name
++ * @param [in]  filename File name
++ * @param [out] line     The first line read from file.
++ *
++ * @retval 0 for success
++ * @retval other value for error
++ */
++static int
++file_read_first_line(const char root[], const char subdir[],
++			const char filename[], char *line)
++{
++	char absolute_file_name[FEC_UIO_MAX_ATTR_FILE_NAME];
++	int fd = 0, ret = 0;
++
++	/*compose the file name: root/subdir/filename */
++	memset(absolute_file_name, 0, sizeof(absolute_file_name));
++	snprintf(absolute_file_name, FEC_UIO_MAX_ATTR_FILE_NAME,
++		"%s/%s/%s", root, subdir, filename);
++
++	fd = open(absolute_file_name, O_RDONLY);
++	if (fd <= 0)
++		ENETFEC_PMD_ERR("Error opening file %s", absolute_file_name);
++
++	/* read UIO device name from first line in file */
++	ret = read(fd, line, FEC_UIO_MAX_DEVICE_FILE_NAME_LENGTH);
++	if (ret <= 0) {
++		ENETFEC_PMD_ERR("Error reading file %s", absolute_file_name);
++		return ret;
++	}
++	close(fd);
++
++	/* NULL-ify string */
++	line[ret] = '\0';
++
++	return 0;
++}
++
++/*
++ * @brief Maps rx-tx bd range assigned for a bd ring.
++ *
++ * @param [in] uio_device_fd    UIO device file descriptor
++ * @param [in] uio_device_id    UIO device id
++ * @param [in] uio_map_id       UIO allows maximum 5 different mapping for
++				each device. Maps start with id 0.
++ * @param [out] map_size        Map size.
++ * @param [out] map_addr	Map physical address
++ *
++ * @retval  NULL if failed to map registers
++ * @retval  Virtual address for mapped register address range
++ */
++static void *
++uio_map_mem(int uio_device_fd, int uio_device_id,
++		int uio_map_id, int *map_size, uint64_t *map_addr)
++{
++	void *mapped_address = NULL;
++	unsigned int uio_map_size = 0;
++	unsigned int uio_map_p_addr = 0;
++	char uio_sys_root[FEC_UIO_MAX_ATTR_FILE_NAME];
++	char uio_sys_map_subdir[FEC_UIO_MAX_ATTR_FILE_NAME];
++	char uio_map_size_str[FEC_UIO_MAX_DEVICE_FILE_NAME_LENGTH + 1];
++	char uio_map_p_addr_str[32];
++	int ret = 0;
++
++	/* compose the file name: root/subdir/filename */
++	memset(uio_sys_root, 0, sizeof(uio_sys_root));
++	memset(uio_sys_map_subdir, 0, sizeof(uio_sys_map_subdir));
++	memset(uio_map_size_str, 0, sizeof(uio_map_size_str));
++	memset(uio_map_p_addr_str, 0, sizeof(uio_map_p_addr_str));
++
++	/* Compose string: /sys/class/uio/uioX */
++	snprintf(uio_sys_root, sizeof(uio_sys_root), "%s/%s%d",
++			FEC_UIO_DEVICE_SYS_ATTR_PATH, "uio", uio_device_id);
++	/* Compose string: maps/mapY */
++	snprintf(uio_sys_map_subdir, sizeof(uio_sys_map_subdir), "%s%d",
++			FEC_UIO_DEVICE_SYS_MAP_ATTR, uio_map_id);
++
++	/* Read first (and only) line from file
++	 * /sys/class/uio/uioX/maps/mapY/size
++	 */
++	ret = file_read_first_line(uio_sys_root, uio_sys_map_subdir,
++				"size", uio_map_size_str);
++	if (ret < 0) {
++		ENETFEC_PMD_ERR("file_read_first_line() failed");
++		return NULL;
++	}
++	ret = file_read_first_line(uio_sys_root, uio_sys_map_subdir,
++				"addr", uio_map_p_addr_str);
++	if (ret < 0) {
++		ENETFEC_PMD_ERR("file_read_first_line() failed");
++		return NULL;
++	}
++	/* Read mapping size and physical address expressed in hexa(base 16) */
++	uio_map_size = strtol(uio_map_size_str, NULL, 16);
++	uio_map_p_addr = strtol(uio_map_p_addr_str, NULL, 16);
++
++	if (uio_map_id == 0) {
++		/* Map the register address in user space when map_id is 0 */
++		mapped_address = mmap(0 /*dynamically choose virtual address */,
++				uio_map_size, PROT_READ | PROT_WRITE,
++				MAP_SHARED, uio_device_fd, 0);
++	} else {
++		/* Map the BD memory in user space */
++		mapped_address = mmap(NULL, uio_map_size,
++				PROT_READ | PROT_WRITE,
++				MAP_SHARED, uio_device_fd, (1 * MAP_PAGE_SIZE));
++	}
++
++	if (mapped_address == MAP_FAILED) {
++		ENETFEC_PMD_ERR("Failed to map! errno = %d uio job fd = %d,"
++			"uio device id = %d, uio map id = %d", errno,
++			uio_device_fd, uio_device_id, uio_map_id);
++		return NULL;
++	}
++
++	/* Save the map size to use it later on for munmap-ing */
++	*map_size = uio_map_size;
++	*map_addr = uio_map_p_addr;
++	ENETFEC_PMD_INFO("UIO dev[%d] mapped region [id =%d] size 0x%x at %p\n",
++		uio_device_id, uio_map_id, uio_map_size, mapped_address);
++
++	return mapped_address;
++}
++
++int
++config_enetfec_uio(struct enetfec_private *fep)
++{
++	char uio_device_file_name[32];
++	struct uio_job *uio_job = NULL;
++
++	/* Mapping is done only one time */
++	if (enetfec_count > 0) {
++		ENETFEC_PMD_INFO("Mapped!\n");
++		return 0;
++	}
++
++	uio_job = &enetfec_uio_job;
++
++	/* Find UIO device created by ENETFEC-UIO kernel driver */
++	memset(uio_device_file_name, 0, sizeof(uio_device_file_name));
++	snprintf(uio_device_file_name, sizeof(uio_device_file_name), "%s%d",
++			FEC_UIO_DEVICE_FILE_NAME, uio_job->uio_minor_number);
++
++	/* Open device file */
++	uio_job->uio_fd = open(uio_device_file_name, O_RDWR);
++	if (uio_job->uio_fd < 0) {
++		ENETFEC_PMD_WARN("Unable to open ENETFEC_UIO file\n");
++		return -1;
++	}
++
++	ENETFEC_PMD_INFO("US_UIO: Open device(%s) file with uio_fd = %d",
++			uio_device_file_name, uio_job->uio_fd);
++
++	fep->hw_baseaddr_v = uio_map_mem(uio_job->uio_fd,
++		uio_job->uio_minor_number, FEC_UIO_REG_MAP_ID,
++		&uio_job->map_size, &uio_job->map_addr);
++	if (fep->hw_baseaddr_v == NULL)
++		return -ENOMEM;
++	fep->hw_baseaddr_p = uio_job->map_addr;
++	fep->reg_size = uio_job->map_size;
++
++	fep->bd_addr_v = uio_map_mem(uio_job->uio_fd,
++		uio_job->uio_minor_number, FEC_UIO_BD_MAP_ID,
++		&uio_job->map_size, &uio_job->map_addr);
++	if (fep->bd_addr_v == NULL)
++		return -ENOMEM;
++	fep->bd_addr_p = (uint32_t)uio_job->map_addr;
++	fep->bd_size = uio_job->map_size;
++
++	enetfec_count++;
++
++	return 0;
++}
++
++int
++enetfec_configure(void)
++{
++	char uio_name[32];
++	int uio_minor_number = -1;
++	int ret;
++	DIR *d = NULL;
++	struct dirent *dir;
++
++	d = opendir(FEC_UIO_DEVICE_SYS_ATTR_PATH);
++	if (d == NULL) {
++		ENETFEC_PMD_ERR("\nError opening directory '%s': %s\n",
++			FEC_UIO_DEVICE_SYS_ATTR_PATH, strerror(errno));
++		return -1;
++	}
++
++	/* Iterate through all subdirs */
++	while ((dir = readdir(d)) != NULL) {
++		if (!strncmp(dir->d_name, ".", 1) ||
++				!strncmp(dir->d_name, "..", 2))
++			continue;
++
++		if (file_name_match_extract(dir->d_name, "uio")) {
++			/*
++			 * As substring <uio> was found in <d_name>
++			 * read number following <uio> substring in <d_name>
++			 */
++			ret = sscanf(dir->d_name + strlen("uio"), "%d",
++							&uio_minor_number);
++			if (ret < 0)
++				ENETFEC_PMD_ERR("Error: not find minor number\n");
++			/*
++			 * Open file uioX/name and read first line which
++			 * contains the name for the device. Based on the
++			 * name check if this UIO device is for enetfec.
++			 */
++			memset(uio_name, 0, sizeof(uio_name));
++			ret = file_read_first_line(FEC_UIO_DEVICE_SYS_ATTR_PATH,
++					dir->d_name, "name", uio_name);
++			if (ret != 0) {
++				ENETFEC_PMD_INFO("file_read_first_line failed\n");
++				closedir(d);
++				return -1;
++			}
++
++			if (file_name_match_extract(uio_name,
++						FEC_UIO_DEVICE_NAME)) {
++				enetfec_uio_job.uio_minor_number =
++							uio_minor_number;
++				ENETFEC_PMD_INFO("enetfec device uio name: %s",
++						 uio_name);
++			}
++		}
++	}
++	closedir(d);
++	return 0;
++}
++
++void
++enetfec_cleanup(struct enetfec_private *fep)
++{
++	munmap(fep->hw_baseaddr_v, fep->reg_size);
++	munmap(fep->bd_addr_v, fep->bd_size);
++}
+diff --git a/devices/enet_fec/enet_uio.h b/devices/enet_fec/enet_uio.h
+new file mode 100644
+index 00000000..6366e0b5
+--- /dev/null
++++ b/devices/enet_fec/enet_uio.h
+@@ -0,0 +1,74 @@
++/* SPDX-License-Identifier: BSD-3-Clause
++ * Copyright 2021-2023 NXP
++ */
++
++#ifndef __ENETFEC_UIO_H__
++#define __ENETFEC_UIO_H__
++
++#include "enet_ethdev.h"
++
++#define PRINT printf
++#define ENETFEC_PMD_INFO PRINT
++#define ENETFEC_PMD_WARN PRINT
++#define ENETFEC_PMD_ERR PRINT
++#define ENETFEC_PMD_LOG PRINT
++
++/* Prefix path to sysfs directory where UIO device attributes are exported.
++ * Path for UIO device X is /sys/class/uio/uioX
++ */
++#define FEC_UIO_DEVICE_SYS_ATTR_PATH	"/sys/class/uio"
++
++/* Subfolder in sysfs where mapping attributes are exported
++ * for each UIO device. Path for mapping Y for device X is:
++ * /sys/class/uio/uioX/maps/mapY
++ */
++#define FEC_UIO_DEVICE_SYS_MAP_ATTR	"maps/map"
++
++/* Name of UIO device file prefix. Each UIO device will have a device file
++ * /dev/uioX, where X is the minor device number.
++ */
++#define FEC_UIO_DEVICE_FILE_NAME	"/dev/uio"
++/*
++ * Name of UIO device. User space FEC will have a corresponding
++ * UIO device.
++ * Maximum length is #FEC_UIO_MAX_DEVICE_NAME_LENGTH.
++ *
++ * @note  Must be kept in sync with FEC kernel driver
++ * define #FEC_UIO_DEVICE_NAME !
++ */
++#define FEC_UIO_DEVICE_NAME     "enet-fec-uio"
++
++/* Maximum length for the name of an UIO device file.
++ * Device file name format is: /dev/uioX.
++ */
++#define FEC_UIO_MAX_DEVICE_FILE_NAME_LENGTH	30
++
++/* Maximum length for the name of an attribute file for an UIO device.
++ * Attribute files are exported in sysfs and have the name formatted as:
++ * /sys/class/uio/uioX/<attribute_file_name>
++ */
++#define FEC_UIO_MAX_ATTR_FILE_NAME	100
++
++/* The id for the mapping used to export ENETFEC registers and BD memory to
++ * user space through UIO device.
++ */
++#define FEC_UIO_REG_MAP_ID		0
++#define FEC_UIO_BD_MAP_ID		1
++
++#define MAP_PAGE_SIZE			4096
++
++struct uio_job {
++	uint32_t fec_id;
++	int uio_fd;
++	void *bd_start_addr;
++	void *register_base_addr;
++	int map_size;
++	uint64_t map_addr;
++	int uio_minor_number;
++};
++
++int enetfec_configure(void);
++int config_enetfec_uio(struct enetfec_private *fep);
++void enetfec_cleanup(struct enetfec_private *fep);
++
++#endif
+diff --git a/emulation/linux/jiffies.h b/emulation/linux/jiffies.h
+index eb736b7a..6a3718e8 100644
+--- a/emulation/linux/jiffies.h
++++ b/emulation/linux/jiffies.h
+@@ -37,16 +37,29 @@ typedef u64 cycles_t;
+ 
+ static const unsigned int cpu_khz = 1000;  // unit of get_cycles()
+ 
++#ifdef EC_USERSPACE_MASTER_FEC
++int ec_master_in_noop_mode(void);
++uint64_t ec_master_cycle_us(void);
++#define HZ (250)
++#else
++#define HZ (1000)
++#endif
++
+ static inline cycles_t get_cycles(void)
+ {
+     struct timeval TVal;
++
++#ifdef EC_USERSPACE_MASTER_FEC
++    if (ec_master_in_noop_mode())
++        return ec_master_cycle_us();
++#endif
++
+     // thanks to VDSO, gettimeofday() does not require a system call
+     if (gettimeofday (&TVal, NULL) < 0)
+         return -1;
+     return (cycles_t) TVal.tv_sec * 1000000 + TVal.tv_usec;
+ }
+ 
+-#define HZ 1000
+ #define jiffies ((unsigned long) (get_cycles () / (cpu_khz * 1000 / HZ)))
+ 
+ #endif
+diff --git a/emulation/linux/kthread.h b/emulation/linux/kthread.h
+index 82adf54a..8433af37 100644
+--- a/emulation/linux/kthread.h
++++ b/emulation/linux/kthread.h
+@@ -1,6 +1,7 @@
+ #ifndef _LINUX_KTHREAD_H
+ #define _LINUX_KTHREAD_H
+ 
++#include <limits.h>
+ #include <pthread.h>
+ #include <signal.h>
+ #include <string.h>
+@@ -25,15 +26,26 @@ static inline void dummy_signal_handler(int sig)
+     (void) sig;
+ }
+ 
++#ifdef EC_USERSPACE_MASTER_FEC
++int ecus_bind_cpu_core(uint32_t core_mask);
++uint32_t ecus_get_core_mask(void);
++#endif
++
+ static inline void *task_run(void *arg)
+ {
+     current_task = (struct task_struct *) arg;
+     prctl(PR_SET_NAME, current_task->name);
++
++#ifdef EC_USERSPACE_MASTER_FEC
++    ecus_bind_cpu_core(ecus_get_core_mask());
++#else
+     struct sigaction a;
+     memset(&a, 0, sizeof (a));
+     a.sa_handler = dummy_signal_handler;
+     sigemptyset(&a.sa_mask);
+     sigaction(SIGUSR1, &a, NULL);
++#endif
++
+     current_task->thread_func(current_task->data);
+     return NULL;
+ }
+@@ -41,6 +53,29 @@ static inline void *task_run(void *arg)
+ static inline struct task_struct *kthread_run(int (*thread_func)(void *), void *data, const char *namefmt, ...)
+ {
+     struct task_struct *task = malloc(sizeof(struct task_struct));
++    pthread_attr_t *pthattr = NULL;
++    int ret = 0;
++
++#ifdef EC_USERSPACE_MASTER_FEC
++    struct sched_param param;
++    pthread_attr_t thattr;
++
++    pthread_attr_init(&thattr);
++    pthread_attr_setstacksize(&thattr, PTHREAD_STACK_MIN);
++    ret = pthread_attr_setschedpolicy(&thattr, SCHED_FIFO);
++    if (ret) {
++        fprintf(stderr, "%s\n", strerror(ret));
++    }
++
++    param.sched_priority = sched_get_priority_max(SCHED_FIFO) - 5;
++    ret = pthread_attr_setschedparam(&thattr, &param);
++    if (ret) {
++        printf(" OP pthread setschedparam failed. ");
++        fprintf(stderr, "%s\n", strerror(ret));
++    }
++    pthattr = &thattr;
++#endif
++
+     if (!task)
+         return ERR_PTR(-ENOMEM);
+     task->thread_func = thread_func;
+@@ -50,7 +85,7 @@ static inline struct task_struct *kthread_run(int (*thread_func)(void *), void *
+     vsnprintf(task->name, sizeof(task->name), namefmt, args);
+     va_end(args);
+     task->should_stop = 0;
+-    int ret = pthread_create(&task->thread, NULL, task_run, task);
++    ret = pthread_create(&task->thread, pthattr, task_run, task);
+     if (ret == 0)
+         return task;
+     free(task);
+@@ -59,7 +94,9 @@ static inline struct task_struct *kthread_run(int (*thread_func)(void *), void *
+ 
+ static inline void kthread_stop(struct task_struct *task)
+ {
++#ifndef EC_USERSPACE_MASTER_FEC
+     pthread_kill(task->thread, SIGUSR1);  // interrupt blocking system calls
++#endif
+     task->should_stop = 1;
+     pthread_join(task->thread, NULL);
+     free(task);
+diff --git a/emulation/linux/wait.h b/emulation/linux/wait.h
+index 66df6f22..61e75973 100644
+--- a/emulation/linux/wait.h
++++ b/emulation/linux/wait.h
+@@ -1,6 +1,6 @@
+ #ifndef _LINUX_WAIT_H
+ #define _LINUX_WAIT_H
+-
++#define __USE_GNU
+ #include <pthread.h>
+ 
+ struct __wait_queue_head
+diff --git a/globals.h b/globals.h
+index 3460e348..b161cab6 100644
+--- a/globals.h
++++ b/globals.h
+@@ -57,10 +57,11 @@
+ 
+ /** Master version string
+  */
+-#define EC_MASTER_VERSION VERSION " " EC_STR(REV)
+ 
+ /*****************************************************************************/
+ #ifdef EC_MASTER_IN_USERSPACE
++#define EC_MASTER_VERSION VERSION " (user-space)"
++
+ // Always 0-terminate dest; avoid newer GCC's warnings about strncpy when possibly truncating.
+ static inline void ec_strncpy(char *dest, const char *src, unsigned long int n)
+ {
+@@ -70,6 +71,8 @@ static inline void ec_strncpy(char *dest, const char *src, unsigned long int n)
+   while (dest < end)
+     *dest++ = 0;
+ }
++#else
++#define EC_MASTER_VERSION VERSION " " EC_STR(REV)
+ #endif  /* EC_MASTER_IN_USERSPACE */
+ 
+ #endif
+diff --git a/include/ecrt.h b/include/ecrt.h
+index 696ca3b3..06601a1b 100644
+--- a/include/ecrt.h
++++ b/include/ecrt.h
+@@ -541,10 +541,20 @@ extern "C" {
+ #endif
+ 
+ #ifdef EC_MASTER_IN_USERSPACE
+-int ecrt_init(unsigned int master_count_, const char *const *master_macs,
+-              unsigned int backup_count_, const char *const *backup_macs,
+-              unsigned int debug_level_);
+-void ecrt_done(void);
++int ecus_init(uint32_t master_count, const char *const *master_macs,
++              uint32_t backup_count, const char *const *backup_macs,
++              uint32_t debug_level, uint32_t cycle_ns, uint32_t core_mask);
++int ecus_done(void);
++
++int ecus_slave_is_ready(uint32_t master_index, uint16_t alias, uint16_t position);
++int ecus_master_operation_loop(ec_master_t *master, int cycle);
++int ecus_enable_ioctl_poll(void);
++
++#ifdef EC_USERSPACE_MASTER_FEC
++int ecus_bind_cpu_core(uint32_t core_mask);
++uint32_t ecus_get_core_mask(void);
++#endif
++
+ #endif
+ 
+ /** Returns the version magic of the realtime interface.
+diff --git a/lib/common.c b/lib/common.c
+index 1d37863d..783bcfb0 100644
+--- a/lib/common.c
++++ b/lib/common.c
+@@ -96,6 +96,7 @@ ec_master_t *ecrt_open_master(unsigned int master_index)
+     master->fd = ioctl_usecat_open(master_index, NULL);
+     return master;
+ #else
++
+     snprintf(path, MAX_PATH_LEN - 1,
+ #ifdef USE_RTDM
+             "EtherCAT%u",
+diff --git a/master/Makefile.am b/master/Makefile.am
+index e9cb23f5..f50c3345 100644
+--- a/master/Makefile.am
++++ b/master/Makefile.am
+@@ -105,8 +105,8 @@ libethercat_master_la_LDFLAGS = -version-info 1:0:0
+ 
+ libethercat_master_la_CFLAGS = -I$(srcdir)/.. \
+ 	-I../emulation \
++	-I../devices/enet_fec \
+ 	-D__KERNEL__ \
+-	-DEC_HAVE_CYCLES \
+ 	-DEC_USE_HRTIMER \
+ 	-DEC_MASTER_IN_USERSPACE \
+ 	-Wall -Werror \
+@@ -150,6 +150,11 @@ libethercat_master_la_SOURCES = \
+ 	sync.c \
+ 	sync_config.c \
+ 	voe_handler.c \
++	../devices/enet_fec/enet_uio.c \
++	../devices/enet_fec/enet_ethdev.c \
++	../devices/enet_fec/enet_rxtx.c \
++	../devices/enet_fec/enet_main.c \
++	../devices/enet_fec/enet_fec.c \
+ 	../devices/generic.c
+ if ENABLE_EOE
+ libethercat_master_la_SOURCES += ethernet.c
+diff --git a/master/cdev.c b/master/cdev.c
+index f16226e8..182a6350 100644
+--- a/master/cdev.c
++++ b/master/cdev.c
+@@ -38,6 +38,11 @@
+ #include <linux/vmalloc.h>
+ #include <linux/mm.h>
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++#include <sys/ipc.h>
++#include <sys/shm.h>
++#endif
++
+ #include "cdev.h"
+ #include "master.h"
+ #include "slave_config.h"
+@@ -56,26 +61,61 @@
+ typedef struct {
+     ec_cdev_t *cdev; /**< Character device. */
+     ec_ioctl_context_t ctx; /**< Context. */
++#ifdef EC_MASTER_IN_USERSPACE
++    void *pmem;
++    int shmid;
++#endif
+ } ec_cdev_priv_t;
+ 
+ /*****************************************************************************/
+ 
+ #ifdef EC_MASTER_IN_USERSPACE
+ 
+-static ec_master_t *sec_masters[MAX_MASTER_NUM];
+-static ec_cdev_priv_t sec_privs[MAX_MASTER_NUM];
++static int ec_cdev_alloc_share_memory(ec_master_t *master)
++{
++    ec_cdev_priv_t *priv = NULL;
++    uint8_t *pmem = NULL;
++    int shmid = 0;
++    key_t key = 0;
++
++    key = ftok("./", 0x88A4 + master->index);
++    if (key == -1) {
++        EC_MASTER_ERR(master, "%s(): ftok failed! key:%d\n", __func__, key);
++        return -1;
++    }
++
++    shmid = shmget(key, 4096, IPC_CREAT | 0666);
++    if (shmid < 0) {
++        EC_MASTER_ERR(master, "%s(): shmget failed! shmid:%d\n", __func__, shmid);
++        return -2;
++    }
++
++    pmem = shmat(shmid, NULL, 0);
++    if (!pmem) {
++        EC_MASTER_ERR(master, "%s(): shmat failed! shmid:%d\n", __func__, shmid);
++        return -3;
++    }
++
++    priv = (ec_cdev_priv_t *)master->priv;
++
++    priv->pmem = pmem;
++    priv->shmid = shmid;
++
++    return 0;
++}
+ 
+ int ec_cdev_usecat_start(ec_master_t *master)
+ {
+     ec_cdev_priv_t *priv = NULL;
+ 
+-    if (master->index >= MAX_MASTER_NUM) {
+-        printf("%s: invalid master index:%d!\n", __func__, master->index);
++    priv = malloc(sizeof(*priv));
++    if (!priv) {
++        EC_MASTER_ERR(master, "%s(): malloc for private data failed!\n", __func__);
+         return -1;
+     }
+ 
+-    priv = sec_privs + master->index;
+-    sec_masters[master->index] = master;
++    master->priv = priv;
++    memset(priv, 0, sizeof(*priv));
+ 
+     priv->cdev = &master->cdev;
+     priv->ctx.writable = 1;
+@@ -83,14 +123,66 @@ int ec_cdev_usecat_start(ec_master_t *master)
+     priv->ctx.process_data = NULL;
+     priv->ctx.process_data_size = 0;
+ 
+-    return 0;
++    return ec_cdev_alloc_share_memory(master);
+ }
+ 
+ int ec_cdev_usecat_stop(ec_master_t *master)
+ {
++    ec_cdev_priv_t *priv = (ec_cdev_priv_t *)master->priv;
++
++    if (!priv)
++        return -1;
++
++    if (priv->pmem) {
++        shmdt(priv->pmem);
++        shmctl(priv->shmid, IPC_RMID, NULL);
++    }
++
++    free(priv);
++
+     return 0;
+ }
+ 
++static int eccdev_usecat_ioctl(ec_master_t *master, unsigned int cmd, void *arg)
++{
++    ec_cdev_priv_t *priv = (ec_cdev_priv_t *)master->priv;
++
++    return ec_ioctl(master, &priv->ctx, cmd, (void __user *)arg);
++}
++
++int ec_master_ioctl_poll(void *priv_data)
++{
++    ec_master_t *master = (ec_master_t *)priv_data;
++    volatile struct ecat_shm_info *pshm = NULL;
++    ec_cdev_priv_t *priv = NULL;
++    uint8_t *parg = NULL;
++    uint32_t index = 0;
++    int ret = 0;
++
++    priv = (ec_cdev_priv_t *)master->priv;
++
++    pshm = (volatile struct ecat_shm_info *)priv->pmem;
++    parg = (uint8_t*)(priv->pmem + sizeof(*pshm));
++
++    if (pshm->flag != 1)
++        return 0;
++
++    index = pshm->index;
++    if (index != master->index) {
++        EC_MASTER_ERR(master, "%s: index is invalid! %d != %d\n", __func__, index, master->index);
++        return -1;
++    }
++
++    if (pshm->len > 0)
++        ret = eccdev_usecat_ioctl(master, pshm->cmd, parg);
++    else
++        ret = eccdev_usecat_ioctl(master, pshm->cmd, (void*)(*(uint64_t *)parg));
++
++    pshm->flag = 2;
++
++    return ret;
++}
++
+ #else /* EC_MASTER_IN_USERSPACE */
+ 
+ /*****************************************************************************/
+@@ -171,25 +263,7 @@ void ec_cdev_clear(ec_cdev_t *cdev /**< EtherCAT XML device */)
+     cdev_del(&cdev->cdev);
+ }
+ 
+-#ifdef EC_MASTER_IN_USERSPACE
+-
+-int eccdev_usecat_ioctl(int fd, unsigned int cmd, void *arg)
+-{
+-    ec_cdev_priv_t *priv = NULL;
+-    ec_master_t *master = NULL;
+-
+-    if (fd >= MAX_MASTER_NUM) {
+-        printf("%s: fd is invalid! fd:%d\n", __func__, fd);
+-        return -1;
+-    }
+-
+-    master = sec_masters[fd];
+-    priv = sec_privs + fd;
+-
+-    return ec_ioctl(master, &priv->ctx, cmd, (void __user *) arg);
+-}
+-
+-#else /* EC_MASTER_IN_USERSPACE */
++#ifndef EC_MASTER_IN_USERSPACE
+ 
+ /******************************************************************************
+  * File operations
+diff --git a/master/cdev.h b/master/cdev.h
+index 1a7bd18a..dcf4f861 100644
+--- a/master/cdev.h
++++ b/master/cdev.h
+@@ -51,8 +51,15 @@ typedef struct {
+     struct cdev cdev; /**< Character device. */
+ } ec_cdev_t;
+ 
+-/*****************************************************************************/
+ #ifdef EC_MASTER_IN_USERSPACE
++struct ecat_shm_info {
++    uint32_t flag;
++    uint32_t index;
++    uint32_t cmd;
++    uint32_t len;
++} __attribute__((packed));
++
++/*****************************************************************************/
+ int ec_cdev_usecat_start(ec_master_t *master);
+ int ec_cdev_usecat_stop(ec_master_t *master);
+ #endif
+diff --git a/master/datagram.h b/master/datagram.h
+index e902fbd4..deecf9e3 100644
+--- a/master/datagram.h
++++ b/master/datagram.h
+@@ -39,10 +39,13 @@
+ 
+ #include <linux/list.h>
+ #include <linux/time.h>
+-#include <linux/timex.h>
+ 
+ #include "globals.h"
+ 
++#ifndef EC_USERSPACE_MASTER_FEC
++#include <linux/timex.h>
++#endif
++
+ /*****************************************************************************/
+ 
+ /** EtherCAT datagram type.
+diff --git a/master/device.c b/master/device.c
+index e25c8301..1303aca8 100644
+--- a/master/device.c
++++ b/master/device.c
+@@ -60,6 +60,28 @@
+  *
+  * \return 0 in case of success, else < 0
+  */
++#ifdef EC_USERSPACE_MASTER_FEC
++extern uint8_t *enet_fec_get_tx_buf(int idx);
++
++static inline struct sk_buff *dev_alloc_ecat_skb(int i)
++{
++    struct sk_buff *buf = NULL;
++
++    buf = malloc(sizeof(struct sk_buff));
++    if(!buf)
++        return NULL;
++
++    buf->len = 0;
++    buf->data = buf->head = buf->tail = enet_fec_get_tx_buf(i);
++    if (!buf->head) {
++        free(buf);
++        return NULL;
++    }
++
++    return buf;
++}
++#endif
++
+ int ec_device_init(
+         ec_device_t *device, /**< EtherCAT device */
+         ec_master_t *master /**< master owning the device */
+@@ -82,7 +104,12 @@ int ec_device_init(
+     for (i = 0; i < EC_TX_RING_SIZE; i++) {
+         device->tx_skb[i] = NULL;
+     }
++#ifdef EC_USERSPACE_MASTER_FEC
++    device->tx_ring_index = (unsigned int)-1;
++#else
+     device->tx_ring_index = 0;
++#endif
++
+ #ifdef EC_HAVE_CYCLES
+     device->cycles_poll = 0;
+ #endif
+@@ -127,7 +154,11 @@ int ec_device_init(
+ #endif
+ 
+     for (i = 0; i < EC_TX_RING_SIZE; i++) {
++#ifdef EC_USERSPACE_MASTER_FEC
++        if (!(device->tx_skb[i] = dev_alloc_ecat_skb(i))) {
++#else
+         if (!(device->tx_skb[i] = dev_alloc_skb(ETH_FRAME_LEN))) {
++#endif
+             EC_MASTER_ERR(master, "Error allocating device socket buffer!\n");
+             ret = -ENOMEM;
+             goto out_tx_ring;
+@@ -145,9 +176,14 @@ int ec_device_init(
+ out_tx_ring:
+     for (i = 0; i < EC_TX_RING_SIZE; i++) {
+         if (device->tx_skb[i]) {
++#ifdef EC_USERSPACE_MASTER_FEC
++            free(device->tx_skb[i]);
++#else
+             dev_kfree_skb(device->tx_skb[i]);
++#endif
+         }
+     }
++
+ #ifdef EC_DEBUG_IF
+     ec_debug_clear(&device->dbg);
+ out_return:
+@@ -169,7 +205,12 @@ void ec_device_clear(
+         ec_device_close(device);
+     }
+     for (i = 0; i < EC_TX_RING_SIZE; i++)
++#ifdef EC_USERSPACE_MASTER_FEC
++        free(device->tx_skb[i]);
++#else
+         dev_kfree_skb(device->tx_skb[i]);
++#endif
++
+ #ifdef EC_DEBUG_IF
+     ec_debug_clear(&device->dbg);
+ #endif
+diff --git a/master/device.h b/master/device.h
+index 2a1b596a..4bca211c 100644
+--- a/master/device.h
++++ b/master/device.h
+@@ -49,8 +49,12 @@
+  * send the same data twice, if it is called twice.
+  */
+ #ifdef EC_MASTER_IN_USERSPACE
+-#define EC_TX_RING_SIZE 16
++#ifdef EC_USERSPACE_MASTER_FEC
++#define EC_TX_RING_SIZE MAX_TX_BD_RING_SIZE
+ #else
++#define EC_TX_RING_SIZE 16
++#endif
++#else  /* EC_MASTER_IN_USERSPACE */
+ #define EC_TX_RING_SIZE 2
+ #endif
+ 
+@@ -74,6 +78,11 @@ typedef struct {
+ 
+ #endif
+ 
++#ifdef EC_USERSPACE_MASTER_FEC
++#define MAX_TX_BD_RING_SIZE (16)
++#define MAX_RX_BD_RING_SIZE (16)
++#endif
++
+ /*****************************************************************************/
+ 
+ /**
+diff --git a/master/ethercat_master.c b/master/ethercat_master.c
+index c2d6fde9..ccec81fb 100644
+--- a/master/ethercat_master.c
++++ b/master/ethercat_master.c
+@@ -24,6 +24,25 @@
+ 
+ volatile sig_atomic_t stop = 0;
+ 
++#ifdef EC_USERSPACE_MASTER_FEC
++int ecus_init(uint32_t master_count, const char *const *master_macs,
++              uint32_t backup_count, const char *const *backup_macs,
++              uint32_t debug_level, uint32_t cycle_ns, uint32_t core_mask);
++int ecus_done(void);
++int ecus_enable_ioctl_poll(void);
++
++#define MAX_MASTER_NUM (32)
++
++static int smaster_count = 1;
++static char *smaster_macs[MAX_MASTER_NUM] = {
++    "04:13:07:02:00:13",
++};
++
++static int sbackup_count = 0;
++static char *sbackup_macs[MAX_MASTER_NUM];
++static int sdebug_level = 0;
++#endif  /* EC_USERSPACE_MASTER_FEC */
++
+ static void handler(int sig)
+ {
+     (void)sig;
+@@ -44,9 +63,21 @@ int main(int argc, const char **argv)
+     unsigned int debug_level = 0;
+     unsigned int master_count = 0;
+     unsigned int backup_count = 0;
++
++#ifdef EC_USERSPACE_MASTER_FEC
++    const char **masters = (const char **)smaster_macs;
++    const char **backups = (const char **)sbackup_macs;
++
++    ecus_enable_ioctl_poll();
++
++    master_count = smaster_count;
++    backup_count = sbackup_count;
++    debug_level = sdebug_level;
++#else
+     const char **masters = alloca(argc * sizeof(const char *));
+     const char **backups = alloca(argc * sizeof(const char *));
+     int i;
++
+     for (i = 1; i < argc; i++) {
+         const char *s = argv[i];
+         if (strcmp(s, "--help") == 0) {
+@@ -77,9 +108,10 @@ int main(int argc, const char **argv)
+             return EXIT_FAILURE;
+         }
+     }
++#endif
+ 
+     /* Initialize. */
+-    int r = ecrt_init(master_count, masters, backup_count, backups, debug_level);
++    int r = ecus_init(master_count, masters, backup_count, backups, debug_level, 0, 0x02);
+     if (r) {
+         fprintf(stderr, "*** Cannot initialize EtherCAT: %s.\n", strerror(-r));
+         return EXIT_FAILURE;
+@@ -90,7 +122,7 @@ int main(int argc, const char **argv)
+     for (j = 0; j < master_count; j++) {
+         if (!ecrt_open_master(j)) {
+             fprintf(stderr, "*** Cannot open master %i.\n", j);
+-            ecrt_done();
++            ecus_done();
+             return EXIT_FAILURE;
+         }
+     }
+@@ -101,6 +133,6 @@ int main(int argc, const char **argv)
+     signal(SIGHUP,  handler);
+     while (!stop)
+         pause();
+-    ecrt_done();
++    ecus_done();
+     return EXIT_SUCCESS;
+ }
+diff --git a/master/globals.h b/master/globals.h
+index 840a160c..eb13f1b1 100644
+--- a/master/globals.h
++++ b/master/globals.h
+@@ -244,8 +244,12 @@ extern const char *ec_device_names[2]; // only main and backup!
+  * \param fmt format string (like in printf())
+  * \param args arguments (optional)
+  */
++#ifdef EC_USERSPACE_MASTER_FEC
++#define EC_DBG(fmt, args...)
++#else
+ #define EC_DBG(fmt, args...) \
+     printk(KERN_DEBUG "EtherCAT DEBUG: " fmt, ##args)
++#endif
+ 
+ /*****************************************************************************/
+ 
+diff --git a/master/ioctl.h b/master/ioctl.h
+index 185f04cc..a42e4319 100644
+--- a/master/ioctl.h
++++ b/master/ioctl.h
+@@ -759,10 +759,9 @@ typedef struct {
+ #define copy_from_user(DST, SRC, SIZE) (memcpy((DST), (SRC), (SIZE)), 0)
+ #define copy_to_user(DST, SRC, SIZE) (memcpy((DST), (SRC), (SIZE)), 0)
+ #define __copy_to_user copy_to_user
+-#define MAX_MASTER_NUM (32)
+ #define __user
+ 
+-int eccdev_usecat_ioctl(int fd, unsigned int cmd, void *arg);
++int ec_master_ioctl_poll(void *priv_data);
+ 
+ /* Emulated ioctl via TCP connection for userspace master */
+ static inline int ioctl_usecat_open(int master_index, const char *host)
+diff --git a/master/master.c b/master/master.c
+index e07c4a66..9538ac3e 100644
+--- a/master/master.c
++++ b/master/master.c
+@@ -1368,7 +1368,19 @@ void ec_master_update_device_stats(
+ 
+ /*****************************************************************************/
+ 
+-#ifndef EC_MASTER_IN_USERSPACE
++#ifdef EC_MASTER_IN_USERSPACE
++
++extern int ec_master_ioctl_poll(void *priv_data);
++static int sec_ioctl_poll_flag = 0;
++
++int ecus_enable_ioctl_poll(void)
++{
++    sec_ioctl_poll_flag = 1;
++    return 0;
++}
++
++#else
++
+ #ifdef EC_USE_HRTIMER
+ 
+ /*
+@@ -1555,6 +1567,11 @@ static int ec_master_idle_thread(void *priv_data)
+     while (!kthread_should_stop()) {
+         ec_datagram_output_stats(&master->fsm_datagram);
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++        if (sec_ioctl_poll_flag)
++            ec_master_ioctl_poll(priv_data);
++#endif
++
+         // receive
+         down(&master->io_sem);
+         ecrt_master_receive(master);
+@@ -1585,7 +1602,11 @@ static int ec_master_idle_thread(void *priv_data)
+ 
+         if (ec_fsm_master_idle(&master->fsm)) {
+ #ifdef EC_USE_HRTIMER
++#ifdef EC_USERSPACE_MASTER_FEC
++            ec_master_nanosleep(master->send_interval * 10);
++#else
+             ec_master_nanosleep(master->send_interval * 1000);
++#endif
+ #else
+             set_current_state(TASK_INTERRUPTIBLE);
+             schedule_timeout(1);
+@@ -1604,6 +1625,55 @@ static int ec_master_idle_thread(void *priv_data)
+     return 0;
+ }
+ 
++#ifdef EC_USERSPACE_MASTER_FEC
++static uint64_t sop_cycle_us_sum;
++static uint32_t sop_cycle_us = 0;
++
++int ec_master_set_noop_mode(uint32_t cycle_ns)
++{
++    sop_cycle_us = cycle_ns / 1000;
++    return 0;
++}
++
++int ec_master_in_noop_mode(void)
++{
++    return (sop_cycle_us > 0);
++}
++
++uint64_t ec_master_cycle_us(void)
++{
++    return sop_cycle_us_sum;
++}
++
++int ecus_master_operation_loop(ec_master_t *master, int cycle)
++{
++    if (!ec_master_in_noop_mode())
++        return 0;
++
++    if (cycle)
++        sop_cycle_us_sum += sop_cycle_us;
++
++    if (master->active) {
++        ec_datagram_output_stats(&master->fsm_datagram);
++
++        if (master->injection_seq_rt == master->injection_seq_fsm) {
++            // output statistics
++            ec_master_output_stats(master);
++
++            if (ec_fsm_master_exec(&master->fsm)) {
++                // Inject datagrams (let the RT thread queue them, see
++                // ecrt_master_send())
++                master->injection_seq_fsm++;
++            }
++
++            ec_master_exec_slave_fsms(master);
++        }
++    }
++
++    return 0;
++}
++#endif
++
+ /*****************************************************************************/
+ 
+ /** Master kernel thread function for OPERATION phase.
+@@ -1641,7 +1711,11 @@ static int ec_master_operation_thread(void *priv_data)
+ 
+ #ifdef EC_USE_HRTIMER
+         // the op thread should not work faster than the sending RT thread
++#ifdef EC_USERSPACE_MASTER_FEC
++        ec_master_nanosleep(master->send_interval * 50);
++#else
+         ec_master_nanosleep(master->send_interval * 1000);
++#endif
+ #else
+         if (ec_fsm_master_idle(&master->fsm)) {
+             set_current_state(TASK_INTERRUPTIBLE);
+@@ -2361,6 +2435,14 @@ int ecrt_master_activate(ec_master_t *master)
+         ec_master_eoe_start(master);
+     }
+ #endif
++
++#ifdef EC_USERSPACE_MASTER_FEC
++    if (ec_master_in_noop_mode()) {
++        master->thread = NULL;
++        goto no_op_tag;
++    }
++#endif
++
+     ret = ec_master_thread_start(master, ec_master_operation_thread,
+                 "EtherCAT-OP");
+     if (ret < 0) {
+@@ -2368,6 +2450,9 @@ int ecrt_master_activate(ec_master_t *master)
+         return ret;
+     }
+ 
++#ifdef EC_USERSPACE_MASTER_FEC
++no_op_tag:
++#endif
+     /* Allow scanning after a topology change. */
+     master->allow_scan = 1;
+ 
+diff --git a/master/master.h b/master/master.h
+index ad761067..e0315d54 100644
+--- a/master/master.h
++++ b/master/master.h
+@@ -108,6 +108,15 @@
+  * \param fmt format string (like in printf())
+  * \param args arguments (optional)
+  */
++#ifdef EC_USERSPACE_MASTER_FEC
++#define EC_MASTER_DBG(master, level, fmt, args...) \
++    do { \
++        if (master->debug_level > level) { \
++            printk(KERN_DEBUG "EtherCAT DEBUG %u: " fmt, \
++                    master->index, ##args); \
++        } \
++    } while (0)
++#else
+ #define EC_MASTER_DBG(master, level, fmt, args...) \
+     do { \
+         if (master->debug_level >= level) { \
+@@ -115,7 +124,7 @@
+                     master->index, ##args); \
+         } \
+     } while (0)
+-
++#endif
+ 
+ /** Size of the external datagram ring.
+  *
+@@ -308,6 +317,9 @@ struct ec_master {
+ 
+     wait_queue_head_t request_queue; /**< Wait queue for external requests
+                                        from user space. */
++#ifdef EC_MASTER_IN_USERSPACE
++    void *priv;
++#endif
+ };
+ 
+ /*****************************************************************************/
+@@ -383,6 +395,11 @@ void ec_master_request_op(ec_master_t *);
+ void ec_master_internal_send_cb(void *);
+ void ec_master_internal_receive_cb(void *);
+ 
++#ifdef EC_USERSPACE_MASTER_FEC
++int ec_master_in_noop_mode(void);
++uint64_t ec_master_cycle_us(void);
++#endif
++
+ extern const unsigned int rate_intervals[EC_RATE_COUNT]; // see master.c
+ 
+ /*****************************************************************************/
+diff --git a/master/module.c b/master/module.c
+index 66b6eb6d..3e5aedc7 100644
+--- a/master/module.c
++++ b/master/module.c
+@@ -699,10 +699,15 @@ ec_master_t *ecrt_open_master(
+     return master;
+ }
+ 
++#ifdef EC_USERSPACE_MASTER_FEC
++int ec_fec_net_init(uint32_t cycle_ns, uint32_t core_mask);
++int __init ec_fec_init_module(void);
++void __exit ec_fec_cleanup_module(void);
++#endif
+ int __init ec_gen_init_module(void);
+ void __exit ec_gen_cleanup_module(void);
+ 
+-int ecrt_init(unsigned int master_count_, const char *const *master_macs,
++static int ecrt_init(unsigned int master_count_, const char *const *master_macs,
+               unsigned int backup_count_, const char *const *backup_macs,
+               unsigned int debug_level_)
+ {
+@@ -734,15 +739,54 @@ int ecrt_init(unsigned int master_count_, const char *const *master_macs,
+     r = ec_init_module();
+     if (r)
+         return r;
++#ifdef EC_USERSPACE_MASTER_FEC
++    r = ec_fec_init_module();
++#else
+     r = ec_gen_init_module();
++#endif
+     if (r)
+         ec_cleanup_module();
+     return r;
+ }
+ 
+-void ecrt_done(void)
++static void ecrt_done(void)
+ {
++#ifdef EC_USERSPACE_MASTER_FEC
++    ec_fec_cleanup_module();
++#else
+     ec_gen_cleanup_module();
++#endif
+     ec_cleanup_module();
+ }
++
++int ecus_init(uint32_t master_count, const char *const *master_macs,
++              uint32_t backup_count, const char *const *backup_macs,
++              uint32_t debug_level, uint32_t cycle_ns, uint32_t core_mask)
++{
++    int ret = 0;
++
++#ifdef EC_USERSPACE_MASTER_FEC
++    ret = ec_fec_net_init(cycle_ns, core_mask);
++    if (ret) {
++        EC_ERR("Failed to init enet_fec driver! ret:%d\n", ret);
++        goto err_tag;
++    }
+ #endif
++
++    ret = ecrt_init(master_count, master_macs, backup_count, backup_macs, debug_level);
++    if (ret) {
++        EC_ERR("Failed to init userspace EtherCAT! %s.\n", strerror(-ret));
++        goto err_tag;
++    }
++
++err_tag:
++    return ret;
++}
++
++int ecus_done(void)
++{
++    ecrt_done();
++    return 0;
++}
++
++#endif  /* EC_MASTER_IN_USERSPACE */
+diff --git a/master/slave.h b/master/slave.h
+index b71d57e2..95d2eeef 100644
+--- a/master/slave.h
++++ b/master/slave.h
+@@ -103,6 +103,15 @@
+  * \param fmt format string (like in printf())
+  * \param args arguments (optional)
+  */
++#ifdef EC_USERSPACE_MASTER_FEC
++#define EC_SLAVE_DBG(slave, level, fmt, args...) \
++    do { \
++        if (slave->master->debug_level > level) { \
++            printk(KERN_DEBUG "EtherCAT DEBUG %u-%u: " fmt, \
++                    slave->master->index, slave->ring_position, ##args); \
++        } \
++    } while (0)
++#else
+ #define EC_SLAVE_DBG(slave, level, fmt, args...) \
+     do { \
+         if (slave->master->debug_level >= level) { \
+@@ -110,6 +119,7 @@
+                     slave->master->index, slave->ring_position, ##args); \
+         } \
+     } while (0)
++#endif
+ 
+ /*****************************************************************************/
+ 
+diff --git a/master/slave_config.c b/master/slave_config.c
+index 38347872..192aa6ca 100644
+--- a/master/slave_config.c
++++ b/master/slave_config.c
+@@ -198,6 +198,30 @@ int ec_slave_config_prepare_fmmu(
+     return fmmu->logical_start_address;
+ }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++#define PREOP (0x02)
++ec_master_t *ecrt_open_master(unsigned int master_index);
++
++int ecus_slave_is_ready(uint32_t master_index, uint16_t alias, uint16_t position)
++{
++    ec_master_t *master = NULL;
++    ec_slave_t *slave = NULL;
++
++    master = ecrt_open_master(master_index);
++    if (!master)
++        return 0;
++
++    slave = ec_master_find_slave(master, alias, position);
++    if (!slave)
++        return 0;
++
++    if (slave->current_state < PREOP)
++        return 0;
++
++    return 1;
++}
++#endif
++
+ /*****************************************************************************/
+ 
+ /** Attaches the configuration to the addressed slave object.
+diff --git a/tool/Makefile.am b/tool/Makefile.am
+index 9d551c7d..69bb1346 100644
+--- a/tool/Makefile.am
++++ b/tool/Makefile.am
+@@ -128,6 +128,7 @@ REV = `if test -s $(top_srcdir)/revision; then \
+ ethercat_CXXFLAGS = \
+ 	-I$(top_srcdir)/include \
+ 	-I$(top_srcdir)/master \
++	-DEC_MASTER_IN_USERSPACE \
+ 	-Wall -DREV=$(REV) \
+ 	-fno-strict-aliasing
+ 
+diff --git a/tool/MasterDevice.cpp b/tool/MasterDevice.cpp
+index ca023246..e8da333c 100644
+--- a/tool/MasterDevice.cpp
++++ b/tool/MasterDevice.cpp
+@@ -40,6 +40,101 @@ using namespace std;
+ 
+ #include "MasterDevice.h"
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++#include <sys/ipc.h>
++#include <sys/shm.h>
++
++extern "C" {
++
++static void *smaster_shmem[MAX_MASTER_NUM];
++
++static uint8_t* alloc_share_memory(int index, int *pshmid)
++{
++    uint8_t *pmem = NULL;
++    int shmid = 0;
++    key_t key = 0;
++
++    key = ftok("./", 0x88A4 + index);
++    if (key == -1) {
++        printf("%s(): ftok failed! key:%d\n", __func__, key);
++        return NULL;
++    }
++
++    shmid = shmget(key, 4096, 0666);
++    if (shmid < 0) {
++        printf("%s(): shmget failed! shmid:%d\n", __func__, shmid);
++        return NULL;
++    }
++
++    pmem = (uint8_t*)shmat(shmid, NULL, 0);
++    if (!pmem) {
++        printf("%s(): shmat failed! shmid:%d\n", __func__, shmid);
++        return NULL;
++    }
++
++    if (pshmid)
++        *pshmid = shmid;
++
++    return pmem;
++}
++
++int ecat_ioctl_len(int fd, unsigned int cmd, void *arg, int len, int flag)
++{
++    volatile struct ecat_shm_info *pshm = NULL;
++    uint8_t *pmem = NULL;
++    uint8_t *parg = NULL;
++    int cnt = 0;
++
++    if (fd >= MAX_MASTER_NUM) {
++        printf("%s(): invalid fd number! fd:%d\n", __func__, fd);
++        return -1;
++    }
++
++    pmem = (uint8_t*)smaster_shmem[fd];
++    if (!pmem) {
++        printf("%s(): smaster_shmem-%d is NULL!\n", __func__, fd);
++        return -2;
++    }
++
++    pshm = (volatile struct ecat_shm_info *)pmem;
++    parg = (uint8_t*)(pmem + sizeof(*pshm));
++
++    pshm->index = fd;
++    pshm->cmd = cmd;
++
++    if (flag == 0) {
++        pshm->len = 0;
++        *(uint64_t *)parg = (uint64_t)arg;
++    } else if (len > 0) {
++        pshm->len = len;
++        memcpy(parg, arg, len);
++    }
++
++    pshm->flag = 1;
++    while (cnt++ < 3000) {  /* wait for max 3s */
++        if (pshm->flag == 2)
++            break;
++
++        usleep(1000);
++    }
++    pshm->flag = 0;
++
++    if (flag && (len > 0))
++        memcpy(arg, parg, len);
++
++    return 0;
++}
++
++}  /* extern "C" */
++
++#undef ioctl
++#define ioctl(f, c, a) ecat_ioctl_len(f, c, a, sizeof(*a), 1)
++#define ioctl_l(f, c, a) ecat_ioctl_len(f, c, (void*)(uint64_t)(a), sizeof(a), 0)
++
++#else
++#define ioctl_l ioctl
++#endif  /* EC_MASTER_IN_USERSPACE */
++
+ /****************************************************************************/
+ 
+ MasterDevice::MasterDevice(unsigned int index):
+@@ -67,14 +162,26 @@ void MasterDevice::setIndex(unsigned int i)
+ 
+ void MasterDevice::open(Permissions perm)
+ {
++    ec_ioctl_module_t module_data;
+     stringstream deviceName;
+ 
+     if (fd == -1) { // not already open
+-        ec_ioctl_module_t module_data;
+-        deviceName << "/dev/EtherCAT" << index;
++#ifdef EC_MASTER_IN_USERSPACE
++        int shmid = 0;
++
++        if (index >= MAX_MASTER_NUM) {
++            stringstream err;
++            err << "invalid master index " << strerror(errno);
++            throw MasterDeviceException(err);
++        }
+ 
+-        if ((fd = ::open(deviceName.str().c_str(),
+-                        perm == ReadWrite ? O_RDWR : O_RDONLY)) == -1) {
++        fd = index;
++        smaster_shmem[fd] = alloc_share_memory(fd, &shmid);
++#else
++        deviceName << "/dev/EtherCAT" << index;
++        fd = ::open(deviceName.str().c_str(), perm == ReadWrite ? O_RDWR : O_RDONLY);
++#endif
++        if (fd == -1) {
+             stringstream err;
+             err << "Failed to open master device " << deviceName.str() << ": "
+                 << strerror(errno);
+@@ -97,10 +204,17 @@ void MasterDevice::open(Permissions perm)
+ 
+ void MasterDevice::close()
+ {
++#ifdef EC_MASTER_IN_USERSPACE
++    if (smaster_shmem[fd]) {
++        shmdt(smaster_shmem[fd]);
++        smaster_shmem[fd] = NULL;
++    }
++#else
+     if (fd != -1) {
+         ::close(fd);
+         fd = -1;
+     }
++#endif
+ }
+ 
+ /****************************************************************************/
+@@ -464,7 +578,7 @@ void MasterDevice::writeFoe(
+ 
+ void MasterDevice::setDebug(unsigned int debugLevel)
+ {
+-    if (ioctl(fd, EC_IOCTL_MASTER_DEBUG, debugLevel) < 0) {
++    if (ioctl_l(fd, EC_IOCTL_MASTER_DEBUG, debugLevel) < 0) {
+         stringstream err;
+         err << "Failed to set debug level: " << strerror(errno);
+         throw MasterDeviceException(err);
+@@ -475,7 +589,7 @@ void MasterDevice::setDebug(unsigned int debugLevel)
+ 
+ void MasterDevice::rescan()
+ {
+-    if (ioctl(fd, EC_IOCTL_MASTER_RESCAN, 0) < 0) {
++    if (ioctl_l(fd, EC_IOCTL_MASTER_RESCAN, 0) < 0) {
+         stringstream err;
+         err << "Failed to command rescan: " << strerror(errno);
+         throw MasterDeviceException(err);
+diff --git a/tool/MasterDevice.h b/tool/MasterDevice.h
+index 7398f978..1b219b73 100644
+--- a/tool/MasterDevice.h
++++ b/tool/MasterDevice.h
+@@ -38,6 +38,22 @@ using namespace std;
+ #include "ioctl.h"
+ 
+ /****************************************************************************/
++#ifdef EC_MASTER_IN_USERSPACE
++extern "C" {
++
++#define MAX_MASTER_NUM (32)
++
++int ecat_ioctl_len(int fd, unsigned int cmd, void *arg, int len, int flag);
++
++struct ecat_shm_info {
++    uint32_t flag;
++    uint32_t index;
++    uint32_t cmd;
++    uint32_t len;
++} __attribute__((packed));
++
++}  /* extern "C" */
++#endif
+ 
+ class MasterDeviceException:
+     public runtime_error
+-- 
+2.25.1
+
