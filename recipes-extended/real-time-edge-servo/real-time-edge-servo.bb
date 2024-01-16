@@ -4,9 +4,13 @@ PV = "1.0"
 DESCRIPTION = "CoE test tool"
 LICENSE = "GPL-2.0-only & MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=ef58f855337069acd375717db0dbbb6d"
-RT_EDGE_SERVO_BRANCH = "master"
-SRC_URI = "git://github.com/nxp-real-time-edge-sw/real-time-edge-servo.git;protocol=https;branch=${RT_EDGE_SERVO_BRANCH}"
-SRCREV = "bc47c8097a7807c934e0ef4425ca11091f500ae0"
+
+REAL_TIME_EDGE_SERVO_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-servo.git;protocol=https"
+REAL_TIME_EDGE_SERVO_BRANCH ?= "master"
+REAL_TIME_EDGE_SERVO_SRCREV ?= "${AUTOREV}"
+
+SRC_URI = "${REAL_TIME_EDGE_SERVO_SRC};branch=${REAL_TIME_EDGE_SERVO_BRANCH}"
+SRCREV = "${REAL_TIME_EDGE_SERVO_SRCREV}"
 
 S = "${WORKDIR}/git"
 
