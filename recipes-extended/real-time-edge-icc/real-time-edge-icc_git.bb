@@ -2,14 +2,18 @@ SUMMARY = "real-time-edge ICC"
 LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=b8b124def019f141a27e002e0a4333cc"
 
-SRC_URI = "git://github.com/nxp-real-time-edge-sw/real-time-edge-icc.git;protocol=https;nobranch=1"
-SRCREV = "6b7d4a92342ffebfdd110637901d549371bfbafa"
+REAL_TIME_EDGE_ICC_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-icc.git;protocol=https"
+REAL_TIME_EDGE_ICC_BRANCH ?= "master"
+REAL_TIME_EDGE_ICC_SRCREV ?= "${AUTOREV}"
+
+SRC_URI = "${REAL_TIME_EDGE_ICC_SRC};branch=${REAL_TIME_EDGE_ICC_BRANCH}"
+SRCREV = "${REAL_TIME_EDGE_ICC_SRCREV}"
+
 PV = "1.1"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 S = "${WORKDIR}/git"
-
 
 ICC_GIC_OFFSET_ALIGN = ""
 ICC_GIC_OFFSET_ALIGN:mx8m-nxp-bsp = "y"
