@@ -1,4 +1,4 @@
-# Copyright 2021-2023 NXP
+# Copyright 2021-2024 NXP
 
 require real-time-edge-baremetal-env.inc
 inherit fsl-u-boot-localversion deploy
@@ -12,11 +12,13 @@ LIC_FILES_CHKSUM = " \
     file://Licenses/lgpl-2.0.txt;md5=4cf66a4984120007c9881cc871cf49db \
     file://Licenses/lgpl-2.1.txt;md5=4fbd65380cdd255951079008b364516c \
 "
+UBOOT_BAREMETAL_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-uboot.git;protocol=https"
 UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2023.04-2.8.0"
-UBOOT_BAREMETAL_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-uboot.git;protocol=https;"
+UBOOT_BAREMETAL_SRCREV ?= "${AUTOREV}"
+
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
 
-SRCREV = "${AUTOREV}"
+SRCREV = "${UBOOT_BAREMETAL_SRCREV}"
 
 PV = "2023.04+git${SRCPV}"
 
