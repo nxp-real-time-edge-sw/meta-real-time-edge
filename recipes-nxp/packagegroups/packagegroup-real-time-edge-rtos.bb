@@ -11,45 +11,5 @@ inherit packagegroup
 
 PACKAGES = "${PN}"
 
-demo-apps ?= ""
-demo-apps:append:mx8mm-nxp-bsp = " demo-hello-world"
-demo-apps:append:mx8mp-nxp-bsp = " demo-hello-world"
 
-rtos-examples ?= ""
-rtos-examples:append:mx8mm-nxp-bsp = " freertos-hello"
-rtos-examples:append:mx8mp-nxp-bsp = " freertos-hello"
 
-driver-examples ?= ""
-driver-examples:append:mx8mm-nxp-bsp = " driver-gpio-led-output"
-driver-examples:append:mx8mp-nxp-bsp = " driver-gpio-led-output"
-
-soem-examples ?= ""
-soem-examples:append:mx8mm-nxp-bsp = " soem-gpio-pulse freertos-soem-gpio-pulse"
-soem-examples:append:mx8mp-nxp-bsp = " soem-gpio-pulse freertos-soem-gpio-pulse"
-
-rpmsg-lite-examples ?= ""
-rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-uart-sharing-rtos"
-rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-str-echo-rtos rpmsg-lite-str-echo-rtos-m4-8m"
-rpmsg-lite-examples:append:imx93evk = "rpmsg-lite-uart-sharing-rtos-mcimx93evk"
-
-uart-examples ?= ""
-uart-examples:append:mx8mm-nxp-bsp = " 9bit-iuart-interrupt-transfer 9bit-iuart-polling"
-
-heterogeneous-multicore-examples ?= ""
-heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " virtio-perf-ca virtio-perf-cm "
-heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " virtio-net-backend-ca virtio-net-backend-cm "
-
-RDEPENDS:${PN} = " \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'rtos-industrial',  \
-    '${RTOS_INDUSTRIAL_INSTALL}', '', d)} \
-"
-
-RTOS_INDUSTRIAL_INSTALL = " \
-    ${demo-apps} \
-    ${rtos-examples} \
-    ${driver-examples} \
-    ${soem-examples} \
-    ${rpmsg-lite-examples} \
-    ${uart-examples} \
-    ${heterogeneous-multicore-examples} \
-"

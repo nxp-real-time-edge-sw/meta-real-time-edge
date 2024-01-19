@@ -32,7 +32,12 @@ do_compile() {
 
     chmod u+x *.sh
     ./clean.sh
-    ./build_release.sh -boot_mode=pci
+if [ imx8mp-rfnm ]; then
+    ./build_release.sh -m pcie -t rfnm -b Release
+else
+    ./build_release.sh -m pcie -t nlm -b Release
+fi
+
 }
 
 FILES:${PN}= "/lib"
@@ -42,3 +47,4 @@ do_install () {
         install -m0755 ${S}/Demo/CORTEX_M4_NXP_LA9310_GCC/release/* ${D}${nonarch_base_libdir}/firmware
         install -m0755 ${S}/firmware/*.eld ${D}${nonarch_base_libdir}/firmware
 }
+

@@ -18,7 +18,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-
 ROOTDIR=`pwd`
 PROGNAME="setup-environment"
 PLATFORM="qoriq"
@@ -64,6 +63,11 @@ change_conf()
 	echo "EXTRA_IMAGE_FEATURES += \"package-management\"" >> $BUILD_DIR/conf/local.conf
 	echo "IMAGE_INSTALL:append += \" kernel-module-la9310 userapp-la9310 freertos-la9310\"" >> $BUILD_DIR/conf/local.conf
 	echo "IMAGE_INSTALL:remove += \" docker \"" >> $BUILD_DIR/conf/local.conf
+
+	cd ${ROOTDIR}/sources/meta-imx/
+	git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0001-rfnm-Add-support-for-rfnm-dtb-support.patch
+	git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0002-rfnm-Temporarily-add-atf-binary-image-support.patch
+	cd -
 }
 
 imx_add_layers()

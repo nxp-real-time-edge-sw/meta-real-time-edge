@@ -12,6 +12,8 @@ SRCBRANCH:real-time-edge = "${REAL_TIME_EDGE_LINUX_BRANCH}"
 SRCREV:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRCREV}"
 SRC_URI = "${KERNEL_SRC}"
 
+KBUILD_DEFCONFIG ?= "imx8mp_rfnm_defconfig"
+
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI:append:real-time-edge = " \
     file://linux-imx8.config \
@@ -40,6 +42,14 @@ SRC_URI:append:imx8mp-rfnm = " \
     file://rfnm-0006-Add-bootconfig-eeprom-driver.patch \
     file://rfnm-0007-Hack-the-TCPM-driver-to-support-USB-PD-without-reque.patch \
 "
+
+do_merge_delta_config:append:imx8mp-rfnm() {
+    cp ${S}/arch/${ARCH}/configs/imx8mp_rfnm_defconfig  ${WORKDIR}/defconfig
+}
+
+do_copy_defconfig:append:imx8mp-rfnm() {
+	cp ${S}/arch/arm64/configs/imx8mp_rfnm_defconfig ${B}/.config
+}
 
 do_configure:prepend:real-time-edge() {
     mkdir -p ${WORKDIR}/source-date-epoch

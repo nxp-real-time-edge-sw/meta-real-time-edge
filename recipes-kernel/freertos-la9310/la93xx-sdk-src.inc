@@ -1,5 +1,7 @@
 # Copyright 2023-2024 NXP
 
+require ../include/la93xx-repo.inc
+
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"
 
@@ -15,12 +17,9 @@ NXP_REAL_TIME_EDGE_BASE="github.com/nxp-real-time-edge-sw"
 SRCREV_FORMAT = "la93xx-sdk"
 
 SRC_URI = "\
-    git://github.com/nxp-qoriq/la93xx_freertos;protocol=https;nobranch=1;name=freertos_repo \
-    git://github.com/nxp-qoriq/la93xx_firmware;protocol=https;nobranch=1;name=firmware_repo;destsuffix=git/firmware \
+    ${SRC_LA9310_FRTOS_URI};name=freertos_repo \
+    ${SRC_LA9310_FW_URI};name=firmware_repo;destsuffix=git/firmware \
     "
-
-SRCREV_freertos_repo = "92cb58f9e90e29ada28feab64e8c54d95067504b"
-SRCREV_firmware_repo = "c298c417f689f0f6709a94d1c75156b1ed2934f5"
 
 S = "${WORKDIR}/git"
 
