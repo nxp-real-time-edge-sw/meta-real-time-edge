@@ -66,8 +66,8 @@ do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
 inherit autotools-brokensep pkgconfig module-base
 
-# EXTRA_OECONF += "--with-linux-dir=${STAGING_KERNEL_BUILDDIR}"
-# EXTRA_OECONF += "--with-module-dir=kernel/ethercat"
+EXTRA_OECONF += " --with-linux-dir=${STAGING_KERNEL_BUILDDIR}"
+EXTRA_OECONF += " --with-module-dir=kernel/ethercat"
 
 do_configure:prepend() {
     touch ChangeLog
