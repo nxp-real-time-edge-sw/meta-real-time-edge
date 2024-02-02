@@ -10,10 +10,6 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7ca
 # find the patch(es) in SRC_URI.
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-NXPMICRO_BASE = "github.com/nxp-mcuxpresso"
-NXP_BASE = "github.com/NXP"
-NXP_REAL_TIME_EDGE_BASE="github.com/nxp-real-time-edge-sw"
-
 SRCREV_FORMAT = "la93xx-sdk"
 
 SRC_URI = "\
@@ -24,7 +20,5 @@ SRC_URI = "\
 S = "${WORKDIR}/git"
 
 # Default to a stable version
-PREFERRED_VERSION_MCUX-SDK ??= "2.12.0"
-#require la93xx-sdk-src-${PREFERRED_VERSION_MCUX-SDK}.inc
 
 PACKAGES = "${PN}"

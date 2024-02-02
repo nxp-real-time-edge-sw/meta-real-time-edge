@@ -24,6 +24,7 @@ EXTRA_OEMAKE = " \
   LA9310_COMMON_HEADERS='${WORKDIR}/la93xx_freertos/common_headers' \
 "
 EXTRA_OEMAKE:append:imx8mp-rfnm = " IMX_RFNM='1' "
+PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 do_configure () {
   cd ${S}
@@ -35,4 +36,7 @@ do_install() {
         install -d ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
         install -m 0755 ${S}/kernel_driver/la9310shiva/la9310shiva.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 	install -m 0755 ${S}/kernel_driver/la9310demo/la9310demo.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
+if [ imx8mp-rfnm ]; then
+	install -m 0755 ${S}/kernel_driver/la9310rfnm/la9310rfnm.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
+fi
 }
