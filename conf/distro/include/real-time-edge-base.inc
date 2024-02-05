@@ -66,6 +66,7 @@ KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-rpmsg-ca53.d
 					       freescale/imx8mm-evk-multicore-rpmsg.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-rpmsg-8m-buf.dtb"
 KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-root.dtb \
+					       freescale/imx8mp-evk-rpmsg-ca53.dtb \
 					       freescale/imx8mp-evk-virtio-net-cm7.dtb \
 					       freescale/imx8mp-evk-virtio-net-ca53.dtb \
 					       freescale/imx8mp-evk-multicore-rtos.dtb \
