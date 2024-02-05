@@ -43,7 +43,7 @@ heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " lwip-ping-ca rpmsg-str
 heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " hello-world-ca hello-world-cm virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
 heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " lwip-ping-ca rpmsg-str-echo-ca rpmsg-str-echo-cm "
 heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " rpmsg-pingpong-master-ca rpmsg-pingpong-remote-ca "
-heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " rpmsg-perf-cm "
+heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " rpmsg-perf-ca rpmsg-perf-cm "
 heterogeneous-multicore-examples:append:imx93evk = " hello-world-ca hello-world-cm lwip-ping-ca virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
 
 heterogeneous-multi-soc-examples ?= ""
