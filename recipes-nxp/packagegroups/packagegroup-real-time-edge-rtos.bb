@@ -28,22 +28,20 @@ soem-examples:append:mx8mm-nxp-bsp = " soem-gpio-pulse freertos-soem-gpio-pulse 
 soem-examples:append:mx8mp-nxp-bsp = " soem-gpio-pulse freertos-soem-gpio-pulse "
 
 rpmsg-lite-examples ?= ""
-rpmsg-lite-examples:append:mx8mm-nxp-bsp = " rpmsg-lite-uart-sharing-rtos "
-rpmsg-lite-examples:append:imx93evk = " rpmsg-lite-uart-sharing-rtos-mcimx93evk "
 rpmsg-lite-examples:append:imx93-9x9-lpddr4-qsb = " rpmsg-lite-uart-sharing-rtos-mcimx93qsb "
 
 uart-examples ?= ""
 uart-examples:append:mx8mm-nxp-bsp = " 9bit-iuart-interrupt-transfer 9bit-iuart-polling "
 
 heterogeneous-multicore-examples ?= ""
-heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " hello-world-ca hello-world-cm virtio-perf-ca virtio-perf-cm hmc-tools "
+heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " hello-world-ca hello-world-cm rpmsg-uart-sharing-cm virtio-perf-ca virtio-perf-cm hmc-tools "
 heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " virtio-net-backend-ca virtio-net-backend-cm "
 heterogeneous-multicore-examples:append:mx8mm-nxp-bsp = " lwip-ping-ca rpmsg-str-echo-ca rpmsg-str-echo-cm rpmsg-str-echo-8m-cm "
 heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " hello-world-ca hello-world-cm virtio-perf-ca virtio-perf-cm virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
 heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " lwip-ping-ca rpmsg-str-echo-ca rpmsg-str-echo-cm "
 heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " rpmsg-pingpong-master-ca rpmsg-pingpong-remote-ca "
 heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " rpmsg-perf-ca rpmsg-perf-cm "
-heterogeneous-multicore-examples:append:imx93evk = " hello-world-ca hello-world-cm lwip-ping-ca virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
+heterogeneous-multicore-examples:append:imx93evk = " hello-world-ca hello-world-cm lwip-ping-ca rpmsg-uart-sharing-cm virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
 
 heterogeneous-multi-soc-examples ?= ""
 heterogeneous-multi-soc-examples:append:mx8mp-nxp-bsp = " dsa-switch-evkmimxrt1180-cm33 "
