@@ -6,7 +6,7 @@
 #REAL_TIME_EDGE_LINUX_BRANCH ?= "linux-5.15-rt"
 REAL_TIME_EDGE_LINUX_SRC ?= "git://github.com/nxp-qoriq/linux.git;protocol=https"
 REAL_TIME_EDGE_LINUX_BRANCH ?= "la12xx-linux-5.15-rt"
-REAL_TIME_EDGE_LINUX_SRCREV ?= "c9c0c942ff904412caf0c26408ba07bb6784d67c"
+REAL_TIME_EDGE_LINUX_SRCREV ?= "9f03c4ee42ff4c0045eec28cae81d5558bacbfbd"
 
 KERNEL_SRC:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRC};branch=${REAL_TIME_EDGE_LINUX_BRANCH}"
 SRCBRANCH:real-time-edge = "${REAL_TIME_EDGE_LINUX_BRANCH}"
