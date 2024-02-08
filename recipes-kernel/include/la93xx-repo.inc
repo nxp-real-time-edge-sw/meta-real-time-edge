@@ -7,5 +7,5 @@ SRC_LA9310_FW_URI = " git://github.com/nxp-qoriq/la93xx_firmware;protocol=https;
 
 
 SRCREV_host_repo = "449727953ffde7a530998cda9d4e73d57f425e70"
-SRCREV_freertos_repo = "94e4eea076e6d9796ccd15e3fcb91fbd2976da63"
+SRCREV_freertos_repo = "41a121f4dccb796f287f8beb3d864782ce1c2c55"
 SRCREV_firmware_repo = "c298c417f689f0f6709a94d1c75156b1ed2934f5"

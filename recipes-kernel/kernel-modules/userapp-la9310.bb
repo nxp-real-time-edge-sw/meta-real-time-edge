@@ -48,7 +48,7 @@ do_install() {
 	install -m 0755 ${S}/install/usr/lib/libla9310wdog.so ${D}${libdir}
 	install -m 0755 ${S}/install/usr/bin/bin_create ${D}/usr/bin
 	install -m 0755 ${S}/install/usr/bin/la9310_wdog_testapp ${D}/usr/bin
-	install -m 0755 ${S}/install/usr/bin/reset_la9310.sh ${D}/usr/bin
+	install -m 0755 ${S}/install/usr/bin/*.sh ${D}/usr/bin
 }
 
 INSANE_SKIP:${PN} = "ldflags"

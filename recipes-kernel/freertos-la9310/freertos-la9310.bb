@@ -15,7 +15,7 @@ do_package_qa[noexec] = "1"
 # do_package_write_rpm[noexec] = "1"
 
 INHIBIT_DEFAULT_DEPS = "1"
-# INHIBIT_SYSROOT_STRIP = "1"
+INHIBIT_SYSROOT_STRIP = "1"
 INHIBIT_PACKAGE_STRIP = "1"
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 
