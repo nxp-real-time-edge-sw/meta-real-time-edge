@@ -30,3 +30,7 @@ do_configure:prepend() {
 do_compile:prepend() {
 	export LA9310_COMMON_HEADERS="${WORKDIR}/la93xx_freertos/common_headers"
 }
+
+do_install:append(){
+    cp ${S}/nxp/debug_dump.sh ${D}/
+}

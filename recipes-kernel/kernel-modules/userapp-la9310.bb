@@ -27,7 +27,7 @@ EXTRA_OEMAKE = '\
     DESTDIR="${D}" \
 '
 PARALLEL_MAKE="-j 1"
-FILES:${PN}= "/usr/lib/* /usr/bin/*"
+FILES:${PN}= "/usr/lib/* /usr/bin/* ${ROOT_HOME}/*"
 
 do_configure () {
 	cd ${S}
@@ -41,14 +41,18 @@ do_compile() {
 	oe_runmake install
 }
 
-
 do_install() {
 	install -d ${D}${libdir}
 	install -d ${D}/usr/bin
 	install -m 0755 ${S}/install/usr/lib/libla9310wdog.so ${D}${libdir}
 	install -m 0755 ${S}/install/usr/bin/bin_create ${D}/usr/bin
 	install -m 0755 ${S}/install/usr/bin/la9310_wdog_testapp ${D}/usr/bin
-	install -m 0755 ${S}/install/usr/bin/*.sh ${D}/usr/bin
+	install -m 0755 ${S}/install/usr/bin/bin2mem ${D}/usr/bin
+	install -m 0755 ${S}/install/usr/bin/devmem ${D}/usr/bin
+	install -m 0755 ${S}/install/usr/bin/devmem5 ${D}/usr/bin
+	install -m 0755 ${S}/install/usr/bin/mem_rw ${D}/usr/bin
+	install -m 0755 ${S}/install/usr/bin/modem_info ${D}/usr/bin
+	install -m 0755 ${S}/install/usr/bin/*.sh ${D}/${ROOT_HOME}
 }
 
 INSANE_SKIP:${PN} = "ldflags"
