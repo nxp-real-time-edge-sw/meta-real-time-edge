@@ -8,6 +8,8 @@ LIC_FILES_CHKSUM = "file://license/gpl-2.0.txt;md5=b234ee4d69f5fce4486a80fdaf4a4
 
 inherit module
 
+SRCREV_FORMAT = "la93xx-sdk"
+
 SRC_URI = "${SRC_LA9310_HOST_URI} \
         ${SRC_LA9310_FRTOS_URI};destsuffix=la93xx_freertos \
         ${SRC_LA9310_FW_URI};destsuffix=git/firmware \

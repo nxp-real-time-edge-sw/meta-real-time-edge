@@ -6,6 +6,8 @@ require ../include/la93xx-repo.inc
 LIC_FILES_CHKSUM = "file://license/gpl-2.0.txt;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://license/bsd-3-clause.txt;md5=0f00d99239d922ffd13cabef83b33444"
 
+SRCREV_FORMAT = "la93xx-sdk"
+
 SRC_URI = "${SRC_LA9310_HOST_URI} \
         ${SRC_LA9310_FRTOS_URI};destsuffix=la93xx_freertos \
         ${SRC_LA9310_FW_URI};destsuffix=git/firmware \
@@ -31,7 +33,7 @@ FILES:${PN}= "/usr/lib/* /usr/bin/* ${ROOT_HOME}/*"
 
 do_configure () {
 	cd ${S}
-	sed -i 's/DIRS ?= lib app kernel_driver firmware scripts/DIRS ?= lib firmware app scripts/g' Makefile
+	sed -i 's/DIRS ?= lib app kernel_driver firmware scripts/DIRS ?= lib app firmware scripts/g' Makefile
 }
 
 
@@ -45,14 +47,8 @@ do_install() {
 	install -d ${D}${libdir}
 	install -d ${D}/usr/bin
 	install -m 0755 ${S}/install/usr/lib/libla9310wdog.so ${D}${libdir}
-	install -m 0755 ${S}/install/usr/bin/bin_create ${D}/usr/bin
-	install -m 0755 ${S}/install/usr/bin/la9310_wdog_testapp ${D}/usr/bin
-	install -m 0755 ${S}/install/usr/bin/bin2mem ${D}/usr/bin
-	install -m 0755 ${S}/install/usr/bin/devmem ${D}/usr/bin
-	install -m 0755 ${S}/install/usr/bin/devmem5 ${D}/usr/bin
-	install -m 0755 ${S}/install/usr/bin/mem_rw ${D}/usr/bin
-	install -m 0755 ${S}/install/usr/bin/modem_info ${D}/usr/bin
-	install -m 0755 ${S}/install/usr/bin/*.sh ${D}/${ROOT_HOME}
+	install -m 0755 ${S}/install/usr/bin/* ${D}/usr/bin
+#	install -m 0755 ${S}/install/usr/bin/*.sh ${D}/${ROOT_HOME}
 }
 
 INSANE_SKIP:${PN} = "ldflags"

@@ -32,14 +32,14 @@ index 0000000000..1ea4c2b490
 ++++ b/iMX8M/soc.mak
 +@@ -144,7 +144,7 @@ u-boot-atf-tee.bin: u-boot.bin bl31.bin $(TEE)
 + clean:
-+ 	@rm -f $(MKIMG) u-boot-atf.bin u-boot-atf-tee.bin u-boot-spl-ddr.bin u-boot.itb u-boot.its u-boot-ddr3l.itb u-boot-ddr3l.its u-boot-spl-ddr3l.bin u-boot-ddr4.itb u-boot-ddr4.its u-boot-spl-ddr4.bin u-boot-ddr4-evk.itb u-boot-ivt.itb u-boot-ddr4-evk.its $(OUTIMG)
-+ 
++	@rm -f $(MKIMG) u-boot-atf.bin u-boot-atf-tee.bin u-boot-spl-ddr.bin u-boot.itb u-boot.its u-boot-ddr3l.itb u-boot-ddr3l.its u-boot-spl-ddr3l.bin u-boot-ddr4.itb u-boot-ddr4.its u-boot-spl-ddr4.bin u-boot-ddr4-evk.itb u-boot-ivt.itb u-boot-ddr4-evk.its $(OUTIMG)
++
 +-dtb = evk.dtb
 ++dtb = imx8mp-rfnm.dtb
 + $(dtb):
-+ 	./$(DTB_PREPROC) $(PLAT)-evk.dtb $(dtb) $(dtbs)
-+ 
-+-- 
++	./$(DTB_PREPROC) $(PLAT)-evk.dtb $(dtb) $(dtbs)
++
++--
 +2.25.1
 +
 diff --git a/meta-bsp/recipes-bsp/imx-mkimage/imx-mkimage_git.inc b/meta-bsp/recipes-bsp/imx-mkimage/imx-mkimage_git.inc
