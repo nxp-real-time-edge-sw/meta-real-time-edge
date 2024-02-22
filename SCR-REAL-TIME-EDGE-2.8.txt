@@ -1,15 +1,15 @@
 NXP Software Content Register
 
-Release - Real-time Edge Software 2.7
- December 2023
+Release - Real-time Edge Software 2.8
+ March 2024
 
 Outgoing License: LA_OPT_NXP_Software_License v49 September 2023 - Additional distribution license granted - Section 2.3 applies
 License File:     LICENSE.txt
 
 Yocto Project recipe manifest:
-repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-mickledore -m real-time-edge-2.7.0.xml
+repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-mickledore -m real-time-edge-2.8.0.xml
 
-Release tag: Real-Time-Edge-v2.7-202312
+Release tag: Real-Time-Edge-v2.8-202403
 Release Location: https://www.nxp.com/design/software/development-software/real-time-edge-software:REALTIME-EDGE-SOFTWARE
 
 --------------------------------------------
@@ -23,7 +23,7 @@ License File:                docs/license.rst
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://github.com/nxp-qoriq/atf -b lf-6.1.36-2.1.0
+Release Location:            https://github.com/nxp-qoriq/atf -b lf-6.1.55-2.2.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
@@ -36,7 +36,7 @@ License File:                docs/license.rst
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://github.com/nxp-imx/imx-atf -b lf-6.1.36-2.1.0
+Release Location:            https://github.com/nxp-imx/imx-atf -b lf-6.1.55-2.2.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
@@ -49,19 +49,19 @@ License File:                LICENSE
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Reset Configuration Word
-Release Location:            https://github.com/nxp-qoriq/rcw -b lf-6.1.36-2.1.0
+Release Location:            https://github.com/nxp-qoriq/rcw -b lf-6.1.55-2.2.0
 Origin:                      NXP (BSD-3-Clause)
 
 --------------------------------------------
 
 Package:                     real-time-edge-linux.git
-Version:                     6.1.36
+Version:                     6.1.55
 Outgoing License:            GPL-2.0
 License File:                COPYING
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    The Linux kernel with PREEMPT-RT enabled
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-linux -b linux_6.1.36
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-linux -b linux_6.1.55
 Origin:                      NXP (GPL-2.0)
                              kernel.org (GPL-2.0) - https://www.kernel.org/
 
@@ -74,7 +74,7 @@ License File:                Licenses/gpl-2.0.txt
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Bootloader with Real-time Edge specific capabilities
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b uboot_v2023.04-2.7.0
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b uboot_v2023.04-2.8.0
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -89,7 +89,7 @@ License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A partitioning Hypervisor based on Linux
-Release Location:            https://github.com/nxp-imx/imx-jailhouse -b lf-6.1.36-2.1.0
+Release Location:            https://github.com/nxp-imx/imx-jailhouse -b lf-6.1.55-2.2.0
 Origin:                      NXP (GPL-2.0)
                              Siemens AG (GPL-2.0) - https://github.com/siemens/jailhouse
 
@@ -147,7 +147,7 @@ Origin:                      Michal Kubecek (GPL-2.0)
 --------------------------------------------
 
 Package:                     genavb-tsn
-Version:                     5.10
+Version:                     6.1
 Outgoing License:            GPL-2.0-or-later, BSD-3-Clause
 License Files:               licenses/COPYING, licenses/BSD-3-Clause
 Package Category:            Real-time Networking
