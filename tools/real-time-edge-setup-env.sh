@@ -31,9 +31,10 @@ exit_message ()
 usage()
 {
     echo -e "\nUsage: source real-time-edge-setup-env.sh
-    Optional parameters: [-b build-dir] [-h]"
+    Optional parameters: [-b build-dir] [-i] [-h]"
 echo "
     * [-b build-dir]: Build directory, if unspecified script uses 'build' as output directory
+    * [-i internal]: Internal build using bitbucket repos instead of github for selected components.
     * [-h]: help
 	"
 }
@@ -64,10 +65,14 @@ change_conf()
 	echo "IMAGE_INSTALL:append += \" kernel-module-la9310 userapp-la9310 freertos-la9310\"" >> $BUILD_DIR/conf/local.conf
 	echo "IMAGE_INSTALL:remove += \" docker \"" >> $BUILD_DIR/conf/local.conf
 
-	cd ${ROOTDIR}/sources/meta-imx/
-	git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0001-rfnm-Add-support-for-rfnm-dtb-support.patch
-	git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0002-rfnm-Temporarily-add-atf-binary-image-support.patch
-	cd -
+	if [ "${MACHINE}" = "imx8mp-rfnm" ]
+	then
+		cd ${ROOTDIR}/sources/meta-imx/
+		git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0001-rfnm-Add-support-for-rfnm-dtb-support.patch
+		git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0002-rfnm-Temporarily-add-atf-binary-image-support.patch
+		cd -
+	fi
+
 }
 
 imx_add_layers()
@@ -140,10 +145,12 @@ add_layers()
 OLD_OPTIND=$OPTIND
 unset FSLDISTRO
 
-while getopts "k:r:t:b:e:gh" fsl_setup_flag
+while getopts "k:r:t:b:i:e:gh" fsl_setup_flag
 do
 	case $fsl_setup_flag in
 	b) BUILD_DIR="$OPTARG";
+		;;
+	i) fsl_setup_internal='true';
 		;;
 	h) fsl_setup_help='true';
 		;;
@@ -201,6 +208,15 @@ fi
 
 change_conf
 add_layers
+
+ln -sf ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo-ext.inc ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo.inc
+
+#internal build 
+if test $fsl_setup_internal; then
+    	echo -e "\nSetting BUILD_TYPE as NXP bitbucket nxp-internal "
+	echo "BUILD_TYPE = \"nxp-internal\"" >> $BUILD_DIR/conf/local.conf
+	ln -sf ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo-int.inc ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo.inc
+fi
 
 cd  $BUILD_DIR
 clean_up

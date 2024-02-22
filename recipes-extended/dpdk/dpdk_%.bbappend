@@ -8,14 +8,12 @@ LIC_FILES_CHKSUM = "file://license/gpl-2.0.txt;md5=b234ee4d69f5fce4486a80fdaf4a4
                     file://license/lgpl-2.1.txt;md5=4b54a1fd55a448865a0b32d41598759d \
                     file://license/bsd-3-clause.txt;md5=0f00d99239d922ffd13cabef83b33444"
 
-DPDK_SRC = "git://git@bitbucket.sw.nxp.com/gitam/dpdk.git;protocol=ssh"
-#SRCREV = "5479bb82b12306a32283d2ef88efb63a696e0d78"
-#DPDK_SRC = "git://github.com/nxp/dpdk;protocol=https"
-SRCREV = "0decf58dfea29e7feb3cbd45c8dc69c044138f20"
+SRCREV_FORMAT = "la93xx-sdk"
 
-SRC_URI = "${DPDK_SRC};nobranch=1 \
+SRC_URI = "${DPDK_SRC}; \
         ${SRC_LA9310_FRTOS_URI};destsuffix=la93xx_freertos \
 "
+SRCREV="${SRCREV_dpdk_rev}"
 
 #DEPENDS:append = "freertos-la9310"
 
@@ -29,4 +27,8 @@ do_configure:prepend() {
 
 do_compile:prepend() {
 	export LA9310_COMMON_HEADERS="${WORKDIR}/la93xx_freertos/common_headers"
+}
+
+do_install:append(){
+    cp ${S}/nxp/debug_dump.sh ${D}/
 }
