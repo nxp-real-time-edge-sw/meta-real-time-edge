@@ -19,6 +19,7 @@ SRC_URI = "${UBOOT_SRC};branch=${SRCBRANCH}"
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI:append:imx8mp-rfnm = " \
     file://0001-rfnm-Add-support-for-rfnm-board.patch \
+    file://0001-rfnm-add-workaround-for-hardcoded-physical-address.patch \
 "
 
 do_configure:prepend:real-time-edge() {
