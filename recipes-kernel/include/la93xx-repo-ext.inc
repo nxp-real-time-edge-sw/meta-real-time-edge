@@ -5,7 +5,7 @@ REAL_TIME_EDGE_LINUX_BRANCH = "la12xx-linux-5.15-rt"
 REAL_TIME_EDGE_LINUX_SRCREV = "84bd90aba15cbd08b92a35f4a6889232c8fe210d"
 
 DPDK_SRC = "git://github.com/nxp/dpdk;protocol=https;nobranch=1"
-SRCREV_dpdk_rev = "17c5cbd755f10a4075320d4466c4be1bd89910d6"
+SRCREV_dpdk_rev = "44ed2d1fbf39189c80b5876a4bdbc836799d8c29"
 
 SRC_LA9310_HOST_URI = "git://github.com/nxp-qoriq/la93xx_host_sw;protocol=https;nobranch=1;name=host_repo"
 SRCREV_host_repo = "add5f75c255ba7fb785c7089af23c8cc5f31c00b"

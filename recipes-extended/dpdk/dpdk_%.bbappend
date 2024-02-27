@@ -29,6 +29,18 @@ do_compile:prepend() {
 	export LA9310_COMMON_HEADERS="${WORKDIR}/la93xx_freertos/common_headers"
 }
 
+FILES:${PN} = "/usr/bin/* ${ROOT_HOME}/*"
+
 do_install:append(){
-    cp ${S}/nxp/debug_dump.sh ${D}/
+    # Install examples
+    install -d ${D}/${ROOT_HOME}
+    install -m 0755 ${S}/nxp/debug_dump.sh ${D}/${ROOT_HOME}/
+
+    install -m 0755 -d ${D}/usr/bin/
+    install -m 0755 ${S}/nxp/debug_dump.sh ${D}/usr/bin/
+    install -m 0755 ${B}/examples/dpdk-bbdev_raw_app  ${D}/usr/bin/
+    install -m 0755 ${B}/examples/dpdk-l2fwd  ${D}/usr/bin/
+    install -m 0755 ${B}/examples/dpdk-l3fwd  ${D}/usr/bin/
+    install -m 0755 ${B}/examples/dpdk-pkt_gen_ext  ${D}/usr/bin/
+    install -m 0755 ${B}/examples/dpdk-pkt_split_app ${D}/usr/bin/
 }
