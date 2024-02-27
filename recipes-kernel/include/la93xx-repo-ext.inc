@@ -8,7 +8,7 @@ DPDK_SRC = "git://github.com/nxp/dpdk;protocol=https;nobranch=1"
 SRCREV_dpdk_rev = "44ed2d1fbf39189c80b5876a4bdbc836799d8c29"
 
 SRC_LA9310_HOST_URI = "git://github.com/nxp-qoriq/la93xx_host_sw;protocol=https;nobranch=1;name=host_repo"
-SRCREV_host_repo = "add5f75c255ba7fb785c7089af23c8cc5f31c00b"
+SRCREV_host_repo = "b4c1effb8b581feb7c019763a8a83b3a32a135c6"
 
 SRC_LA9310_FRTOS_URI = "git://github.com/nxp-qoriq/la93xx_freertos;protocol=https;nobranch=1;name=freertos_repo"
 SRCREV_freertos_repo = "bd0269d851f8ba7ebeb9b7be9c88b0fa7c1009eb"
