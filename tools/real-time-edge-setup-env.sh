@@ -63,6 +63,7 @@ change_conf()
 	echo "PACKAGE_CLASSES = \"package_deb\"" >> $BUILD_DIR/conf/local.conf
 	echo "EXTRA_IMAGE_FEATURES += \"package-management\"" >> $BUILD_DIR/conf/local.conf
 	echo "IMAGE_INSTALL:append = \" kernel-module-la9310 userapp-la9310 freertos-la9310 arm-ral dpdk kernel-module-kpage-ncache \"" >> $BUILD_DIR/conf/local.conf
+	#echo "IMAGE_INSTALL:append = \" cli-la9310 \"" >> $BUILD_DIR/conf/local.conf
 	echo "IMAGE_INSTALL:remove = \" docker \"" >> $BUILD_DIR/conf/local.conf
 	echo "MACHINE_FEATURES:append:imx8mp-rfnm = \" dpdk\"" >> $BUILD_DIR/conf/local.conf
 	if [ "${MACHINE}" = "imx8mp-rfnm" ]
