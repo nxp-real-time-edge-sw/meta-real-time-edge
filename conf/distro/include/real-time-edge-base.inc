@@ -89,6 +89,12 @@ KERNEL_DEVICETREE:append:imx93-9x9-lpddr4-qsb = " freescale/imx93-9x9-qsb-inmate
 						  freescale/imx93-9x9-qsb-root.dtb \
 						  freescale/imx93-9x9-qsb-uart-sharing-cm33.dtb"
 
+# dtb for igh
+KERNEL_DEVICETREE:append:imx6ull14x14evk = " imx6ull-14x14-evk-igh.dtb"
+KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-igh.dtb"
+KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-igh.dtb"
+KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-igh.dtb"
+
 # dtb for plc
 KERNEL_DEVICETREE:append:imx6ull14x14evk = " imx6ull-14x14-evk-ecat.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-ecat.dtb"

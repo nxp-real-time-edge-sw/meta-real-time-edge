@@ -40,6 +40,7 @@ SRC_URI += "\
     file://0001-Native-Driver-fix-ec_fec-kernel-module-insmod-failur.patch \
     file://0001-net-enetc-use-lynx_pcs_create_mdiodev.patch \
     file://0002-net-enetc-integrate-SerDes-phys-with-lynx-pcs.patch \
+    file://0001-Use-new-igh-native-dts.patch \
 "
 S = "${WORKDIR}/git"
 
