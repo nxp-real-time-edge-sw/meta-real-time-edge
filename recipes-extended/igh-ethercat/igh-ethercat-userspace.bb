@@ -43,6 +43,9 @@ SRC_URI += "\
     file://0001-Add-code-to-support-userspace-IGH-EtherCAT-for-v1.5..patch \
     file://0002-Add-code-to-support-NXP-i.MX-FEC-ethernet-port.patch \
     file://0003-Fix-the-compile-error.patch \
+    file://0001-Fix-the-issue-that-shm_get-key-is-using-relative-pat.patch \
+    file://0002-Update-Readme_For_User_Space_IGH_EtherCAT.txt.patch \
+    file://0003-Modify-ecrt.h-for-real-time-edge-servo-and-user-appl.patch \
 "
 
 S = "${WORKDIR}/git"

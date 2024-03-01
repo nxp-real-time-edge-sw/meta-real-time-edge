@@ -1,0 +1,54 @@
+From d93d7b8fdda931bc7ad39b3dbfed6eba9a5bcda3 Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Mon, 26 Feb 2024 15:47:21 +0800
+Subject: [PATCH 2/3] Update Readme_For_User_Space_IGH_EtherCAT.txt
+
+NOTE:
+For user space IGH EtherCAT, should use *-dpdk.dtb for Linux kernel, for example:
+- imx8mm-evk-dpdk.dtb
+- imx8mp-evk-dpdk.dtb
+- imx93-11x11-evk-dpdk.dtb
+
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+---
+ Readme_For_User_Space_IGH_EtherCAT.txt | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/Readme_For_User_Space_IGH_EtherCAT.txt b/Readme_For_User_Space_IGH_EtherCAT.txt
+index 9df955b6..8b78d2ec 100644
+--- a/Readme_For_User_Space_IGH_EtherCAT.txt
++++ b/Readme_For_User_Space_IGH_EtherCAT.txt
+@@ -25,7 +25,7 @@ also increase system jitter and time latency.
+ 
+   In IGH EtherCAT stack, there are different drivers for devices, so it depends
+ on the version of Linux kernel. When you want to compile IGH EtherCAT stack, you
+-have to point out clearly the path of kernel, otherwise it will reports error.
++have to point out clearly the path of kernel, otherwise it will report error.
+ 
+ 2. How to resolve the above issues in user space IGH EtherCAT stack?
+ 
+@@ -173,6 +173,12 @@ int main()
+ 	return 0;
+ }
+ 
++NOTE:
++For user space IGH EtherCAT, should use *-dpdk.dtb for Linux kernel, for example:
++- imx8mm-evk-dpdk.dtb
++- imx8mp-evk-dpdk.dtb
++- imx93-11x11-evk-dpdk.dtb
++
+ 5. How to run user's EtherCAT application
+ 
+ Before running application, we should set hugepage related configuration:
+@@ -203,3 +209,8 @@ Then we can run EtherCAT tool:
+ or
+ 
+ # ./ethercat cstruct
++
++Note:
++1. If want to run user's application, should exit and close ethercat_master program.
++2. For i.MX platforms, should limit DDR memory in 4G bytes via 'mem' variable in U-Boot bootargs.
++	Example: 'mem=4096M'
+-- 
+2.25.1
+

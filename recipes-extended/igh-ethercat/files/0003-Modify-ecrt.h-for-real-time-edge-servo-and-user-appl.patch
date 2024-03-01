@@ -1,0 +1,32 @@
+From ce9b5b3088f7f1355f332d47538cdfe6e0edb0a1 Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Wed, 6 Mar 2024 11:15:34 +0800
+Subject: [PATCH 3/3] Modify ecrt.h for real-time-edge-servo and user
+ application
+
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+---
+ include/ecrt.h | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/include/ecrt.h b/include/ecrt.h
+index 06601a1b..c01ab7ad 100644
+--- a/include/ecrt.h
++++ b/include/ecrt.h
+@@ -550,13 +550,10 @@ int ecus_slave_is_ready(uint32_t master_index, uint16_t alias, uint16_t position
+ int ecus_master_operation_loop(ec_master_t *master, int cycle);
+ int ecus_enable_ioctl_poll(void);
+ 
+-#ifdef EC_USERSPACE_MASTER_FEC
+ int ecus_bind_cpu_core(uint32_t core_mask);
+ uint32_t ecus_get_core_mask(void);
+ #endif
+ 
+-#endif
+-
+ /** Returns the version magic of the realtime interface.
+  *
+  * \return Value of ECRT_VERSION_MAGIC() at EtherCAT master compile time.
+-- 
+2.25.1
+
