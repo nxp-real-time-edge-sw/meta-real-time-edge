@@ -65,7 +65,7 @@ change_conf()
 	echo "# Switch to Debian packaging and include package-management in the image" >> $BUILD_DIR/conf/local.conf
 	echo "PACKAGE_CLASSES = \"package_deb\"" >> $BUILD_DIR/conf/local.conf
 	echo "EXTRA_IMAGE_FEATURES += \"package-management\"" >> $BUILD_DIR/conf/local.conf
-	echo "IMAGE_INSTALL:append = \" kernel-module-la9310 userapp-la9310 freertos-la9310 arm-ral dpdk kernel-module-kpage-ncache \"" >> $BUILD_DIR/conf/local.conf
+	echo "IMAGE_INSTALL:append = \" dtc kernel-module-la9310 userapp-la9310 freertos-la9310 arm-ral dpdk kernel-module-kpage-ncache \"" >> $BUILD_DIR/conf/local.conf
 	if [ "${RFNM_CLI_ENABLE}" = "enable" ]
 	then
 		echo "IMAGE_INSTALL:append = \" rfnm-cli-la9310 \"" >> $BUILD_DIR/conf/local.conf
