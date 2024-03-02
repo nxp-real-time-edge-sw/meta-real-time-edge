@@ -17,3 +17,6 @@ SRCREV_freertos_repo = "${AUTOREV}"
 
 SRC_LA9310_FW_URI = "git://git@bitbucket.sw.nxp.com/dn5g/la931x_firmware.git;protocol=ssh;branch=master;name=firmware_repo"
 SRCREV_firmware_repo = "${AUTOREV}"
+
+SRC_LA9310_RFNM_CLI_URI = "git://git@bitbucket.sw.nxp.com/dn5g/rfnm-cli.git;protocol=ssh;branch=main;name=rfnm_cli_repo"
+SRCREV_rfnm_cli_repo = "${AUTOREV}"

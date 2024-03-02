@@ -148,7 +148,7 @@ add_layers()
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-real-time-edge\"" >> $BUILD_DIR/conf/bblayers.conf
 	if [ "${RFNM_CLI_ENABLE}" = "enable" ]
 	then
-		echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-5g-radio\"" >> $BUILD_DIR/conf/bblayers.conf
+		echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-sdr\"" >> $BUILD_DIR/conf/bblayers.conf
 	fi
 
 }
