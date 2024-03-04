@@ -21,6 +21,7 @@
 ROOTDIR=`pwd`
 PROGNAME="setup-environment"
 PLATFORM="qoriq"
+RFNM_CLI_ENABLE="disable"
 
 exit_message ()
 {
@@ -35,6 +36,8 @@ usage()
 echo "
     * [-b build-dir]: Build directory, if unspecified script uses 'build' as output directory
     * [-i internal]: Internal build using bitbucket repos instead of github for selected components.
+    * [-c cli]: cli enable/disable.
+
     * [-h]: help
 	"
 }
@@ -62,8 +65,11 @@ change_conf()
 	echo "# Switch to Debian packaging and include package-management in the image" >> $BUILD_DIR/conf/local.conf
 	echo "PACKAGE_CLASSES = \"package_deb\"" >> $BUILD_DIR/conf/local.conf
 	echo "EXTRA_IMAGE_FEATURES += \"package-management\"" >> $BUILD_DIR/conf/local.conf
-	echo "IMAGE_INSTALL:append = \" kernel-module-la9310 userapp-la9310 freertos-la9310 arm-ral dpdk kernel-module-kpage-ncache \"" >> $BUILD_DIR/conf/local.conf
-	#echo "IMAGE_INSTALL:append = \" cli-la9310 \"" >> $BUILD_DIR/conf/local.conf
+	echo "IMAGE_INSTALL:append = \" dtc kernel-module-la9310 userapp-la9310 freertos-la9310 arm-ral dpdk kernel-module-kpage-ncache \"" >> $BUILD_DIR/conf/local.conf
+	if [ "${RFNM_CLI_ENABLE}" = "enable" ]
+	then
+		echo "IMAGE_INSTALL:append = \" rfnm-cli-la9310 \"" >> $BUILD_DIR/conf/local.conf
+	fi
 	echo "IMAGE_INSTALL:remove = \" docker \"" >> $BUILD_DIR/conf/local.conf
 	echo "MACHINE_FEATURES:append:imx8mp-rfnm = \" dpdk\"" >> $BUILD_DIR/conf/local.conf
 	if [ "${MACHINE}" = "imx8mp-rfnm" ]
@@ -140,18 +146,25 @@ add_layers()
 	echo "" >> $BUILD_DIR/conf/bblayers.conf
 	echo "# Real-time Edge Yocto Project Release layers" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-real-time-edge\"" >> $BUILD_DIR/conf/bblayers.conf
+	if [ "${RFNM_CLI_ENABLE}" = "enable" ]
+	then
+		echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-sdr\"" >> $BUILD_DIR/conf/bblayers.conf
+	fi
+
 }
 
 # get command line options
 OLD_OPTIND=$OPTIND
 unset FSLDISTRO
 
-while getopts "k:r:t:b:i:e:gh" fsl_setup_flag
+while getopts "k:r:t:b:i:c:e:gh" fsl_setup_flag
 do
 	case $fsl_setup_flag in
 	b) BUILD_DIR="$OPTARG";
 		;;
 	i) fsl_setup_internal='true';
+		;;
+	c) RFNM_CLI_ENABLE="enable"
 		;;
 	h) fsl_setup_help='true';
 		;;
