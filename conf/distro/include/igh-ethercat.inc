@@ -1,5 +1,7 @@
 IGH_ETHERCAT:imx8dxlb0-lpddr4-evk = " fec "
 IGH_ETHERCAT:imx8mm-lpddr4-evk = " fec "
+IGH_ETHERCAT:imx8mp-lpddr4-evk = " fec "
+IGH_ETHERCAT:imx93evk = " fec "
 IGH_ETHERCAT:ls1028ardb = " enetc "
 IGH_ETHERCAT:ls1046ardb = " dpaa1 backup"
 IGH_ETHERCAT:ls1043ardb = " dpaa1 backup"
