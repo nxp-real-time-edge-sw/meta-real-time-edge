@@ -14,7 +14,7 @@ LIC_FILES_CHKSUM = " \
 "
 UBOOT_BAREMETAL_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-uboot.git;protocol=https"
 UBOOT_BAREMETAL_BRANCH ?= "baremetal-uboot_v2023.04-2.8.0"
-UBOOT_BAREMETAL_SRCREV ?= "${AUTOREV}"
+UBOOT_BAREMETAL_SRCREV ?= "f4412c267ebdb2907b6889831cc249b30154d304"
 
 SRC_URI = "${UBOOT_BAREMETAL_SRC};branch=${UBOOT_BAREMETAL_BRANCH}"
 

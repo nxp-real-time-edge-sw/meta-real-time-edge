@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=ef58f855337069acd375717db0dbbb6d"
 
 REAL_TIME_EDGE_SERVO_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-servo.git;protocol=https"
 REAL_TIME_EDGE_SERVO_BRANCH ?= "userspace"
-REAL_TIME_EDGE_SERVO_SRCREV ?= "${AUTOREV}"
+REAL_TIME_EDGE_SERVO_SRCREV ?= "af8aac4088e55ead1aaa5f54142009837c4ffd42"
 
 SRC_URI = "${REAL_TIME_EDGE_SERVO_SRC};branch=${REAL_TIME_EDGE_SERVO_BRANCH}"
 SRCREV = "${REAL_TIME_EDGE_SERVO_SRCREV}"

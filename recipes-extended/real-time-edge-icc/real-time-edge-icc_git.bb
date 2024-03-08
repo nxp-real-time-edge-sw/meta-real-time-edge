@@ -4,7 +4,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=b8b124def019f141a27e002e0a4333cc"
 
 REAL_TIME_EDGE_ICC_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-icc.git;protocol=https"
 REAL_TIME_EDGE_ICC_BRANCH ?= "master"
-REAL_TIME_EDGE_ICC_SRCREV ?= "${AUTOREV}"
+REAL_TIME_EDGE_ICC_SRCREV ?= "6b7d4a92342ffebfdd110637901d549371bfbafa"
 
 SRC_URI = "${REAL_TIME_EDGE_ICC_SRC};branch=${REAL_TIME_EDGE_ICC_BRANCH}"
 SRCREV = "${REAL_TIME_EDGE_ICC_SRCREV}"
