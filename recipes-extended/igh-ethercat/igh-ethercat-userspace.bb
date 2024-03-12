@@ -46,6 +46,7 @@ SRC_URI += "\
     file://0001-Fix-the-issue-that-shm_get-key-is-using-relative-pat.patch \
     file://0002-Update-Readme_For_User_Space_IGH_EtherCAT.txt.patch \
     file://0003-Modify-ecrt.h-for-real-time-edge-servo-and-user-appl.patch \
+    file://0001-User-Space-enable-ethercat_userspace.patch \
 "
 
 S = "${WORKDIR}/git"
@@ -69,7 +70,7 @@ do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
 inherit autotools-brokensep pkgconfig module-base
 
-EXTRA_OECONF += " --enable-userlib=no --enable-tool=no"
+EXTRA_OECONF += " --enable-userlib=no"
 EXTRA_OECONF += " --with-linux-dir=${STAGING_KERNEL_BUILDDIR}"
 EXTRA_OECONF += " --with-module-dir=kernel/ethercat"
 
