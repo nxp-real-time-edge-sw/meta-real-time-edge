@@ -4,8 +4,8 @@ SAVED_DIR := "${THISDIR}"
 
 SRC_URI = "git://github.com/nxp-qoriq/tsntool;protocol=https;nobranch=1"
 
-SRCREV:qoriq = "e2270e7e361ab35555864520fd6d5a0780f7dffc"
-SRCREV:imx-nxp-bsp = "e2270e7e361ab35555864520fd6d5a0780f7dffc"
+SRCREV:qoriq = "3db0ff58440bd6808320e8b298478a45b86ea9ae"
+SRCREV:imx-nxp-bsp = "3db0ff58440bd6808320e8b298478a45b86ea9ae"
 
 FILES:${PN} += "/home/root/* /home/root/sample/* /home/root/samples/* \
                /home/root/samples/gatescripts/* \
