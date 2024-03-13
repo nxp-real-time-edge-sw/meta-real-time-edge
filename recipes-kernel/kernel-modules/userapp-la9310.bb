@@ -10,7 +10,6 @@ SRCREV_FORMAT = "la93xx-sdk"
 
 SRC_URI = "${SRC_LA9310_HOST_URI} \
         ${SRC_LA9310_FRTOS_URI};destsuffix=la93xx_freertos \
-        ${SRC_LA9310_FW_URI};destsuffix=git/firmware \
 "
 
 S = "${WORKDIR}/git"
@@ -33,7 +32,7 @@ FILES:${PN}= "/usr/lib/* /usr/bin/* ${ROOT_HOME}/*"
 
 do_configure () {
 	cd ${S}
-	sed -i 's/DIRS ?= lib app kernel_driver firmware scripts/DIRS ?= lib app firmware scripts/g' Makefile
+	sed -i 's/DIRS ?= lib app kernel_driver firmware scripts/DIRS ?= lib app scripts/g' Makefile
 }
 
 
