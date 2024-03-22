@@ -1,0 +1,96 @@
+From b33380e7571277f60b999269a2a467b9a3ff73c1 Mon Sep 17 00:00:00 2001
+From: Pramod Kumar <pramod.kumar_1@nxp.com>
+Date: Fri, 22 Mar 2024 16:13:37 +0530
+Subject: [PATCH] rfnm: Add support to read bootconfig mem rage from dts
+
+Signed-off-by: Pramod Kumar <pramod.kumar_1@nxp.com>
+---
+ arch/arm/dts/imx8mp-rfnm.dts              |  6 ++++++
+ board/freescale/imx8mp_rfnm/imx8mp_rfnm.c | 24 +++++++++++++++++++++--
+ board/freescale/imx8mp_rfnm/rfnm-shared.h |  5 ++---
+ 3 files changed, 30 insertions(+), 5 deletions(-)
+
+diff --git a/arch/arm/dts/imx8mp-rfnm.dts b/arch/arm/dts/imx8mp-rfnm.dts
+index 4f0ddd7fe3..025f688ce3 100644
+--- a/arch/arm/dts/imx8mp-rfnm.dts
++++ b/arch/arm/dts/imx8mp-rfnm.dts
+@@ -16,6 +16,11 @@
+ 		bootargs = "console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200";
+ 		stdout-path = &uart2;
+ 	};
++
++	bootconfig: bootconfig@A3400000 {
++		reg = <0 0xA3400000 0 0x400000>;
++		no-map;
++	};
+ 	
+ 	memory@40000000 {
+ 		device_type = "memory";
+@@ -56,6 +61,7 @@
+ 		startup-delay-us = <100>;
+ 		off-on-delay-us = <12000>;
+ 	};
++
+ };
+ 
+ &eqos {
+diff --git a/board/freescale/imx8mp_rfnm/imx8mp_rfnm.c b/board/freescale/imx8mp_rfnm/imx8mp_rfnm.c
+index 69b666a05b..995d3ddc21 100644
+--- a/board/freescale/imx8mp_rfnm/imx8mp_rfnm.c
++++ b/board/freescale/imx8mp_rfnm/imx8mp_rfnm.c
+@@ -483,14 +483,34 @@ static iomux_v3_cfg_t ss_mux_rfnm[] = {
+ 
+ int board_init(void)
+ {
+-	struct arm_smccc_res res;
++        int ret, boot_cfg;
++        struct fdt_resource res;
+ 
+ 	imx_iomux_v3_setup_multiple_pads(ss_mux_rfnm, ARRAY_SIZE(ss_mux_rfnm));
+ 
++        boot_cfg = fdt_path_offset(gd->fdt_blob, RFNM_BOOT_CONFIG_NODE_NAME);
++        if (boot_cfg < 0) {
++                printf("%s: Missing %s node\n", __func__,RFNM_BOOT_CONFIG_NODE_NAME);
++                return -EINVAL;
++        }
++        else {
++               debug("%s: Found %s node\n", __func__,RFNM_BOOT_CONFIG_NODE_NAME);
++        }
++
++        ret = fdt_get_resource(gd->fdt_blob, boot_cfg, "reg", 0, &res);
++        if (ret != 0) {
++                printf("%s: Unable to decode %s node\n", __func__,RFNM_BOOT_CONFIG_NODE_NAME);
++                return -EINVAL;
++        }
++
++        printf("%s: boot config  start address  %llx\n", __func__,(phys_size_t)res.start);
++        printf("%s: boot config  mem size %llx\n", __func__,
++              (phys_size_t)(res.end - res.start + 1));
++
+ 	// init memory for bootconfig struct
+ 	int i;
+ 	for(i = 0; i < 1024; i++) {
+-		writel(0xffffffff, RFNM_BOOTCONFIG_PHYADDR + (i*4));
++		writel(0xffffffff, (phys_size_t)res.start + (i*4));
+ 	}
+ 	
+ 
+diff --git a/board/freescale/imx8mp_rfnm/rfnm-shared.h b/board/freescale/imx8mp_rfnm/rfnm-shared.h
+index c673f9b84f..61d11de2f4 100644
+--- a/board/freescale/imx8mp_rfnm/rfnm-shared.h
++++ b/board/freescale/imx8mp_rfnm/rfnm-shared.h
+@@ -8,9 +8,8 @@
+ #define RFNM_DAUGHTERBOARD_PRESENT (0x10)
+ #define RFNM_DAUGHTERBOARD_NOT_FOUND (0x20)
+ #define RFNM_DAUGHTERBOARD_NOT_CHECKED_YET (0xff)
+-
+-#define RFNM_BOOTCONFIG_PHYADDR (0xA3400000)
+-
++#define RFNM_DTB_NODE_NOT_FOUND (-1)
++#define RFNM_BOOT_CONFIG_NODE_NAME  "/bootconfig"
+ 
+ struct __packed rfnm_eeprom_data {
+ 	uint8_t magic_header[4];
+-- 
+2.25.1
+
