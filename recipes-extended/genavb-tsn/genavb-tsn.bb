@@ -11,7 +11,7 @@ SRC_URI:append = " \
 
 PR = "r0"
 
-GENAVB_TSN_DEMO_APPS = "1"
+GENAVB_TSN_DEMO_APPS ?= "1"
 
 RDEPENDS:${PN}:append = " kernel-module-genavb-tsn"
 
