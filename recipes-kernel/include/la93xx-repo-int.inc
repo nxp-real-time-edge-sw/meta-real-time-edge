@@ -29,3 +29,6 @@ SRCREV_geul_common_headers_repo = "${AUTOREV}"
 
 SRC_DPDK_EXTRAS = "git://github.com/nxp-qoriq/dpdk-extras.git;protocol=https;nobranch=1;name=dpdk-extras_repo"
 SRCREV_dpdk-extras_repo = "e53931e22a15858c5469f9cb0b631f40c3ec8db3"
+
+SRC_LMS7002M_URI = "git://github.com/rfnm/lms7002m;protocol=https;nobranch=1;name=LMS7002M_repo"
+SRCREV_LMS7002M_repo = "f19355476b787043e76e9f0da7740001c93458f5"
