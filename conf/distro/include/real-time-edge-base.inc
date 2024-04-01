@@ -3,7 +3,7 @@
 DISTRO = "nxp-real-time-edge"
 DISTROOVERRIDES:append = " :real-time-edge"
 DISTRO_NAME = "NXP Real-time Edge Distro"
-DISTRO_VERSION = "2.8"
+DISTRO_VERSION = "2.9"
 
 CONNECTIVITY_CHECK_URIS ?= "https://yoctoproject.org/connectivity.html"
 
