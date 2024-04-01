@@ -17,7 +17,6 @@ RDEPENDS:${PN} = " \
     iperf3 e2fsprogs e2fsprogs-resize2fs \
     devmem2 \
     rteval \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'feedgnuplot', 'feedgnuplot', '', d)} \
 "
 
 RDEPENDS:${PN}:append = " \
