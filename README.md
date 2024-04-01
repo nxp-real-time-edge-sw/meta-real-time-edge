@@ -1,4 +1,4 @@
-# Real-time Edge Software Project v2.8 Release
+# Real-time Edge Software Project v2.9 Release
 
 ======================================================
 
@@ -32,12 +32,12 @@ $ repo sync
 
 #### Examples
 
-To download the Real-time Edge 2.8 release
+To download the Real-time Edge 2.9 release
 
 ```
 $ mkdir yocto-real-time-edge
 $ cd yocto-real-time-edge
-$ repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-mickledore -m real-time-edge-2.8.0.xml
+$ repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-nanbield -m real-time-edge-2.9.0.xml
 $ repo sync
 ```
 
@@ -57,7 +57,6 @@ Machine:
 - imx93-14x14-lpddr4x-evk
 - ls1028ardb
 - ls1043ardb
-- ls1046afrwy
 - ls1046ardb
 - lx2160ardb-rev2
 
