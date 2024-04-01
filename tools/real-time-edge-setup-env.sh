@@ -72,17 +72,17 @@ imx_add_layers()
 {
     . ${ROOTDIR}/sources/meta-imx/tools/setup-utils.sh
 
-    META_FSL_BSP_RELEASE="${ROOTDIR}/sources/meta-imx/meta-bsp"
+    META_FSL_BSP_RELEASE="${ROOTDIR}/sources/meta-imx/meta-imx-bsp"
 
-    hook_in_layer meta-imx/meta-bsp
-    hook_in_layer meta-imx/meta-sdk
-    hook_in_layer meta-imx/meta-ml
-    hook_in_layer meta-imx/meta-v2x
+    hook_in_layer meta-imx/meta-imx-bsp
+    hook_in_layer meta-imx/meta-imx-sdk
+    hook_in_layer meta-imx/meta-imx-ml
+    hook_in_layer meta-imx/meta-imx-v2x
     hook_in_layer meta-nxp-demo-experience
 
     echo "" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm\"" >> $BUILD_DIR/conf/bblayers.conf
-echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm-toolchain\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm-toolchain\"" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-browser/meta-chromium\"" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-clang\"" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-gnome\"" >> $BUILD_DIR/conf/bblayers.conf
@@ -93,7 +93,7 @@ echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm-toolchain\"" >> $BUILD_
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security/meta-tpm\"" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-virtualization\"" >> $BUILD_DIR/conf/bblayers.conf
 
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
+    # echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
 
     echo "" >> $BUILD_DIR/conf/bblayers.conf
     echo "# RTOS layer" >> $BUILD_DIR/conf/bblayers.conf
@@ -136,7 +136,7 @@ echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm-toolchain\"" >> $BUILD_
 
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qoriq\"" >> $BUILD_DIR/conf/bblayers.conf
 
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
+    # echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
 
     echo "" >> $BUILD_DIR/conf/bblayers.conf
     echo "# RTOS layer" >> $BUILD_DIR/conf/bblayers.conf
