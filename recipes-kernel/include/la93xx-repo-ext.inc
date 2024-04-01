@@ -29,4 +29,4 @@ SRC_DPDK_EXTRAS = "git://github.com/nxp-qoriq/dpdk-extras.git;protocol=https;nob
 SRCREV_dpdk-extras_repo = "e53931e22a15858c5469f9cb0b631f40c3ec8db3"
 
 SRC_LMS7002M_URI = "git://github.com/rfnm/lms7002m;protocol=https;nobranch=1;name=LMS7002M_repo"
-SRCREV_LMS7002M_repo = "f19355476b787043e76e9f0da7740001c93458f5"
+SRCREV_LMS7002M_repo = "335ca15e478948ef6762910b8c95dfb4ce0e6617"
