@@ -41,8 +41,6 @@ do_install() {
         install -m 0755 ${S}/kernel_driver/la9310shiva/la9310shiva.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 	install -m 0755 ${S}/kernel_driver/la9310demo/la9310demo.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 if [ imx8mp-rfnm ]; then
-	install -m 0755 ${S}/kernel_driver/la9310rfnm/la9310rfnm.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
-	install -m 0755 ${S}/kernel_driver/la9310rfnm/rfnm_usb_function.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
-	install -m 0755 ${S}/kernel_driver/la9310rfnm/rfnm_usb.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
+	install -m 0755 ${S}/kernel_driver/la9310rfnm/*.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 fi
 }
