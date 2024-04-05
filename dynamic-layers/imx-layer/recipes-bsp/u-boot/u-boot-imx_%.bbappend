@@ -22,6 +22,7 @@ SRC_URI:append:imx8mp-rfnm = " \
     file://0001-rfnm-add-workaround-for-hardcoded-physical-address.patch \
     file://0001-rfnm-Add-support-to-read-bootconfig-mem-rage-from-dt.patch \
     file://0001-Changes-enabling-RBB.patch \
+    file://0001-update-rfnm-shared.h-file.patch \
 "
 
 do_configure:prepend:real-time-edge() {
