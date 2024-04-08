@@ -46,6 +46,7 @@ do_install() {
 	install -d ${D}${libdir}
 	install -d ${D}/usr/bin
 	install -m 0755 ${S}/install/usr/lib/libla9310wdog.so ${D}${libdir}
+        install -m 0755 ${S}/install/usr/lib/libla9310tti.so ${D}${libdir}
 	install -m 0755 ${S}/install/usr/bin/* ${D}/usr/bin/
 	install -d ${D}/${ROOT_HOME}
 	install -m 0755 ${S}/install/etc/*.sh ${D}/${ROOT_HOME}/
