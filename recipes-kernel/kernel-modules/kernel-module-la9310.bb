@@ -27,7 +27,7 @@ EXTRA_OEMAKE = " \
   LA9310_COMMON_HEADERS='${WORKDIR}/la93xx_freertos/common_headers' \
   LMS7002M_KERNEL_DIR='${WORKDIR}/LMS7002M_kernel' \
 "
-EXTRA_OEMAKE:append:imx8mp-rfnm = " IMX_RFNM='1' "
+EXTRA_OEMAKE:append:imx8mp-rfnm = " CONFIG_ENABLE_FLOAT_BYPASS=y IMX_RFNM='1' "
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 do_configure () {
