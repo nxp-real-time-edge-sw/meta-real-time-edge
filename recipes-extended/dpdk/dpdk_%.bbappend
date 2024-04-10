@@ -19,7 +19,7 @@ SRCREV="${SRCREV_dpdk_rev}"
 
 S = "${WORKDIR}/git"
 
-DPDK_EXAMPLES:imx-nxp-bsp = "l2fwd,l3fwd,bbdev_app,bbdev_raw_app,pkt_gen_ext,pkt_split_app "
+DPDK_EXAMPLES:imx-nxp-bsp = "l2fwd,l3fwd,bbdev_app,bbdev_raw_app,pkt_gen_ext,pkt_split_app,dfe_app "
 
 do_configure:prepend() {
 	export LA9310_COMMON_HEADERS="${WORKDIR}/la93xx_freertos/common_headers"
