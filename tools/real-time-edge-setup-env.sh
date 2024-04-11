@@ -85,6 +85,10 @@ change_conf()
 		cd -
 	fi
 
+	echo "SKIP_RECIPE[imx-gpu-sdk] = \"skip\"" >> $BUILD_DIR/conf/local.conf
+	echo "SKIP_RECIPE[gstreamer] = \"skip\"" >> $BUILD_DIR/conf/local.conf
+	echo "SKIP_RECIPE[gnome-desktop] = \"skip\"" >> $BUILD_DIR/conf/local.conf
+	echo "SKIP_RECIPE[kernel-module-nxp89xx] = \"skip\"" >> $BUILD_DIR/conf/local.conf
 }
 
 imx_add_layers()
