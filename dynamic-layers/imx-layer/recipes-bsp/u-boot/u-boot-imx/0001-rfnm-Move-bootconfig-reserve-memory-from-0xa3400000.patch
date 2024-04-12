@@ -1,0 +1,29 @@
+From 0aaaaa9fbadfdfe637cb2792b68815404e81b162 Mon Sep 17 00:00:00 2001
+From: Pramod Kumar <pramod.kumar_1@nxp.com>
+Date: Fri, 12 Apr 2024 12:03:29 +0530
+Subject: [PATCH] rfnm: Move bootconfig reserve memory from 0xa3400000 to
+ 0xbec00000 ddr location
+
+Signed-off-by: Pramod Kumar <pramod.kumar_1@nxp.com>
+---
+ arch/arm/dts/imx8mp-rfnm.dts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/dts/imx8mp-rfnm.dts b/arch/arm/dts/imx8mp-rfnm.dts
+index 025f688ce3..ff959a2fb8 100644
+--- a/arch/arm/dts/imx8mp-rfnm.dts
++++ b/arch/arm/dts/imx8mp-rfnm.dts
+@@ -17,8 +17,8 @@
+ 		stdout-path = &uart2;
+ 	};
+ 
+-	bootconfig: bootconfig@A3400000 {
+-		reg = <0 0xA3400000 0 0x400000>;
++	bootconfig: bootconfig@bec00000 {
++		reg = <0 0xbec00000 0 0x400000>;
+ 		no-map;
+ 	};
+ 	
+-- 
+2.25.1
+
