@@ -67,6 +67,5 @@ do_install () {
         install -d ${D}${nonarch_base_libdir}/firmware
         install -m0755 ${S}/Demo/CORTEX_M4_NXP_LA9310_GCC/release/*.bin ${D}${nonarch_base_libdir}/firmware
         install -m0755 ${S}/firmware/*.eld ${D}${nonarch_base_libdir}/firmware
-        install -m0755 ${S}/firmware/*m7*.elf ${D}${nonarch_base_libdir}/firmware
 }
 
