@@ -89,6 +89,33 @@ change_conf()
 	echo "SKIP_RECIPE[gstreamer] = \"skip\"" >> $BUILD_DIR/conf/local.conf
 	echo "SKIP_RECIPE[gnome-desktop] = \"skip\"" >> $BUILD_DIR/conf/local.conf
 	echo "SKIP_RECIPE[kernel-module-nxp89xx] = \"skip\"" >> $BUILD_DIR/conf/local.conf
+	echo "SKIP_RECIPE[packagegroup-real-time-edge-multimedia] = \"skip\"" >> $BUILD_DIR/conf/local.conf
+	echo "SKIP_RECIPE[packagegroup-fsl-gstreamer1.0-full] = \"skip\"" >> $BUILD_DIR/conf/local.conf
+	echo "SKIP_RECIPE[packagegroup-fsl-tools-gpu] = \"skip\"" >> $BUILD_DIR/conf/local.conf
+	echo "SKIP_RECIPE[packagegroup-imx-tools-audio] = \"skip\"" >> $BUILD_DIR/conf/local.conf
+	echo "SKIP_RECIPE[packagegroup-fsl-gstreamer1.0-full] = \"skip\"" >> $BUILD_DIR/conf/local.conf
+
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-freescale/recipes-graphics\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-imx/meta-bsp/recipes-connectivity/wpa-supplicant\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-freescale/recipes-graphics\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-freescale/recipes-multimedia\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-freescale-3rdparty/recipes-bsp/alsa-state\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-freescale/dynamic-layers/gnome-layer\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-real-time-edge/recipes-extended/exporter-tiny-perl\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-clang/recipes-devtools/gdb\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-clang/recipes-extended/ghostscript\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-freescale/recipes-graphics\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-imx/meta-bsp/recipes-support\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-real-time-edge/recipes-extended/half\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-imx/meta-sdk/dynamic-layers/openembedded-layer/recipes-connectivity\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-real-time-edge/recipes-extended/jailhouse\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-freescale-distro/recipes-fsl/packagegroups/packagegroup-fsl-tools-gpu.bb\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-imx/meta-sdk/recipes-fsl/packagegroup/packagegroup-fsl-tools-gpu.bbappend\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-real-time-edge/recipes-nxp/packagegroups/packagegroup-real-time-edge-multimedia.bb\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-imx/meta-sdk/recipes-graphics\"" >> $BUILD_DIR/conf/local.conf
+	echo "BBMASK += \"\${BSPDIR}/sources/meta-imx/meta-bsp/recipes-support/opencv\"" >> $BUILD_DIR/conf/local.conf
+
+
 }
 
 imx_add_layers()
