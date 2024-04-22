@@ -21,7 +21,6 @@
 ROOTDIR=`pwd`
 PROGNAME="setup-environment"
 PLATFORM="qoriq"
-RFNM_CLI_ENABLE="disable"
 
 exit_message ()
 {
@@ -36,7 +35,6 @@ usage()
 echo "
     * [-b build-dir]: Build directory, if unspecified script uses 'build' as output directory
     * [-i internal]: Internal build using bitbucket repos instead of github for selected components.
-    * [-c cli]: cli enable/disable.
 
     * [-h]: help
 	"
@@ -70,10 +68,11 @@ change_conf()
 	echo "IMAGE_INSTALL:append = \" kernel-module-la9310 userapp-la9310 freertos-la9310 arm-ral dpdk kernel-module-kpage-ncache \"" >> $BUILD_DIR/conf/local.conf
 	echo "IMAGE_INSTALL:append = \" imx-test dtc python3-pip \"" >> $BUILD_DIR/conf/local.conf
 
-	if [ "${RFNM_CLI_ENABLE}" = "enable" ]
-	then
+	if test $fsl_setup_internal; then
 		echo "IMAGE_INSTALL:append = \" rfnm-cli-la9310 \"" >> $BUILD_DIR/conf/local.conf
-	        #echo "IMAGE_INSTALL:append = \" rf-util-la9310 \"" >> $BUILD_DIR/conf/local.conf
+	        echo "IMAGE_INSTALL:append = \" rf-util-la9310 \"" >> $BUILD_DIR/conf/local.conf
+		echo "IMAGE_INSTALL:append = \"  bash git-perltools fr1-fr2-test-tool-la9310 \"" >> $BUILD_DIR/conf/local.conf
+
 	fi
 	echo "IMAGE_INSTALL:remove = \" docker \"" >> $BUILD_DIR/conf/local.conf
 	echo "MACHINE_FEATURES:append:imx8mp-rfnm = \" dpdk\"" >> $BUILD_DIR/conf/local.conf
@@ -182,8 +181,7 @@ add_layers()
 	echo "" >> $BUILD_DIR/conf/bblayers.conf
 	echo "# Real-time Edge Yocto Project Release layers" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-real-time-edge\"" >> $BUILD_DIR/conf/bblayers.conf
-	if [ "${RFNM_CLI_ENABLE}" = "enable" ]
-	then
+	if test $fsl_setup_internal; then
 		echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-sdr\"" >> $BUILD_DIR/conf/bblayers.conf
 	fi
 
@@ -199,8 +197,6 @@ do
 	b) BUILD_DIR="$OPTARG";
 		;;
 	i) fsl_setup_internal='true';
-		;;
-	c) RFNM_CLI_ENABLE="enable"
 		;;
 	h) fsl_setup_help='true';
 		;;
