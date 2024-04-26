@@ -66,7 +66,7 @@ change_conf()
 	echo "EXTRA_IMAGE_FEATURES += \" debug-tweaks tools-debug eclipse-debug ssh-server-openssh \"" >> $BUILD_DIR/conf/local.conf
 	echo "CORE_IMAGE_EXTRA_INSTALL += \" openssh-sftp openssh-sftp-server \"" >> $BUILD_DIR/conf/local.conf
 	echo "IMAGE_INSTALL:append = \" kernel-module-la9310 userapp-la9310 freertos-la9310 arm-ral dpdk kernel-module-kpage-ncache imx-m7-la9310 \"" >> $BUILD_DIR/conf/local.conf
-	echo "IMAGE_INSTALL:append = \" imx-test dtc python3-pip \"" >> $BUILD_DIR/conf/local.conf
+	echo "IMAGE_INSTALL:append = \" imx-test dtc python3-pip python3-numpy \"" >> $BUILD_DIR/conf/local.conf
 
 	if test $fsl_setup_internal; then
 		echo "IMAGE_INSTALL:append = \" rfnm-cli-la9310 \"" >> $BUILD_DIR/conf/local.conf
