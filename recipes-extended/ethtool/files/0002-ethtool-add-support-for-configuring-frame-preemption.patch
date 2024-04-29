@@ -1,6 +1,6 @@
-From 6e0e31e5a12ad8b164732544a9d4dd5ba5902dc8 Mon Sep 17 00:00:00 2001
+From 46950931786dc4eb2bd96520b1dd1de110e754cd Mon Sep 17 00:00:00 2001
 From: Vinicius Costa Gomes <vinicius.gomes@intel.com>
-Date: Fri, 21 Apr 2023 09:44:53 +0800
+Date: Sun, 28 Apr 2024 15:28:10 +0800
 Subject: [PATCH 2/5] ethtool: add support for configuring frame preemption
 
 The configuration knobs that can be set are:
@@ -16,15 +16,16 @@ The values that can be retrieved from the hardware are:
   - the current minimum fragment size;
 
 Signed-off-by: Vinicius Costa Gomes <vinicius.gomes@intel.com>
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 ---
  ethtool.c | 92 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 92 insertions(+)
 
 diff --git a/ethtool.c b/ethtool.c
-index 023bb7d..4a0b2ad 100644
+index af51220..beff8c1 100644
 --- a/ethtool.c
 +++ b/ethtool.c
-@@ -1639,6 +1639,28 @@ static void dump_fec(u32 fec)
+@@ -1645,6 +1645,28 @@ static void dump_fec(u32 fec)
  		fprintf(stdout, " LLRS");
  }
  
@@ -53,7 +54,7 @@ index 023bb7d..4a0b2ad 100644
  #define N_SOTS 7
  
  static char *so_timestamping_labels[N_SOTS] = {
-@@ -5190,6 +5212,63 @@ static int do_gtunable(struct cmd_context *ctx)
+@@ -5196,6 +5218,63 @@ static int do_gtunable(struct cmd_context *ctx)
  	return 0;
  }
  
@@ -117,9 +118,9 @@ index 023bb7d..4a0b2ad 100644
  static int do_get_phy_tunable(struct cmd_context *ctx)
  {
  	unsigned int argc = ctx->argc;
-@@ -6031,6 +6110,19 @@ static const struct option args[] = {
- 		.help	= "Set FEC settings",
- 		.xhelp	= "		[ encoding auto|off|rs|baser|llrs [...]]\n"
+@@ -6037,6 +6116,19 @@ static const struct option args[] = {
+ 		.nlfunc	= nl_gfec,
+ 		.help	= "Show FEC settings",
  	},
 +	{
 +		.opts	= "--show-frame-preemption",
@@ -135,8 +136,8 @@ index 023bb7d..4a0b2ad 100644
 +			  "		[ min-frag-size %d ]\n",
 +	},
  	{
- 		.opts	= "-Q|--per-queue",
- 		.func	= do_perqueue,
+ 		.opts	= "--set-fec",
+ 		.func	= do_sfec,
 -- 
-2.25.1
+2.17.1
 

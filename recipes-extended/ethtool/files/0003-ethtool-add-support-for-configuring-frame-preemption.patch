@@ -1,6 +1,6 @@
-From 7dcb9206c185ef90c59485ffa36f51bcb1794e1d Mon Sep 17 00:00:00 2001
+From 5f76d31f84fd2674e664a087670f8feaa672ede6 Mon Sep 17 00:00:00 2001
 From: Vinicius Costa Gomes <vinicius.gomes@intel.com>
-Date: Fri, 21 Apr 2023 20:49:14 +0800
+Date: Sun, 28 Apr 2024 15:32:12 +0800
 Subject: [PATCH 3/5] ethtool: add support for configuring frame preemption via
  netlink
 
@@ -8,34 +8,34 @@ Adds the same functionality of the ETHTOOL_{G,S}FP commands, now via
 the ETHTOOL_MSG_PREEMPT_{GET,SET} netlink messages.
 
 Signed-off-by: Vinicius Costa Gomes <vinicius.gomes@intel.com>
-Signed-off-by: Changming Huang <jerry.huang@nxp.com>
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 ---
- Makefile.am            |   1 +
+ Makefile.am            |   2 +-
  ethtool.c              |   2 +
  netlink/desc-ethtool.c |  12 +++
  netlink/extapi.h       |   4 +
  netlink/preempt.c      | 165 +++++++++++++++++++++++++++++++++++++++++
- 5 files changed, 184 insertions(+)
+ 5 files changed, 184 insertions(+), 1 deletion(-)
  create mode 100644 netlink/preempt.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 999e769..eca778e 100644
+index ae3b667..c9d14cc 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -42,6 +42,7 @@ ethtool_SOURCES += \
+@@ -42,7 +42,7 @@ ethtool_SOURCES += \
  		  netlink/desc-ethtool.c netlink/desc-genlctrl.c \
  		  netlink/module-eeprom.c netlink/module.c netlink/rss.c \
  		  netlink/desc-rtnl.c netlink/cable_test.c netlink/tunnels.c \
-+		  netlink/preempt.c \
+-		  netlink/plca.c \
++		  netlink/plca.c netlink/preempt.c \
+ 		  netlink/pse-pd.c \
  		  uapi/linux/ethtool_netlink.h \
  		  uapi/linux/netlink.h uapi/linux/genetlink.h \
- 		  uapi/linux/rtnetlink.h uapi/linux/if_link.h \
 diff --git a/ethtool.c b/ethtool.c
-index 4a0b2ad..a9f0167 100644
+index beff8c1..58dfb95 100644
 --- a/ethtool.c
 +++ b/ethtool.c
-@@ -6113,11 +6113,13 @@ static const struct option args[] = {
+@@ -6119,11 +6119,13 @@ static const struct option args[] = {
  	{
  		.opts	= "--show-frame-preemption",
  		.func	= do_get_preempt,
@@ -50,11 +50,11 @@ index 4a0b2ad..a9f0167 100644
  		.xhelp	= "		[ fp on|off ]\n"
  			  "		[ preemptible-queues-mask %x ]\n"
 diff --git a/netlink/desc-ethtool.c b/netlink/desc-ethtool.c
-index 737196f..68e5591 100644
+index 661de26..62d3dd7 100644
 --- a/netlink/desc-ethtool.c
 +++ b/netlink/desc-ethtool.c
-@@ -451,6 +451,16 @@ static const struct pretty_nla_desc __rss_desc[] = {
- 	NLATTR_DESC_BINARY(ETHTOOL_A_RSS_HKEY),
+@@ -496,6 +496,16 @@ static const struct pretty_nla_desc __mm_desc[] = {
+ 	NLATTR_DESC_NESTED(ETHTOOL_A_MM_STATS, mm_stat),
  };
  
 +static const struct pretty_nla_desc __preempt_desc[] = {
@@ -70,7 +70,7 @@ index 737196f..68e5591 100644
  const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
  	NLMSG_DESC_INVALID(ETHTOOL_MSG_USER_NONE),
  	NLMSG_DESC(ETHTOOL_MSG_STRSET_GET, strset),
-@@ -484,6 +494,8 @@ const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
+@@ -529,6 +539,8 @@ const struct pretty_nlmsg_desc ethnl_umsg_desc[] = {
  	NLMSG_DESC(ETHTOOL_MSG_FEC_GET, fec),
  	NLMSG_DESC(ETHTOOL_MSG_FEC_SET, fec),
  	NLMSG_DESC(ETHTOOL_MSG_MODULE_EEPROM_GET, module_eeprom),
@@ -80,7 +80,7 @@ index 737196f..68e5591 100644
  	NLMSG_DESC(ETHTOOL_MSG_PHC_VCLOCKS_GET, phc_vclocks),
  	NLMSG_DESC(ETHTOOL_MSG_MODULE_GET, module),
 diff --git a/netlink/extapi.h b/netlink/extapi.h
-index 9b6dd1a..a2735ab 100644
+index e2d6b71..7c1f153 100644
 --- a/netlink/extapi.h
 +++ b/netlink/extapi.h
 @@ -46,6 +46,8 @@ int nl_gstats(struct cmd_context *ctx);
@@ -91,8 +91,8 @@ index 9b6dd1a..a2735ab 100644
 +int nl_set_preempt(struct cmd_context *ctx);
  int nl_getmodule(struct cmd_context *ctx);
  int nl_grss(struct cmd_context *ctx);
- 
-@@ -108,6 +110,8 @@ nl_get_eeprom_page(struct cmd_context *ctx __maybe_unused,
+ int nl_plca_get_cfg(struct cmd_context *ctx);
+@@ -115,6 +117,8 @@ nl_get_eeprom_page(struct cmd_context *ctx __maybe_unused,
  #define nl_cable_test		NULL
  #define nl_cable_test_tdr	NULL
  #define nl_gtunnels		NULL
@@ -273,5 +273,5 @@ index 0000000..0e4695c
 +	return nlctx->exit_code ?: 75;
 +}
 -- 
-2.25.1
+2.17.1
 

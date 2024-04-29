@@ -1,4 +1,4 @@
-From fafb81870deea996d2931ad9b5c3e2735b6fa79c Mon Sep 17 00:00:00 2001
+From 5d1045d25086a23e87de718c18a67fad72c32592 Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Tue, 9 May 2023 16:23:33 +0800
 Subject: [PATCH 5/5] preemption: add disabled parameter
@@ -15,10 +15,10 @@ Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
  5 files changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/ethtool.c b/ethtool.c
-index 08221a4..8a58c58 100644
+index 9219b48..00c151e 100644
 --- a/ethtool.c
 +++ b/ethtool.c
-@@ -5240,9 +5240,11 @@ static int do_get_preempt(struct cmd_context *ctx)
+@@ -5246,9 +5246,11 @@ static int do_get_preempt(struct cmd_context *ctx)
  static int do_set_preempt(struct cmd_context *ctx)
  {
  	int fp_c = -1, preempt_queues_mask_c = -1, min_frag_c = -1;
@@ -30,7 +30,7 @@ index 08221a4..8a58c58 100644
  		{ "fp", CMDL_BOOL, &fp_c, &fpcmd.fp_enabled },
  		{ "preemptible-queues-mask", CMDL_U32, &preempt_queues_mask_c,
  		  &fpcmd.preemptible_queues_mask },
-@@ -6127,7 +6129,8 @@ static const struct option args[] = {
+@@ -6133,7 +6135,8 @@ static const struct option args[] = {
  		.func	= do_set_preempt,
  		.nlfunc	= nl_set_preempt,
  		.help	= "Set Frame Preemption settings",
@@ -41,10 +41,10 @@ index 08221a4..8a58c58 100644
  			  "		[ min-frag-size %d ]\n",
  	},
 diff --git a/netlink/desc-ethtool.c b/netlink/desc-ethtool.c
-index 32bc3da..397dfa1 100644
+index d422c9f..c879441 100644
 --- a/netlink/desc-ethtool.c
 +++ b/netlink/desc-ethtool.c
-@@ -454,6 +454,7 @@ static const struct pretty_nla_desc __rss_desc[] = {
+@@ -499,6 +499,7 @@ static const struct pretty_nla_desc __mm_desc[] = {
  static const struct pretty_nla_desc __preempt_desc[] = {
  	NLATTR_DESC_INVALID(ETHTOOL_A_PREEMPT_UNSPEC),
  	NLATTR_DESC_NESTED(ETHTOOL_A_PREEMPT_HEADER, header),
@@ -71,7 +71,7 @@ index 56b1817..08fca64 100644
  		.arg		= "fp",
  		.group		= ETHTOOL_MSG_PREEMPT_SET,
 diff --git a/uapi/linux/ethtool.h b/uapi/linux/ethtool.h
-index 446e68a..07815ba 100644
+index 13c55bc..3e2ae4e 100644
 --- a/uapi/linux/ethtool.h
 +++ b/uapi/linux/ethtool.h
 @@ -393,6 +393,7 @@ struct ethtool_eee {
@@ -83,10 +83,10 @@ index 446e68a..07815ba 100644
  	__u8	fp_enabled;
  	__u8	fp_status;
 diff --git a/uapi/linux/ethtool_netlink.h b/uapi/linux/ethtool_netlink.h
-index 7f6be8c..8dd1fd5 100644
+index 17d6a26..81103fe 100644
 --- a/uapi/linux/ethtool_netlink.h
 +++ b/uapi/linux/ethtool_netlink.h
-@@ -571,6 +571,7 @@ enum {
+@@ -588,6 +588,7 @@ enum {
  enum {
  	ETHTOOL_A_PREEMPT_UNSPEC,		/* nest - _A_HEADER_* */
  	ETHTOOL_A_PREEMPT_HEADER,		/* u8 */
@@ -95,5 +95,5 @@ index 7f6be8c..8dd1fd5 100644
  	ETHTOOL_A_PREEMPT_STATUS,		/* u8 */
  	ETHTOOL_A_PREEMPT_ACTIVE,		/* u8 */
 -- 
-2.25.1
+2.17.1
 
