@@ -6,7 +6,7 @@ REAL_TIME_EDGE_LINUX_SRC = "git://git@bitbucket.sw.nxp.com/dn5g/5g-linux.git;pro
 REAL_TIME_EDGE_LINUX_BRANCH = "linux-5.15-rt"
 REAL_TIME_EDGE_LINUX_SRCREV = "${AUTOREV}"
 
-DPDK_SRC = "git://git@bitbucket.sw.nxp.com/gitam/dpdk.git;protocol=ssh;branch=22.11-qoriq"
+DPDK_SRC = "git://git@bitbucket.sw.nxp.com/gitam/dpdk.git;protocol=ssh;branch=22.11-qoriq-dev"
 SRCREV_dpdk_rev = "${AUTOREV}"
 
 SRC_LA9310_HOST_URI = "git://git@bitbucket.sw.nxp.com/dnnpi/la931x_host_sw.git;protocol=ssh;branch=la12xx;name=host_repo"
