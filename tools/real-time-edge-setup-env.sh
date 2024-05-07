@@ -72,7 +72,7 @@ change_conf()
 		echo "IMAGE_INSTALL:append = \" rfnm-cli-la9310 \"" >> $BUILD_DIR/conf/local.conf
 	        echo "IMAGE_INSTALL:append = \" rf-util-la9310 \"" >> $BUILD_DIR/conf/local.conf
 		echo "IMAGE_INSTALL:append = \"  bash git-perltools fr1-fr2-test-tool-la9310 \"" >> $BUILD_DIR/conf/local.conf
-
+		echo "IMAGE_INSTALL:append = \" kernel-module-rfnm \"" >> $BUILD_DIR/conf/local.conf
 	fi
 	echo "IMAGE_INSTALL:remove = \" docker \"" >> $BUILD_DIR/conf/local.conf
 	echo "MACHINE_FEATURES:append:imx8mp-rfnm = \" dpdk\"" >> $BUILD_DIR/conf/local.conf
