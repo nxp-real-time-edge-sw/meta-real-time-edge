@@ -6,6 +6,7 @@ Subject: [PATCH 5/5] preemption: add disabled parameter
 Add disabled parameter to disable the preemption configuration.
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  ethtool.c                    | 5 ++++-
  netlink/desc-ethtool.c       | 1 +

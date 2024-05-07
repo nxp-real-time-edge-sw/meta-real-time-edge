@@ -4,6 +4,7 @@ Date: Sun, 19 Jan 2020 15:37:36 +0800
 Subject: [PATCH] taprio: add hold and release command
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  tc/q_taprio.c | 4 ++++
  1 file changed, 4 insertions(+)

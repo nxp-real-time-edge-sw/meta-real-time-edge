@@ -9,6 +9,7 @@ the ETHTOOL_MSG_PREEMPT_{GET,SET} netlink messages.
 
 Signed-off-by: Vinicius Costa Gomes <vinicius.gomes@intel.com>
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  Makefile.am            |   2 +-
  ethtool.c              |   2 +

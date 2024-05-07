@@ -7,6 +7,7 @@ Add preempt header from kernel.
 
 Signed-off-by: Vinicius Costa Gomes <vinicius.gomes@intel.com>
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  uapi/linux/ethtool.h         | 27 +++++++++++++++++++++++++++
  uapi/linux/ethtool_netlink.h | 19 +++++++++++++++++++

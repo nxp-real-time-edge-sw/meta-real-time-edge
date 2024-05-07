@@ -17,6 +17,7 @@ The values that can be retrieved from the hardware are:
 
 Signed-off-by: Vinicius Costa Gomes <vinicius.gomes@intel.com>
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  ethtool.c | 92 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 92 insertions(+)

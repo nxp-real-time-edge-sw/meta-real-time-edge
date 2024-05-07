@@ -6,6 +6,7 @@ Subject: [PATCH 4/5] preemption: add ETHTOOL_A_PREEMPT_STATUS netlink
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
+Upstream-Status: Pending
 ---
  ethtool.c                    | 8 +++++++-
  netlink/desc-ethtool.c       | 1 +
