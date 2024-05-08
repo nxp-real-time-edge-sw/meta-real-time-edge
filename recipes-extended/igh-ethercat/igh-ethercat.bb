@@ -42,6 +42,7 @@ SRC_URI += "\
     file://0002-net-enetc-integrate-SerDes-phys-with-lynx-pcs.patch \
     file://0001-Use-new-igh-native-dts.patch \
     file://0001-fix-compile-error-because-of-linux-kernel-upgrade-to.patch \
+    file://0001-igh-8mm-fix-compile-error-due-to-kernel-upgrade-to-v.patch \
 "
 S = "${WORKDIR}/git"
 
