@@ -1,0 +1,185 @@
+From 7ff17f96a9f0d76012583f4864dc80a136f9fa23 Mon Sep 17 00:00:00 2001
+From: qizhang <jony.zhang@nxp.com>
+Date: Sat, 11 May 2024 21:08:39 +0800
+Subject: [PATCH] ls1028: fix enetc compile error because of kernel upgrade to
+ v6.6.3
+
+Signed-off-by: qizhang <jony.zhang@nxp.com>
+---
+ devices/enetc/enetc_pf.c  | 114 ++++++++++++++++++++++----------------
+ devices/enetc/enetc_qos.c |   6 +-
+ 2 files changed, 70 insertions(+), 50 deletions(-)
+
+diff --git a/devices/enetc/enetc_pf.c b/devices/enetc/enetc_pf.c
+index d3469c4..fc9a1b2 100644
+--- a/devices/enetc/enetc_pf.c
++++ b/devices/enetc/enetc_pf.c
+@@ -279,9 +279,11 @@ static int enetc_mdio_probe(struct enetc_pf *pf, struct device_node *np)
+ 		return -ENOMEM;
+ 
+ 	bus->name = "Freescale ENETC MDIO Bus";
+-	bus->read = enetc_mdio_read;
+-	bus->write = enetc_mdio_write;
+-	bus->parent = dev;
++    bus->read = enetc_mdio_read_c22;
++    bus->write = enetc_mdio_write_c22;
++    bus->read_c45 = enetc_mdio_read_c45;
++    bus->write_c45 = enetc_mdio_write_c45;
++    bus->parent = dev;
+ 	mdio_priv = bus->priv;
+ 	mdio_priv->hw = &pf->si->hw;
+ 	mdio_priv->mdio_base = ENETC_EMDIO_BASE;
+@@ -306,57 +308,75 @@ static void enetc_mdio_remove(struct enetc_pf *pf)
+ 
+ static int enetc_imdio_create(struct enetc_pf *pf)
+ {
+-	struct device *dev = &pf->si->pdev->dev;
+-	struct enetc_mdio_priv *mdio_priv;
+-	struct phylink_pcs *phylink_pcs;
+-	struct mii_bus *bus;
+-	struct phy *serdes;
+-	size_t num_phys;
+-	int err;
+-
+-	serdes = devm_of_phy_optional_get(dev, dev->of_node, NULL);
+-	if (IS_ERR(serdes))
+-		return PTR_ERR(serdes);
+-
+-	num_phys = serdes ? 1 : 0;
+-
+-	bus = mdiobus_alloc_size(sizeof(*mdio_priv));
+-	if (!bus)
+-		return -ENOMEM;
++    struct device *dev = &pf->si->pdev->dev;
++    struct enetc_mdio_priv *mdio_priv;
++    struct phylink_pcs *phylink_pcs;
++    struct mii_bus *bus;
++    struct phy *serdes;
++    size_t num_phys;
++    int err;
++
++    serdes = devm_of_phy_optional_get(dev, dev->of_node, NULL);
++    if (IS_ERR(serdes))
++        return PTR_ERR(serdes);
++
++    num_phys = serdes ? 1 : 0;
++
++    bus = mdiobus_alloc_size(sizeof(*mdio_priv));
++    if (!bus)
++        return -ENOMEM;
++
++    bus->name = "Freescale ENETC internal MDIO Bus";
++    bus->read = enetc_mdio_read_c22;
++    bus->write = enetc_mdio_write_c22;
++    bus->read_c45 = enetc_mdio_read_c45;
++    bus->write_c45 = enetc_mdio_write_c45;
++    bus->parent = dev;
++    bus->phy_mask = ~0;
++    mdio_priv = bus->priv;
++    mdio_priv->hw = &pf->si->hw;
++    mdio_priv->mdio_base = ENETC_PM_IMDIO_BASE;
++    snprintf(bus->id, MII_BUS_ID_SIZE, "%s-imdio", dev_name(dev));
++
++    mdio_priv->regulator = devm_regulator_get_optional(dev, "serdes");
++    if (IS_ERR(mdio_priv->regulator)) {
++        err = PTR_ERR(mdio_priv->regulator);
++        if (err == -EPROBE_DEFER)
++            goto free_mdio_bus;
++        mdio_priv->regulator = NULL;
++    }
++
++    if (mdio_priv->regulator) {
++        err = regulator_enable(mdio_priv->regulator);
++        if (err) {
++            dev_err(dev, "fail to enable phy-supply\n");
++            goto free_mdio_bus;
++        }
++    }
+ 
+-	bus->name = "Freescale ENETC internal MDIO Bus";
+-	bus->read = enetc_mdio_read;
+-	bus->write = enetc_mdio_write;
+-	bus->parent = dev;
+-	bus->phy_mask = ~0;
+-	mdio_priv = bus->priv;
+-	mdio_priv->hw = &pf->si->hw;
+-	mdio_priv->mdio_base = ENETC_PM_IMDIO_BASE;
+-	snprintf(bus->id, MII_BUS_ID_SIZE, "%s-imdio", dev_name(dev));
++    err = mdiobus_register(bus);
++    if (err) {
++        dev_err(dev, "cannot register internal MDIO bus (%d)\n", err);
++        goto free_mdio_bus;
++    }
+ 
+-	err = mdiobus_register(bus);
+-	if (err) {
+-		dev_err(dev, "cannot register internal MDIO bus (%d)\n", err);
+-		goto free_mdio_bus;
+-	}
++    phylink_pcs = lynx_pcs_create_mdiodev(bus, 0, &serdes, num_phys);
++    if (IS_ERR(phylink_pcs)) {
++        err = PTR_ERR(phylink_pcs);
++        dev_err(dev, "cannot create lynx pcs (%d)\n", err);
++        goto unregister_mdiobus;
++    }
+ 
+-	phylink_pcs = lynx_pcs_create_mdiodev(bus, 0, &serdes, num_phys);
+-	if (IS_ERR(phylink_pcs)) {
+-		err = PTR_ERR(phylink_pcs);
+-		dev_err(dev, "cannot create lynx pcs (%d)\n", err);
+-		goto unregister_mdiobus;
+-	}
+-
+-	pf->imdio = bus;
+-	pf->pcs = phylink_pcs;
++    pf->imdio = bus;
++    pf->pcs = phylink_pcs;
+ 
+-	return 0;
++    return 0;
+ 
+ unregister_mdiobus:
+-	mdiobus_unregister(bus);
++    mdiobus_unregister(bus);
+ free_mdio_bus:
+-	mdiobus_free(bus);
+-	return err;
++    mdiobus_free(bus);
++    return err;
+ }
+ 
+ static void enetc_imdio_remove(struct enetc_pf *pf)
+diff --git a/devices/enetc/enetc_qos.c b/devices/enetc/enetc_qos.c
+index a47c661..6db778a 100644
+--- a/devices/enetc/enetc_qos.c
++++ b/devices/enetc/enetc_qos.c
+@@ -65,7 +65,7 @@ static int enetc_setup_taprio(struct net_device *ndev,
+ 	gcl_len = admin_conf->num_entries;
+ 
+ 	tge = enetc_rd(&priv->si->hw, ENETC_QBV_PTGCR_OFFSET);
+-	if (!admin_conf->enable) {
++	if (admin_conf->cmd == TAPRIO_CMD_DESTROY) {
+ 		enetc_wr(&priv->si->hw,
+ 			 ENETC_QBV_PTGCR_OFFSET,
+ 			 tge & (~ENETC_QBV_TGE));
+@@ -153,7 +153,7 @@ int enetc_setup_tc_taprio(struct net_device *ndev, void *type_data)
+ 	for (i = 0; i < priv->num_tx_rings; i++)
+ 		enetc_set_bdr_prio(&priv->si->hw,
+ 				   priv->tx_ring[i]->index,
+-				   taprio->enable ? i : 0);
++				   (taprio->cmd != TAPRIO_CMD_DESTROY) ? i : 0);
+ 
+ 	err = enetc_setup_taprio(ndev, taprio);
+ 
+@@ -161,7 +161,7 @@ int enetc_setup_tc_taprio(struct net_device *ndev, void *type_data)
+ 		for (i = 0; i < priv->num_tx_rings; i++)
+ 			enetc_set_bdr_prio(&priv->si->hw,
+ 					   priv->tx_ring[i]->index,
+-					   taprio->enable ? 0 : i);
++					   (taprio->cmd == TAPRIO_CMD_DESTROY) ? 0 : i);
+ 
+ 	return err;
+ }
+-- 
+2.25.1
+
