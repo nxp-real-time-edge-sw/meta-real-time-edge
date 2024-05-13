@@ -43,4 +43,5 @@ do_install:append(){
     install -m 0755 ${B}/examples/dpdk-l3fwd  ${D}/usr/bin/
     install -m 0755 ${B}/examples/dpdk-pkt_gen_ext  ${D}/usr/bin/
     install -m 0755 ${B}/examples/dpdk-pkt_split_app ${D}/usr/bin/
+    install -m 0755 ${B}/examples/dpdk-dfe_app ${D}/usr/bin/
 }
