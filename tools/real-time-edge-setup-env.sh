@@ -69,7 +69,6 @@ change_conf()
 	echo "IMAGE_INSTALL:append = \" imx-test dtc python3-pip python3-numpy \"" >> $BUILD_DIR/conf/local.conf
 
 	if test $fsl_setup_internal; then
-		echo "IMAGE_INSTALL:append = \" rfnm-cli-la9310 \"" >> $BUILD_DIR/conf/local.conf
 	        echo "IMAGE_INSTALL:append = \" rf-util-la9310 \"" >> $BUILD_DIR/conf/local.conf
 		echo "IMAGE_INSTALL:append = \"  bash git-perltools fr1-fr2-test-tool-la9310 \"" >> $BUILD_DIR/conf/local.conf
 		echo "IMAGE_INSTALL:append = \" kernel-module-rfnm \"" >> $BUILD_DIR/conf/local.conf
@@ -93,6 +92,8 @@ change_conf()
 	echo "SKIP_RECIPE[packagegroup-fsl-tools-gpu] = \"skip\"" >> $BUILD_DIR/conf/local.conf
 	echo "SKIP_RECIPE[packagegroup-imx-tools-audio] = \"skip\"" >> $BUILD_DIR/conf/local.conf
 	echo "SKIP_RECIPE[packagegroup-fsl-gstreamer1.0-full] = \"skip\"" >> $BUILD_DIR/conf/local.conf
+	echo "IMAGE_INSTALL:remove = \" imx-test \"" >> $BUILD_DIR/conf/local.conf
+	echo "IMAGE_INSTALL:remove = \" packagegroup-fsl-tools-testapps \"" >> $BUILD_DIR/conf/local.conf
 
 	echo "BBMASK += \"\${BSPDIR}/sources/meta-freescale/recipes-graphics\"" >> $BUILD_DIR/conf/local.conf
 	echo "BBMASK += \"\${BSPDIR}/sources/meta-imx/meta-bsp/recipes-connectivity/wpa-supplicant\"" >> $BUILD_DIR/conf/local.conf
