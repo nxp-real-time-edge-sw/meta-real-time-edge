@@ -15,7 +15,6 @@ SRC_URI = "\
     ${SRC_LA9310_FREERTOS_VARISCITE_URI};name=freertos_variscite_repo \
     ${SRC_LA9310_IMX8MP_M7_URI};name=imx8mp-m7_repo;destsuffix=git/boards/dart_mx8mp/driver_examples/gpt/imx8mp-m7 \
     file://0001-rfnm-add-support-to-compile-m7.patch;patchdir=boards/dart_mx8mp/driver_examples/gpt/imx8mp-m7/ \
-    file://0001-la9310-Correct-the-PCI_CRTL_ADDR-in-M7.patch;patchdir=boards/dart_mx8mp/driver_examples/gpt/imx8mp-m7/ \
     "
 
 inherit cmake
