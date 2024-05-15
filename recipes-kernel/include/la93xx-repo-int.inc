@@ -6,6 +6,10 @@ REAL_TIME_EDGE_LINUX_SRC = "git://git@bitbucket.sw.nxp.com/dn5g/5g-linux.git;pro
 REAL_TIME_EDGE_LINUX_BRANCH = "linux-5.15-rt"
 REAL_TIME_EDGE_LINUX_SRCREV = "${AUTOREV}"
 
+REAL_TIME_EDGE_UBOOT_SRC ?= "git://git@bitbucket.sw.nxp.com/dn5g/5g-uboot.git;protocol=ssh"
+REAL_TIME_EDGE_UBOOT_BRANCH = "imx8mp-la9310-v2022.04-2.5.0"
+REAL_TIME_EDGE_UBOOT_SRCREV = "${AUTOREV}"
+
 DPDK_SRC = "git://git@bitbucket.sw.nxp.com/gitam/dpdk.git;protocol=ssh;branch=22.11-qoriq-dev"
 SRCREV_dpdk_rev = "${AUTOREV}"
 
