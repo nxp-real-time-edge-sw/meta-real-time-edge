@@ -1,5 +1,7 @@
 # Copyright 2024 NXP
 
+NXP_INTERNAL = "0"
+
 REAL_TIME_EDGE_LINUX_SRC = "git://github.com/nxp-qoriq/linux.git;protocol=https"
 REAL_TIME_EDGE_LINUX_BRANCH = "la12xx-linux-5.15-rt"
 REAL_TIME_EDGE_LINUX_SRCREV = "5d1547599daf00fa61865a2db5344b9f3a0a09e2"

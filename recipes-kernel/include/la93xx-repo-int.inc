@@ -2,6 +2,8 @@
 
 PV = "1.0+git${SRCPV}"
 
+NXP_INTERNAL = "1"
+
 REAL_TIME_EDGE_LINUX_SRC = "git://git@bitbucket.sw.nxp.com/dn5g/5g-linux.git;protocol=ssh"
 REAL_TIME_EDGE_LINUX_BRANCH = "linux-5.15-rt"
 REAL_TIME_EDGE_LINUX_SRCREV = "${AUTOREV}"
@@ -40,8 +42,8 @@ SRCREV_LMS7002M_repo = "335ca15e478948ef6762910b8c95dfb4ce0e6617"
 SRC_LA9310_FREERTOS_VARISCITE_URI =  "git://github.com/varigit/freertos-variscite.git;protocol=https;branch=mcuxpresso_sdk_2.10.x-var01;name=freertos_variscite_repo"
 SRCREV_freertos_variscite_repo = "1a174e74344976450dcf29275c68464b23f7110d"
 
-SRC_LA9310_IMX8MP_M7_URI = "git://github.com/rfnm/imx8mp-m7.git;protocol=https;branch=main;name=imx8mp-m7_repo"
-SRCREV_imx8mp-m7_repo = "cdf07e8d249526c09ce471cc14658d096862e3e8"
+SRC_LA9310_IMX8MP_M7_URI = "git://git@bitbucket.sw.nxp.com/dn5g/imx8mp-m7.git;protocol=ssh;branch=main;name=imx8mp-m7_repo"
+SRCREV_imx8mp-m7_repo = "${AUTOREV}"
 
 SRC_LA9310_FR1_FR2_TEST_TOOL_URI = "git://git@bitbucket.sw.nxp.com/dn5g/fr1_fr2_test_tool.git;protocol=ssh;branch=Redcap;name=fr1_fr2_test_tool_repo"
 SRCREV_fr1_fr2_test_tool_repo = "${AUTOREV}"
