@@ -5,7 +5,7 @@ PV = "1.0+git${SRCPV}"
 NXP_INTERNAL = "1"
 
 REAL_TIME_EDGE_LINUX_SRC = "git://git@bitbucket.sw.nxp.com/dn5g/5g-linux.git;protocol=ssh"
-REAL_TIME_EDGE_LINUX_BRANCH = "linux-5.15-rt"
+REAL_TIME_EDGE_LINUX_BRANCH = "la9310-linux-5.15-rt"
 REAL_TIME_EDGE_LINUX_SRCREV = "${AUTOREV}"
 
 REAL_TIME_EDGE_UBOOT_SRC ?= "git://git@bitbucket.sw.nxp.com/dn5g/5g-uboot.git;protocol=ssh"
