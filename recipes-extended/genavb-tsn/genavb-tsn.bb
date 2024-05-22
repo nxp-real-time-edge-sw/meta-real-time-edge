@@ -90,4 +90,4 @@ INSANE_SKIP:${PN} = "ldflags"
 INSANE_SKIP:${PN} += "dev-so"
 
 # Add the firmware directory to the package files
-FILES:${PN} += "/lib/firmware"
+FILES:${PN} += "/usr/lib/firmware"
