@@ -16,6 +16,8 @@ SRC_URI = "\
     ${SRC_LA9310_IMX8MP_M7_URI};name=imx8mp-m7_repo;destsuffix=git/boards/dart_mx8mp/driver_examples/gpt/imx8mp-m7 \
     "
 SRC_URI += "${@bb.utils.contains('NXP_INTERNAL', '0', 'file://0001-rfnm-add-support-to-compile-m7.patch;patchdir=boards/dart_mx8mp/driver_examples/gpt/imx8mp-m7/', '', d)}"
+SRC_URI += "${@bb.utils.contains('NXP_INTERNAL', '0', 'file://0001-M7-enablement-for-UART4.patch;patchdir=boards/dart_mx8mp/driver_examples/gpt/imx8mp-m7/', '', d)}"
+
 
 inherit cmake
 

@@ -1,0 +1,130 @@
+From e5c7d5dfca0792863f2866caff86d29a200c1fa8 Mon Sep 17 00:00:00 2001
+From: Arpit Goel <arpit.goel_2@nxp.com>
+Date: Thu, 16 May 2024 10:51:48 +0530
+Subject: [PATCH] M7 enablement for UART4
+
+Signed-off-by: Arpit Goel <arpit.goel_2@nxp.com>
+---
+ board.h        | 14 +++++++-------
+ clock_config.c |  6 +++---
+ main.c         | 10 +++++-----
+ pin_mux.c      | 11 ++++++++++-
+ 4 files changed, 25 insertions(+), 16 deletions(-)
+
+diff --git a/board.h b/board.h
+index 7405b24..bed4445 100644
+--- a/board.h
++++ b/board.h
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2019-2020 NXP
++ * Copyright 2019-2024 NXP
+  * All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+@@ -20,13 +20,13 @@
+ /* The UART to use for debug messages. */
+ #define BOARD_DEBUG_UART_TYPE     kSerialPort_Uart
+ #define BOARD_DEBUG_UART_BAUDRATE (115200U)
+-#define BOARD_DEBUG_UART_BASEADDR UART3_BASE
+-#define BOARD_DEBUG_UART_INSTANCE (3U)
++#define BOARD_DEBUG_UART_BASEADDR UART4_BASE
++#define BOARD_DEBUG_UART_INSTANCE (4U)
+ #define BOARD_DEBUG_UART_CLK_FREQ                                                           \
+-    CLOCK_GetPllFreq(kCLOCK_SystemPll1Ctrl) / (CLOCK_GetRootPreDivider(kCLOCK_RootUart3)) / \
+-        (CLOCK_GetRootPostDivider(kCLOCK_RootUart3)) / 10
+-#define BOARD_UART_IRQ         UART3_IRQn
+-#define BOARD_UART_IRQ_HANDLER UART3_IRQHandler
++    CLOCK_GetPllFreq(kCLOCK_SystemPll1Ctrl) / (CLOCK_GetRootPreDivider(kCLOCK_RootUart4)) / \
++        (CLOCK_GetRootPostDivider(kCLOCK_RootUart4)) / 10
++#define BOARD_UART_IRQ         UART4_IRQn
++#define BOARD_UART_IRQ_HANDLER UART4_IRQHandler
+ 
+ #define BOARD_GPC_BASEADDR GPC
+ #define BOARD_MU_IRQ       MU1_M7_IRQn
+diff --git a/clock_config.c b/clock_config.c
+index 9ccbb85..4ea7f9e 100644
+--- a/clock_config.c
++++ b/clock_config.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2019-2020 NXP
++ * Copyright 2019-2024 NXP
+  * All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+@@ -102,8 +102,8 @@ void BOARD_BootClockRUN(void)
+     CLOCK_SetRootDivider(kCLOCK_RootAudioAhb, 1U, 2U);                    /* Set root clock freq to 800MHZ/ 2= 400MHZ*/
+     CLOCK_SetRootMux(kCLOCK_RootAudioAhb, kCLOCK_AudioAhbRootmuxSysPll1); /* switch AUDIO AHB to SYSTEM PLL1 */
+ 
+-    CLOCK_SetRootMux(kCLOCK_RootUart3, kCLOCK_UartRootmuxSysPll1Div10); /* Set UART source to SysPLL1 Div10 80MHZ */
+-    CLOCK_SetRootDivider(kCLOCK_RootUart3, 1U, 1U);                     /* Set root clock to 80MHZ/ 1= 80MHZ */
++    CLOCK_SetRootMux(kCLOCK_RootUart4, kCLOCK_UartRootmuxSysPll1Div10); /* Set UART source to SysPLL1 Div10 80MHZ */
++    CLOCK_SetRootDivider(kCLOCK_RootUart4, 1U, 1U);                     /* Set root clock to 80MHZ/ 1= 80MHZ */
+ 
+     CLOCK_EnableClock(kCLOCK_Rdc);   /* Enable RDC clock */
+     CLOCK_EnableClock(kCLOCK_Ocram); /* Enable Ocram clock */
+diff --git a/main.c b/main.c
+index 43a5529..7ef806a 100644
+--- a/main.c
++++ b/main.c
+@@ -1,6 +1,6 @@
+ /*
+  * Copyright (c) 2016, Freescale Semiconductor, Inc.
+- * Copyright 2016-2017 NXP
++ * Copyright 2016-2024 NXP
+  * All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+@@ -146,11 +146,11 @@ int main(void)
+ 
+     BOARD_InitBootPins();
+     BOARD_BootClockRUN();
+-    //BOARD_InitDebugConsole();
++    BOARD_InitDebugConsole();
+ 
+     /* Print a note to terminal */
+-    //PRINTF("\r\nGPT input capture example\r\n");
+-    //PRINTF("\r\nOnce the input signal is received the input capture value is printed\r\n");
++    PRINTF("\r\nGPT input capture example\r\n");
++    PRINTF("\r\nOnce the input signal is received the input capture value is printed\r\n");
+ 
+     GPT_GetDefaultConfig(&gptConfig);
+ 
+@@ -526,4 +526,4 @@ no_dma:
+ 
+ 
+ }
+-  //          __WFI();
+\ No newline at end of file
++  //          __WFI();
+diff --git a/pin_mux.c b/pin_mux.c
+index 8bf71a9..511aa13 100644
+--- a/pin_mux.c
++++ b/pin_mux.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2019-2021 NXP
++ * Copyright 2019-2024 NXP
+  * All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+@@ -68,6 +68,15 @@ void BOARD_InitPins(void) {                                /*!< Function assigne
+     IOMUXC_SetPinMux(IOMUXC_I2C3_SDA_GPT3_CLK, 0U);
+     IOMUXC_SetPinConfig(IOMUXC_I2C3_SDA_GPT3_CLK, IOMUXC_SW_PAD_CTL_PAD_DSE(3U));
+ 
++    IOMUXC_SetPinMux(IOMUXC_UART4_RXD_UART4_RX, 0U);
++    IOMUXC_SetPinConfig(IOMUXC_UART4_RXD_UART4_RX,
++        IOMUXC_SW_PAD_CTL_PAD_PUE_MASK |
++        IOMUXC_SW_PAD_CTL_PAD_PE_MASK);
++    IOMUXC_SetPinMux(IOMUXC_UART4_TXD_UART4_TX, 0U);
++    IOMUXC_SetPinConfig(IOMUXC_UART4_TXD_UART4_TX,
++        IOMUXC_SW_PAD_CTL_PAD_PUE_MASK |
++        IOMUXC_SW_PAD_CTL_PAD_PE_MASK);
++
+ 
+     /*IOMUXC_SetPinMux(IOMUXC_SAI3_RXD_GPIO4_IO30, 0U);
+     IOMUXC_SetPinConfig(IOMUXC_SAI3_RXD_GPIO4_IO30, 
+-- 
+2.25.1
+
