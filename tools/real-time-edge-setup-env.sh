@@ -68,7 +68,7 @@ change_conf()
 	echo "IMAGE_INSTALL:append = \" kernel-module-la9310 userapp-la9310 freertos-la9310 arm-ral dpdk kernel-module-kpage-ncache imx-m7-la9310 \"" >> $BUILD_DIR/conf/local.conf
 	echo "IMAGE_INSTALL:append = \" imx-test dtc python3-pip python3-numpy \"" >> $BUILD_DIR/conf/local.conf
 
-	if test $fsl_setup_internal; then
+	if $fsl_setup_internal eq 'true'; then
 	        echo "IMAGE_INSTALL:append = \" rf-util-la9310 \"" >> $BUILD_DIR/conf/local.conf
 		echo "IMAGE_INSTALL:append = \"  bash git-perltools fr1-fr2-test-tool-la9310 \"" >> $BUILD_DIR/conf/local.conf
 		echo "IMAGE_INSTALL:append = \" kernel-module-rfnm \"" >> $BUILD_DIR/conf/local.conf
@@ -182,7 +182,7 @@ add_layers()
 	echo "" >> $BUILD_DIR/conf/bblayers.conf
 	echo "# Real-time Edge Yocto Project Release layers" >> $BUILD_DIR/conf/bblayers.conf
 	echo "BBLAYERS += \"\${BSPDIR}/sources/meta-real-time-edge\"" >> $BUILD_DIR/conf/bblayers.conf
-	if test $fsl_setup_internal; then
+	if $fsl_setup_internal eq 'true'; then
 		echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-sdr\"" >> $BUILD_DIR/conf/bblayers.conf
 	fi
 
@@ -191,7 +191,7 @@ add_layers()
 # get command line options
 OLD_OPTIND=$OPTIND
 unset FSLDISTRO
-
+fsl_setup_internal='false'
 while getopts "k:r:t:b:i:c:e:gh" fsl_setup_flag
 do
 	case $fsl_setup_flag in
@@ -256,13 +256,15 @@ fi
 change_conf
 add_layers
 
-ln -sf ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo-ext.inc ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo.inc
-
 #internal build 
-if test $fsl_setup_internal; then
+if $fsl_setup_internal eq 'true'; then
     	echo -e "\nSetting BUILD_TYPE as NXP bitbucket nxp-internal "
 	echo "BUILD_TYPE = \"nxp-internal\"" >> $BUILD_DIR/conf/local.conf
+	rm -f  ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo.inc
 	ln -sf ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo-int.inc ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo.inc
+else
+	rm -f  ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo.inc
+	ln -sf ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo-ext.inc ${ROOTDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo.inc
 fi
 
 cd  $BUILD_DIR

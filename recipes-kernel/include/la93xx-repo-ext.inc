@@ -22,15 +22,6 @@ SRCREV_freertos_repo = "08bc01912285af7952aba70ac3ec2b559be21329"
 SRC_LA9310_FW_URI = " git://github.com/nxp-qoriq/la93xx_firmware;protocol=https;nobranch=1;name=firmware_repo"
 SRCREV_firmware_repo = "b5e797bdbef120954cd5e615bc45493aff6afe25"
 
-SRC_LA9310_RFNM_CLI_URI = "git://git@bitbucket.sw.nxp.com/dn5g/rfnm-cli.git;protocol=ssh;branch=main;name=rfnm_cli_repo"
-SRCREV_rfnm_cli_repo = "${AUTOREV}"
-
-SRC_LA9310_GEUL_RF_UTIL_URI = "git://git@bitbucket.sw.nxp.com/dnnpi/geul_rf_util.git;protocol=ssh;branch=la12xx;name=geul_rf_util_repo"
-SRCREV_geul_rf_util_repo = "${AUTOREV}"
-
-SRC_LA9310_GEUL_COMMON_HEADER_URI = "git://git@bitbucket.sw.nxp.com/dnnpi/geul_common_headers.git;protocol=ssh;branch=la12xx;name=geul_common_headers_repo"
-SRCREV_geul_common_headers_repo = "${AUTOREV}"
-
 SRC_DPDK_EXTRAS = "git://github.com/nxp-qoriq/dpdk-extras.git;protocol=https;nobranch=1;name=dpdk-extras_repo"
 SRCREV_dpdk-extras_repo = "e53931e22a15858c5469f9cb0b631f40c3ec8db3"
 
