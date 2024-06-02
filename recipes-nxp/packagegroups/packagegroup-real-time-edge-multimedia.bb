@@ -13,6 +13,7 @@ SOC_GPU= ""
 SOC_GPU:imxgpu = "libopencl-imx imx-gpu-viv-demos gtk+3-demo \
                   packagegroup-fsl-tools-gpu packagegroup-imx-tools-audio"
 SOC_GPU:remove:mx8mm-nxp-bsp = " libopencl-imx"
+SOC_GPU:remove:mx95-nxp-bsp = " libopencl-imx imx-gpu-viv-demos "
 SOC_GPU:ls1028ardb = "libopencl-imx imx-gpu-viv-demos gtk+3-demo \
                   packagegroup-fsl-tools-gpu packagegroup-imx-tools-audio"
 
