@@ -45,5 +45,5 @@ SRCREV_freertos_variscite_repo = "1a174e74344976450dcf29275c68464b23f7110d"
 SRC_LA9310_IMX8MP_M7_URI = "git://git@bitbucket.sw.nxp.com/dn5g/imx8mp-m7.git;protocol=ssh;branch=main;name=imx8mp-m7_repo"
 SRCREV_imx8mp-m7_repo = "${AUTOREV}"
 
-SRC_LA9310_FR1_FR2_TEST_TOOL_URI = "git://git@bitbucket.sw.nxp.com/dn5g/fr1_fr2_test_tool.git;protocol=ssh;branch=Redcap;name=fr1_fr2_test_tool_repo"
+SRC_LA9310_FR1_FR2_TEST_TOOL_URI = "git://git@bitbucket.sw.nxp.com/dn5g/fr1_fr2_test_tool.git;protocol=ssh;branch=master;name=fr1_fr2_test_tool_repo"
 SRCREV_fr1_fr2_test_tool_repo = "${AUTOREV}"
