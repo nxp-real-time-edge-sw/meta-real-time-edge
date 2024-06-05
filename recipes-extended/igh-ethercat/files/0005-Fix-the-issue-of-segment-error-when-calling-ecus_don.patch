@@ -1,0 +1,49 @@
+From 3fd393c211c3db1208d25373f11f2677b1c03858 Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Mon, 27 May 2024 15:27:42 +0800
+Subject: [PATCH 5/5] Fix the issue of "segment error" when calling ecus_done
+
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+---
+ devices/enet_fec/enet_ethdev.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/devices/enet_fec/enet_ethdev.c b/devices/enet_fec/enet_ethdev.c
+index 0f23a198..e5458581 100644
+--- a/devices/enet_fec/enet_ethdev.c
++++ b/devices/enet_fec/enet_ethdev.c
+@@ -450,6 +450,7 @@ int pmd_enetfec_probe(struct rte_vdev_device *vdev)
+ 	struct rte_ether_addr macaddr;
+ 	struct enetfec_private *fep;
+ 	unsigned int bdsize;
++	void *bd_addr_v;
+ 	int rc;
+ 	int i;
+ 
+@@ -488,16 +489,19 @@ int pmd_enetfec_probe(struct rte_vdev_device *vdev)
+ 	/* Get the BD size for distributing among six queues */
+ 	bdsize = (fep->bd_size) / NUM_OF_BD_QUEUES;
+ 
++	bd_addr_v = fep->bd_addr_v;
+ 	for (i = 0; i < fep->max_tx_queues; i++) {
+-		fep->dma_baseaddr_t[i] = fep->bd_addr_v;
++		fep->dma_baseaddr_t[i] = bd_addr_v;
+ 		fep->bd_addr_p_t[i] = fep->bd_addr_p;
+-		fep->bd_addr_v = (uint8_t *)fep->bd_addr_v + bdsize;
++
++		bd_addr_v = (uint8_t *)bd_addr_v + bdsize;
+ 		fep->bd_addr_p = fep->bd_addr_p + bdsize;
+ 	}
+ 	for (i = 0; i < fep->max_rx_queues; i++) {
+-		fep->dma_baseaddr_r[i] = fep->bd_addr_v;
++		fep->dma_baseaddr_r[i] = bd_addr_v;
+ 		fep->bd_addr_p_r[i] = fep->bd_addr_p;
+-		fep->bd_addr_v = (uint8_t *)fep->bd_addr_v + bdsize;
++
++		bd_addr_v = (uint8_t *)bd_addr_v + bdsize;
+ 		fep->bd_addr_p = fep->bd_addr_p + bdsize;
+ 	}
+ 
+-- 
+2.34.1
+
