@@ -43,6 +43,8 @@ heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " rpmsg-pingpong-master-
 heterogeneous-multicore-examples:append:mx8mp-nxp-bsp = " rpmsg-perf-ca rpmsg-perf-cm rt-latency-ca rt-latency-ca-zephyr "
 heterogeneous-multicore-examples:append:imx93evk = " hello-world-ca-zephyr hello-world-ca hello-world-cm lwip-ping-ca rpmsg-uart-sharing-cm virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
 heterogeneous-multicore-examples:append:imx93evk = " rt-latency-ca rt-latency-ca-zephyr "
+heterogeneous-multicore-examples:append:imx93-14x14-lpddr4x-evk = " hello-world-ca-zephyr hello-world-ca hello-world-cm lwip-ping-ca rpmsg-uart-sharing-cm virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
+heterogeneous-multicore-examples:append:imx93-14x14-lpddr4x-evk = " rt-latency-ca rt-latency-ca-zephyr "
 
 heterogeneous-multi-soc-examples ?= ""
 heterogeneous-multi-soc-examples:append:mx8mp-nxp-bsp = " dsa-switch-evkmimxrt1180-cm33 "
