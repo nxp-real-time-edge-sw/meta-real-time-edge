@@ -79,7 +79,7 @@ change_conf()
 	then
 		cd ${ROOTDIR}/sources/meta-imx/
 		git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0001-rfnm-Add-support-for-rfnm-dtb-support.patch
-		git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0002-rfnm-Temporarily-add-atf-binary-image-support.patch
+		git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0002-atf-set-non-optee-atf-boot-as-default.patch
 		cd -
 	fi
 

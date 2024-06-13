@@ -1,0 +1,26 @@
+From acfafa19b02a8061f452c81a75bd87e9c756a221 Mon Sep 17 00:00:00 2001
+From: Pramod Kumar <pramod.kumar_1@nxp.com>
+Date: Wed, 12 Jun 2024 19:32:38 +0530
+Subject: [PATCH] atf: set non-optee atf boot as default
+
+Signed-off-by: Pramod Kumar <pramod.kumar_1@nxp.com>
+---
+ meta-bsp/recipes-bsp/imx-mkimage/imx-boot_1.0.bb | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meta-bsp/recipes-bsp/imx-mkimage/imx-boot_1.0.bb b/meta-bsp/recipes-bsp/imx-mkimage/imx-boot_1.0.bb
+index 451cce8365..40893e452d 100644
+--- a/meta-bsp/recipes-bsp/imx-mkimage/imx-boot_1.0.bb
++++ b/meta-bsp/recipes-bsp/imx-mkimage/imx-boot_1.0.bb
+@@ -44,7 +44,7 @@ do_compile[depends] += " \
+ SC_FIRMWARE_NAME ?= "scfw_tcm.bin"
+ 
+ ATF_MACHINE_NAME ?= "bl31-${ATF_PLATFORM}.bin"
+-ATF_MACHINE_NAME:append = "${@bb.utils.contains('MACHINE_FEATURES', 'optee', '-optee', '', d)}"
++#ATF_MACHINE_NAME:append = "${@bb.utils.contains('MACHINE_FEATURES', 'optee', '-optee', '', d)}"
+ 
+ UBOOT_NAME = "u-boot-${MACHINE}.bin-${UBOOT_CONFIG}"
+ BOOT_CONFIG_MACHINE = "${BOOT_NAME}-${MACHINE}-${UBOOT_CONFIG}.bin"
+-- 
+2.25.1
+
