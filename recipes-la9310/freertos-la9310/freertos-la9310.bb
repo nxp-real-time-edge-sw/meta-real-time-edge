@@ -1,7 +1,8 @@
 # Copyright 2023-2024 NXP
 
 require la93xx-sdk-common.inc
-require ../include/la93xx-repo.inc
+require ${BSPDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo.inc
+
 
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"

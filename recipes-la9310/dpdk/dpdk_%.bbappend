@@ -1,7 +1,8 @@
 # DPDK version update with bbdev support
 # Build tools and examples here
 
-require ../../recipes-kernel/include/la93xx-repo.inc
+require ${BSPDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo.inc
+
 
 LICENSE = "BSD-3-Clause & LGPL-2.1-only & GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://license/gpl-2.0.txt;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
