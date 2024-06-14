@@ -24,8 +24,9 @@ driver-examples:append:mx8mm-nxp-bsp = " driver-gpio-led-output "
 driver-examples:append:mx8mp-nxp-bsp = " driver-gpio-led-output "
 
 soem-examples ?= ""
-soem-examples:append:mx8mm-nxp-bsp = " soem-gpio-pulse freertos-soem-gpio-pulse "
-soem-examples:append:mx8mp-nxp-bsp = " soem-gpio-pulse freertos-soem-gpio-pulse "
+soem-examples:append:mx8mm-nxp-bsp = " soem-gpio-pulse freertos-soem-gpio-pulse soem-servo-motor freertos-soem-servo-motor soem-servo-motor-rt1180 freertos-soem-servo-motor-rt1180 "
+soem-examples:append:mx8mp-nxp-bsp = " soem-gpio-pulse freertos-soem-gpio-pulse soem-servo-motor freertos-soem-servo-motor soem-servo-motor-rt1180 freertos-soem-servo-motor-rt1180 "
+soem-examples:append:imx93evk = " soem-servo-motor soem-servo-motor-rt1180 "
 
 rpmsg-lite-examples ?= ""
 rpmsg-lite-examples:append:imx93-9x9-lpddr4-qsb = " rpmsg-lite-uart-sharing-rtos-mcimx93qsb "
