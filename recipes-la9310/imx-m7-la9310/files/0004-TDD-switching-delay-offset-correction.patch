@@ -1,0 +1,217 @@
+From 3fcc92bf5207c3d57e7021ab9b2773acb30dc975 Mon Sep 17 00:00:00 2001
+From: Arpit Goel <arpit.goel_2@nxp.com>
+Date: Thu, 13 Jun 2024 14:48:27 +0530
+Subject: [PATCH 4/4] TDD switching delay offset correction
+
+  1. Latches are now triggered as comparator expires
+  2. Updates interrupt latency offset to approx 1.25 us
+  3. Removes empty lines and redundant code
+
+Signed-off-by: Arpit Goel <arpit.goel_2@nxp.com>
+---
+ main.c    | 100 +++---------------------------------------------------
+ rfnm_m7.h |   2 +-
+ 2 files changed, 5 insertions(+), 97 deletions(-)
+
+diff --git a/main.c b/main.c
+index 7ef806a..13d9f17 100644
+--- a/main.c
++++ b/main.c
+@@ -72,6 +72,10 @@ void GPT1_IRQHandler(void)
+ 
+     } else if(GPT_GetStatusFlags(GPT1, kGPT_OutputCompare1Flag)) {
+ 
++        // trigger latches as comparator expires
++        // do bookeeping for interrupts and TTI later
++        rfnm_fe_trigger_latches(&m7_dgb, pp_txrx);
++
+         if(rf_ctrl.tti_period_ts && rf_ctrl.tti_period_ts > 1) {
+             // As per RM writing to the output compare register should reset the timer, 
+             // but that doesn't seem to happen in practice... ???
+@@ -86,32 +90,9 @@ void GPT1_IRQHandler(void)
+         GPT_DisableInterrupts(GPT1, kGPT_OutputCompare1InterruptEnable);
+         GPT_ClearStatusFlags(GPT1, kGPT_OutputCompare1Flag);
+ 
+-
+-        
+-        
+-
+-        //for(volatile int i = i; i < 100; i++) {
+-        //    i++;
+-        //    i--;
+-        // }
+-        
+-        rfnm_fe_trigger_latches(&m7_dgb, pp_txrx);
+-
+         //last_pp_txrx = !last_pp_txrx;
+-
+-        
+-
+     }
+-
+-
+-
+-
+-
+-
+ }
+-
+-
+-
+ static inline int tdd_init() {
+     if(m7_dgb.tdd_available && !m7_dgb.m7_tdd_initialized) {
+         rfnm_fe_generic_init(&m7_dgb);
+@@ -122,10 +103,8 @@ static inline int tdd_init() {
+ 
+         m7_dgb.m7_tdd_initialized = 1;
+     }
+-    
+ }
+ 
+-
+ int main(void)
+ {
+     gpt_config_t gptConfig;
+@@ -140,7 +119,6 @@ int main(void)
+      * non-cacheable before accessing this address region */
+     BOARD_InitMemory();
+ 
+-
+     /* Board specific RDC settings */
+     BOARD_RdcInit();
+ 
+@@ -177,8 +155,6 @@ int main(void)
+ //    gpio_pin_config_t led_config = {kGPIO_DigitalOutput, 0, kGPIO_NoIntmode};
+ //    GPIO_PinInit(GPIO4, 30U, &led_config);
+ 
+-
+-
+ // transfer size -> MBps single ch -> MBps single ch with partial reset as you are writing -> MBps with dual channel
+ 
+ // 0x400 -> 334 -> 360 -> 676 MBps
+@@ -188,7 +164,6 @@ int main(void)
+ // 0x2000 -> 669 -> 684
+ // 0x4000 -> 730 -> 737 -> 780 MBps
+ 
+-
+     volatile uint32_t *reg;
+     volatile int cnt = 0;
+ 
+@@ -211,7 +186,6 @@ int main(void)
+ 
+     uint32_t last_read_buf = 0;
+     
+-    
+     int32_t dma_buf_last_map[2] = {-1, -1};
+ 
+     int16_t buffs_to_ign[RFNM_RX_BUF_CNT];
+@@ -220,10 +194,6 @@ int main(void)
+         buffs_to_ign[i] = 0;
+     }
+ 
+-
+-
+-
+-
+ #if 0
+ 
+     reg = DMA_WRITE_ENGINE_EN_OFF; 
+@@ -301,58 +271,12 @@ int main(void)
+         }
+ 
+     }
+-
+-
+-
+-
+ #endif
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+     rfnm_la9310_status[0].age = 0;
+     while(rfnm_la9310_status[0].age == 0) {tdd_init();}
+ 
+     rfnm_m7_status->rx_head = 0;
+ 
+-    
+-    
+-
+-
+     while(1) {
+         
+         tdd_init();
+@@ -507,23 +431,7 @@ no_dma:
+             //rfnm_buf_age[(win_b * 32)] = 0xffff; // meh what a shitshow
+ 
+             cnt += reading;
+-
+-            
+         }
+-
+-        
+-
+-        
+-
+-        
+-
+-        
+-
+-        
+-
+     }
+-
+-
+-
+ }
+   //          __WFI();
+diff --git a/rfnm_m7.h b/rfnm_m7.h
+index 5156eec..35e8b01 100644
+--- a/rfnm_m7.h
++++ b/rfnm_m7.h
+@@ -7,7 +7,7 @@
+ #define VSPA_MEM_ADDR_OFFSET (0x1F400000 - 0x18000000)
+ #define VSPA_MEM_ADDR_FROM_M7 (0xD0000000 + VSPA_MEM_ADDR_OFFSET)
+ 
+-#define INTERRUPT_LATENCY_OFFSET (5.5 * 3.84)
++#define INTERRUPT_LATENCY_OFFSET (1 * 3.84) // 1uS
+ 
+ 
+ typedef uint32_t vspa_complex_fixed16;
+-- 
+2.25.1
+
