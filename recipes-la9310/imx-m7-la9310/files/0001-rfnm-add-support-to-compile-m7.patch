@@ -1,7 +1,7 @@
-From 3b83c24287a951b49fdf323f6262acae5a74adc8 Mon Sep 17 00:00:00 2001
+From 3ea6c271ac5c31f4cffcfdaa7a357226156c443b Mon Sep 17 00:00:00 2001
 From: Nikhil Gupta <nikhil.gupta_2@nxp.com>
 Date: Mon, 13 May 2024 23:21:51 -0700
-Subject: [PATCH] rfnm-add-support-to-compile-m7
+Subject: [PATCH 1/4] rfnm-add-support-to-compile-m7
 
 Signed-off-by: Nikhil Gupta <nikhil.gupta_2@nxp.com>
 ---

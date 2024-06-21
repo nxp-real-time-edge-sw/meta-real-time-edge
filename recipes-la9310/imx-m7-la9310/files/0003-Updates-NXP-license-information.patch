@@ -1,0 +1,61 @@
+From 052deb6f62bd9de1ae22f93db700a2dc17582cbb Mon Sep 17 00:00:00 2001
+From: Arpit Goel <arpit.goel_2@nxp.com>
+Date: Fri, 17 May 2024 13:06:42 +0530
+Subject: [PATCH 3/4] Updates NXP license information
+
+Signed-off-by: Arpit Goel <arpit.goel_2@nxp.com>
+---
+ board.h        | 2 +-
+ clock_config.c | 2 +-
+ main.c         | 2 +-
+ pin_mux.c      | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/board.h b/board.h
+index b416406..bed4445 100644
+--- a/board.h
++++ b/board.h
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2019-2020 NXP
++ * Copyright 2019-2024 NXP
+  * All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+diff --git a/clock_config.c b/clock_config.c
+index 7256b17..4ea7f9e 100644
+--- a/clock_config.c
++++ b/clock_config.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2019-2020 NXP
++ * Copyright 2019-2024 NXP
+  * All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+diff --git a/main.c b/main.c
+index 1ef5cff..7ef806a 100644
+--- a/main.c
++++ b/main.c
+@@ -1,6 +1,6 @@
+ /*
+  * Copyright (c) 2016, Freescale Semiconductor, Inc.
+- * Copyright 2016-2017 NXP
++ * Copyright 2016-2024 NXP
+  * All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+diff --git a/pin_mux.c b/pin_mux.c
+index d60aba5..511aa13 100644
+--- a/pin_mux.c
++++ b/pin_mux.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2019-2021 NXP
++ * Copyright 2019-2024 NXP
+  * All rights reserved.
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+-- 
+2.25.1
+
