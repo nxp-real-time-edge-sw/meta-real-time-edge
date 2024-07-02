@@ -1,3 +1,3 @@
 #!/bin/bash
 
-modprobe jailhouse.ko
+modprobe jailhouse
