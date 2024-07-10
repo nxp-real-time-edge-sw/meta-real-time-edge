@@ -27,7 +27,6 @@ SRC_URI:append:real-time-edge-plc = " \
 "
 
 SRC_URI:append:imx8mp-rfnm = " \
-    file://rfnm-0003-Enable-IIO-subsystem.patch \
 "
 
 do_merge_delta_config:append:imx8mp-rfnm() {
