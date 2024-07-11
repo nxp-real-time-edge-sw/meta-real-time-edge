@@ -1,0 +1,224 @@
+From df1908b0180fbdb9127c62a1e27e5d1f86314c40 Mon Sep 17 00:00:00 2001
+From: qizhang <jony.zhang@nxp.com>
+Date: Thu, 11 Jul 2024 18:01:27 +0800
+Subject: [PATCH] Delete power_runtime of mdio read and write
+
+Signed-off-by: qizhang <jony.zhang@nxp.com>
+---
+ devices/fec/fec_main.c | 70 +++++++++++++-----------------------------
+ 1 file changed, 21 insertions(+), 49 deletions(-)
+
+diff --git a/devices/fec/fec_main.c b/devices/fec/fec_main.c
+index e6736262..e7940756 100644
+--- a/devices/fec/fec_main.c
++++ b/devices/fec/fec_main.c
+@@ -95,19 +95,21 @@ struct fec_devinfo {
+ 
+ static const struct fec_devinfo fec_imx25_info = {
+ 	.quirks = FEC_QUIRK_USE_GASKET | FEC_QUIRK_MIB_CLEAR |
+-		  FEC_QUIRK_HAS_FRREG,
++		  FEC_QUIRK_HAS_FRREG | FEC_QUIRK_HAS_MDIO_C45,
+ };
+ 
+ #define FEC_ENET_GET_QUEUE(_x) ((_x == 0) ? 1 : ((_x == 1) ? 2 : 0))
+ 
+ static const struct fec_devinfo fec_imx27_info = {
+-	.quirks = FEC_QUIRK_MIB_CLEAR | FEC_QUIRK_HAS_FRREG,
++	.quirks = FEC_QUIRK_MIB_CLEAR | FEC_QUIRK_HAS_FRREG | 
++		  FEC_QUIRK_HAS_MDIO_C45,
+ };
+ 
+ static const struct fec_devinfo fec_imx28_info = {
+ 	.quirks = FEC_QUIRK_ENET_MAC | FEC_QUIRK_SWAP_FRAME |
+ 		  FEC_QUIRK_SINGLE_MDIO | FEC_QUIRK_HAS_RACC |
+-		  FEC_QUIRK_HAS_FRREG | FEC_QUIRK_CLEAR_SETUP_MII,
++		  FEC_QUIRK_HAS_FRREG | FEC_QUIRK_CLEAR_SETUP_MII | 
++		  FEC_QUIRK_HAS_MDIO_C45,
+ };
+ 
+ static const struct fec_devinfo fec_imx6q_info = {
+@@ -115,11 +117,12 @@ static const struct fec_devinfo fec_imx6q_info = {
+ 		  FEC_QUIRK_HAS_BUFDESC_EX | FEC_QUIRK_HAS_CSUM |
+ 		  FEC_QUIRK_HAS_VLAN | FEC_QUIRK_ERR006358 |
+ 		  FEC_QUIRK_HAS_RACC | FEC_QUIRK_CLEAR_SETUP_MII |
+-		  FEC_QUIRK_HAS_PMQOS,
++		  FEC_QUIRK_HAS_PMQOS | FEC_QUIRK_HAS_MDIO_C45,
+ };
+ 
+ static const struct fec_devinfo fec_mvf600_info = {
+-	.quirks = FEC_QUIRK_ENET_MAC | FEC_QUIRK_HAS_RACC,
++	.quirks = FEC_QUIRK_ENET_MAC | FEC_QUIRK_HAS_RACC | 
++		  FEC_QUIRK_HAS_MDIO_C45,
+ };
+ 
+ static const struct fec_devinfo fec_imx6x_info = {
+@@ -128,7 +131,7 @@ static const struct fec_devinfo fec_imx6x_info = {
+ 		  FEC_QUIRK_HAS_VLAN | FEC_QUIRK_HAS_AVB |
+ 		  FEC_QUIRK_ERR007885 | FEC_QUIRK_BUG_CAPTURE |
+ 		  FEC_QUIRK_HAS_RACC | FEC_QUIRK_HAS_COALESCE |
+-		  FEC_QUIRK_CLEAR_SETUP_MII,
++		  FEC_QUIRK_CLEAR_SETUP_MII | FEC_QUIRK_HAS_MDIO_C45,
+ };
+ 
+ static const struct fec_devinfo fec_imx6ul_info = {
+@@ -136,7 +139,8 @@ static const struct fec_devinfo fec_imx6ul_info = {
+ 		  FEC_QUIRK_HAS_BUFDESC_EX | FEC_QUIRK_HAS_CSUM |
+ 		  FEC_QUIRK_HAS_VLAN | FEC_QUIRK_ERR007885 |
+ 		  FEC_QUIRK_BUG_CAPTURE | FEC_QUIRK_HAS_RACC |
+-		  FEC_QUIRK_HAS_COALESCE | FEC_QUIRK_CLEAR_SETUP_MII,
++		  FEC_QUIRK_HAS_COALESCE | FEC_QUIRK_CLEAR_SETUP_MII | 
++		  FEC_QUIRK_HAS_MDIO_C45,
+ };
+ 
+ static const struct fec_devinfo fec_imx8mq_info = {
+@@ -145,7 +149,8 @@ static const struct fec_devinfo fec_imx8mq_info = {
+ 		  FEC_QUIRK_HAS_VLAN | FEC_QUIRK_HAS_AVB |
+ 		  FEC_QUIRK_ERR007885 | FEC_QUIRK_BUG_CAPTURE |
+ 		  FEC_QUIRK_HAS_RACC | FEC_QUIRK_HAS_COALESCE |
+-		  FEC_QUIRK_CLEAR_SETUP_MII | FEC_QUIRK_HAS_EEE,
++		  FEC_QUIRK_CLEAR_SETUP_MII | FEC_QUIRK_HAS_EEE | 
++		  FEC_QUIRK_HAS_MDIO_C45,
+ };
+ 
+ static const struct fec_devinfo fec_imx8qm_info = {
+@@ -154,14 +159,16 @@ static const struct fec_devinfo fec_imx8qm_info = {
+ 		  FEC_QUIRK_HAS_VLAN | FEC_QUIRK_HAS_AVB |
+ 		  FEC_QUIRK_ERR007885 | FEC_QUIRK_BUG_CAPTURE |
+ 		  FEC_QUIRK_HAS_RACC | FEC_QUIRK_HAS_COALESCE |
+-		  FEC_QUIRK_CLEAR_SETUP_MII | FEC_QUIRK_DELAYED_CLKS_SUPPORT,
++		  FEC_QUIRK_CLEAR_SETUP_MII | FEC_QUIRK_DELAYED_CLKS_SUPPORT | 
++		  FEC_QUIRK_HAS_MDIO_C45,
+ };
+ 
+ static const struct fec_devinfo fec_s32v234_info = {
+ 	.quirks = FEC_QUIRK_ENET_MAC | FEC_QUIRK_HAS_GBIT |
+ 		  FEC_QUIRK_HAS_BUFDESC_EX | FEC_QUIRK_HAS_CSUM |
+ 		  FEC_QUIRK_HAS_VLAN | FEC_QUIRK_HAS_AVB |
+-		  FEC_QUIRK_ERR007885 | FEC_QUIRK_BUG_CAPTURE,
++		  FEC_QUIRK_ERR007885 | FEC_QUIRK_BUG_CAPTURE | 
++		  FEC_QUIRK_HAS_MDIO_C45,
+ };
+ 
+ static struct platform_device_id fec_devtype[] = {
+@@ -1513,10 +1520,6 @@ static int fec_enet_mdio_read_c22(struct mii_bus *bus, int mii_id, int regnum)
+     struct device *dev = &fep->pdev->dev;
+     int ret = 0, frame_start, frame_addr, frame_op;
+ 
+-    ret = pm_runtime_resume_and_get(dev);
+-    if (ret < 0)
+-        return ret;
+-
+     /* C22 read */
+     frame_op = FEC_MMFR_OP_READ;
+     frame_start = FEC_MMFR_ST;
+@@ -1531,15 +1534,10 @@ static int fec_enet_mdio_read_c22(struct mii_bus *bus, int mii_id, int regnum)
+     ret = fec_enet_mdio_wait(fep);
+     if (ret) {
+         netdev_err(fep->netdev, "MDIO read timeout\n");
+-        goto out;
++        return ret;
+     }
+ 
+     ret = FEC_MMFR_DATA(readl(fep->hwp + FEC_MII_DATA));
+-
+-out:
+-    pm_runtime_mark_last_busy(dev);
+-    pm_runtime_put_autosuspend(dev);
+-
+     return ret;
+ }
+ 
+@@ -1549,11 +1547,6 @@ static int fec_enet_mdio_read_c45(struct mii_bus *bus, int mii_id,
+     struct fec_enet_private *fep = bus->priv;
+     struct device *dev = &fep->pdev->dev;
+     int ret = 0, frame_start, frame_op;
+-
+-    ret = pm_runtime_resume_and_get(dev);
+-    if (ret < 0)
+-        return ret;
+-
+     frame_start = FEC_MMFR_ST_C45;
+ 
+     /* write address */
+@@ -1566,7 +1559,7 @@ static int fec_enet_mdio_read_c45(struct mii_bus *bus, int mii_id,
+     ret = fec_enet_mdio_wait(fep);
+     if (ret) {
+         netdev_err(fep->netdev, "MDIO address write timeout\n");
+-        goto out;
++        return ret;
+     }
+ 
+     frame_op = FEC_MMFR_OP_READ_C45;
+@@ -1580,15 +1573,10 @@ static int fec_enet_mdio_read_c45(struct mii_bus *bus, int mii_id,
+     ret = fec_enet_mdio_wait(fep);
+     if (ret) {
+         netdev_err(fep->netdev, "MDIO read timeout\n");
+-        goto out;
++        return ret;
+     }
+ 
+     ret = FEC_MMFR_DATA(readl(fep->hwp + FEC_MII_DATA));
+-
+-out:
+-    pm_runtime_mark_last_busy(dev);
+-    pm_runtime_put_autosuspend(dev);
+-
+     return ret;
+ }
+ 
+@@ -1599,10 +1587,6 @@ static int fec_enet_mdio_write_c22(struct mii_bus *bus, int mii_id, int regnum,
+     struct device *dev = &fep->pdev->dev;
+     int ret, frame_start, frame_addr;
+ 
+-    ret = pm_runtime_resume_and_get(dev);
+-    if (ret < 0)
+-        return ret;
+-
+     /* C22 write */
+     frame_start = FEC_MMFR_ST;
+     frame_addr = regnum;
+@@ -1618,9 +1602,6 @@ static int fec_enet_mdio_write_c22(struct mii_bus *bus, int mii_id, int regnum,
+     if (ret)
+         netdev_err(fep->netdev, "MDIO write timeout\n");
+ 
+-    pm_runtime_mark_last_busy(dev);
+-    pm_runtime_put_autosuspend(dev);
+-
+     return ret;
+ }
+ 
+@@ -1630,11 +1611,6 @@ static int fec_enet_mdio_write_c45(struct mii_bus *bus, int mii_id,
+     struct fec_enet_private *fep = bus->priv;
+     struct device *dev = &fep->pdev->dev;
+     int ret, frame_start;
+-
+-    ret = pm_runtime_resume_and_get(dev);
+-    if (ret < 0)
+-        return ret;
+-
+     frame_start = FEC_MMFR_ST_C45;
+ 
+     /* write address */
+@@ -1647,7 +1623,7 @@ static int fec_enet_mdio_write_c45(struct mii_bus *bus, int mii_id,
+     ret = fec_enet_mdio_wait(fep);
+     if (ret) {
+         netdev_err(fep->netdev, "MDIO address write timeout\n");
+-        goto out;
++        return ret;
+     }
+ 
+     /* start a write op */
+@@ -1661,10 +1637,6 @@ static int fec_enet_mdio_write_c45(struct mii_bus *bus, int mii_id,
+     if (ret)
+         netdev_err(fep->netdev, "MDIO write timeout\n");
+ 
+-out:
+-    pm_runtime_mark_last_busy(dev);
+-    pm_runtime_put_autosuspend(dev);
+-
+     return ret;
+ }
+ 
+-- 
+2.25.1
+

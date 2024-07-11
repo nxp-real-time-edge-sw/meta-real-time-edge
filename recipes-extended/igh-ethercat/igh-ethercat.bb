@@ -44,6 +44,7 @@ SRC_URI += "\
     file://0001-fix-compile-error-because-of-linux-kernel-upgrade-to.patch \
     file://0001-igh-8mm-fix-compile-error-due-to-kernel-upgrade-to-v.patch \
     file://0001-ls1028-fix-enetc-compile-error-because-of-kernel-upg.patch \
+    file://0001-Delete-power_runtime-of-mdio-read-and-write.patch \
 "
 S = "${WORKDIR}/git"
 
