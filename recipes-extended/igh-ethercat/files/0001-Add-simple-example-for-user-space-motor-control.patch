@@ -1,0 +1,609 @@
+From c34409c1c86463749169fccfbbba2599c02ba8a2 Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Tue, 25 Jun 2024 16:46:55 +0800
+Subject: [PATCH] Add simple example for user space motor control
+
+Usage:
+  ./ec_motor_example -h / --help
+  ./ec_motor_example [encode_rate]
+
+For example:
+  mkdir -p /dev/hugepages
+  mount -t hugetlbfs hugetlbfs /dev/hugepages
+  echo 448 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+
+  ./ec_motor_example 131072
+
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+---
+ configure.ac                       |   1 +
+ examples/Makefile.am               |   5 +
+ examples/motor_control/Makefile.am |  42 +++
+ examples/motor_control/main.c      | 491 +++++++++++++++++++++++++++++
+ 4 files changed, 539 insertions(+)
+ create mode 100644 examples/motor_control/Makefile.am
+ create mode 100644 examples/motor_control/main.c
+
+diff --git a/configure.ac b/configure.ac
+index c38bb2ff..4f3fd254 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1073,6 +1073,7 @@ AC_CONFIG_FILES([
+         examples/tty/Kbuild
+         examples/tty/Makefile
+         examples/user/Makefile
++        examples/motor_control/Makefile
+         examples/xenomai/Makefile
+         examples/xenomai_posix/Makefile
+         include/Makefile
+diff --git a/examples/Makefile.am b/examples/Makefile.am
+index 9dcbef2c..0a39ef18 100644
+--- a/examples/Makefile.am
++++ b/examples/Makefile.am
+@@ -54,6 +54,10 @@ SUBDIRS += \
+ endif
+ endif
+ 
++if ENABLE_USERSPACE_MASTER
++SUBDIRS += motor_control
++endif
++
+ DIST_SUBDIRS = \
+ 	dc_rtai \
+ 	dc_user \
+@@ -63,6 +67,7 @@ DIST_SUBDIRS = \
+ 	rtai_rtdm_dc \
+ 	tty \
+ 	user \
++	motor_control \
+ 	xenomai \
+ 	xenomai_posix
+ 
+diff --git a/examples/motor_control/Makefile.am b/examples/motor_control/Makefile.am
+new file mode 100644
+index 00000000..c50cf74d
+--- /dev/null
++++ b/examples/motor_control/Makefile.am
+@@ -0,0 +1,42 @@
++#------------------------------------------------------------------------------
++#
++#  $Id$
++#
++#  Copyright 2024 NXP
++#
++#  This file is part of the IgH EtherCAT Master.
++#
++#  The IgH EtherCAT Master is free software; you can redistribute it and/or
++#  modify it under the terms of the GNU General Public License version 2, as
++#  published by the Free Software Foundation.
++#
++#  The IgH EtherCAT Master is distributed in the hope that it will be useful,
++#  but WITHOUT ANY WARRANTY; without even the implied warranty of
++#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
++#  Public License for more details.
++#
++#  You should have received a copy of the GNU General Public License along with
++#  the IgH EtherCAT Master; if not, write to the Free Software Foundation,
++#  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++#  ---
++#
++#  The license mentioned above concerns the source code only. Using the
++#  EtherCAT technology and brand is only permitted in compliance with the
++#  industrial property and similar rights of Beckhoff Automation GmbH.
++#
++#------------------------------------------------------------------------------
++
++noinst_PROGRAMS = ec_motor_example
++
++ec_motor_example_SOURCES = main.c
++ec_motor_example_CFLAGS = -I$(top_srcdir)/include -Wall
++
++if ENABLE_USERSPACE_MASTER
++ec_motor_example_CFLAGS += -DEC_MASTER_IN_USERSPACE
++ec_motor_example_LDFLAGS = -L$(top_builddir)/master/.libs -lethercat_master -lpthread
++else
++ec_motor_example_LDFLAGS = -L$(top_builddir)/lib/.libs
++endif
++
++#------------------------------------------------------------------------------
+diff --git a/examples/motor_control/main.c b/examples/motor_control/main.c
+new file mode 100644
+index 00000000..3ee705d4
+--- /dev/null
++++ b/examples/motor_control/main.c
+@@ -0,0 +1,491 @@
++/*****************************************************************************
++ *
++ *  $Id$
++ *
++ *  Copyright 2024 NXP
++ *
++ *  This file is part of the IgH EtherCAT Master.
++ *
++ *  The IgH EtherCAT Master is free software; you can redistribute it and/or
++ *  modify it under the terms of the GNU General Public License version 2, as
++ *  published by the Free Software Foundation.
++ *
++ *  The IgH EtherCAT Master is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
++ *  Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License along
++ *  with the IgH EtherCAT Master; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++ *
++ *  ---
++ *
++ *  The license mentioned above concerns the source code only. Using the
++ *  EtherCAT technology and brand is only permitted in compliance with the
++ *  industrial property and similar rights of Beckhoff Automation GmbH.
++ *
++ ****************************************************************************/
++
++#include <errno.h>
++#include <signal.h>
++#include <stdio.h>
++#include <string.h>
++#include <sys/resource.h>
++#include <sys/time.h>
++#include <time.h>
++#include <sys/types.h>
++#include <unistd.h>
++
++#include "ecrt.h"
++
++typedef struct _ec_reg_pdo_cfg_t {
++	uint16_t index;
++	uint8_t subindex;
++	int32_t *poffset;
++} ec_reg_pdo_cfg_t;
++
++typedef enum {
++	no_ready_to_switch_on = 0,
++	switch_on_disable,
++	ready_to_switch_on,
++	switched_on,
++	operation_enable,
++	quick_stop_active,
++	fault_reaction_active,
++	fault,
++	none
++} servo_axle_state;
++
++typedef enum {
++	op_mode_no = 0,
++	op_mode_pp = 1,
++	op_mode_vl = 2,
++	op_mode_pv = 3,
++	op_mode_hm = 6,
++	op_mode_ip = 7,
++	op_mode_csp = 8,
++	op_mode_csv = 9,
++	op_mode_cst = 10
++} mode_of_operation;
++
++#define contrlword_shutdown(c)			(((c) | 0x6) & ~0x81)
++#define contrlword_switch_on(c) 		(((c) | 0x7) & ~0x88)
++#define contrlword_enable_operation(c)		(((c) | 0xF) & ~0x80)
++#define contrlword_fault_reset(c)		((c) | 0x80)
++
++#define EC_BIND_CORE_MASK (0x02)  /* working on core1 in default */
++
++#define NUM_OF(x) (sizeof(x) / sizeof(x[0]))
++#define NSEC_PER_SEC (1000000000L)
++#define CYCLE_TIME_NS (1000000)  /* cycle time: 1ms */
++#define TIMESPEC2NS(T) ((uint64_t) (T).tv_sec * NSEC_PER_SEC + (T).tv_nsec)
++
++#define RET_ERR(r, s) do {printf("%s", (s)); ret = (r); goto ret_tag;} while(0)
++
++static ec_master_t *sec_master = NULL;
++static ec_master_state_t sec_master_state;
++
++static ec_domain_t *sec_domain = NULL;
++static ec_domain_state_t sec_domain_state;
++
++static ec_slave_config_t *sec_slave_config;
++static ec_slave_config_state_t sec_slave_config_state;
++
++static uint32_t sec_vendor_id = 0;
++static uint32_t sec_product_code = 0;
++static uint32_t sec_rate = 2 << 16;
++
++static uint8_t *sec_domain_pd = NULL;
++static int sloop_flag = 1;
++static int sexit_flag = 0;
++
++static inline struct timespec timespec_add(struct timespec t1, struct timespec t2)
++{
++	struct timespec result;
++
++	if ((t1.tv_nsec + t2.tv_nsec) >= NSEC_PER_SEC) {
++		result.tv_sec = t1.tv_sec + t2.tv_sec + 1;
++		result.tv_nsec = t1.tv_nsec + t2.tv_nsec - NSEC_PER_SEC;
++	} else {
++		result.tv_sec = t1.tv_sec + t2.tv_sec;
++		result.tv_nsec = t1.tv_nsec + t2.tv_nsec;
++	}
++
++	return result;
++}
++
++static int32_t sec_target_pos;
++static int32_t sec_actual_pos;
++static int32_t sec_ctrl_word;
++static int32_t sec_stat_word;
++static int32_t sec_op_mode;
++
++static ec_reg_pdo_cfg_t sec_reg_pdo_cfg[] = {
++	{0x6040, 0x0, &sec_ctrl_word},
++	{0x6041, 0x0, &sec_stat_word},
++	{0x6064, 0x0, &sec_actual_pos},
++	{0x6060, 0x0, &sec_op_mode},
++	{0x6061, 0x0},
++	{0x607A, 0x0, &sec_target_pos},
++	{0x60FF, 0x0},
++};
++
++static ec_pdo_entry_info_t sec_rx_pdo_entry[] = {
++	{0x6040, 0, 16},  /* controlword */
++	{0x6060, 0, 8},   /* op_mode */
++	{0x607A, 0, 32},  /* target_position */
++	{0x60FF, 0, 32},  /* target_velocity */
++};
++
++static ec_pdo_entry_info_t sec_tx_pdo_entry[] = {
++	{0x6041, 0, 16},  /* statusword */
++	{0x6061, 0, 8},   /* op_mode_display */
++	{0x6064, 0, 32},  /* actual_position */
++	{0x606c, 0, 32},  /* actual_velocity */
++};
++
++static ec_pdo_info_t sec_rx_pdo[] = {
++	{0x1600, 4, sec_rx_pdo_entry},
++};
++
++static ec_pdo_info_t sec_tx_pdo[] = {
++	{0x1a00, 4, sec_tx_pdo_entry},
++};
++
++static ec_sync_info_t sec_sync_mgr[] = {
++	{2, EC_DIR_OUTPUT, 1, sec_rx_pdo},
++	{3, EC_DIR_INPUT, 1, sec_tx_pdo},
++	{0xff}
++};
++
++void check_ecat_slave_state(void)
++{
++	ec_slave_config_state_t cs;
++	ec_domain_state_t ds;
++	ec_master_state_t ms;
++
++	/* Check domain state */
++	ecrt_domain_state(sec_domain, &ds);
++
++	if (ds.working_counter != sec_domain_state.working_counter)
++		printf("Domain: WC %u.\n", ds.working_counter);
++	if (ds.wc_state != sec_domain_state.wc_state)
++		printf("Domain: State %u.\n", ds.wc_state);
++
++	sec_domain_state = ds;
++
++	/* Check master state */
++	ecrt_master_state(sec_master, &ms);
++
++	if (ms.slaves_responding != sec_master_state.slaves_responding)
++		printf("%u slave(s).\n", ms.slaves_responding);
++	if (ms.al_states != sec_master_state.al_states)
++		printf("AL states: 0x%02X.\n", ms.al_states);
++	if (ms.link_up != sec_master_state.link_up)
++		printf("Link is %s.\n", ms.link_up ? "up" : "down");
++
++	sec_master_state = ms;
++
++	/* Check slave config state */
++	ecrt_slave_config_state(sec_slave_config, &cs);
++
++	if (cs.al_state != sec_slave_config_state.al_state)
++		printf("Slave State 0x%02X.\n", cs.al_state);
++	if (cs.online != sec_slave_config_state.online)
++		printf("Slave %s.\n", cs.online ? "online" : "offline");
++	if (cs.operational != sec_slave_config_state.operational)
++		printf("Slave %soperational.\n", cs.operational ? "" : "Not ");
++
++	sec_slave_config_state = cs;
++}
++
++static servo_axle_state get_axle_state(uint16_t status_word)
++{
++	if ((status_word & 0x4F) == 0x40)
++		return switch_on_disable;
++	if ((status_word & 0x6F) == 0x21)
++		return ready_to_switch_on;
++	if ((status_word & 0x6F) == 0x23)
++		return switched_on;
++	if ((status_word & 0x6F) == 0x27)
++		return operation_enable;
++	if ((status_word & 0x6F) == 0x07)
++		return quick_stop_active;
++	if ((status_word & 0x4F) == 0xF)
++		return fault_reaction_active;
++	if ((status_word & 0x4F) == 0x08)
++		return fault;
++	else
++		return no_ready_to_switch_on;
++}
++
++static int servo_axle_switch_mode(void)
++{
++	uint16_t status_word = 0;
++	servo_axle_state s = 0;
++	int ret = -1;
++
++	status_word = EC_READ_U16(sec_domain_pd + sec_stat_word);
++	s = get_axle_state(status_word);
++
++	switch (s) {
++	case (no_ready_to_switch_on):
++	case (switch_on_disable):
++		EC_WRITE_U16(sec_domain_pd + sec_ctrl_word, contrlword_shutdown(0));
++		break;
++	case (ready_to_switch_on):
++		EC_WRITE_U16(sec_domain_pd + sec_ctrl_word, contrlword_switch_on(0));
++		break;
++	case (switched_on):
++		EC_WRITE_U8(sec_domain_pd + sec_op_mode, op_mode_csp);
++		EC_WRITE_U16(sec_domain_pd + sec_ctrl_word, contrlword_enable_operation(0));
++		break;
++	case (operation_enable):
++		ret = 0;
++		break;
++	case (quick_stop_active):
++	case (fault_reaction_active):
++		ret = -3;
++		break;
++	case (fault):
++		EC_WRITE_U16(sec_domain_pd + sec_ctrl_word, contrlword_fault_reset(0));
++		ret = -4;
++		break;
++	default:
++		ret = -2;
++	}
++
++	return ret;
++}
++
++static int32_t sec_base_pos = 0;
++static int32_t sec_cur_pos = 0;
++static int update_motor_positon(void)
++{
++	static float fratio = 0.0;
++	static int init_flag = 0;
++	static int ctrl_flag = 1;
++	static int pos_idx = 0;
++	static int sec_cnt = 0;
++	int ret = 0;
++
++	ret = servo_axle_switch_mode();
++	if (ret)
++		return ret;
++
++	if (!init_flag) {
++		sec_base_pos = EC_READ_U16(sec_domain_pd + sec_actual_pos);
++		fratio = sec_rate / 1000.0;
++		init_flag = 1;
++	}
++
++	if (sexit_flag && (pos_idx == 0)) {
++		sec_cnt++;
++		if (sec_cnt > 3000)
++			sloop_flag = 0;
++		return 0;
++	}
++
++	if (ctrl_flag) {
++		pos_idx++;
++		if (sexit_flag && (pos_idx > 0))
++			ctrl_flag = 0;
++		else if (pos_idx >= 10000)  /* rotate forward for 10s */
++			ctrl_flag = 0;
++	} else {
++		pos_idx--;
++		if (sexit_flag && (pos_idx < 0))
++			ctrl_flag = 1;
++		else if (pos_idx <= -10000)  /* rotate backward for 10s */
++			ctrl_flag = 1;
++	}
++
++	sec_cur_pos = sec_base_pos + fratio * pos_idx;
++	EC_WRITE_U32(sec_domain_pd + sec_target_pos, sec_cur_pos);
++
++	return 0;
++}
++
++void run_main_cycle_task(void)
++{
++	struct timespec cycletime = {0, CYCLE_TIME_NS};
++	struct timespec wakeupTime;
++	struct timespec start_time;
++
++#ifdef EC_MASTER_IN_USERSPACE
++	ecus_bind_cpu_core(EC_BIND_CORE_MASK);
++#endif
++
++	clock_gettime(CLOCK_REALTIME, &wakeupTime);
++	while (sloop_flag) {
++		wakeupTime = timespec_add(wakeupTime, cycletime);
++		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &wakeupTime, NULL);
++		clock_gettime(CLOCK_REALTIME, &start_time);
++
++		/* receive process data */
++		ecrt_master_receive(sec_master);
++		ecrt_domain_process(sec_domain);
++
++		/* check slave state (optional) */
++		//check_ecat_slave_state();
++
++		/* time sync and reference clock */
++		ecrt_master_application_time(sec_master, TIMESPEC2NS(start_time));
++		ecrt_master_sync_reference_clock(sec_master);
++		ecrt_master_sync_slave_clocks(sec_master);
++
++#ifdef EC_MASTER_IN_USERSPACE
++		ecus_master_operation_loop(sec_master, 1);
++#endif
++
++		/* Update motor position */
++		update_motor_positon();
++
++		/* send process data */
++		ecrt_domain_queue(sec_domain);
++		ecrt_master_send(sec_master);
++
++#ifdef EC_MASTER_IN_USERSPACE
++		ecus_master_operation_loop(sec_master, 0);
++#endif
++	}
++}
++
++void signal_handler(int signum)
++{
++	sexit_flag = 1;
++	printf("\nSystem will exit after several seconds...\n");
++}
++
++#ifdef EC_MASTER_IN_USERSPACE
++#define MAX_MASTER_NUM (32)
++static int smaster_count = 1;
++static char *smaster_macs[MAX_MASTER_NUM] = {
++	"04:13:07:02:00:13",
++};
++
++static int sbackup_count = 0;
++static char *sbackup_macs[MAX_MASTER_NUM];
++
++int is_all_slaves_ready(void)
++{
++	int ready = 0;
++
++	ready = ecus_slave_is_ready(0, 0, 0);
++	if (!ready)
++		return 0;
++
++	return 1;
++}
++#endif
++
++int main(int argc, char **argv)
++{
++#ifdef EC_MASTER_IN_USERSPACE
++	const char **masters = (const char **)smaster_macs;
++	const char **backups = (const char **)sbackup_macs;
++#endif
++	ec_reg_pdo_cfg_t *prp  = NULL;
++	ec_slave_info_t slave_info;
++	int32_t pdo_oft = 0;
++	int ecat_flag = 0;
++	int sec = 0;
++	int ret = 0;
++	int i = 0;
++
++	signal(SIGTERM, signal_handler);
++	signal(SIGINT, signal_handler);
++
++	if (argc > 1) {
++		if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
++			printf("Usage:\n  %s [encode_rate]\n\n", argv[0]);
++			return 0;
++		}
++		sec_rate = strtoul(argv[1], NULL, 0);
++	}
++
++#ifdef EC_MASTER_IN_USERSPACE
++	ret = ecus_init(smaster_count, masters, sbackup_count, backups, 0, CYCLE_TIME_NS, EC_BIND_CORE_MASK);
++	if (ret)
++		RET_ERR(-1, "Failed to init userspace EtherCAT!\n");
++
++	ecat_flag = 1;
++	printf("waiting for slaves ");
++	for (sec = 0; sec < 60; sec++) {
++		if (is_all_slaves_ready()) {
++			printf("\nAll slaves are ready, sec:%d\n", sec);
++			break;
++		}
++		printf(".");
++		sleep(1);
++	}
++	if (sec == 60)
++		RET_ERR(-2, "Timeout to wait for slave to be ready!\n");
++#endif
++
++	/* Requests an EtherCAT master for realtime operation */
++	sec_master = ecrt_request_master(0);
++	if (!sec_master)
++		RET_ERR(-3, "Failed to request master!\n");
++
++	ret = ecrt_master_get_slave(sec_master, 0, &slave_info);
++	if (ret == 0) {
++		sec_vendor_id = slave_info.vendor_id;
++		sec_product_code = slave_info.product_code;
++	} else {
++		RET_ERR(-4, "Failed to get slave information!\n");
++	}
++	printf("Motor vendor_id:0x%X product_code:0x%X encode_rate:%d\n", sec_vendor_id, sec_product_code, sec_rate);
++
++	/* Creates a new process data domain */
++	sec_domain = ecrt_master_create_domain(sec_master);
++	if (!sec_domain)
++		RET_ERR(-5, "Failed to create domain for master!\n");
++
++	/* Obtains slave configuration */
++	sec_slave_config = ecrt_master_slave_config(sec_master, 0, 0, sec_vendor_id, sec_product_code);
++	if (!sec_slave_config)
++		RET_ERR(-6, "Failed to get slave configuration!\n");
++
++	ecrt_slave_config_sdo32(sec_slave_config, 0x6083, 0, 0x1000);  /* Profile_acceleration */
++	ecrt_slave_config_sdo32(sec_slave_config, 0x6084, 0, 0x1000);  /* Profile_deceleration */
++	ecrt_slave_config_sdo32(sec_slave_config, 0x6085, 0, 0x1000);  /* Quick_stop_deceleration */
++
++	ecrt_slave_config_watchdog(sec_slave_config, 0, 4000);
++	ecrt_slave_config_dc(sec_slave_config, 0x0300, CYCLE_TIME_NS, 0, 0, 0);
++
++	printf("Configuring PDOs...\n");
++	if (ecrt_slave_config_pdos(sec_slave_config, EC_END, sec_sync_mgr))
++		RET_ERR(-7, "Failed to configure PDOs!\n");
++
++	for (i = 0; i < NUM_OF(sec_reg_pdo_cfg); i++) {
++		prp = sec_reg_pdo_cfg + i;
++
++		pdo_oft = ecrt_slave_config_reg_pdo_entry(sec_slave_config, prp->index, prp->subindex, sec_domain, NULL);
++		if (pdo_oft < 0)
++			RET_ERR(-8, "Failed to register PDO entry!\n");
++
++		if (prp->poffset)
++			*prp->poffset = pdo_oft;
++	}
++
++	printf("Activating master...\n");
++	if (ecrt_master_activate(sec_master))
++		RET_ERR(-9, "Failed to activate master!\n");
++
++	sec_domain_pd = ecrt_domain_data(sec_domain);
++	if (!sec_domain_pd)
++		RET_ERR(-10, "Failed to get domain data!\n");
++
++	run_main_cycle_task();
++
++ret_tag:
++
++#ifdef EC_MASTER_IN_USERSPACE
++	if (ecat_flag)
++	      ecus_done();
++#endif
++
++	return 0;
++}
+-- 
+2.34.1
+

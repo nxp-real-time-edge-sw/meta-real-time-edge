@@ -56,6 +56,7 @@ SRC_URI += "\
     file://0003-Optimize-the-code-of-enet_fec-driver.patch \
     file://0004-Add-support-for-platform-with-1-core-like-i.MX91.patch \
     file://0005-Fix-the-issue-of-segment-error-when-calling-ecus_don.patch \
+    file://0001-Add-simple-example-for-user-space-motor-control.patch \
 "
 
 S = "${WORKDIR}/git"
@@ -83,8 +84,19 @@ EXTRA_OECONF += " --enable-userlib=no"
 EXTRA_OECONF += " --with-linux-dir=${STAGING_KERNEL_BUILDDIR}"
 EXTRA_OECONF += " --with-module-dir=kernel/ethercat"
 
+EXAMPLE_INSTALL_DIR = "examples"
+FILES:${PN} += "${EXAMPLE_INSTALL_DIR}"
+FILES:${PN} += "${EXAMPLE_INSTALL_DIR}/${PN}"
+
 do_configure:prepend() {
     touch ChangeLog
+}
+
+do_install:append() {
+    install -d ${D}/${EXAMPLE_INSTALL_DIR}/${PN}
+    if [ -f "${S}/examples/motor_control/ec_motor_example" ]; then
+        cp examples/motor_control/ec_motor_example  ${D}/${EXAMPLE_INSTALL_DIR}/${PN}
+    fi
 }
 
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
