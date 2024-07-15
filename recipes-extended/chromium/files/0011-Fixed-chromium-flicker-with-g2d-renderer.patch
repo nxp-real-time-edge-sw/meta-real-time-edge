@@ -1,0 +1,14 @@
+diff --git a/ui/ozone/platform/wayland/gpu/gbm_surfaceless_wayland.cc b/ui/ozone/platform/wayland/gpu/gbm_surfaceless_wayland.cc
+index aee5dd0..c6678c5 100644
+--- a/ui/ozone/platform/wayland/gpu/gbm_surfaceless_wayland.cc
++++ b/ui/ozone/platform/wayland/gpu/gbm_surfaceless_wayland.cc
+@@ -203,8 +203,7 @@ void GbmSurfacelessWayland::Present(SwapCompletionCallback completion_callback,
+   unsubmitted_frames_.back()->configs.reserve(frame->configs.size());
+   // If Wayland server supports linux_explicit_synchronization_protocol, fences
+   // should be shipped with buffers. Otherwise, we will wait for fences.
+-  if (buffer_manager_->supports_acquire_fence() || !use_egl_fence_sync_ ||
+-      !frame->schedule_planes_succeeded) {
++  if (!use_egl_fence_sync_ || !frame->schedule_planes_succeeded) {
+     frame->ready = true;
+     MaybeSubmitFrames();
+     return;

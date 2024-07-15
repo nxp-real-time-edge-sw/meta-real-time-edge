@@ -1,0 +1,60 @@
+diff --git a/ui/gfx/linux/gbm_device.h b/ui/gfx/linux/gbm_device.h
+index 8fd34e8..fa5e6a5 100644
+--- a/ui/gfx/linux/gbm_device.h
++++ b/ui/gfx/linux/gbm_device.h
+@@ -34,6 +34,8 @@ class GbmDevice {
+       gfx::NativePixmapHandle handle) = 0;
+ 
+   virtual bool CanCreateBufferForFormat(uint32_t format) = 0;
++
++  virtual gbm_device* get() = 0;
+ };
+ 
+ }  // namespace ui
+diff --git a/ui/gfx/linux/gbm_wrapper.cc b/ui/gfx/linux/gbm_wrapper.cc
+index 3fd107d..50e22a4 100644
+--- a/ui/gfx/linux/gbm_wrapper.cc
++++ b/ui/gfx/linux/gbm_wrapper.cc
+@@ -393,6 +393,8 @@ class Device final : public ui::GbmDevice {
+   }
+ #endif
+ 
++ gbm_device* get() {return device_;};
++
+  private:
+   const raw_ptr<gbm_device> device_;
+ };
+diff --git a/ui/ozone/platform/wayland/gpu/wayland_buffer_manager_gpu.cc b/ui/ozone/platform/wayland/gpu/wayland_buffer_manager_gpu.cc
+index b353069..f2d1c0e 100644
+--- a/ui/ozone/platform/wayland/gpu/wayland_buffer_manager_gpu.cc
++++ b/ui/ozone/platform/wayland/gpu/wayland_buffer_manager_gpu.cc
+@@ -349,8 +349,6 @@ GbmDevice* WaylandBufferManagerGpu::GetGbmDevice() {
+   if (!supports_dmabuf_ || (!gl::GLSurfaceEGL::GetGLDisplayEGL()
+                                  ->ext->b_EGL_EXT_image_dma_buf_import &&
+                             !use_fake_gbm_device_for_test_)) {
+-    supports_dmabuf_ = false;
+-    return nullptr;
+   }
+ 
+   if (gbm_device_ || use_fake_gbm_device_for_test_)
+diff --git a/ui/ozone/platform/wayland/gpu/wayland_surface_factory.cc b/ui/ozone/platform/wayland/gpu/wayland_surface_factory.cc
+index 7ed05c4..9911181 100644
+--- a/ui/ozone/platform/wayland/gpu/wayland_surface_factory.cc
++++ b/ui/ozone/platform/wayland/gpu/wayland_surface_factory.cc
+@@ -164,6 +164,16 @@ scoped_refptr<gl::GLSurface> GLOzoneEGLWayland::CreateOffscreenGLSurface(
+ }
+ 
+ gl::EGLDisplayPlatform GLOzoneEGLWayland::GetNativeDisplay() {
++#if defined(WAYLAND_GBM)
++  GbmDevice* const device = buffer_manager_->GetGbmDevice();
++  if (device != nullptr) {
++    gbm_device* gbm = device->get();
++    if (gbm) {
++      return gl::EGLDisplayPlatform(
++          reinterpret_cast<EGLNativeDisplayType>(gbm), EGL_PLATFORM_GBM_KHR);
++    }
++  }
++#endif
+   if (connection_)
+     return gl::EGLDisplayPlatform(
+         reinterpret_cast<EGLNativeDisplayType>(connection_->display()));
