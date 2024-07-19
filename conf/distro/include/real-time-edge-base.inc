@@ -25,14 +25,20 @@ DISTRO_FEATURES:remove:mx8dxl-nxp-bsp = " jailhouse"
 
 # For ls1028ardb
 DISTRO_FEATURES:remove:ls1028ardb = " x11"
+
+PREFERRED_VERSION_imx-gpu-viv:ls1028a = "6.4.11.p2.4-aarch64"
 PREFERRED_VERSION_weston:ls1028ardb = "12.0.2.imx"
 PREFERRED_VERSION_wayland-protocols:ls1028ardb = "1.32.imx"
 PREFERRED_VERSION_libdrm:ls1028ardb = "2.4.116.imx"
+
+PREFERRED_PROVIDER_virtual/mesa:ls1028a   = "mesa-gl"
+PREFERRED_PROVIDER_virtual/libgl:ls1028a  = "mesa-gl"
 PREFERRED_PROVIDER_virtual/libgles1:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/libgles2:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/libgles3:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/egl:ls1028ardb  = "imx-gpu-viv"
 PREFERRED_PROVIDER_virtual/opencl-icd:ls1028ardb = "imx-gpu-viv"
+
 LICENSE_FLAGS_ACCEPTED:append:ls1028ardb = " commercial"
 MACHINEOVERRIDES:append:ls1028ardb = ":imxdrm"
 
