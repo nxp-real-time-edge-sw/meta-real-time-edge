@@ -66,7 +66,7 @@ change_conf()
 	echo "EXTRA_IMAGE_FEATURES += \" debug-tweaks tools-debug eclipse-debug ssh-server-openssh \"" >> $BUILD_DIR/conf/local.conf
 	echo "CORE_IMAGE_EXTRA_INSTALL += \" openssh-sftp openssh-sftp-server \"" >> $BUILD_DIR/conf/local.conf
 	echo "IMAGE_INSTALL:append = \" kernel-module-la9310 userapp-la9310 freertos-la9310 arm-ral dpdk kernel-module-kpage-ncache imx-m7-la9310 kernel-module-arm-pmu\"" >> $BUILD_DIR/conf/local.conf
-	echo "IMAGE_INSTALL:append = \" imx-test dtc python3-pip python3-numpy \"" >> $BUILD_DIR/conf/local.conf
+	echo "IMAGE_INSTALL:append = \" dtc python3-pip python3-numpy minicom \"" >> $BUILD_DIR/conf/local.conf
 
 	if $fsl_setup_internal eq 'true'; then
 	        echo "IMAGE_INSTALL:append = \" rf-util-la9310 \"" >> $BUILD_DIR/conf/local.conf
@@ -114,7 +114,6 @@ change_conf()
 	echo "BBMASK += \"\${BSPDIR}/sources/meta-real-time-edge/recipes-nxp/packagegroups/packagegroup-real-time-edge-multimedia.bb\"" >> $BUILD_DIR/conf/local.conf
 	echo "BBMASK += \"\${BSPDIR}/sources/meta-imx/meta-sdk/recipes-graphics\"" >> $BUILD_DIR/conf/local.conf
 	echo "BBMASK += \"\${BSPDIR}/sources/meta-imx/meta-bsp/recipes-support/opencv\"" >> $BUILD_DIR/conf/local.conf
-
 
 }
 
