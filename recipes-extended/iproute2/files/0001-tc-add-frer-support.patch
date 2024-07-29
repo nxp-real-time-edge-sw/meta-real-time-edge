@@ -1,0 +1,382 @@
+From d26ebd7fa0d1b12ba6589643da7c6223e7a59752 Mon Sep 17 00:00:00 2001
+From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Date: Mon, 29 Jul 2024 14:05:14 +0800
+Subject: [PATCH] tc: add frer support
+
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
+---
+ include/uapi/linux/pkt_cls.h        |   1 +
+ include/uapi/linux/tc_act/tc_frer.h |  50 +++++
+ tc/Makefile                         |   1 +
+ tc/m_frer.c                         | 277 ++++++++++++++++++++++++++++
+ 4 files changed, 329 insertions(+)
+ create mode 100644 include/uapi/linux/tc_act/tc_frer.h
+ create mode 100644 tc/m_frer.c
+
+diff --git a/include/uapi/linux/pkt_cls.h b/include/uapi/linux/pkt_cls.h
+index 4f3932bb..e07a1821 100644
+--- a/include/uapi/linux/pkt_cls.h
++++ b/include/uapi/linux/pkt_cls.h
+@@ -139,6 +139,7 @@ enum tca_id {
+ 	TCA_ID_MPLS,
+ 	TCA_ID_CT,
+ 	TCA_ID_GATE,
++	TCA_ID_FRER,
+ 	/* other actions go here */
+ 	__TCA_ID_MAX = 255
+ };
+diff --git a/include/uapi/linux/tc_act/tc_frer.h b/include/uapi/linux/tc_act/tc_frer.h
+new file mode 100644
+index 00000000..a5c28acd
+--- /dev/null
++++ b/include/uapi/linux/tc_act/tc_frer.h
+@@ -0,0 +1,50 @@
++/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
++/* Copyright 2024 NXP */
++
++#ifndef __LINUX_TC_FRER_H
++#define __LINUX_TC_FRER_H
++
++#include <linux/pkt_cls.h>
++
++struct tc_frer {
++	tc_gen;
++};
++
++enum {
++	TCA_FRER_UNSPEC,
++	TCA_FRER_TM,
++	TCA_FRER_PARMS,
++	TCA_FRER_PAD,
++	TCA_FRER_TAG_TYPE,
++	TCA_FRER_TAG_ACTION,
++	TCA_FRER_RECOVER,
++	TCA_FRER_RECOVER_ALG,
++	TCA_FRER_RECOVER_HISTORY_LEN,
++	TCA_FRER_RECOVER_RESET_TM,
++	TCA_FRER_RECOVER_TAGLESS_PKTS,
++	TCA_FRER_RECOVER_OUT_OF_ORDER_PKTS,
++	TCA_FRER_RECOVER_ROGUE_PKTS,
++	TCA_FRER_RECOVER_LOST_PKTS,
++	TCA_FRER_RECOVER_RESETS,
++	__TCA_FRER_MAX,
++};
++#define TCA_FRER_MAX (__TCA_FRER_MAX - 1)
++
++enum tc_frer_tag_action {
++	TCA_FRER_TAG_NULL,
++	TCA_FRER_TAG_PUSH,
++	TCA_FRER_TAG_POP,
++};
++
++enum tc_frer_tag_type {
++	TCA_FRER_TAG_RTAG = 1,
++	TCA_FRER_TAG_HSR,
++	TCA_FRER_TAG_PRP,
++};
++
++enum tc_frer_rcvy_alg {
++	TCA_FRER_RCVY_VECTOR_ALG,
++	TCA_FRER_RCVY_MATCH_ALG,
++};
++
++#endif
+diff --git a/tc/Makefile b/tc/Makefile
+index 98d2ee59..1b44d145 100644
+--- a/tc/Makefile
++++ b/tc/Makefile
+@@ -37,6 +37,7 @@ TCMODULES += q_htb.o
+ TCMODULES += q_drr.o
+ TCMODULES += q_qfq.o
+ TCMODULES += m_gact.o
++TCMODULES += m_frer.o
+ TCMODULES += m_mirred.o
+ TCMODULES += m_mpls.o
+ TCMODULES += m_nat.o
+diff --git a/tc/m_frer.c b/tc/m_frer.c
+new file mode 100644
+index 00000000..649630b4
+--- /dev/null
++++ b/tc/m_frer.c
+@@ -0,0 +1,277 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
++/* Copyright 2024 NXP */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <string.h>
++#include <linux/if_ether.h>
++#include "utils.h"
++#include "rt_names.h"
++#include "tc_util.h"
++#include "list.h"
++#include <linux/tc_act/tc_frer.h>
++
++static void explain(void)
++{
++	fprintf(stderr,
++		"Usage: frer rtag/hsr/prp push\n"
++		"       frer rtag/hsr/prp [POP] recover\n"
++		"       [ alg RCVY-ALG ]\n"
++		"       [ history-length HISTORY-LEN ]\n"
++		"       [ reset-time RESET-TM ]\n"
++		"       [ CONTROL ]\n"
++		"       RCVY-ALG := vector | match\n"
++		"       HISTORY-LEN : vector history length: 1-32\n"
++		"       RESET-TM : mseconds period of recover reset time\n"
++		"       CONTROL := reclassify | pipe | drop | continue | pass |\n"
++		"                  goto chain <CHAIN_INDEX>\n");
++}
++
++static void usage(void)
++{
++	explain();
++	exit(-1);
++}
++
++static int parse_frer(struct action_util *a, int *argc_p, char ***argv_p,
++		      int tca_id, struct nlmsghdr *n);
++static int print_frer(struct action_util *au, FILE *f, struct rtattr *arg);
++
++struct action_util frer_action_util = {
++	.id = "frer",
++	.parse_aopt = parse_frer,
++	.print_aopt = print_frer,
++};
++
++static int parse_frer(struct action_util *a, int *argc_p, char ***argv_p,
++		      int tca_id, struct nlmsghdr *n)
++{
++	struct tc_frer parm = {.action = TC_ACT_PIPE};
++	enum tc_frer_tag_type tag_type;
++	struct rtattr *tail, *nle;
++	char **argv = *argv_p;
++	int argc = *argc_p;
++	char *invalidarg;
++	__u32 flags = 0;
++	__u8 tag_action, alg, his_len;
++	__u8 recover = 0;
++	__u64 reset_tm;
++	int err;
++
++	if (matches(*argv, "frer") != 0)
++		return -1;
++
++	NEXT_ARG();
++	if (argc <= 1)
++		return -1;
++
++	if (matches(*argv, "rtag") == 0)
++		tag_type = TCA_FRER_TAG_RTAG;
++	else if(matches(*argv, "hsr") == 0)
++		tag_type = TCA_FRER_TAG_HSR;
++	else if(matches(*argv, "prp") == 0)
++		tag_type = TCA_FRER_TAG_PRP;
++	else
++		return -1;
++
++	tag_action = TCA_FRER_TAG_NULL;
++	alg = TCA_FRER_RCVY_MATCH_ALG;
++	his_len = 32;
++	reset_tm = 0;
++
++	NEXT_ARG();
++	while (argc > 0) {
++		if (matches(*argv, "tag-action") == 0) {
++			NEXT_ARG();
++			if (matches(*argv, "tag-push") == 0)
++				tag_action = TCA_FRER_TAG_PUSH;
++			else if (matches(*argv, "tag-pop") == 0)
++				tag_action = TCA_FRER_TAG_POP;
++		} else if (matches(*argv, "recover") == 0) {
++			recover = 1;
++			NEXT_ARG();
++			if (matches(*argv, "alg") == 0) {
++				NEXT_ARG();
++				if (matches(*argv, "vector") == 0)
++					alg = TCA_FRER_RCVY_VECTOR_ALG;
++				else if(matches(*argv, "match") == 0)
++					alg = TCA_FRER_RCVY_MATCH_ALG;
++				else
++					goto err_arg;
++			}
++
++			NEXT_ARG();
++			if (matches(*argv, "history-length") == 0) {
++				NEXT_ARG();
++				if (get_u8(&his_len, *argv, 10)) {
++					invalidarg = "history-length";
++					goto err_arg;
++				}
++			}
++
++			NEXT_ARG();
++			if (matches(*argv, "reset-time") == 0) {
++				NEXT_ARG();
++				if (get_u64(&reset_tm, *argv, 10)) {
++					invalidarg = "reset-time";
++					goto err_arg;
++				}
++			}
++		} else if (matches(*argv, "help") == 0) {
++			usage();
++		} else {
++			break;
++		}
++
++		argc--;
++		argv++;
++	}
++
++	parse_action_control_dflt(&argc, &argv, &parm.action,
++				  false, TC_ACT_PIPE);
++
++	tail = addattr_nest(n, MAX_MSG, tca_id | NLA_F_NESTED);
++	addattr_l(n, MAX_MSG, TCA_FRER_PARMS, &parm, sizeof(parm));
++
++	addattr_l(n, MAX_MSG, TCA_FRER_TAG_TYPE, &tag_type, sizeof(__u8));
++
++	addattr_l(n, MAX_MSG, TCA_FRER_TAG_ACTION, &tag_action, sizeof(__u8));
++	addattr_l(n, MAX_MSG, TCA_FRER_RECOVER, &recover, sizeof(__u8));
++
++	addattr_l(n, MAX_MSG, TCA_FRER_RECOVER, &recover, sizeof(__u8));
++	addattr_l(n, MAX_MSG, TCA_FRER_RECOVER_ALG, &alg, sizeof(__u8));
++	addattr_l(n, MAX_MSG, TCA_FRER_RECOVER_HISTORY_LEN, &his_len,
++		  sizeof(__u8));
++	addattr_l(n, MAX_MSG, TCA_FRER_RECOVER_RESET_TM, &reset_tm,
++		  sizeof(__u64));
++
++	addattr_nest_end(n, tail);
++
++	*argc_p = argc;
++	*argv_p = argv;
++
++	return 0;
++err_arg:
++	invarg(invalidarg, *argv);
++
++	return -1;
++}
++
++static int print_frer(struct action_util *au, FILE *f, struct rtattr *arg)
++{
++	struct tc_frer *parm;
++	struct rtattr *tb[TCA_FRER_MAX + 1];
++	__u8 tag_type, tag_action, alg, his_len;
++	bool recover;
++	__u64 reset_tm;
++	__u32 cnt;
++	SPRINT_BUF(buf);
++
++	if (arg == NULL)
++		return -1;
++
++	parse_rtattr_nested(tb, TCA_FRER_MAX, arg);
++
++	if (!tb[TCA_FRER_PARMS]) {
++		fprintf(stderr, "Missing frer parameters\n");
++		return -1;
++	}
++
++	print_string(PRINT_FP, NULL, "%s", "\n");
++
++	parm = RTA_DATA(tb[TCA_FRER_PARMS]);
++
++	if (tb[TCA_FRER_TAG_TYPE])
++		tag_type = rta_getattr_u8(tb[TCA_FRER_TAG_TYPE]);
++
++	if (tag_type == TCA_FRER_TAG_RTAG)
++		print_string(PRINT_ANY, "tag-type",
++			     "\ttag-type %s", "rtag");
++	else if (tag_type == TCA_FRER_TAG_HSR)
++		print_string(PRINT_ANY, "tag-type",
++			     "\ttag-type %s", "hsr");
++	else if (tag_type == TCA_FRER_TAG_PRP)
++		print_string(PRINT_ANY, "tag-type",
++			     "\ttag-type %s", "prp");
++
++	if (tb[TCA_FRER_TAG_ACTION])
++		tag_action = rta_getattr_u8(tb[TCA_FRER_TAG_ACTION]);
++
++	if (tag_action == TCA_FRER_TAG_PUSH)
++		print_string(PRINT_ANY, "tag-action",
++			     "\ttag-action %s", "push");
++	else if (tag_action == TCA_FRER_TAG_POP)
++		print_string(PRINT_ANY, "tag-action",
++			     "\ttag-action %s", "pop");
++	else
++		print_string(PRINT_ANY, "tag-action",
++			     "\ttag-action %s", "NULL");
++
++	if (tb[TCA_FRER_RECOVER])
++		recover = rta_getattr_u8(tb[TCA_FRER_RECOVER]);
++
++	if (recover) {
++		print_string(PRINT_ANY, "recover", "\n\trecover:%s", "");
++
++		if (tb[TCA_FRER_RECOVER_ALG])
++			alg = rta_getattr_u8(tb[TCA_FRER_RECOVER_ALG]);
++		if (alg == TCA_FRER_RCVY_VECTOR_ALG)
++			print_string(PRINT_ANY, "recover-alg",
++				     "\talg %s", "vector");
++		else
++			print_string(PRINT_ANY, "recover-alg",
++				     "\talg %s", "match");
++
++		if (tb[TCA_FRER_RECOVER_HISTORY_LEN])
++			his_len = rta_getattr_u8(tb[TCA_FRER_RECOVER_HISTORY_LEN]);
++		print_int(PRINT_ANY, "history-len",
++			  "\thistory-len %d", his_len);
++
++		if (tb[TCA_FRER_RECOVER_RESET_TM])
++			reset_tm = rta_getattr_u64(tb[TCA_FRER_RECOVER_RESET_TM]);
++		print_int(PRINT_ANY, "reset-time",
++			  "\treset-time %d", reset_tm);
++
++		print_string(PRINT_ANY, "recover_stats",
++			     "\n\trecover stats:%s", "");
++
++		if (tb[TCA_FRER_RECOVER_TAGLESS_PKTS])
++			cnt = rta_getattr_u32(tb[TCA_FRER_RECOVER_TAGLESS_PKTS]);
++		print_int(PRINT_ANY, "tagless", "\ttagless %d", cnt);
++
++		if (tb[TCA_FRER_RECOVER_OUT_OF_ORDER_PKTS])
++			cnt = rta_getattr_u32(tb[TCA_FRER_RECOVER_OUT_OF_ORDER_PKTS]);
++		print_int(PRINT_ANY, "out-of-order", "\tout-of-order %d", cnt);
++
++		if (tb[TCA_FRER_RECOVER_ROGUE_PKTS])
++			cnt = rta_getattr_u32(tb[TCA_FRER_RECOVER_ROGUE_PKTS]);
++		print_int(PRINT_ANY, "rogue", "\trogue %d", cnt);
++
++		if (tb[TCA_FRER_RECOVER_LOST_PKTS])
++			cnt = rta_getattr_u32(tb[TCA_FRER_RECOVER_LOST_PKTS]);
++		print_int(PRINT_ANY, "lost", "\tlost %d", cnt);
++
++		if (tb[TCA_FRER_RECOVER_RESETS])
++			cnt = rta_getattr_u32(tb[TCA_FRER_RECOVER_RESETS]);
++		print_int(PRINT_ANY, "resets", "\tresets %d", cnt);
++	}
++
++	print_action_control(f, "\n\t", parm->action, "");
++
++	print_uint(PRINT_ANY, "index", "\n\t index %u", parm->index);
++	print_int(PRINT_ANY, "ref", " ref %d", parm->refcnt);
++	print_int(PRINT_ANY, "bind", " bind %d", parm->bindcnt);
++
++	if (show_stats) {
++		if (tb[TCA_FRER_TM]) {
++			struct tcf_t *tm = RTA_DATA(tb[TCA_FRER_TM]);
++
++			print_tm(f, tm);
++		}
++	}
++
++	print_string(PRINT_FP, NULL, "%s", "\n");
++
++	return 0;
++}
+-- 
+2.34.1
+
