@@ -1,12 +1,12 @@
 SUMMARY = "ARM RAM is a library for implementing ARM NEON Optimized functions for soft radio processing"
 DESCRIPTION = "ARM RAM is a library for implementing ARM NEON Optimized functions for soft radio processing."
 LICENSE = "BSD-3-Clause"
-LIC_FILES_CHKSUM = "file://license_terms/BSD-3-Clause.txt;md5=0b78a9675df61b1368982e4641d07fe3"
+LIC_FILES_CHKSUM = "file://LICENSE.md;md5=5268fbc4c21a5b0604093f6876d504fa"
 
 SRC_URI = "git://gitlab.arm.com/networking/ral.git;protocol=https;nobranch=1 \
 "
 
-SRCREV = "2f304504777627e6540137452e52716ed2d82fb9"
+SRCREV = "9038c543edc1e27b3347825161fe223ca5c13472"
 
 S = "${WORKDIR}/git"
 
