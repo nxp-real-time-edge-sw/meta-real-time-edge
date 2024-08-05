@@ -26,8 +26,8 @@ DISTRO_FEATURES:remove:mx8dxl-nxp-bsp = " jailhouse"
 # For ls1028ardb
 DISTRO_FEATURES:remove:ls1028ardb = " x11"
 
-PREFERRED_VERSION_imx-gpu-viv:ls1028a = "6.4.11.p2.4-aarch64"
-PREFERRED_VERSION_weston:ls1028ardb = "12.0.2.imx"
+PREFERRED_VERSION_imx-gpu-viv:ls1028a = "6.4.11.p2.8-aarch64"
+PREFERRED_VERSION_weston:ls1028ardb = "12.0.4.imx"
 PREFERRED_VERSION_wayland-protocols:ls1028ardb = "1.32.imx"
 PREFERRED_VERSION_libdrm:ls1028ardb = "2.4.116.imx"
 
