@@ -49,8 +49,12 @@ do_install() {
         install -m 0755 ${S}/install/usr/lib/libla9310tti.so ${D}${libdir}
 	install -m 0755 ${S}/install/usr/bin/* ${D}/usr/bin/
 	install -d ${D}/${ROOT_HOME}
+	install -d ${D}/${ROOT_HOME}/host_utils
 	install -m 0755 ${S}/install/etc/*.sh ${D}/${ROOT_HOME}/
 	install -m 0755 ${S}/install/etc/rfnm_* ${D}/${ROOT_HOME}/
+	install -m 0755 ${S}/app/host_utils/*.py ${D}/${ROOT_HOME}/host_utils
+	install -m 0755 ${S}/app/host_utils/*.sh ${D}/${ROOT_HOME}/host_utils
+	install -m 0755 ${S}/app/host_utils/*.bin ${D}/${ROOT_HOME}/host_utils
 }
 
 INSANE_SKIP:${PN} = "ldflags"
