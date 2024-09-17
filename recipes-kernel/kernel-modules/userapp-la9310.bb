@@ -28,7 +28,7 @@ EXTRA_OEMAKE = '\
     DESTDIR="${D}" \
 '
 PARALLEL_MAKE="-j 1"
-FILES:${PN}= "/usr/lib/* /usr/bin/* ${ROOT_HOME}/*"
+FILES:${PN}= "/usr/lib/* /usr/bin/* ${ROOT_HOME}/* /lib/firmware/* "
 
 do_configure () {
 	cd ${S}
@@ -50,11 +50,13 @@ do_install() {
 	install -m 0755 ${S}/install/usr/bin/* ${D}/usr/bin/
 	install -d ${D}/${ROOT_HOME}
 	install -d ${D}/${ROOT_HOME}/host_utils
+	install -d ${D}${nonarch_base_libdir}/firmware
 	install -m 0755 ${S}/install/etc/*.sh ${D}/${ROOT_HOME}/
 	install -m 0755 ${S}/install/etc/rfnm_* ${D}/${ROOT_HOME}/
 	install -m 0755 ${S}/app/host_utils/*.py ${D}/${ROOT_HOME}/host_utils
 	install -m 0755 ${S}/app/host_utils/*.sh ${D}/${ROOT_HOME}/host_utils
 	install -m 0755 ${S}/app/host_utils/*.bin ${D}/${ROOT_HOME}/host_utils
+	install -m 0755 ${S}/app/host_utils/fw_iqplayer/*.eld ${D}${nonarch_base_libdir}/firmware
 }
 
 INSANE_SKIP:${PN} = "ldflags"
@@ -64,3 +66,5 @@ INHIBIT_SYSROOT_STRIP = "1"
 SOLIBS = ".so"
 FILES_SOLIBSDEV = ""
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
+do_package_qa[noexec] = "1"
+
