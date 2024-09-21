@@ -27,8 +27,11 @@ SRCREV_firmware_repo = "${AUTOREV}"
 SRC_LA9310_RFNM_CLI_URI = "git://git@bitbucket.sw.nxp.com/dn5g/rfnm-cli.git;protocol=ssh;branch=main;name=rfnm_cli_repo"
 SRCREV_rfnm_cli_repo = "${AUTOREV}"
 
-SRC_LA9310_GEUL_RF_UTIL_URI = "git://git@bitbucket.sw.nxp.com/dnnpi/geul_rf_util.git;protocol=ssh;branch=la12xx;name=geul_rf_util_repo"
+SRC_LA9310_GEUL_RF_UTIL_URI = "git://git@bitbucket.sw.nxp.com/dnnpi/geul_rf_util.git;protocol=ssh;branch=rfnm_mt3812_dev;name=geul_rf_util_repo"
 SRCREV_geul_rf_util_repo = "${AUTOREV}"
+
+SRC_LA9310_GEUL_RF_DIORA_URI = "git://git@bitbucket.sw.nxp.com/dn5g/rf_diora_sdk.git;protocol=ssh;branch=rfnm_mt3812_dev;name=geul_rf_diora_repo"
+SRCREV_geul_rf_diora_repo = "${AUTOREV}"
 
 SRC_LA9310_GEUL_COMMON_HEADER_URI = "git://git@bitbucket.sw.nxp.com/dnnpi/geul_common_headers.git;protocol=ssh;branch=la12xx;name=geul_common_headers_repo"
 SRCREV_geul_common_headers_repo = "${AUTOREV}"
