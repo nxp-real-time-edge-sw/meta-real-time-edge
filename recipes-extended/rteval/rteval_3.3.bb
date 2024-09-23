@@ -38,6 +38,5 @@ RDEPENDS:${PN} += " \
     libxml2 \
     libxml2-python \
     python3-lxml \
-    python3-distutils \
     python3-xmlrpc \
 "
