@@ -27,7 +27,7 @@ EXTRA_OEMAKE = " \
   LA9310_COMMON_HEADERS='${WORKDIR}/la93xx_freertos/common_headers' \
   LMS7002M_KERNEL_DIR='${WORKDIR}/lms7002m' \
 "
-EXTRA_OEMAKE:append:imx8mp-rfnm = " CONFIG_ENABLE_FLOAT_BYPASS=y IMX_RFNM='1' "
+EXTRA_OEMAKE:append:imx8mp-rfnm = " CONFIG_ENABLE_FLOAT_BYPASS=y IMX_RFNM='1' IMX_RFMT3812='1' "
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 do_configure () {
@@ -42,5 +42,6 @@ do_install() {
 	install -m 0755 ${S}/kernel_driver/la9310demo/la9310demo.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 if [ imx8mp-rfnm ]; then
 	install -m 0755 ${S}/kernel_driver/la9310rfnm/*.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
+	install -m 0755 ${S}/kernel_driver/la9310mt3812/*.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 fi
 }
