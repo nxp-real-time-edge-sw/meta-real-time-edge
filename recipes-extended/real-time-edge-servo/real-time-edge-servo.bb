@@ -36,6 +36,6 @@ do_install() {
    oe_runmake install-libs -C ${S} ${EXTRA_OEMAKE}
 }
 
-FILES:${PN} += "${bindir_native}/* ${sbindir_native}/* ${libdir_native}/* ${ROOT_HOME}/*"
+FILES:${PN} += "${bindir}/* ${libdir}/* ${ROOT_HOME}/*"
 
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
