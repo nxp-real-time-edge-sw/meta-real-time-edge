@@ -3,17 +3,18 @@ DESCRIPTION = "A tool to configure TSN functionalities in user space"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
-REAL_TIME_EDGE_SYSREPO_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-sysrepo.git;protocol=https;nobranch=1"
+REAL_TIME_EDGE_SYSREPO_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-sysrepo.git;protocol=https"
+REAL_TIME_EDGE_SYSREPO_BRANCH ?= "master"
+REAL_TIME_EDGE_SYSREPO_SRCREV ?= "eb0fff59a87ea4bc9e1606c60d2a37e0ddca322b"
 
-SRC_URI = "${REAL_TIME_EDGE_SYSREPO_SRC}"
+SRC_URI = "${REAL_TIME_EDGE_SYSREPO_SRC};branch=${REAL_TIME_EDGE_SYSREPO_BRANCH}"
+SRCREV = "${REAL_TIME_EDGE_SYSREPO_SRCREV}"
 
 SRC_URI += " \
     file://sysrepo-tsnd \
     file://sysrepo-init \
     file://scripts/model-install.sh \
 "
-
-SRCREV = "0efbc1756340c94b0f3e66bd9642fdd6f3a2fa22"
 
 S = "${WORKDIR}/git"
 
