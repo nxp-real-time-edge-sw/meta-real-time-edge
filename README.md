@@ -57,6 +57,7 @@ Machine:
 - imx93-9x9-lpddr4-qsb
 - imx93-14x14-lpddr4x-evk
 - imx95-19x19-lpddr5-evk
+- imx95-15x15-lpddr4x-evk
 - ls1028ardb
 - ls1043ardb
 - ls1046ardb
