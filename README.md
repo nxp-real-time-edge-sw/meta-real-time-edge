@@ -53,6 +53,7 @@ Machine:
 - imx8mm-lpddr4-evk
 - imx8mp-lpddr4-evk
 - imx91-11x11-lpddr4-evk
+- imx91-9x9-lpddr4-qsb
 - imx93evk
 - imx93-9x9-lpddr4-qsb
 - imx93-14x14-lpddr4x-evk
