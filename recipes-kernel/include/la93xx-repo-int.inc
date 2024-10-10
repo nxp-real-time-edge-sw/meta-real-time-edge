@@ -42,6 +42,9 @@ SRCREV_dpdk-extras_repo = "e53931e22a15858c5469f9cb0b631f40c3ec8db3"
 SRC_LMS7002M_URI = "git://github.com/rfnm/lms7002m;protocol=https;nobranch=1;name=LMS7002M_repo"
 SRCREV_LMS7002M_repo = "335ca15e478948ef6762910b8c95dfb4ce0e6617"
 
+SRC_LIMESUITENG_URI = "git://github.com/ehntoo/LimeSuiteNG.git;protocol=https;branch=rfnm-less-malloc;name=LIMESUITENG_repo"
+SRCREV_LIMESUITENG_repo = "bbd08c2af32f3f3e5d0b009c5634c716dceed213"
+
 SRC_LA9310_FREERTOS_VARISCITE_URI =  "git://github.com/varigit/freertos-variscite.git;protocol=https;branch=mcuxpresso_sdk_2.10.x-var01;name=freertos_variscite_repo"
 SRCREV_freertos_variscite_repo = "1a174e74344976450dcf29275c68464b23f7110d"
 

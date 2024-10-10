@@ -13,7 +13,7 @@ SRCREV_FORMAT = "la93xx-sdk"
 SRC_URI = "${SRC_LA9310_HOST_URI} \
         ${SRC_LA9310_FRTOS_URI};destsuffix=la93xx_freertos \
         ${SRC_LA9310_FW_URI};destsuffix=git/firmware \
-        ${SRC_LMS7002M_URI};destsuffix=lms7002m \
+        ${SRC_LIMESUITENG_URI};destsuffix=LimeSuiteNG \
 "
 
 S = "${WORKDIR}/git"
@@ -25,9 +25,9 @@ EXTRA_OEMAKE = " \
   KERNEL_DIR='${STAGING_KERNEL_BUILDDIR}' \
   ARCH='arm64' \
   LA9310_COMMON_HEADERS='${WORKDIR}/la93xx_freertos/common_headers' \
-  LMS7002M_KERNEL_DIR='${WORKDIR}/lms7002m' \
+  LMS7002M_KERNEL_DIR='${WORKDIR}/LimeSuiteNG' \
 "
-EXTRA_OEMAKE:append:imx8mp-rfnm = " CONFIG_ENABLE_FLOAT_BYPASS=y IMX_RFNM='1' IMX_RFMT3812='1' "
+EXTRA_OEMAKE:append:imx8mp-rfnm = " IMX_RFNM='1' IMX_RFLIME='1' IMX_RFMT3812='1' "
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 do_configure () {

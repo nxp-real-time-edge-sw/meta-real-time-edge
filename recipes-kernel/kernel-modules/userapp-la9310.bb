@@ -1,4 +1,4 @@
-DESCRIPTION = "user-space application for accessing any MDIO device."
+DESCRIPTION = "user-space application for LA9310 PCI driver."
 LICENSE = "GPL-2.0-or-later"
 
 require ../include/la93xx-repo.inc
