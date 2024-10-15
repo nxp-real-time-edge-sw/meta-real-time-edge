@@ -1,0 +1,32 @@
+From e10583a264ac53a8545f63a96ba70b4e243f8f0d Mon Sep 17 00:00:00 2001
+From: Nikhil Gupta <nikhil.gupta_2@nxp.com>
+Date: Mon, 29 Jul 2024 03:35:43 -0700
+Subject: [PATCH 5/5] la9310:Correct PCI addr offset according to TCML data
+ section offset
+
+Signed-off-by: Nikhil Gupta <nikhil.gupta_2@nxp.com>
+Signed-off-by: Arpit Goel <arpit.goel_2@nxp.com>
+---
+ rfnm_m7.h | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/rfnm_m7.h b/rfnm_m7.h
+index 35e8b01..d8e4c19 100644
+--- a/rfnm_m7.h
++++ b/rfnm_m7.h
+@@ -1,8 +1,10 @@
+ #ifndef __H_RFNM_M7
+ #define __H_RFNM_M7
+ 
+-#define PCIE_CTRL_ADDR_OFFSET (0x1C010B40 - 0x18000000)
+-#define PCIE_CTRL_ADDR_FROM_M7 (0xD0000000 + PCIE_CTRL_ADDR_OFFSET) // D400 10B40
++//PCIe offset of rf_ctrl structure present in TCML.
++//This offset can vary, please check offset with la9310.map file
++#define PCIE_CTRL_ADDR_OFFSET (0x1C012400 - 0x18000000)
++#define PCIE_CTRL_ADDR_FROM_M7 (0xD0000000 + PCIE_CTRL_ADDR_OFFSET) // D40 12400
+ #define PCIE_GPIO_ADDR_FROM_M7 (0xD0000000 + 0x2300000)
+ #define VSPA_MEM_ADDR_OFFSET (0x1F400000 - 0x18000000)
+ #define VSPA_MEM_ADDR_FROM_M7 (0xD0000000 + VSPA_MEM_ADDR_OFFSET)
+-- 
+2.25.1
+
