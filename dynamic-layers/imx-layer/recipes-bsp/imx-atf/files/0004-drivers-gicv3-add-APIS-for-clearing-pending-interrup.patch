@@ -1,0 +1,138 @@
+From a8f7ede9c6131e6228eab061f1ea4a78a5df68a6 Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Sat, 12 Oct 2024 16:33:29 +0800
+Subject: [PATCH 4/7] drivers: gicv3: add APIS for clearing pending interrupts
+
+Add two new APIs:
+1. Clean interrupts from distributor for a CPU Core, it will clear pending
+   SPIs interrupts and disable all interrups routes to this CPU Core.
+2. Clean interrupts from redistributor interface, it will clean pending
+   and disable all SGIs/PPIs on this redistributor interface.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+---
+ drivers/arm/gic/v3/gicv3_helpers.c | 40 ++++++++++++++++++++++++++++++
+ drivers/arm/gic/v3/gicv3_main.c    | 28 +++++++++++++++++++++
+ drivers/arm/gic/v3/gicv3_private.h |  2 ++
+ include/drivers/arm/gicv3.h        |  2 ++
+ 4 files changed, 72 insertions(+)
+
+diff --git a/drivers/arm/gic/v3/gicv3_helpers.c b/drivers/arm/gic/v3/gicv3_helpers.c
+index e85970dde..345270fd8 100644
+--- a/drivers/arm/gic/v3/gicv3_helpers.c
++++ b/drivers/arm/gic/v3/gicv3_helpers.c
+@@ -312,6 +312,46 @@ void gicv3_clear_spi_cluster(uintptr_t gicd_base)
+ 	}
+ }
+ 
++/*******************************************************************************
++ * Helper function to clear all SPI interrupts of a CPU Core
++ ******************************************************************************/
++void gicv3_clear_spi_cpu(uintptr_t gicd_base)
++{
++	unsigned int irq_num, num_ints;
++	unsigned long long cpu_aff, irq_aff;	/* the irouter affinity values */
++	unsigned int mpidr = read_mpidr();
++
++	num_ints = gicd_read_typer(gicd_base);
++	num_ints &= TYPER_IT_LINES_NO_MASK;
++	num_ints = (num_ints + 1) << 5;
++
++	cpu_aff = gicd_irouter_val_from_mpidr(mpidr, 0);
++
++	/* browse all SPIs */
++	for (irq_num = MIN_SPI_ID; irq_num < num_ints; irq_num++) {
++		irq_aff = gicd_read_irouter(gicd_base, irq_num);
++		if ((irq_aff & MPIDR_AFFINITY_MASK) == cpu_aff) {
++			/* if affinity matches CPU Core, clear INT */
++			/* disable INT */
++			gicd_set_icenabler(gicd_base, irq_num);
++			/* remove pending state */
++			gicd_set_icpendr(gicd_base, irq_num);
++			while (gicd_read_ctlr(gicd_base) & GICD_CTLR_RWP_BIT);
++		}
++	}
++}
++
++/*******************************************************************************
++ * Helper function to clear all SGI/PPI interrupts of a GIC redistributor
++ ******************************************************************************/
++void gicv3_clear_sgi_ppi_cpu(uintptr_t gicr_base)
++{
++	/* Disable SGIs: 0-15, PPIs: 16-31 */
++	gicr_write_isenabler0(gicr_base, 0);
++	/* Clean Pending SGIs and PPIs */
++	gicr_write_icpendr0(gicr_base, 0);
++}
++
+ /*******************************************************************************
+  * Helper function to configure the default attributes of (E)PPIs/SGIs
+  ******************************************************************************/
+diff --git a/drivers/arm/gic/v3/gicv3_main.c b/drivers/arm/gic/v3/gicv3_main.c
+index 11ccc91f7..cabd8b624 100644
+--- a/drivers/arm/gic/v3/gicv3_main.c
++++ b/drivers/arm/gic/v3/gicv3_main.c
+@@ -230,6 +230,34 @@ void gicv3_distif_clear(void)
+ 	gicv3_clear_spi_cluster(gicv3_driver_data->gicd_base);
+ }
+ 
++/*******************************************************************************
++ * This function clears interrupts for CPU Core at GIC distributor level
++ ******************************************************************************/
++void gicv3_distif_cpu_clear(void)
++{
++	assert(gicv3_driver_data);
++	assert(gicv3_driver_data->gicd_base);
++
++	gicv3_clear_spi_cpu(gicv3_driver_data->gicd_base);
++}
++
++/*******************************************************************************
++ * This function clears interrupts for CPU Core at GIC redistributor level
++ ******************************************************************************/
++void gicv3_rdistif_cpu_clear(unsigned int proc_num)
++{
++	uintptr_t gicr_base;
++
++	assert(gicv3_driver_data);
++	assert(proc_num < gicv3_driver_data->rdistif_num);
++	assert(gicv3_driver_data->rdistif_base_addrs != NULL);
++
++	gicr_base = gicv3_driver_data->rdistif_base_addrs[proc_num];
++	assert(gicr_base != 0UL);
++
++	gicv3_clear_sgi_ppi_cpu(gicr_base);
++}
++
+ /*******************************************************************************
+  * This function initialises the GIC Redistributor interface of the calling CPU
+  * (identified by the 'proc_num' parameter) based upon the data provided by the
+diff --git a/drivers/arm/gic/v3/gicv3_private.h b/drivers/arm/gic/v3/gicv3_private.h
+index ac7c5199f..6de9de7cb 100644
+--- a/drivers/arm/gic/v3/gicv3_private.h
++++ b/drivers/arm/gic/v3/gicv3_private.h
+@@ -240,6 +240,8 @@ unsigned int gicv3_get_espi_limit(uintptr_t gicd_base);
+ void gicv3_spis_config_defaults(uintptr_t gicd_base);
+ void gicv3_ppi_sgi_config_defaults(uintptr_t gicr_base);
+ void gicv3_clear_spi_cluster(uintptr_t gicd_base);
++void gicv3_clear_spi_cpu(uintptr_t gicd_base);
++void gicv3_clear_sgi_ppi_cpu(uintptr_t gicr_base);
+ unsigned int gicv3_secure_ppi_sgi_config_props(uintptr_t gicr_base,
+ 		const interrupt_prop_t *interrupt_props,
+ 		unsigned int interrupt_props_num);
+diff --git a/include/drivers/arm/gicv3.h b/include/drivers/arm/gicv3.h
+index 77b7a42d5..0ee62c294 100644
+--- a/include/drivers/arm/gicv3.h
++++ b/include/drivers/arm/gicv3.h
+@@ -549,6 +549,8 @@ void gicv3_driver_init(const gicv3_driver_data_t *plat_driver_data);
+ int gicv3_rdistif_probe(const uintptr_t gicr_frame);
+ void gicv3_distif_init(void);
+ void gicv3_distif_clear(void);
++void gicv3_distif_cpu_clear(void);
++void gicv3_rdistif_cpu_clear(unsigned int proc_num);
+ void gicv3_rdistif_init(unsigned int proc_num);
+ void gicv3_rdistif_on(unsigned int proc_num);
+ void gicv3_rdistif_off(unsigned int proc_num);
+-- 
+2.34.1
+

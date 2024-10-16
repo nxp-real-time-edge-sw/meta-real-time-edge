@@ -1,0 +1,352 @@
+From 5e23b7f4632116d0590b68e3c7fac7ba2ef49219 Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Sat, 21 Sep 2024 16:51:22 +0800
+Subject: [PATCH 5/7] plat: imx: add SIP cpu_off service for imx93
+
+SIP cpu_off service is used to turn off specified CPU Core by any
+other management CPU Core, SGI interrupt is trigged by managment
+CPU Core and handled on specified CPU Core which will be into
+WFI in SGI interrupt handler.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+---
+ plat/imx/common/imx_cpu_off.c               | 43 +++++++++++++++++++
+ plat/imx/common/imx_intercore_svc.c         | 47 ++++++++++++++++++++-
+ plat/imx/common/imx_interrupt_mgmt.c        | 11 ++---
+ plat/imx/common/imx_sip_handler.c           | 26 +++++++++++-
+ plat/imx/common/imx_sip_svc.c               |  4 ++
+ plat/imx/common/include/imx_cpu_off.h       | 12 ++++++
+ plat/imx/common/include/imx_intercore_svc.h |  9 +++-
+ plat/imx/common/include/imx_sip_svc.h       |  6 +++
+ plat/imx/imx93/imx93_bl31_setup.c           |  2 +
+ plat/imx/imx93/platform.mk                  |  1 +
+ 10 files changed, 149 insertions(+), 12 deletions(-)
+ create mode 100644 plat/imx/common/imx_cpu_off.c
+ create mode 100644 plat/imx/common/include/imx_cpu_off.h
+
+diff --git a/plat/imx/common/imx_cpu_off.c b/plat/imx/common/imx_cpu_off.c
+new file mode 100644
+index 000000000..1941ac972
+--- /dev/null
++++ b/plat/imx/common/imx_cpu_off.c
+@@ -0,0 +1,43 @@
++/*
++ * Copyright 2024 NXP
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <common/debug.h>
++#include <drivers/arm/gicv3.h>
++#include <imx_intercore_svc.h>
++#include <lib/psci/psci.h>
++
++static uint64_t imx_cpu_off(uint32_t id, uint32_t flags,
++		void *handle, void *cookie)
++{
++	unsigned int cpu_id = get_cpu_id();
++	int ret;
++
++	/* Mask all exceptions */
++	write_daifset(0xf);
++	/* Clean and disable SPIs routing to this Core */
++	gicv3_distif_cpu_clear();
++	/* Clean and disable all SGIs/PPIs in this redistributor interface */
++	gicv3_rdistif_cpu_clear(cpu_id);
++	isb();
++	/* Will not return in case of success */
++	ret = psci_cpu_off();
++	if (ret != PSCI_E_SUCCESS) {
++		WARN("CPU off failed\n");
++	}
++
++	return ret;
++}
++
++void imx_cpuoff_init(void)
++{
++	int rc;
++
++	/* CPU off intercore service */
++	rc = register_intercore_cpuoff_svc(imx_cpu_off);
++	if (rc) {
++		panic();
++	}
++}
+diff --git a/plat/imx/common/imx_intercore_svc.c b/plat/imx/common/imx_intercore_svc.c
+index e03d5df39..fc855cca6 100644
+--- a/plat/imx/common/imx_intercore_svc.c
++++ b/plat/imx/common/imx_intercore_svc.c
+@@ -5,6 +5,7 @@
+  */
+ 
+ #include <common/debug.h>
++#include <drivers/delay_timer.h>
+ #include <imx_interrupt_mgmt.h>
+ #include <imx_intercore_svc.h>
+ #include <imx_interrupt_mgmt.h>
+@@ -59,6 +60,43 @@ int trigger_intercore_dvfs_svc(void)
+ 	return 0;
+ }
+ 
++int register_intercore_cpuoff_svc(interrupt_type_handler_t handler)
++{
++	percpu_svc_inf_t *inf;
++	uint32_t i;
++
++	if (!handler) {
++		return -EINVAL;
++	}
++
++	for (i = 0; i < PLATFORM_CORE_COUNT; i++) {
++		inf = &svc_info[i];
++		inf->cpu_off_svc.enabled = true;
++		inf->cpu_off_svc.handler = handler;
++	}
++
++	return 0;
++}
++
++int trigger_intercore_cpuoff_svc(unsigned int cpu)
++{
++	percpu_svc_inf_t *inf;
++
++	if (cpu >= PLATFORM_CORE_COUNT) {
++		return -EINVAL;
++	}
++
++	inf = &svc_info[cpu];
++	inf->cpu_off_svc.trigged = true;
++	inf->cpu_off_svc.result = 0;
++
++	plat_ic_raise_el3_sgi(INTERCORE_SVC_IRQ, logical_id_to_hwid(cpu));
++
++	/* Wait 1ms in case of returned error from cpu_off_svc handler */
++	mdelay(1);
++
++	return inf->cpu_off_svc.result;
++}
+ 
+ static uint64_t intercore_service(uint32_t id, uint32_t flags,
+ 		void *handle, void *cookie)
+@@ -67,11 +105,16 @@ static uint64_t intercore_service(uint32_t id, uint32_t flags,
+ 	percpu_svc_inf_t *inf = &svc_info[cpu_id];
+ 
+ 	if (inf->dvfs_svc.enabled && inf->dvfs_svc.trigged && inf->dvfs_svc.handler) {
+-		inf->dvfs_svc.handler(id, flags, handle, cookie);
++		inf->dvfs_svc.result = inf->dvfs_svc.handler(id, flags, handle, cookie);
+ 		inf->dvfs_svc.trigged = false;
+ 	}
+ 
+-	return 0U;
++	if (inf->cpu_off_svc.enabled && inf->cpu_off_svc.trigged && inf->cpu_off_svc.handler) {
++		inf->cpu_off_svc.trigged = false;
++		inf->cpu_off_svc.result = inf->cpu_off_svc.handler(id, flags, handle, cookie);
++	}
++
++	return 0;
+ }
+ 
+ void imx_intercore_svc_init(void)
+diff --git a/plat/imx/common/imx_interrupt_mgmt.c b/plat/imx/common/imx_interrupt_mgmt.c
+index 2b24fe45c..df0a2dbbc 100644
+--- a/plat/imx/common/imx_interrupt_mgmt.c
++++ b/plat/imx/common/imx_interrupt_mgmt.c
+@@ -42,20 +42,17 @@ static uint64_t imx_el3_interrupt_handler(uint32_t id, uint32_t flags,
+ 		WARN("No pending interrupt\n");
+ 		return 0U;
+ 	}
+-	intr_id = plat_ic_acknowledge_interrupt();
+ 
+-	INFO("Interrupt recvd is %d\n", intr_id);
++	intr_id = plat_ic_acknowledge_interrupt();
++	/* Mark this interrupt as complete firstly as CPU Off will not return from handler */
++	plat_ic_end_of_interrupt(intr_id);
++	isb();
+ 
+ 	handler = type_el3_interrupt_table[intr_id];
+ 	if (handler != NULL) {
+ 		handler(intr_id, flags, handle, cookie);
+ 	}
+ 
+-	/*
+-	 * Mark this interrupt as complete to avoid a interrupt storm.
+-	 */
+-	plat_ic_end_of_interrupt(intr_id);
+-
+ 	return 0U;
+ }
+ 
+diff --git a/plat/imx/common/imx_sip_handler.c b/plat/imx/common/imx_sip_handler.c
+index 1b764ad5d..588a421cc 100644
+--- a/plat/imx/common/imx_sip_handler.c
++++ b/plat/imx/common/imx_sip_handler.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2019 NXP
++ * Copyright 2019,2024 NXP
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -12,6 +12,7 @@
+ #include <platform_def.h>
+ #include <common/debug.h>
+ #include <common/runtime_svc.h>
++#include <imx_intercore_svc.h>
+ #include <imx_sip_svc.h>
+ #include <lib/mmio.h>
+ #include <lib/el3_runtime/context_mgmt.h>
+@@ -331,3 +332,26 @@ int imx_get_partition_number(void *handle) {
+ 
+ #endif
+ 
++
++#if defined(PLAT_imx93)
++uint64_t imx_sip_cpuoff_handler(uint32_t smc_fid,
++			u_register_t x1,
++			u_register_t x2,
++			u_register_t x3,
++			u_register_t x4)
++{
++	uint32_t cpu_id = x1;
++	int ret;
++
++	if (get_cpu_data_by_index(cpu_id, psci_svc_cpu_data.aff_info_state) == AFF_STATE_ON) {
++		ret = trigger_intercore_cpuoff_svc(cpu_id);
++		if (ret) {
++			return SMC_UNK;
++		}
++
++		return SMC_OK;
++	}
++
++	return SMC_UNK;
++}
++#endif
+diff --git a/plat/imx/common/imx_sip_svc.c b/plat/imx/common/imx_sip_svc.c
+index e65540851..9957b3df4 100644
+--- a/plat/imx/common/imx_sip_svc.c
++++ b/plat/imx/common/imx_sip_svc.c
+@@ -111,6 +111,10 @@ static uintptr_t imx_sip_handler(unsigned int smc_fid,
+ 		return imx_configure_memory_for_vpu(handle, x1);
+ 	case IMX_SIP_GET_PARTITION_NUMBER:
+ 		return imx_get_partition_number(handle);
++#endif
++#if defined(PLAT_imx93)
++	case IMX_SIP_CPU_OFF:
++		SMC_RET1(handle, imx_sip_cpuoff_handler(smc_fid, x1, x2, x3, x4));
+ #endif
+ 	default:
+ 		WARN("Unimplemented i.MX SiP Service Call: 0x%x\n", smc_fid);
+diff --git a/plat/imx/common/include/imx_cpu_off.h b/plat/imx/common/include/imx_cpu_off.h
+new file mode 100644
+index 000000000..20d27c9c0
+--- /dev/null
++++ b/plat/imx/common/include/imx_cpu_off.h
+@@ -0,0 +1,12 @@
++/*
++ * Copyright 2024 NXP
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef IMX_CPU_OFF_H
++#define IMX_CPU_OFF_H
++
++void imx_cpuoff_init(void);
++
++#endif		/*	IMX_CPU_OFF_H	*/
+diff --git a/plat/imx/common/include/imx_intercore_svc.h b/plat/imx/common/include/imx_intercore_svc.h
+index 3e58b9485..b045bda29 100644
+--- a/plat/imx/common/include/imx_intercore_svc.h
++++ b/plat/imx/common/include/imx_intercore_svc.h
+@@ -7,18 +7,21 @@
+ #ifndef IMX_INTERCORE_SVC_H
+ #define IMX_INTERCORE_SVC_H
+ 
+-#include <platform_def.h>       /* CACHE_WRITEBACK_GRANULE required */
++#include <platform_def.h>	/* CACHE_WRITEBACK_GRANULE required */
+ #include <stdbool.h>
++#include <stdint.h>
+ #include <imx_interrupt_mgmt.h>
+ 
+ typedef struct intercore_svc {
+ 	volatile bool enabled;
+ 	volatile bool trigged;
++	volatile int result;
+ 	interrupt_type_handler_t handler;
+ } intercore_svc_t;
+ 
+ typedef struct percpu_svc_inf {
+ 	intercore_svc_t dvfs_svc;
++	intercore_svc_t cpu_off_svc;
+ } __aligned(CACHE_WRITEBACK_GRANULE) percpu_svc_inf_t;
+ 
+ static inline unsigned int get_cpu_id(void)
+@@ -33,6 +36,8 @@ static inline unsigned int get_cpu_id(void)
+ 
+ int register_intercore_dvfs_svc(interrupt_type_handler_t handler);
+ int trigger_intercore_dvfs_svc(void);
++int register_intercore_cpuoff_svc(interrupt_type_handler_t handler);
++int trigger_intercore_cpuoff_svc(unsigned int cpu);
+ void imx_intercore_svc_init(void);
+ 
+-#endif		/*	IMX_INTERCORE_SVC_H	*/
++#endif	/* IMX_INTERCORE_SVC_H	*/
+diff --git a/plat/imx/common/include/imx_sip_svc.h b/plat/imx/common/include/imx_sip_svc.h
+index 6cd76cfaf..b74ba5231 100644
+--- a/plat/imx/common/include/imx_sip_svc.h
++++ b/plat/imx/common/include/imx_sip_svc.h
+@@ -66,6 +66,8 @@
+ 
+ #define IMX_SIP_MISC_SET_TEMP		0xC200000C
+ 
++#define IMX_SIP_CPU_OFF			0xC200000D
++
+ #define IMX_SIP_AARCH32			0xC20000FD
+ 
+ int imx_kernel_entry_handler(uint32_t smc_fid, u_register_t x1,
+@@ -149,4 +151,8 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
+ int imx_src_handler(uint32_t smc_fid, u_register_t x1,
+ 		    u_register_t x2, u_register_t x3, void *handle);
+ #endif
++#if defined(PLAT_imx93)
++uint64_t imx_sip_cpuoff_handler(uint32_t smc_fid, u_register_t x1,
++    u_register_t x2, u_register_t x3, u_register_t x4);
++#endif
+ #endif /* __IMX_SIP_SVC_H__ */
+diff --git a/plat/imx/imx93/imx93_bl31_setup.c b/plat/imx/imx93/imx93_bl31_setup.c
+index f7cc0967b..88c8f889f 100644
+--- a/plat/imx/imx93/imx93_bl31_setup.c
++++ b/plat/imx/imx93/imx93_bl31_setup.c
+@@ -21,6 +21,7 @@
+ 
+ #include <ele_api.h>
+ #include <dram.h>
++#include <imx_cpu_off.h>
+ #include <imx_interrupt_mgmt.h>
+ #include <imx_intercore_svc.h>
+ #include <imx8_lpuart.h>
+@@ -157,6 +158,7 @@ void bl31_platform_setup(void)
+ 
+ 	imx_el3_interrupt_config();
+ 	imx_intercore_svc_init();
++	imx_cpuoff_init();
+ 
+ 	/* Init the dram info */
+ 	dram_info_init(SAVED_DRAM_TIMING_BASE);
+diff --git a/plat/imx/imx93/platform.mk b/plat/imx/imx93/platform.mk
+index 9dff4c219..d4d118fa7 100644
+--- a/plat/imx/imx93/platform.mk
++++ b/plat/imx/imx93/platform.mk
+@@ -40,6 +40,7 @@ BL31_SOURCES		+=	plat/common/aarch64/crash_console_helpers.S   \
+ 				plat/imx/common/imx_sip_handler.c			\
+ 				plat/imx/common/imx_interrupt_mgmt.c		\
+ 				plat/imx/common/imx_intercore_svc.c			\
++				plat/imx/common/imx_cpu_off.c		\
+ 				plat/imx/common/ele_api.c			\
+ 				lib/cpus/aarch64/cortex_a55.S			\
+ 				drivers/delay_timer/delay_timer.c		\
+-- 
+2.34.1
+

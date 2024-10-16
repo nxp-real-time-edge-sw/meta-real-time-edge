@@ -1,0 +1,155 @@
+From d8ebd0012f11666a691c196277599664e703480d Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Wed, 25 Sep 2024 18:05:27 +0800
+Subject: [PATCH 2/7] plat: imx: add inter-core service common driver
+
+Add common layer of inter-core service, so that we can use single
+SGI interrupt to more inter-core notifyication service.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+---
+ plat/imx/common/imx_intercore_svc.c         | 86 +++++++++++++++++++++
+ plat/imx/common/include/imx_intercore_svc.h | 38 +++++++++
+ 2 files changed, 124 insertions(+)
+ create mode 100644 plat/imx/common/imx_intercore_svc.c
+ create mode 100644 plat/imx/common/include/imx_intercore_svc.h
+
+diff --git a/plat/imx/common/imx_intercore_svc.c b/plat/imx/common/imx_intercore_svc.c
+new file mode 100644
+index 000000000..e03d5df39
+--- /dev/null
++++ b/plat/imx/common/imx_intercore_svc.c
+@@ -0,0 +1,86 @@
++/*
++ * Copyright 2024 NXP
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#include <common/debug.h>
++#include <imx_interrupt_mgmt.h>
++#include <imx_intercore_svc.h>
++#include <imx_interrupt_mgmt.h>
++#include <plat/common/platform.h>
++#include <platform_def.h>
++
++static percpu_svc_inf_t svc_info[PLATFORM_CORE_COUNT];
++
++static uint64_t logical_id_to_hwid(unsigned int cpu_id)
++{
++	uint64_t hwid = cpu_id;
++
++	if ((read_mpidr_el1() & MPIDR_MT_MASK) != 0U)
++		hwid = cpu_id << MPIDR_AFF1_SHIFT;
++
++	return hwid;
++}
++
++int register_intercore_dvfs_svc(interrupt_type_handler_t handler)
++{
++	percpu_svc_inf_t *inf;
++	uint32_t i;
++
++	if (!handler) {
++		return -EINVAL;
++	}
++
++	for (i = 0; i < PLATFORM_CORE_COUNT; i++) {
++		inf = &svc_info[i];
++		inf->dvfs_svc.enabled = true;
++		inf->dvfs_svc.handler = handler;
++	}
++
++	return 0;
++}
++
++int trigger_intercore_dvfs_svc(void)
++{
++	unsigned int cpu_id = get_cpu_id();
++	percpu_svc_inf_t *inf;
++	uint32_t i;
++
++	for (i = 0; i < PLATFORM_CORE_COUNT; i++) {
++		inf = &svc_info[i];
++		inf->dvfs_svc.trigged = true;
++		/* Skip raise SGI for current CPU */
++		if (i != cpu_id) {
++			plat_ic_raise_el3_sgi(INTERCORE_SVC_IRQ, logical_id_to_hwid(i));
++		}
++	}
++
++	return 0;
++}
++
++
++static uint64_t intercore_service(uint32_t id, uint32_t flags,
++		void *handle, void *cookie)
++{
++	unsigned int cpu_id = get_cpu_id();
++	percpu_svc_inf_t *inf = &svc_info[cpu_id];
++
++	if (inf->dvfs_svc.enabled && inf->dvfs_svc.trigged && inf->dvfs_svc.handler) {
++		inf->dvfs_svc.handler(id, flags, handle, cookie);
++		inf->dvfs_svc.trigged = false;
++	}
++
++	return 0U;
++}
++
++void imx_intercore_svc_init(void)
++{
++	int rc;
++
++	/* Register the EL3 handler for Intercore service */
++	rc = request_intr_type_el3(INTERCORE_SVC_IRQ, intercore_service);
++	if (rc) {
++		panic();
++	}
++}
+diff --git a/plat/imx/common/include/imx_intercore_svc.h b/plat/imx/common/include/imx_intercore_svc.h
+new file mode 100644
+index 000000000..3e58b9485
+--- /dev/null
++++ b/plat/imx/common/include/imx_intercore_svc.h
+@@ -0,0 +1,38 @@
++/*
++ * Copyright 2024 NXP
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ */
++
++#ifndef IMX_INTERCORE_SVC_H
++#define IMX_INTERCORE_SVC_H
++
++#include <platform_def.h>       /* CACHE_WRITEBACK_GRANULE required */
++#include <stdbool.h>
++#include <imx_interrupt_mgmt.h>
++
++typedef struct intercore_svc {
++	volatile bool enabled;
++	volatile bool trigged;
++	interrupt_type_handler_t handler;
++} intercore_svc_t;
++
++typedef struct percpu_svc_inf {
++	intercore_svc_t dvfs_svc;
++} __aligned(CACHE_WRITEBACK_GRANULE) percpu_svc_inf_t;
++
++static inline unsigned int get_cpu_id(void)
++{
++	uint64_t mpidr = read_mpidr_el1();
++
++	if ((mpidr & MPIDR_MT_MASK) != 0U)
++		return MPIDR_AFFLVL1_VAL(mpidr);
++	else
++		return MPIDR_AFFLVL0_VAL(mpidr);
++}
++
++int register_intercore_dvfs_svc(interrupt_type_handler_t handler);
++int trigger_intercore_dvfs_svc(void);
++void imx_intercore_svc_init(void);
++
++#endif		/*	IMX_INTERCORE_SVC_H	*/
+-- 
+2.34.1
+

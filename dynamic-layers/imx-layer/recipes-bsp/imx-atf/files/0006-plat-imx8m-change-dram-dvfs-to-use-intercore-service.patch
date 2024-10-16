@@ -1,0 +1,89 @@
+From b4d564727143387ea0fd3df584927b90c1a2ff03 Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Wed, 25 Sep 2024 17:33:47 +0800
+Subject: [PATCH 6/7] plat: imx8m: change dram dvfs to use intercore service
+
+So that the same SGI irq can be shared with SIP cpu_off service.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+---
+ plat/imx/imx8m/ddr/dram.c | 22 ++++------------------
+ 1 file changed, 4 insertions(+), 18 deletions(-)
+
+diff --git a/plat/imx/imx8m/ddr/dram.c b/plat/imx/imx8m/ddr/dram.c
+index 16507c9f7..d1e66dbfe 100644
+--- a/plat/imx/imx8m/ddr/dram.c
++++ b/plat/imx/imx8m/ddr/dram.c
+@@ -1,17 +1,16 @@
+ /*
+- * Copyright 2019-2023 NXP
++ * Copyright 2019-2024 NXP
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+ 
+-#include <bl31/interrupt_mgmt.h>
+ #include <common/runtime_svc.h>
+ #include <lib/mmio.h>
+ #include <lib/spinlock.h>
+-#include <plat/common/platform.h>
+ 
+ #include <dram.h>
+ #include <gpc.h>
++#include <imx_intercore_svc.h>
+ 
+ #define IMX_SIP_DDR_DVFS_GET_FREQ_COUNT		0x10
+ #define IMX_SIP_DDR_DVFS_GET_FREQ_INFO		0x11
+@@ -181,18 +180,11 @@ void dram_phy_init(struct dram_timing_info *timing)
+ 	}
+ }
+ 
+-/* EL3 SGI-8 IPI handler for DDR Dynamic frequency scaling */
+ static uint64_t waiting_dvfs(uint32_t id, uint32_t flags,
+ 				void *handle, void *cookie)
+ {
+ 	uint64_t mpidr = read_mpidr_el1();
+ 	unsigned int cpu_id = MPIDR_AFFLVL0_VAL(mpidr);
+-	uint32_t irq;
+-
+-	irq = plat_ic_acknowledge_interrupt();
+-	if (irq < 1022U) {
+-		plat_ic_end_of_interrupt(irq);
+-	}
+ 
+ 	/* set the WFE done status */
+ 	spin_lock(&dfs_lock);
+@@ -215,7 +207,6 @@ void dram_info_init(unsigned long dram_timing_base)
+ {
+ 	uint32_t ddrc_mstr, current_fsp;
+ 	unsigned int idx = 0;
+-	uint32_t flags = 0;
+ 	uint32_t rc;
+ 	unsigned int i;
+ 
+@@ -267,8 +258,7 @@ void dram_info_init(unsigned long dram_timing_base)
+ 	}
+ 
+ 	/* Register the EL3 handler for DDR DVFS */
+-	set_interrupt_rm_flag(flags, NON_SECURE);
+-	rc = register_interrupt_type_handler(INTR_TYPE_EL3, waiting_dvfs, flags);
++	rc = register_intercore_dvfs_svc(waiting_dvfs);
+ 	if (rc != 0) {
+ 		panic();
+ 	}
+@@ -349,11 +339,7 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
+ 		dsb();
+ 
+ 		/* trigger the SGI IPI to info other cores */
+-		for (int i = 0; i < PLATFORM_CORE_COUNT; i++) {
+-			if (cpu_id != i && (online_cores & (0x1 << (i * 8)))) {
+-				plat_ic_raise_el3_sgi(0x8, i);
+-			}
+-		}
++		trigger_intercore_dvfs_svc();
+ #if defined(PLAT_imx8mq)
+ 		for (unsigned int i = 0; i < PLATFORM_CORE_COUNT; i++) {
+ 			if (i != cpu_id && online_cores & (1 << (i * 8))) {
+-- 
+2.34.1
+

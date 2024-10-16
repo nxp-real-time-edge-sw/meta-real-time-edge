@@ -1,0 +1,128 @@
+From 54b4c39e8e4472923c12c4ebdac29ff098537afd Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Wed, 25 Sep 2024 18:06:38 +0800
+Subject: [PATCH 3/7] plat: imx93: change dram dvfs to use intercore service
+
+So that SGI irq can be shared with SIP cpu_off service.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+---
+ plat/imx/imx93/ddr/dram.c             | 17 +++--------------
+ plat/imx/imx93/imx93_bl31_setup.c     |  2 ++
+ plat/imx/imx93/include/platform_def.h |  3 +++
+ plat/imx/imx93/platform.mk            |  1 +
+ 4 files changed, 9 insertions(+), 14 deletions(-)
+
+diff --git a/plat/imx/imx93/ddr/dram.c b/plat/imx/imx93/ddr/dram.c
+index ade2e1810..dcdffb872 100644
+--- a/plat/imx/imx93/ddr/dram.c
++++ b/plat/imx/imx93/ddr/dram.c
+@@ -4,22 +4,17 @@
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+ 
+-#include <bl31/interrupt_mgmt.h>
+ #include <common/runtime_svc.h>
+ #include <lib/mmio.h>
+ #include <lib/spinlock.h>
+-#include <plat/common/platform.h>
+ #include <drivers/delay_timer.h>
+ 
+ #include <dram.h>
+-#include <imx_interrupt_mgmt.h>
++#include <imx_intercore_svc.h>
+ 
+ #define IMX_SIP_DDR_DVFS_GET_FREQ_COUNT		0x10
+ #define IMX_SIP_DDR_DVFS_GET_FREQ_INFO		0x11
+ 
+-/* Use SGI-8 as IPI interrupt for DDR Dynamic frequency scaling */
+-#define dvfs_irq				0x8
+-
+ /* lock used for DDR DVFS */
+ spinlock_t dfs_lock;
+ struct dram_timing_info *timing_info;
+@@ -225,7 +220,6 @@ int ddrc_apply_reg_config(enum reg_type type, struct dram_cfg_param *reg_config)
+ 	return ret;
+ }
+ 
+-/* EL3 SGI-8 IPI handler for DDR Dynamic frequency scaling */
+ /* For non-primary core, waiting for frequency scaling down */
+ static uint64_t waiting_dvfs(uint32_t id, uint32_t flags,
+ 		void *handle, void *cookie)
+@@ -270,7 +264,7 @@ void dram_info_init(unsigned long dram_timing_base)
+ 	mmio_setbits_32(REG_DDR_SDRAM_CFG_3, BIT(1));
+ 
+ 	/* Register the EL3 handler for DDR DVFS */
+-	rc = request_intr_type_el3(dvfs_irq, waiting_dvfs);
++	rc = register_intercore_dvfs_svc(waiting_dvfs);
+ 	if (rc)
+ 		panic();
+ }
+@@ -280,8 +274,6 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
+ {
+ 	unsigned int fsp_index = x1;
+ 	uint32_t online_cpus = x2 - 1; 
+-	uint64_t mpidr = read_mpidr_el1();
+-	unsigned int cpu_id = MPIDR_AFFLVL1_VAL(mpidr);
+ 	int ret = 0;
+ 
+ 	/* get the fsp num, return the number of supported fsp */
+@@ -300,10 +292,7 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
+ 	dsb();
+ 
+ 	/* notify other core wait for scaling done */
+-	for (int i = 0; i < PLATFORM_CORE_COUNT; i++)
+-		/* Skip raise SGI for current CPU */
+-		if (i != cpu_id)
+-			plat_ic_raise_el3_sgi(dvfs_irq, i << 8);
++	trigger_intercore_dvfs_svc();
+ 	
+ 	/* Make sure all the cpu in WFE */
+ 	while (1) {
+diff --git a/plat/imx/imx93/imx93_bl31_setup.c b/plat/imx/imx93/imx93_bl31_setup.c
+index 6f447e3b8..f7cc0967b 100644
+--- a/plat/imx/imx93/imx93_bl31_setup.c
++++ b/plat/imx/imx93/imx93_bl31_setup.c
+@@ -22,6 +22,7 @@
+ #include <ele_api.h>
+ #include <dram.h>
+ #include <imx_interrupt_mgmt.h>
++#include <imx_intercore_svc.h>
+ #include <imx8_lpuart.h>
+ #include <plat_imx8.h>
+ #include <platform_def.h>
+@@ -155,6 +156,7 @@ void bl31_platform_setup(void)
+ 	ele_get_soc_info();
+ 
+ 	imx_el3_interrupt_config();
++	imx_intercore_svc_init();
+ 
+ 	/* Init the dram info */
+ 	dram_info_init(SAVED_DRAM_TIMING_BASE);
+diff --git a/plat/imx/imx93/include/platform_def.h b/plat/imx/imx93/include/platform_def.h
+index 2d140400d..ddc52fb8b 100644
+--- a/plat/imx/imx93/include/platform_def.h
++++ b/plat/imx/imx93/include/platform_def.h
+@@ -124,4 +124,7 @@
+ #define IMX_TRUSTY_STACK_SIZE 0x100
+ #define TRUSTY_SHARED_MEMORY_OBJ_SIZE (12 * 1024)
+ 
++/*Use SGI-8 as Inter-Core Service IRQ */
++#define INTERCORE_SVC_IRQ   0x8
++
+ #endif /* platform_def.h */
+diff --git a/plat/imx/imx93/platform.mk b/plat/imx/imx93/platform.mk
+index 64363aec2..9dff4c219 100644
+--- a/plat/imx/imx93/platform.mk
++++ b/plat/imx/imx93/platform.mk
+@@ -39,6 +39,7 @@ BL31_SOURCES		+=	plat/common/aarch64/crash_console_helpers.S   \
+ 				plat/imx/common/imx_sip_svc.c			\
+ 				plat/imx/common/imx_sip_handler.c			\
+ 				plat/imx/common/imx_interrupt_mgmt.c		\
++				plat/imx/common/imx_intercore_svc.c			\
+ 				plat/imx/common/ele_api.c			\
+ 				lib/cpus/aarch64/cortex_a55.S			\
+ 				drivers/delay_timer/delay_timer.c		\
+-- 
+2.34.1
+
