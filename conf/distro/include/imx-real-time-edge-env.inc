@@ -8,3 +8,6 @@ include conf/distro/include/rtos-industrial-examples.inc
 # Remove conflicting backends
 DISTRO_FEATURES:remove = "directfb x11 "
 DISTRO_FEATURES:append = " wayland pam systemd"
+
+# System Manager config
+SYSTEM_MANAGER_CONFIG:imx95-19x19-lpddr5-evk = "mx95rte"
