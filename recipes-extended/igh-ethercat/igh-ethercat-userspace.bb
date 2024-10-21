@@ -44,20 +44,12 @@ SRC_URI += "\
     file://0001-fix-compile-error-because-of-linux-kernel-upgrade-to.patch \
     file://0001-igh-8mm-fix-compile-error-due-to-kernel-upgrade-to-v.patch \
     file://0001-ls1028-fix-enetc-compile-error-because-of-kernel-upg.patch \
+    file://0001-Delete-power_runtime-of-mdio-read-and-write.patch \
     file://0001-Add-code-to-support-userspace-IGH-EtherCAT-for-v1.5..patch \
     file://0002-Add-code-to-support-NXP-i.MX-FEC-ethernet-port.patch \
-    file://0003-Fix-the-compile-error.patch \
-    file://0001-Fix-the-issue-that-shm_get-key-is-using-relative-pat.patch \
-    file://0002-Update-Readme_For_User_Space_IGH_EtherCAT.txt.patch \
-    file://0003-Modify-ecrt.h-for-real-time-edge-servo-and-user-appl.patch \
-    file://0001-User-Space-enable-ethercat_userspace.patch \
-    file://0001-Update-configure.ac-to-avoid-compile-error.patch \
-    file://0002-Fix-the-issue-that-user-space-IgH-can-t-work-when-me.patch \
-    file://0003-Optimize-the-code-of-enet_fec-driver.patch \
-    file://0004-Add-support-for-platform-with-1-core-like-i.MX91.patch \
-    file://0005-Fix-the-issue-of-segment-error-when-calling-ecus_don.patch \
-    file://0001-Add-simple-example-for-user-space-motor-control.patch \
 "
+
+SRC_URI += "file://libus_drv.a"
 
 S = "${WORKDIR}/git"
 
@@ -90,6 +82,10 @@ FILES:${PN} += "${EXAMPLE_INSTALL_DIR}/${PN}"
 
 do_configure:prepend() {
     touch ChangeLog
+}
+
+do_compile:prepend() {
+    cp ${WORKDIR}/libus_drv.a ${S}/devices/nxp_userspace/libus_drv.a
 }
 
 do_install:append() {

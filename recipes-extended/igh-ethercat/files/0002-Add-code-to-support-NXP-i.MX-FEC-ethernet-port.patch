@@ -1,7 +1,7 @@
-From 5b5818635bf7ffad43d2de9b25b4832d71f3d8cd Mon Sep 17 00:00:00 2001
+From 4010d4372fa8e4416358616591f662c219eca0f6 Mon Sep 17 00:00:00 2001
 From: Hongbo Wang <hongbo.wang@nxp.com>
 Date: Thu, 23 Nov 2023 22:05:20 +0800
-Subject: [PATCH 2/3] Add code to support NXP i.MX FEC ethernet port
+Subject: [PATCH 2/2] Add code to support NXP i.MX FEC ethernet port
 
 the verified platform: i.MX8MP, i.MX8MM and i.MX93
 
@@ -13,62 +13,103 @@ compilation steps:
 make
 make install
 
+** Note-1:
+if user's board has larger memory than 4G bytes,
+using this patch, don't need limit memory in 4GB.
+
+user should allocate enough hugepages firstly, make sure that there are
+hugepages within 4G bytes, like following:
+  echo 2048 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+
+then allocate hugepage for user space IgH, after that user can free surplus
+hugepage to Linux kernel, like this:
+  echo 64 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+
+** Note-2:
+add simple example for user space motor control
+
+Usage:
+  ./ec_motor_example [encode_rate] [axle_num]
+
+For example:
+  1 motors:
+    ./ec_motor_example or ./ec_motor_example 131072 1
+
+  6 motors:
+    ./ec_motor_example 131072 6
+
+** Note-3:
+add support for i.MXRT1180 EtherCAT slave
+
+Usage for i.MXRT1180 motors:
+    ./ec_motor_example or ./ec_motor_example 131072 1
+
 Signed-off-by: Yuhang Wang <yuhang.wang@nxp.com>
 Signed-off-by: Lyrix Liu <lyrix.liu@nxp.com>
 Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
 ---
- Readme_For_User_Space_IGH_EtherCAT.txt | 205 ++++++++++
- configure.ac                           |   2 +-
- devices/enet_fec/enet_ethdev.c         | 523 +++++++++++++++++++++++++
- devices/enet_fec/enet_ethdev.h         | 227 +++++++++++
- devices/enet_fec/enet_fec.c            | 331 ++++++++++++++++
- devices/enet_fec/enet_fec.h            |  51 +++
- devices/enet_fec/enet_main.c           | 289 ++++++++++++++
- devices/enet_fec/enet_regs.h           | 116 ++++++
- devices/enet_fec/enet_rxtx.c           | 183 +++++++++
- devices/enet_fec/enet_uio.c            | 282 +++++++++++++
- devices/enet_fec/enet_uio.h            |  74 ++++
+ Readme_For_User_Space_IGH_EtherCAT.txt | 216 +++++++++
+ compile.sh                             |  21 +
+ configure.ac                           |  10 +-
+ devices/nxp_userspace/usm_main.c       | 308 +++++++++++++
+ devices/nxp_userspace/usm_main.h       |  41 ++
  emulation/linux/jiffies.h              |  15 +-
  emulation/linux/kthread.h              |  39 +-
+ emulation/linux/skbuff.h               |   5 +-
  emulation/linux/wait.h                 |   2 +-
+ examples/Makefile.am                   |   5 +
+ examples/motor_control/Makefile.am     |  42 ++
+ examples/motor_control/main.c          | 589 +++++++++++++++++++++++++
  globals.h                              |   5 +-
- include/ecrt.h                         |  18 +-
+ include/ecrt.h                         |  15 +-
  lib/common.c                           |   1 +
+ libecat.mri                            |   5 +
  master/Makefile.am                     |   7 +-
- master/cdev.c                          | 126 ++++--
+ master/cdev.c                          | 127 ++++--
  master/cdev.h                          |   9 +-
  master/datagram.h                      |   5 +-
- master/device.c                        |  41 ++
+ master/device.c                        |  38 +-
  master/device.h                        |  11 +-
  master/ethercat_master.c               |  38 +-
  master/globals.h                       |   4 +
+ master/ioctl.c                         |  42 +-
  master/ioctl.h                         |   3 +-
- master/master.c                        |  87 +++-
- master/master.h                        |  19 +-
- master/module.c                        |  48 ++-
+ master/master.c                        | 147 +++++-
+ master/master.h                        |  23 +-
+ master/module.c                        |  54 ++-
  master/slave.h                         |  10 +
- master/slave_config.c                  |  24 ++
- tool/Makefile.am                       |   1 +
- tool/MasterDevice.cpp                  | 126 +++++-
- tool/MasterDevice.h                    |  16 +
- 34 files changed, 2884 insertions(+), 54 deletions(-)
+ master/slave_config.c                  |  24 +
+ tool/CommandAlias.cpp                  |   8 +-
+ tool/CommandData.cpp                   |   6 +-
+ tool/CommandDomains.cpp                |   8 +-
+ tool/CommandDownload.cpp               |  22 +-
+ tool/CommandFoeRead.cpp                |   6 +-
+ tool/CommandFoeWrite.cpp               |  10 +-
+ tool/CommandRegRead.cpp                |   8 +-
+ tool/CommandRegWrite.cpp               |  18 +-
+ tool/CommandSiiRead.cpp                |   6 +-
+ tool/CommandSiiWrite.cpp               |  12 +-
+ tool/CommandSoeRead.cpp                |  10 +-
+ tool/CommandSoeWrite.cpp               |  12 +-
+ tool/CommandUpload.cpp                 |  10 +-
+ tool/Makefile.am                       |   9 +-
+ tool/MasterDevice.cpp                  | 147 +++++-
+ tool/MasterDevice.h                    |  22 +
+ 47 files changed, 2042 insertions(+), 133 deletions(-)
  create mode 100644 Readme_For_User_Space_IGH_EtherCAT.txt
- create mode 100644 devices/enet_fec/enet_ethdev.c
- create mode 100644 devices/enet_fec/enet_ethdev.h
- create mode 100644 devices/enet_fec/enet_fec.c
- create mode 100644 devices/enet_fec/enet_fec.h
- create mode 100644 devices/enet_fec/enet_main.c
- create mode 100644 devices/enet_fec/enet_regs.h
- create mode 100644 devices/enet_fec/enet_rxtx.c
- create mode 100644 devices/enet_fec/enet_uio.c
- create mode 100644 devices/enet_fec/enet_uio.h
+ create mode 100755 compile.sh
+ create mode 100644 devices/nxp_userspace/usm_main.c
+ create mode 100644 devices/nxp_userspace/usm_main.h
+ create mode 100644 examples/motor_control/Makefile.am
+ create mode 100644 examples/motor_control/main.c
+ create mode 100644 libecat.mri
 
 diff --git a/Readme_For_User_Space_IGH_EtherCAT.txt b/Readme_For_User_Space_IGH_EtherCAT.txt
 new file mode 100644
-index 00000000..9df955b6
+index 00000000..7e465b39
 --- /dev/null
 +++ b/Readme_For_User_Space_IGH_EtherCAT.txt
-@@ -0,0 +1,205 @@
+@@ -0,0 +1,216 @@
 +
 +		Readme for user space IGH EtherCAT stack
 +
@@ -96,7 +137,7 @@ index 00000000..9df955b6
 +
 +  In IGH EtherCAT stack, there are different drivers for devices, so it depends
 +on the version of Linux kernel. When you want to compile IGH EtherCAT stack, you
-+have to point out clearly the path of kernel, otherwise it will reports error.
++have to point out clearly the path of kernel, otherwise it will report error.
 +
 +2. How to resolve the above issues in user space IGH EtherCAT stack?
 +
@@ -181,7 +222,7 @@ index 00000000..9df955b6
 +
 +4. How to use user space EtherCAT stack?
 +
-+User space IGH EtherCAT stack will be compiled out a library named "libethercat_master.a",
++User space IGH EtherCAT stack will be compiled out a library named "libethercat_master.a/.so",
 +user's application should link this new library by "-lethercat_master",
 +
 +I will take the below code as example (cycle time: 1ms)
@@ -244,6 +285,12 @@ index 00000000..9df955b6
 +	return 0;
 +}
 +
++NOTE:
++For user space IGH EtherCAT, should use *-dpdk.dtb for Linux kernel, for example:
++- imx8mm-evk-dpdk.dtb
++- imx8mp-evk-dpdk.dtb
++- imx93-11x11-evk-dpdk.dtb
++
 +5. How to run user's EtherCAT application
 +
 +Before running application, we should set hugepage related configuration:
@@ -257,7 +304,7 @@ index 00000000..9df955b6
 +
 +6. How to use EtherCAT tool to show EtherCAT device's information?
 +
-+Because EtherCAT tool(named ethercat) will invoke ioctl to scan and
++Because EtherCAT tool(named ethercat_userspace) will invoke ioctl to scan and
 +show EtherCAT devices, for conveniency of using EtherCAT tool, we have
 +implemented one virtual ioctl interface to support this tool. one backend
 +program(named ethercat_master) will supply the service for the tool.
@@ -269,13 +316,45 @@ index 00000000..9df955b6
 +# ./ethercat_master &
 +
 +Then we can run EtherCAT tool:
-+# ./ethercat slaves -v
++# ./ethercat_userspace slaves -v
 +
 +or
 +
-+# ./ethercat cstruct
++# ./ethercat_userspace cstruct
++
++Note:
++1. If want to run user's application, should exit and close ethercat_master program.
++2. For i.MX platforms, should limit DDR memory in 4G bytes via 'mem' variable in U-Boot bootargs.
++	Example: 'mem=4096M'
+diff --git a/compile.sh b/compile.sh
+new file mode 100755
+index 00000000..617abcb7
+--- /dev/null
++++ b/compile.sh
+@@ -0,0 +1,21 @@
++#!/bin/bash
++
++echo $PWD
++
++if [ "$1" == "rebuild" ]; then
++rm -fr $PWD/ecat_build
++mkdir $PWD/ecat_build
++rm ./configure
++rm ./config.status
++
++rm -fr autoconf/ autom4te.cache/ master/.libs/
++find . -name ".deps" | xargs rm -fr
++
++./bootstrap
++./configure --prefix=$PWD/ecat_build/ --enable-usecat=yes --enable-8139too=no --enable-tool=yes --enable-eoe=no --build=arm
++fi
++
++make
++make install
++
++ar -M < ./libecat.mri
 diff --git a/configure.ac b/configure.ac
-index 953af99d..c007a46e 100644
+index 953af99d..3fcb5b60 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -80,7 +80,7 @@ AC_ARG_ENABLE([usecat],
@@ -283,1172 +362,38 @@ index 953af99d..c007a46e 100644
  
  if test "x${enable_usecat}" = "x1"; then
 -    AC_DEFINE([EC_USERSPACE_MASTER], [1], [Userspace EtherCAT library enabled])
-+    AC_DEFINE([EC_USERSPACE_MASTER_FEC], [1], [Userspace EtherCAT library enabled])
++    AC_DEFINE([EC_USERSPACE_MASTER_NEW], [1], [Userspace EtherCAT library enabled])
      AC_MSG_RESULT([yes])
  else
      AC_MSG_RESULT([no])
-diff --git a/devices/enet_fec/enet_ethdev.c b/devices/enet_fec/enet_ethdev.c
+@@ -93,7 +93,12 @@ AC_SUBST(ENABLE_USERSPACE_MASTER,[$enable_usecat])
+ # Linux sources
+ #------------------------------------------------------------------------------
+ 
+-if test "x${enable_usecat}" = "x0"; then
++if test "x${enable_usecat}" = "x1"; then
++	version=[`uname -r`]
++	modulesdir=/lib/modules/${version}
++	sourcedir=`cd ${modulesdir}/build && pwd -P`
++	AC_SUBST(LINUX_SOURCE_DIR,[$sourcedir])
++else
+ AC_ARG_WITH([linux-dir],
+     AC_HELP_STRING(
+         [--with-linux-dir=<DIR>],
+@@ -1068,6 +1073,7 @@ AC_CONFIG_FILES([
+         examples/tty/Kbuild
+         examples/tty/Makefile
+         examples/user/Makefile
++        examples/motor_control/Makefile
+         examples/xenomai/Makefile
+         examples/xenomai_posix/Makefile
+         include/Makefile
+diff --git a/devices/nxp_userspace/usm_main.c b/devices/nxp_userspace/usm_main.c
 new file mode 100644
-index 00000000..0f23a198
+index 00000000..28972ec7
 --- /dev/null
-+++ b/devices/enet_fec/enet_ethdev.c
-@@ -0,0 +1,523 @@
-+/* SPDX-License-Identifier: BSD-3-Clause
-+ * Copyright 2020-2023 NXP
-+ */
-+
-+#include <unistd.h>
-+#include "enet_ethdev.h"
-+#include "enet_regs.h"
-+#include "enet_uio.h"
-+
-+#define ENETFEC_NAME_PMD                net_enetfec
-+
-+#define RTE_BIT32(nr) (UINT32_C(1) << (nr))
-+
-+/* FEC receive acceleration */
-+#define ENETFEC_RACC_IPDIS		RTE_BIT32(1)
-+#define ENETFEC_RACC_PRODIS		RTE_BIT32(2)
-+#define ENETFEC_RACC_SHIFT16		RTE_BIT32(7)
-+#define ENETFEC_RACC_OPTIONS		(ENETFEC_RACC_IPDIS | \
-+						ENETFEC_RACC_PRODIS)
-+
-+#define ENETFEC_PAUSE_FLAG_AUTONEG	0x1
-+#define ENETFEC_PAUSE_FLAG_ENABLE	0x2
-+
-+/* Pause frame field and FIFO threshold */
-+#define ENETFEC_FCE			RTE_BIT32(5)
-+#define ENETFEC_RSEM_V			0x84
-+#define ENETFEC_RSFL_V			16
-+#define ENETFEC_RAEM_V			0x8
-+#define ENETFEC_RAFL_V			0x8
-+#define ENETFEC_OPD_V			0xFFF0
-+
-+/* Extended buffer descriptor */
-+#define ENETFEC_EXTENDED_BD		0
-+#define NUM_OF_BD_QUEUES		6
-+
-+static struct enetfec_private sfec_priv_data;
-+static struct rte_eth_dev_data sfec_eth_data;
-+static int sfec_km_mode;  /* whether to enable 1000M MAC support */
-+
-+struct enetfec_private *enetfec_get_priv_data(void)
-+{
-+	return &sfec_priv_data;
-+}
-+
-+int enetfec_set_km_mode(int mode)
-+{
-+	sfec_km_mode = !!(mode);
-+	ENETFEC_PMD_INFO("%s(): 1000Mbps_mode:%d\n", __func__, sfec_km_mode);
-+
-+	return sfec_km_mode;
-+}
-+
-+/*
-+ * This function is called to start or restart the ENETFEC during a link
-+ * change, transmit timeout, or to reconfigure the ENETFEC. The network
-+ * packet processing for this device must be stopped before this call.
-+ */
-+void enetfec_restart(struct rte_eth_dev *dev)
-+{
-+	struct enetfec_private *fep = dev->data->dev_private;
-+	uint32_t rcntl = OPT_FRAME_SIZE | 0x04;
-+	uint32_t ecntl = ENETFEC_ETHEREN;
-+	uint32_t val;
-+	int i;
-+
-+	/* Clear any outstanding interrupt. */
-+	writel(0xffffffff, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_EIR);
-+	writel(0x00, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_EIMR);
-+
-+	/* Enable MII mode */
-+	if (fep->full_duplex == FULL_DUPLEX) {
-+		/* FD enable */
-+		rte_write32(rte_cpu_to_le_32(0x04),
-+			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_TCR);
-+	} else {
-+	/* No Rcv on Xmit */
-+		rcntl |= 0x02;
-+		rte_write32(0, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_TCR);
-+	}
-+
-+	if (fep->quirks & QUIRK_RACC) {
-+		val = rte_read32((uint8_t *)fep->hw_baseaddr_v + ENETFEC_RACC);
-+		/* align IP header */
-+		val |= ENETFEC_RACC_SHIFT16;
-+		if (fep->flag_csum & RX_FLAG_CSUM_EN)
-+			/* set RX checksum */
-+			val |= ENETFEC_RACC_OPTIONS;
-+		else
-+			val &= ~ENETFEC_RACC_OPTIONS;
-+		rte_write32(rte_cpu_to_le_32(val),
-+			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_RACC);
-+		rte_write32(rte_cpu_to_le_32(PKT_MAX_BUF_SIZE),
-+			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_FRAME_TRL);
-+	}
-+
-+	/*
-+	 * The phy interface and speed need to get configured
-+	 * differently on enet-mac.
-+	 */
-+	if (fep->quirks & QUIRK_HAS_ENETFEC_MAC) {
-+		/* Enable flow control and length check */
-+		rcntl |= 0x40000000 | 0x00000020;
-+
-+		/* RGMII, RMII or MII */
-+		rcntl |= RTE_BIT32(6);
-+
-+		if (sfec_km_mode)  /* EtherCAT is working in 100Mbps mode in default */
-+			ecntl |= RTE_BIT32(5);
-+	}
-+
-+	/* enable pause frame*/
-+	if ((fep->flag_pause & ENETFEC_PAUSE_FLAG_ENABLE) ||
-+		((fep->flag_pause & ENETFEC_PAUSE_FLAG_AUTONEG)
-+		/*&& ndev->phydev && ndev->phydev->pause*/)) {
-+		rcntl |= ENETFEC_FCE;
-+
-+		/* set FIFO threshold parameter to reduce overrun */
-+		rte_write32(rte_cpu_to_le_32(ENETFEC_RSEM_V),
-+			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_R_FIFO_SEM);
-+		rte_write32(rte_cpu_to_le_32(ENETFEC_RSFL_V),
-+			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_R_FIFO_SFL);
-+		rte_write32(rte_cpu_to_le_32(ENETFEC_RAEM_V),
-+			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_R_FIFO_AEM);
-+		rte_write32(rte_cpu_to_le_32(ENETFEC_RAFL_V),
-+			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_R_FIFO_AFL);
-+
-+		/* OPD */
-+		rte_write32(rte_cpu_to_le_32(ENETFEC_OPD_V),
-+			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_OPD);
-+	} else {
-+		rcntl &= ~ENETFEC_FCE;
-+	}
-+
-+	rte_write32(rte_cpu_to_le_32(rcntl),
-+		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_RCR);
-+
-+	rte_write32(0, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_IAUR);
-+	rte_write32(0, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_IALR);
-+
-+	if (fep->quirks & QUIRK_HAS_ENETFEC_MAC) {
-+		/* enable ENETFEC endian swap */
-+		ecntl |= (1 << 8);
-+		/* enable ENETFEC store and forward mode */
-+		rte_write32(rte_cpu_to_le_32(1 << 8),
-+			(uint8_t *)fep->hw_baseaddr_v + ENETFEC_TFWR);
-+	}
-+	if (fep->bufdesc_ex)
-+		ecntl |= (1 << 4);
-+	if (fep->quirks & QUIRK_SUPPORT_DELAYED_CLKS &&
-+		fep->rgmii_txc_delay)
-+		ecntl |= ENETFEC_TXC_DLY;
-+	if (fep->quirks & QUIRK_SUPPORT_DELAYED_CLKS &&
-+		fep->rgmii_rxc_delay)
-+		ecntl |= ENETFEC_RXC_DLY;
-+	/* Enable the MIB statistic event counters */
-+	rte_write32(0, (uint8_t *)fep->hw_baseaddr_v + ENETFEC_MIBC);
-+
-+	ecntl |= 0x70000000;
-+	fep->enetfec_e_cntl = ecntl;
-+	/* And last, enable the transmit and receive processing */
-+	rte_write32(rte_cpu_to_le_32(ecntl),
-+		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_ECR);
-+
-+	for (i = 0; i < fep->max_rx_queues; i++)
-+		rte_write32(0, fep->rx_queues[i]->bd.active_reg_desc);
-+	rte_delay_us(10);
-+}
-+
-+void enet_free_buffers(struct rte_eth_dev *dev)
-+{
-+	struct enetfec_private *fep = dev->data->dev_private;
-+	struct enetfec_priv_rx_q *rxq;
-+	struct enetfec_priv_tx_q *txq;
-+	unsigned int q = 0;
-+
-+	for (q = 0; q < dev->data->nb_rx_queues; q++) {
-+		rxq = fep->rx_queues_base[q];
-+		free(rxq);
-+	}
-+
-+	for (q = 0; q < dev->data->nb_tx_queues; q++) {
-+		txq = fep->tx_queues_base[q];
-+		free(txq);
-+	}
-+
-+	free(fep->dev);
-+}
-+
-+int enetfec_eth_configure(struct rte_eth_dev *dev)
-+{
-+	return 0;
-+}
-+
-+int enetfec_eth_start(struct rte_eth_dev *dev)
-+{
-+	enetfec_restart(dev);
-+
-+	return 0;
-+}
-+
-+/* ENETFEC disable function.
-+ * @param[in] base      ENETFEC base address
-+ */
-+void enetfec_disable(struct enetfec_private *fep)
-+{
-+	rte_write32(rte_read32((uint8_t *)fep->hw_baseaddr_v + ENETFEC_ECR)
-+		    & ~(fep->enetfec_e_cntl),
-+		    (uint8_t *)fep->hw_baseaddr_v + ENETFEC_ECR);
-+}
-+
-+int enetfec_eth_stop(struct rte_eth_dev *dev)
-+{
-+	struct enetfec_private *fep = dev->data->dev_private;
-+
-+	enetfec_disable(fep);
-+
-+	return 0;
-+}
-+
-+int enetfec_eth_close(struct rte_eth_dev *dev)
-+{
-+	struct enetfec_private *fep = dev->data->dev_private;
-+
-+	enet_free_buffers(dev);
-+	enetfec_cleanup(fep);
-+	return 0;
-+}
-+
-+static inline void
-+rte_ether_addr_copy(const struct rte_ether_addr *__restrict ea_from,
-+		    struct rte_ether_addr *__restrict ea_to)
-+{
-+	memcpy(ea_to, ea_from, sizeof(struct rte_ether_addr));
-+}
-+
-+/* Set a MAC change in hardware. */
-+int enetfec_set_mac_address(struct rte_eth_dev *dev,
-+		    struct rte_ether_addr *addr)
-+{
-+	struct enetfec_private *fep = dev->data->dev_private;
-+
-+	writel(addr->addr_bytes[3] | (addr->addr_bytes[2] << 8) |
-+		(addr->addr_bytes[1] << 16) | (addr->addr_bytes[0] << 24),
-+		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_PALR);
-+	writel((addr->addr_bytes[5] << 16) | (addr->addr_bytes[4] << 24),
-+		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_PAUR);
-+
-+	rte_ether_addr_copy(addr, &dev->data->mac_addrs);
-+
-+	return 0;
-+}
-+
-+static const unsigned short offset_des_active_rxq[] = {
-+	ENETFEC_RDAR_0, ENETFEC_RDAR_1, ENETFEC_RDAR_2
-+};
-+
-+static const unsigned short offset_des_active_txq[] = {
-+	ENETFEC_TDAR_0, ENETFEC_TDAR_1, ENETFEC_TDAR_2
-+};
-+
-+extern struct enet_fec_bd_buf_t *enet_fec_get_bd_buf(void);
-+
-+int enetfec_tx_queue_setup(struct rte_eth_dev *dev, uint16_t queue_idx, uint16_t nb_desc)
-+{
-+	struct enet_fec_bd_buf_t *ptrb = enet_fec_get_bd_buf();
-+	struct enetfec_private *fep = dev->data->dev_private;
-+	unsigned int i;
-+	struct bufdesc *bdp, *bd_base;
-+	struct enetfec_priv_tx_q *txq;
-+	unsigned int size;
-+	unsigned int dsize = fep->bufdesc_ex ? sizeof(struct bufdesc_ex) :
-+		sizeof(struct bufdesc);
-+	unsigned int dsize_log2 = fls64(dsize);
-+
-+	/* allocate transmit queue */
-+	txq = calloc(1, sizeof(*txq) + RTE_CACHE_LINE_SIZE);
-+	if (txq == NULL) {
-+		ENETFEC_PMD_ERR("transmit queue allocation failed");
-+		return -ENOMEM;
-+	}
-+	fep->tx_queues_base[queue_idx] = txq;
-+	txq = (struct enetfec_priv_tx_q *)RTE_ALIGN_CEIL((uint64_t)(txq), RTE_CACHE_LINE_SIZE);
-+
-+	if (nb_desc > MAX_TX_BD_RING_SIZE) {
-+		nb_desc = MAX_TX_BD_RING_SIZE;
-+		ENETFEC_PMD_WARN("modified the nb_desc to MAX_TX_BD_RING_SIZE");
-+	}
-+	txq->bd.ring_size = nb_desc;
-+	fep->total_tx_ring_size += txq->bd.ring_size;
-+	fep->tx_queues[queue_idx] = txq;
-+
-+	rte_write32(rte_cpu_to_le_32(fep->bd_addr_p_t[queue_idx]),
-+		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_TD_START(queue_idx));
-+
-+	/* Set transmit descriptor base. */
-+	txq = fep->tx_queues[queue_idx];
-+	txq->fep = fep;
-+	size = dsize * txq->bd.ring_size;
-+	bd_base = (struct bufdesc *)fep->dma_baseaddr_t[queue_idx];
-+	txq->bd.queue_id = queue_idx;
-+	txq->bd.base = bd_base;
-+	txq->bd.cur = bd_base;
-+	txq->bd.d_size = dsize;
-+	txq->bd.d_size_log2 = dsize_log2;
-+	txq->bd.active_reg_desc = (uint8_t *)fep->hw_baseaddr_v +
-+			offset_des_active_txq[queue_idx];
-+	bd_base = (struct bufdesc *)(((uintptr_t)bd_base) + size);
-+	txq->bd.last = (struct bufdesc *)(((uintptr_t)bd_base) - dsize);
-+	bdp = txq->bd.base;
-+	bdp = txq->bd.cur;
-+
-+	if ((ptrb->tx_buf_num != nb_desc) || (ptrb->tx_buf_num != MAX_TX_BD_RING_SIZE))
-+		ENETFEC_PMD_ERR("nb_desc:%d tx_buf_num:%d, configure ERROR!\n", nb_desc, ptrb->tx_buf_num);
-+
-+	for (i = 0; i < txq->bd.ring_size; i++) {
-+		/* Initialize the BD for every fragment in the page. */
-+		rte_write16(rte_cpu_to_le_16(0), &bdp->bd_sc);
-+
-+		if (ptrb->tx_buf_num == MAX_TX_BD_RING_SIZE) {
-+			rte_write32(rte_cpu_to_le_32(ptrb->tx_addr[i]), &bdp->bd_bufaddr);
-+			txq->tx_addr[i] = ptrb->tx_addr[i];
-+			txq->tx_buf[i] = ptrb->tx_buf[i];
-+		} else {
-+			rte_write32(0, &bdp->bd_bufaddr);
-+		}
-+
-+		bdp = enet_get_nextdesc(bdp, &txq->bd);
-+	}
-+
-+	/* Set the last buffer to wrap */
-+	bdp = enet_get_prevdesc(bdp, &txq->bd);
-+	rte_write16((rte_cpu_to_le_16(TX_BD_WRAP) |
-+		rte_read16(&bdp->bd_sc)), &bdp->bd_sc);
-+	txq->dirty_tx = bdp;
-+
-+	return 0;
-+}
-+
-+int enetfec_rx_queue_setup(struct rte_eth_dev *dev, uint16_t queue_idx, uint16_t nb_rx_desc)
-+{
-+	struct enet_fec_bd_buf_t *ptrb = enet_fec_get_bd_buf();
-+	struct enetfec_private *fep = dev->data->dev_private;
-+	unsigned int i;
-+	struct bufdesc *bd_base;
-+	struct bufdesc *bdp;
-+	struct enetfec_priv_rx_q *rxq;
-+	unsigned int size;
-+	unsigned int dsize = fep->bufdesc_ex ? sizeof(struct bufdesc_ex) :
-+			sizeof(struct bufdesc);
-+	unsigned int dsize_log2 = fls64(dsize);
-+
-+	if (queue_idx >= ENETFEC_MAX_Q) {
-+		ENETFEC_PMD_ERR("Invalid queue id %u, max %d\n", queue_idx, ENETFEC_MAX_Q);
-+		return -EINVAL;
-+	}
-+
-+	/* allocate receive queue */
-+	rxq = calloc(1, sizeof(*rxq) + RTE_CACHE_LINE_SIZE);
-+	if (rxq == NULL) {
-+		ENETFEC_PMD_ERR("receive queue allocation failed");
-+		return -ENOMEM;
-+	}
-+	fep->rx_queues_base[queue_idx] = rxq;
-+	rxq = (struct enetfec_priv_rx_q *)RTE_ALIGN_CEIL((uint64_t)(rxq), RTE_CACHE_LINE_SIZE);
-+
-+	if (nb_rx_desc > MAX_RX_BD_RING_SIZE) {
-+		nb_rx_desc = MAX_RX_BD_RING_SIZE;
-+		ENETFEC_PMD_WARN("modified the nb_desc to MAX_RX_BD_RING_SIZE");
-+	}
-+
-+	rxq->bd.ring_size = nb_rx_desc;
-+	fep->total_rx_ring_size += rxq->bd.ring_size;
-+	fep->rx_queues[queue_idx] = rxq;
-+
-+	rte_write32(rte_cpu_to_le_32(fep->bd_addr_p_r[queue_idx]),
-+		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_RD_START(queue_idx));
-+	rte_write32(rte_cpu_to_le_32(PKT_MAX_BUF_SIZE),
-+		(uint8_t *)fep->hw_baseaddr_v + ENETFEC_MRB_SIZE(queue_idx));
-+
-+	/* Set receive descriptor base. */
-+	rxq = fep->rx_queues[queue_idx];
-+
-+	size = dsize * rxq->bd.ring_size;
-+	bd_base = (struct bufdesc *)fep->dma_baseaddr_r[queue_idx];
-+	rxq->bd.queue_id = queue_idx;
-+	rxq->bd.base = bd_base;
-+	rxq->bd.cur = bd_base;
-+	rxq->bd.d_size = dsize;
-+	rxq->bd.d_size_log2 = dsize_log2;
-+	rxq->bd.active_reg_desc = (uint8_t *)fep->hw_baseaddr_v +
-+			offset_des_active_rxq[queue_idx];
-+	bd_base = (struct bufdesc *)(((uintptr_t)bd_base) + size);
-+	rxq->bd.last = (struct bufdesc *)(((uintptr_t)bd_base) - dsize);
-+
-+	rxq->fep = fep;
-+	bdp = rxq->bd.base;
-+	rxq->bd.cur = bdp;
-+
-+	if ((ptrb->rx_buf_num != nb_rx_desc) || (ptrb->rx_buf_num != MAX_RX_BD_RING_SIZE))
-+		ENETFEC_PMD_ERR("nb_rx_desc:%d rx_buf_num:%d, configure ERROR!\n", nb_rx_desc, ptrb->rx_buf_num);
-+
-+	for (i = 0; i < nb_rx_desc; i++) {
-+		if (ptrb->rx_buf_num == MAX_RX_BD_RING_SIZE) {
-+			rte_write32(rte_cpu_to_le_32(ptrb->rx_addr[i]), &bdp->bd_bufaddr);
-+			rxq->rx_addr[i] = ptrb->rx_addr[i];
-+			rxq->rx_buf[i] = ptrb->rx_buf[i];
-+		} else {
-+			rte_write32(0, &bdp->bd_bufaddr);
-+		}
-+
-+		rte_write16(rte_cpu_to_le_16(RX_BD_EMPTY), &bdp->bd_sc);
-+
-+		bdp = enet_get_nextdesc(bdp, &rxq->bd);
-+	}
-+
-+	/* Initialize the receive buffer descriptors. */
-+	bdp = rxq->bd.cur;
-+	for (i = 0; i < rxq->bd.ring_size; i++) {
-+		/* Initialize the BD for every fragment in the page. */
-+		if (rte_read32(&bdp->bd_bufaddr) > 0)
-+			rte_write16(rte_cpu_to_le_16(RX_BD_EMPTY),
-+				&bdp->bd_sc);
-+		else
-+			rte_write16(rte_cpu_to_le_16(0), &bdp->bd_sc);
-+
-+		bdp = enet_get_nextdesc(bdp, &rxq->bd);
-+	}
-+
-+	/* Set the last buffer to wrap */
-+	bdp = enet_get_prevdesc(bdp, &rxq->bd);
-+	rte_write16((rte_cpu_to_le_16(RX_BD_WRAP) |
-+		rte_read16(&bdp->bd_sc)),  &bdp->bd_sc);
-+	rte_write32(0, fep->rx_queues[queue_idx]->bd.active_reg_desc);
-+	return 0;
-+}
-+
-+int enetfec_eth_init(struct rte_eth_dev *dev)
-+{
-+	struct enetfec_private *fep = dev->data->dev_private;
-+
-+	fep->full_duplex = FULL_DUPLEX;
-+
-+	return 0;
-+}
-+
-+int pmd_enetfec_probe(struct rte_vdev_device *vdev)
-+{
-+	const char *src_macaddr = "ethcat";
-+	struct rte_eth_dev *dev = NULL;
-+	struct rte_ether_addr macaddr;
-+	struct enetfec_private *fep;
-+	unsigned int bdsize;
-+	int rc;
-+	int i;
-+
-+	ENETFEC_PMD_LOG("[INFO] Initializing driver for enet_fec\n");
-+
-+	dev = calloc(1, sizeof(*dev));
-+	if (dev == NULL)
-+		return -ENOMEM;
-+
-+	memset(&sfec_eth_data, 0, sizeof(sfec_eth_data));
-+	memset(&sfec_priv_data, 0, sizeof(sfec_priv_data));
-+
-+	sfec_eth_data.dev_private = &sfec_priv_data;
-+	dev->data = &sfec_eth_data;
-+
-+	/* setup board info structure */
-+	fep = dev->data->dev_private;
-+	fep->dev = dev;
-+
-+	fep->max_rx_queues = ENETFEC_MAX_Q;
-+	fep->max_tx_queues = ENETFEC_MAX_Q;
-+	dev->data->nb_rx_queues = fep->max_rx_queues;
-+	dev->data->nb_tx_queues = fep->max_tx_queues;
-+	fep->quirks = QUIRK_HAS_ENETFEC_MAC | QUIRK_GBIT
-+		| QUIRK_RACC;
-+
-+	vdev->dev = dev;
-+
-+	rc = enetfec_configure();
-+	if (rc != 0)
-+		return -ENOMEM;
-+	rc = config_enetfec_uio(fep);
-+	if (rc != 0)
-+		return -ENOMEM;
-+
-+	/* Get the BD size for distributing among six queues */
-+	bdsize = (fep->bd_size) / NUM_OF_BD_QUEUES;
-+
-+	for (i = 0; i < fep->max_tx_queues; i++) {
-+		fep->dma_baseaddr_t[i] = fep->bd_addr_v;
-+		fep->bd_addr_p_t[i] = fep->bd_addr_p;
-+		fep->bd_addr_v = (uint8_t *)fep->bd_addr_v + bdsize;
-+		fep->bd_addr_p = fep->bd_addr_p + bdsize;
-+	}
-+	for (i = 0; i < fep->max_rx_queues; i++) {
-+		fep->dma_baseaddr_r[i] = fep->bd_addr_v;
-+		fep->bd_addr_p_r[i] = fep->bd_addr_p;
-+		fep->bd_addr_v = (uint8_t *)fep->bd_addr_v + bdsize;
-+		fep->bd_addr_p = fep->bd_addr_p + bdsize;
-+	}
-+
-+	/*
-+	 * Set default mac address
-+	 */
-+	for (i = 0; i < 6; i++)
-+		macaddr.addr_bytes[i] = src_macaddr[i] - 'a';
-+
-+	enetfec_set_mac_address(dev, &macaddr);
-+
-+	fep->bufdesc_ex = ENETFEC_EXTENDED_BD;
-+	rc = enetfec_eth_init(dev);
-+	if (rc)
-+		goto failed_init;
-+
-+	return 0;
-+
-+failed_init:
-+	ENETFEC_PMD_ERR("Failed to init");
-+
-+	return rc;
-+}
-diff --git a/devices/enet_fec/enet_ethdev.h b/devices/enet_fec/enet_ethdev.h
-new file mode 100644
-index 00000000..0785e42d
---- /dev/null
-+++ b/devices/enet_fec/enet_ethdev.h
-@@ -0,0 +1,227 @@
-+/* SPDX-License-Identifier: BSD-3-Clause
-+ * Copyright 2020-2023 NXP
-+ */
-+
-+#ifndef __ENETFEC_ETHDEV_H__
-+#define __ENETFEC_ETHDEV_H__
-+
-+#include <stdio.h>
-+#include <stdint.h>
-+#include <stdbool.h>
-+#include <stddef.h>
-+#include <string.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <sys/mman.h>
-+#include <fcntl.h>
-+#include <unistd.h>
-+#include <stdlib.h>
-+#include <dirent.h>
-+#include <errno.h>
-+
-+#include "enet_fec.h"
-+
-+
-+/* full duplex */
-+#define FULL_DUPLEX		0x00
-+
-+#define PKT_MAX_BUF_SIZE	1984
-+#define OPT_FRAME_SIZE		(PKT_MAX_BUF_SIZE << 16)
-+
-+#define __iomem
-+#define dcbf(p) { asm volatile("dc cvac, %0" : : "r"(p) : "memory"); }
-+#define dcbf_64(p) dcbf(p)
-+
-+#define rte_wmb() asm volatile("dmb oshst" : : : "memory")
-+#define rte_rmb() asm volatile("dmb oshld" : : : "memory")
-+
-+#define rte_delay_us usleep
-+
-+/*
-+ * ENETFEC can support 1 rx and tx queue..
-+ */
-+#define ENETFEC_MAX_Q		(1)
-+#define RTE_CACHE_LINE_SIZE (64)
-+#define RTE_ETHER_ADDR_LEN (6)
-+
-+struct rte_ether_addr {
-+	uint8_t addr_bytes[RTE_ETHER_ADDR_LEN]; /**< Addr bytes in tx order */
-+};
-+
-+struct rte_eth_dev_data {
-+	void *dev_private;
-+	int nb_rx_queues;
-+	int nb_tx_queues;
-+	struct rte_ether_addr mac_addrs;
-+};
-+
-+#define writel(v, p) ({*(volatile unsigned int *)(p) = (v); })
-+
-+#define __rte_always_inline inline __attribute__((always_inline))
-+
-+static __rte_always_inline uint32_t rte_read32(const volatile void *addr)
-+{
-+	return *(volatile uint32_t*)addr;
-+}
-+
-+static __rte_always_inline uint16_t rte_read16(const volatile void *addr)
-+{
-+	return *(volatile uint16_t*)addr;
-+}
-+
-+static __rte_always_inline void rte_write16(uint16_t value, volatile void *addr)
-+{
-+	*(volatile uint16_t*)addr = value;
-+}
-+
-+static __rte_always_inline void rte_write32(uint32_t value, volatile void *addr)
-+{
-+        *(volatile uint32_t*)addr = value;
-+}
-+
-+struct rte_eth_dev {
-+	struct rte_eth_dev_data *data;
-+	void *process_private; /**< Pointer to per-process device data */
-+};
-+
-+#define RTE_STATIC_BSWAP16(v) \
-+	((((uint16_t)(v) & UINT16_C(0x00ff)) << 8) | \
-+	 (((uint16_t)(v) & UINT16_C(0xff00)) >> 8))
-+
-+#define rte_cpu_to_le_32(x) (x)
-+#define rte_cpu_to_le_16(x) (x)
-+#define rte_le_to_cpu_16(x) (x)
-+
-+struct rte_vdev_device {
-+	struct rte_eth_dev *dev;
-+};
-+
-+/**
-+ * IO virtual address type.
-+ * When the physical addressing mode (IOVA as PA) is in use,
-+ * the translation from an IO virtual address (IOVA) to a physical address
-+ * is a direct mapping, i.e. the same value.
-+ * Otherwise, in virtual mode (IOVA as VA), an IOMMU may do the translation.
-+ */
-+typedef uint64_t rte_iova_t;
-+#define RTE_BAD_IOVA ((rte_iova_t)-1)
-+
-+#define RTE_ALIGN_FLOOR(val, align) \
-+	(typeof(val))((val) & (~((typeof(val))((align) - 1))))
-+
-+#define RTE_ALIGN_CEIL(val, align) \
-+	RTE_ALIGN_FLOOR(((val) + ((typeof(val)) (align) - 1)), align)
-+
-+struct bufdesc {
-+	uint16_t		bd_datlen;  /* buffer data length */
-+	uint16_t		bd_sc;      /* buffer control & status */
-+	uint32_t		bd_bufaddr; /* buffer address */
-+} __attribute__((packed));
-+
-+struct bufdesc_ex {
-+	struct			bufdesc desc;
-+	uint32_t		bd_esc;
-+	uint32_t		bd_prot;
-+	uint32_t		bd_bdu;
-+	uint32_t		ts;
-+	uint16_t		res0[4];
-+} __attribute__((packed));
-+
-+struct bufdesc_prop {
-+	int			queue_id;
-+	/* Addresses of Tx and Rx buffers */
-+	struct bufdesc		*base;
-+	struct bufdesc		*last;
-+	struct bufdesc		*cur;
-+	void __iomem		*active_reg_desc;
-+	uint64_t		descr_baseaddr_p;
-+	unsigned short		ring_size;
-+	unsigned char		d_size;
-+	unsigned char		d_size_log2;
-+};
-+
-+struct enetfec_priv_tx_q {
-+	struct bufdesc_prop	bd;
-+	struct bufdesc		*dirty_tx;
-+	struct enetfec_private	*fep;
-+	uint8_t			*tx_buf[MAX_TX_BD_RING_SIZE];
-+	uint32_t		tx_addr[MAX_TX_BD_RING_SIZE];
-+};
-+
-+struct enetfec_priv_rx_q {
-+	struct bufdesc_prop	bd;
-+	struct enetfec_private	*fep;
-+	uint8_t			*rx_buf[MAX_RX_BD_RING_SIZE];
-+	uint32_t		rx_addr[MAX_RX_BD_RING_SIZE];
-+};
-+
-+struct enetfec_private {
-+	struct rte_eth_dev	*dev;
-+	int			full_duplex;
-+	int			flag_pause;
-+	int			flag_csum;
-+	uint32_t		quirks;
-+	uint32_t		cbus_size;
-+	uint32_t		enetfec_e_cntl;
-+	uint16_t		max_rx_queues;
-+	uint16_t		max_tx_queues;
-+	unsigned int		total_tx_ring_size;
-+	unsigned int		total_rx_ring_size;
-+	unsigned int		reg_size;
-+	unsigned int		bd_size;
-+	bool			bufdesc_ex;
-+	bool			rgmii_txc_delay;
-+	bool			rgmii_rxc_delay;
-+	void			*hw_baseaddr_v;
-+	void			*bd_addr_v;
-+	uint32_t		hw_baseaddr_p;
-+	uint32_t		bd_addr_p;
-+	uint32_t		bd_addr_p_r[ENETFEC_MAX_Q];
-+	uint32_t		bd_addr_p_t[ENETFEC_MAX_Q];
-+	void			*dma_baseaddr_r[ENETFEC_MAX_Q];
-+	void			*dma_baseaddr_t[ENETFEC_MAX_Q];
-+	struct enetfec_priv_rx_q *rx_queues[ENETFEC_MAX_Q];
-+	struct enetfec_priv_tx_q *tx_queues[ENETFEC_MAX_Q];
-+	struct enetfec_priv_rx_q *rx_queues_base[ENETFEC_MAX_Q];
-+	struct enetfec_priv_tx_q *tx_queues_base[ENETFEC_MAX_Q];
-+};
-+
-+static inline struct
-+bufdesc *enet_get_nextdesc(struct bufdesc *bdp, struct bufdesc_prop *bd)
-+{
-+	return (bdp >= bd->last) ? bd->base
-+		: (struct bufdesc *)(((uintptr_t)bdp) + bd->d_size);
-+}
-+
-+static inline int
-+fls64(unsigned long word)
-+{
-+	return (64 - __builtin_clzl(word)) - 1;
-+}
-+
-+static inline struct
-+bufdesc *enet_get_prevdesc(struct bufdesc *bdp, struct bufdesc_prop *bd)
-+{
-+	return (bdp <= bd->base) ? bd->last
-+		: (struct bufdesc *)(((uintptr_t)bdp) - bd->d_size);
-+}
-+
-+static inline int
-+enet_get_bd_index(struct bufdesc *bdp, struct bufdesc_prop *bd)
-+{
-+	return ((const char *)bdp - (const char *)bd->base) >> bd->d_size_log2;
-+}
-+
-+struct enetfec_private *enetfec_get_priv_data(void);
-+int enetfec_set_km_mode(int mode);
-+uint16_t enetfec_recv_pkts_ecat(uint32_t *pindex, uint16_t *plength);
-+uint16_t enetfec_xmit_pkts_ecat(void *pbuffer, uint16_t length);
-+int pmd_enetfec_probe(struct rte_vdev_device *vdev);
-+int enetfec_eth_configure(struct rte_eth_dev *dev);
-+int enetfec_rx_queue_setup(struct rte_eth_dev *dev, uint16_t queue_idx, uint16_t nb_rx_desc);
-+int enetfec_tx_queue_setup(struct rte_eth_dev *dev, uint16_t queue_idx, uint16_t nb_desc);
-+int enetfec_eth_start(struct rte_eth_dev *dev);
-+int enetfec_eth_stop(struct rte_eth_dev *dev);
-+int enetfec_eth_close(struct rte_eth_dev *dev);
-+
-+#endif /*__ENETFEC_ETHDEV_H__*/
-diff --git a/devices/enet_fec/enet_fec.c b/devices/enet_fec/enet_fec.c
-new file mode 100644
-index 00000000..56ffbe9b
---- /dev/null
-+++ b/devices/enet_fec/enet_fec.c
-@@ -0,0 +1,331 @@
-+/* SPDX-License-Identifier: BSD-3-Clause
-+ * Copyright 2021-2023 NXP
-+ */
-+
-+#include <sys/mman.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <unistd.h>
-+
-+#include "enet_uio.h"
-+#include "enet_ethdev.h"
-+#include "enet_fec.h"
-+
-+
-+static struct enet_fec_bd_buf_t senet_fec_bd_buf;
-+
-+#define HUGE_PAGE_MNT_PATH ("/dev/hugepages/ecat_hugepage")
-+#define HUGE_PAGE_SIZE (0x200000)
-+#define NUM_HUGE_PAGE (16)
-+#define HP_DIR_LEN (256)
-+
-+static struct huge_page_info_t shp_info[NUM_HUGE_PAGE];
-+static int shp_cnt;
-+
-+#define PFN_MASK_SIZE	8
-+static struct rte_vdev_device sfec_vdev;
-+
-+phys_addr_t rte_mem_virt2phy(const void *virtaddr)
-+{
-+	int fd, retval;
-+	uint64_t page, physaddr;
-+	unsigned long virt_pfn;
-+	int page_size;
-+	off_t offset;
-+
-+	/* standard page size */
-+	page_size = getpagesize();
-+
-+	fd = open("/proc/self/pagemap", O_RDONLY);
-+	if (fd < 0) {
-+		printf("INFO_EAL cannot open /proc/self/pagemap \n");
-+		return RTE_BAD_IOVA;
-+	}
-+
-+	virt_pfn = (unsigned long)virtaddr / page_size;
-+	offset = sizeof(uint64_t) * virt_pfn;
-+	if (lseek(fd, offset, SEEK_SET) == (off_t) -1) {
-+		printf("INFO_EAL seek error in /proc/self/pagemap \n");
-+		close(fd);
-+		return RTE_BAD_IOVA;
-+	}
-+
-+	retval = read(fd, &page, PFN_MASK_SIZE);
-+	close(fd);
-+	if (retval < 0) {
-+		printf("INFO_EAL cannot read /proc/self/pagemap \n");
-+		return RTE_BAD_IOVA;
-+	} else if (retval != PFN_MASK_SIZE) {
-+		printf("INFO_EAL read %d bytes from /proc/self/pagemap but expected %d \n", retval, PFN_MASK_SIZE);
-+		return RTE_BAD_IOVA;
-+	}
-+
-+	/*
-+	 * the pfn (page frame number) are bits 0-54 (see
-+	 * pagemap.txt in linux Documentation)
-+	 */
-+	if ((page & 0x7fffffffffffffULL) == 0)
-+		return RTE_BAD_IOVA;
-+
-+	physaddr = ((page & 0x7fffffffffffffULL) * page_size)
-+		+ ((unsigned long)virtaddr % page_size);
-+
-+	return physaddr;
-+}
-+
-+void* enet_fec_mem_map(size_t length, uint32_t *pa, uint32_t align)
-+{
-+	struct huge_page_info_t *php = NULL;
-+	char *hp_dir = NULL;
-+	void *pbase = NULL;
-+	void *pvirt = NULL;
-+	off_t addr = 0;
-+	int fd = 0;
-+
-+	if (length > HUGE_PAGE_SIZE) {
-+		printf("%s(): out of hugepage size! length:0x%lX\n", __func__, length);
-+		return NULL;
-+	}
-+
-+	if (shp_cnt >= NUM_HUGE_PAGE) {
-+		printf("%s(): out of hugepage number! shp_cnt:%d\n", __func__, shp_cnt);
-+		return NULL;
-+	}
-+
-+	hp_dir = (char *)malloc(HP_DIR_LEN);
-+	if (!hp_dir) {
-+		printf("%s(): malloc hp_dir failed! shp_cnt:%d\n", __func__, shp_cnt);
-+		return NULL;
-+	}
-+
-+	memset(hp_dir, 0, HP_DIR_LEN);
-+	snprintf(hp_dir, HP_DIR_LEN - 1, "%s_%d", HUGE_PAGE_MNT_PATH, shp_cnt);
-+
-+	fd = open(hp_dir, O_CREAT | O_RDWR, 0600);
-+	if (fd == -1) {
-+		printf("%s(): open \"%s\" ERROR!\n", __func__, HUGE_PAGE_MNT_PATH);
-+		free(hp_dir);
-+		return NULL;
-+	}
-+
-+	pbase = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-+	if (pbase == MAP_FAILED) {
-+		printf("%s(): mmap failed! ret:%p\n", __func__, pbase);
-+		free(hp_dir);
-+		return NULL;
-+	}
-+
-+	*(volatile int *)pbase = *(volatile int *)pbase;
-+	addr = rte_mem_virt2phy(pbase);
-+
-+	php = shp_info + shp_cnt++;
-+	memset(php, 0, sizeof(*php));
-+
-+	php->size = length;
-+	php->virt = pbase;
-+	php->dir = hp_dir;
-+	php->fd = fd;
-+
-+	pvirt = (uint8_t*)RTE_ALIGN_CEIL((uint64_t)pbase, align);
-+	if (pa)
-+		*pa = addr + (off_t)(pvirt - pbase);
-+
-+	return pvirt;
-+}
-+
-+int enet_fec_mem_unmap(void *va, size_t len)
-+{
-+	if ((va != NULL) && (len > 0))
-+		munmap(va, len);
-+
-+	return 0;
-+}
-+
-+static int enet_fec_init_bd_buf(void)
-+{
-+	struct enet_fec_bd_buf_t *ptrb = &senet_fec_bd_buf;
-+	int i = 0;
-+
-+	shp_cnt = 0;
-+	for (i = 0; i < NUM_HUGE_PAGE; i++) {
-+		memset(shp_info + i, 0, sizeof(struct huge_page_info_t));
-+		shp_info[i].fd = -1;
-+	}
-+
-+	for (i = 0; i < MAX_RX_BD_RING_SIZE; i++)
-+		ptrb->rx_buf[i] = NULL;
-+
-+	for (i = 0; i < MAX_TX_BD_RING_SIZE; i++)
-+		ptrb->tx_buf[i] = NULL;
-+
-+	ptrb->rx_buf_num = 0;
-+	ptrb->tx_buf_num = 0;
-+
-+	return 0;
-+}
-+
-+static int enet_fec_clean_bd_buf(void)
-+{
-+	int i = 0;
-+
-+	for (i = 0; i < shp_cnt; i++) {
-+		enet_fec_mem_unmap(shp_info[i].virt, shp_info[i].size);
-+
-+		if (shp_info[i].fd != -1) {
-+			close(shp_info[i].fd);
-+			shp_info[i].fd = -1;
-+		}
-+
-+		if (shp_info[i].dir) {
-+			unlink(shp_info[i].dir);
-+			free(shp_info[i].dir);
-+			shp_info[i].dir = NULL;
-+		}
-+	}
-+	shp_cnt = 0;
-+
-+	return 0;
-+}
-+
-+static int enet_fec_alloc_bd_buf(void)
-+{
-+	struct enet_fec_bd_buf_t *ptrb = &senet_fec_bd_buf;
-+	uint32_t mm_addr = 0;
-+	void *mm_virt = NULL;
-+	size_t mm_size = 0;
-+	int ret = 0;
-+	int i = 0;
-+
-+	mm_size = (MAX_TX_BD_RING_SIZE + MAX_RX_BD_RING_SIZE) * FEC_BD_BUF_SIZE + RTE_CACHE_LINE_SIZE;
-+
-+	mm_virt = (uint8_t*)enet_fec_mem_map(mm_size, &mm_addr, RTE_CACHE_LINE_SIZE);
-+	if (!mm_virt) {
-+		printf("%s(): mem_map hugepage failed! size:0x%lX\n", __func__, mm_size);
-+		ret = -1;
-+		goto malloc_fail;
-+	}
-+
-+	for (i = 0; i < MAX_TX_BD_RING_SIZE; i++) {
-+		ptrb->tx_buf[i] = mm_virt;
-+		ptrb->tx_addr[i] = mm_addr;
-+
-+		mm_virt += FEC_BD_BUF_SIZE;
-+		mm_addr += FEC_BD_BUF_SIZE;
-+	}
-+	ptrb->tx_buf_len = FEC_BD_BUF_SIZE;
-+	ptrb->tx_buf_oft = 0;
-+	ptrb->tx_buf_num = MAX_TX_BD_RING_SIZE;
-+
-+	for (i = 0; i < MAX_RX_BD_RING_SIZE; i++) {
-+		ptrb->rx_buf[i] = mm_virt;
-+		ptrb->rx_addr[i] = mm_addr;
-+		ptrb->rx_buf[i] += FEC_RX_BD_OFFSET;  /* FEC BD RING will add unused 2 Bytes, see QUIRK_RACC */
-+
-+		mm_virt += FEC_BD_BUF_SIZE;
-+		mm_addr += FEC_BD_BUF_SIZE;
-+	}
-+	ptrb->rx_buf_len = FEC_BD_BUF_SIZE;
-+	ptrb->rx_buf_oft = FEC_RX_BD_OFFSET;
-+	ptrb->rx_buf_num = MAX_RX_BD_RING_SIZE;
-+
-+malloc_fail:
-+
-+	return ret;
-+}
-+
-+uint8_t *enet_fec_get_tx_buf(int idx)
-+{
-+    struct enet_fec_bd_buf_t *ptrb = &senet_fec_bd_buf;
-+
-+    return ptrb->tx_buf[idx];
-+}
-+
-+struct enet_fec_bd_buf_t *enet_fec_get_bd_buf(void)
-+{
-+	return &senet_fec_bd_buf;
-+}
-+
-+int enet_fec_alloc_buffer(void)
-+{
-+	int ret = 0;
-+
-+	ret = enet_fec_init_bd_buf();
-+	if (ret)
-+		return ret;
-+
-+        ret = enet_fec_alloc_bd_buf();
-+	if (ret)
-+		return ret;
-+
-+	return 0;
-+}
-+
-+int enet_fec_recv_no_copy(void *buf, uint16_t *plen, uint32_t *pindex)
-+{
-+	int nb_rx = 0;
-+
-+	nb_rx = enetfec_recv_pkts_ecat(pindex, plen);
-+	return nb_rx;
-+}
-+
-+int enet_fec_send_no_copy(void *buf, uint16_t len, uint32_t addr)
-+{
-+	uint16_t ret_len = 0;
-+	int nb_tx = 0;
-+
-+	nb_tx = enetfec_xmit_pkts_ecat(buf, len);
-+	if (nb_tx != 0)
-+		ret_len = len;
-+
-+	return ret_len;
-+}
-+
-+int enet_fec_dev_init(void)
-+{
-+	struct rte_eth_dev *dev = NULL;
-+	int ret = 0;
-+
-+	pmd_enetfec_probe(&sfec_vdev);
-+	dev = sfec_vdev.dev;
-+
-+	enetfec_eth_configure(dev);
-+
-+	/* init one RX queue */
-+	ret = enetfec_rx_queue_setup(dev, 0, MAX_RX_BD_RING_SIZE);
-+	if (ret)
-+		goto err_tag;
-+
-+	/* init one TX queue */
-+	ret = enetfec_tx_queue_setup(dev, 0, MAX_TX_BD_RING_SIZE);
-+	if (ret)
-+		goto err_tag;
-+
-+	/* Start device */
-+	enetfec_eth_start(dev);
-+	printf("Starting port for user space EtherCAT\n");
-+
-+err_tag:
-+	if (ret)
-+		printf("%s(): run failed! ret:%d\n", __func__, ret);
-+
-+	return ret;
-+}
-+
-+int enet_fec_dev_quit(void)
-+{
-+	struct rte_eth_dev *dev = sfec_vdev.dev;
-+	int ret = 0;
-+
-+	printf("Closing port for user space EtherCAT\n");
-+	ret = enetfec_eth_stop(dev);
-+	if (ret != 0)
-+		printf("[ERR] rte_eth_dev_stop: err=%d" , ret);
-+
-+	enetfec_eth_close(dev);
-+
-+	enet_fec_clean_bd_buf();
-+
-+	return 0;
-+}
-diff --git a/devices/enet_fec/enet_fec.h b/devices/enet_fec/enet_fec.h
-new file mode 100644
-index 00000000..580ca291
---- /dev/null
-+++ b/devices/enet_fec/enet_fec.h
-@@ -0,0 +1,51 @@
-+/* SPDX-License-Identifier: BSD-3-Clause
-+ * Copyright 2021-2023 NXP
-+ */
-+
-+#ifndef __ENET_FEC_H__
-+#define __ENET_FEC_H__
-+
-+struct huge_page_info_t {
-+	size_t size;
-+	void *virt;
-+	char *dir;
-+	int fd;
-+};
-+
-+#define MAX_TX_BD_RING_SIZE	(16)  /* It should be power of 2 */
-+#define MAX_RX_BD_RING_SIZE	(16)
-+#define FEC_BD_BUF_SIZE (2048)
-+#define FEC_RX_BD_OFFSET (2)
-+
-+struct enet_fec_bd_buf_t {
-+	uint8_t *tx_buf[MAX_TX_BD_RING_SIZE];
-+	uint32_t tx_addr[MAX_TX_BD_RING_SIZE];
-+	uint16_t tx_buf_len;
-+	uint16_t tx_buf_oft;
-+	uint8_t tx_buf_num;
-+
-+	uint8_t *rx_buf[MAX_RX_BD_RING_SIZE];
-+	uint32_t rx_addr[MAX_RX_BD_RING_SIZE];
-+	uint16_t rx_buf_len;
-+	uint16_t rx_buf_oft;
-+	uint8_t rx_buf_num;
-+} __attribute__((packed));
-+
-+typedef uint64_t phys_addr_t;
-+
-+phys_addr_t rte_mem_virt2phy(const void *virtaddr);
-+
-+int enet_fec_alloc_buffer(void);
-+uint8_t *enet_fec_get_tx_buf(int idx);
-+struct enet_fec_bd_buf_t *enet_fec_get_bd_buf(void);
-+
-+uint32_t ecus_get_core_mask(void);
-+int ecus_bind_cpu_core(uint32_t core_mask);
-+
-+int enet_fec_recv_no_copy(void *buf, uint16_t *plen, uint32_t *pindex);
-+int enet_fec_send_no_copy(void *buf, uint16_t len, uint32_t addr);
-+
-+int enet_fec_dev_init(void);
-+int enet_fec_dev_quit(void);
-+
-+#endif
-diff --git a/devices/enet_fec/enet_main.c b/devices/enet_fec/enet_main.c
-new file mode 100644
-index 00000000..c0e4121e
---- /dev/null
-+++ b/devices/enet_fec/enet_main.c
-@@ -0,0 +1,289 @@
++++ b/devices/nxp_userspace/usm_main.c
+@@ -0,0 +1,308 @@
 +/* SPDX-License-Identifier: BSD-3-Clause
 + * Copyright 2023 NXP
 + */
@@ -1462,36 +407,39 @@ index 00000000..c0e4121e
 +#include <linux/netdevice.h>
 +#include <linux/if_arp.h> /* ARPHRD_ETHER */
 +#include <linux/etherdevice.h>
++#include <sys/sysinfo.h>
 +
 +#include "../globals.h"
 +#include "../ecdev.h"
 +#include "device.h"
-+#include "enet_fec.h"
++#include "usm_main.h"
 +
-+#define PFX "ec_enet_fec: "
++#define PFX "nxp_us_drv: "
 +
-+MODULE_DESCRIPTION("EtherCAT master enet-fec Ethernet device module");
++MODULE_DESCRIPTION("NXP user space driver module");
 +MODULE_LICENSE("GPL");
 +MODULE_VERSION(EC_MASTER_VERSION);
 +
-+static uint32_t srx_idxs[MAX_RX_BD_RING_SIZE];
-+static uint16_t srx_lens[MAX_RX_BD_RING_SIZE];
-+static int srx_cnt;
 +
-+int __init ec_fec_init_module(void);
-+void __exit ec_fec_cleanup_module(void);
++int __init ec_usm_init_module(void);
++void __exit ec_usm_cleanup_module(void);
 +
 +typedef struct {
 +    struct net_device *netdev;
 +    ec_device_t *ecdev;
-+} ec_fec_device_t;
++    uint8_t *rx_buf[MAX_RX_BD_RING_SIZE];
++    uint8_t *tx_buf[MAX_TX_BD_RING_SIZE];
++    uint32_t rx_idxs[MAX_RX_BD_RING_SIZE];
++    uint16_t rx_lens[MAX_RX_BD_RING_SIZE];
++    int rx_cnt;
++} ec_usm_device_t;
 +
-+static ec_fec_device_t sec_fec_dev;
++static ec_usm_device_t sec_usm_dev;
 +static uint32_t score_mask = 0x02;
 +
 +extern int ec_master_set_noop_mode(uint32_t cycle_ns);
-+int ec_fec_device_xmit(ec_fec_device_t *, struct sk_buff *);
-+void ec_fec_device_poll(ec_fec_device_t *);
++static int ec_usm_device_xmit(ec_usm_device_t *, struct sk_buff *);
++static void ec_usm_device_poll(ec_usm_device_t *);
 +
 +static int ecus_set_core_mask(uint32_t core_mask)
 +{
@@ -1511,17 +459,26 @@ index 00000000..c0e4121e
 +{
 +    pthread_t thread;
 +    cpu_set_t cpuset;
++    int core_num = 0;
 +    int ret = 0;
 +    int i = 0;
 +
 +    thread = pthread_self();
++    core_num = get_nprocs();
 +
 +    CPU_ZERO(&cpuset);
++
++    if (core_num == 1) {
++        CPU_SET(0, &cpuset);
++        goto set_tag;
++    }
++
 +    for (i = 0; i < 32; i++) {
 +        if (core_mask & (0x01 << i))
 +            CPU_SET(i, &cpuset);
 +    }
 +
++set_tag:
 +    ret = pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
 +    if (ret != 0)
 +        printk(KERN_ERR PFX "pthread_setaffinity_np failed!\n");
@@ -1529,37 +486,37 @@ index 00000000..c0e4121e
 +    return ret;
 +}
 +
-+static int ec_fec_netdev_open(struct net_device *dev)
++static int ec_usm_netdev_open(struct net_device *dev)
 +{
 +    return 0;
 +}
 +
-+static int ec_fec_netdev_stop(struct net_device *dev)
++static int ec_usm_netdev_stop(struct net_device *dev)
 +{
 +    return 0;
 +}
 +
-+static int ec_fec_netdev_xmit(struct sk_buff *skb, struct net_device *dev)
++static int ec_usm_netdev_xmit(struct sk_buff *skb, struct net_device *dev)
 +{
-+    ec_fec_device_t *fec_dev = &sec_fec_dev;
++    ec_usm_device_t *usm_dev = &sec_usm_dev;
 +
-+    return ec_fec_device_xmit(fec_dev, skb);
++    return ec_usm_device_xmit(usm_dev, skb);
 +}
 +
-+void ec_fec_poll(struct net_device *dev)
++static void ec_usm_poll(struct net_device *dev)
 +{
-+    ec_fec_device_t *fec_dev = &sec_fec_dev;
++    ec_usm_device_t *usm_dev = &sec_usm_dev;
 +
-+    return ec_fec_device_poll(fec_dev);
++    return ec_usm_device_poll(usm_dev);
 +}
 +
-+static const struct net_device_ops ec_fec_netdev_ops = {
-+    .ndo_open       = ec_fec_netdev_open,
-+    .ndo_stop       = ec_fec_netdev_stop,
-+    .ndo_start_xmit = ec_fec_netdev_xmit,
++static const struct net_device_ops ec_usm_netdev_ops = {
++    .ndo_open       = ec_usm_netdev_open,
++    .ndo_stop       = ec_usm_netdev_stop,
++    .ndo_start_xmit = ec_usm_netdev_xmit,
 +};
 +
-+static inline void ec_fec_ether_setup(struct net_device *netdev)
++static inline void ec_usm_ether_setup(struct net_device *netdev)
 +{
 +    uint8_t smac[6] = {0x04, 0x13, 0x07, 0x02, 0x00, 0x13};
 +
@@ -1568,18 +525,25 @@ index 00000000..c0e4121e
 +    netdev->ifindex = 0;
 +}
 +
-+/** Init enet-fec device.
++/** Init userspace-master device.
 + */
-+int ec_fec_device_init(ec_fec_device_t *dev)
++static int ec_usm_device_init(ec_usm_device_t *dev)
 +{
-+    ec_fec_device_t **priv;
++    ec_usm_device_t **priv;
++    int i = 0;
 +
 +    dev->ecdev = NULL;
-+    dev->netdev = alloc_netdev(sizeof(ec_fec_device_t *), "ecat0", NET_NAME_UNKNOWN, ec_fec_ether_setup);
++    dev->netdev = alloc_netdev(sizeof(ec_usm_device_t *), "ecat0", NET_NAME_UNKNOWN, ec_usm_ether_setup);
 +    if (!dev->netdev)
 +        return -ENOMEM;
 +
-+    dev->netdev->netdev_ops = &ec_fec_netdev_ops;
++    dev->netdev->netdev_ops = &ec_usm_netdev_ops;
++
++    for (i = 0; i < MAX_RX_BD_RING_SIZE; i++)
++        dev->rx_buf[i] = us_drv_get_rx_buf(i);
++
++    for (i = 0; i < MAX_TX_BD_RING_SIZE; i++)
++        dev->tx_buf[i] = us_drv_get_tx_buf(i);
 +
 +    priv = netdev_priv(dev->netdev);
 +    *priv = dev;
@@ -1587,9 +551,9 @@ index 00000000..c0e4121e
 +    return 0;
 +}
 +
-+/** Clear enet-fec device.
++/** Clear userspace-master device.
 + */
-+void ec_fec_device_clear(ec_fec_device_t *dev)
++static void ec_usm_device_clear(ec_usm_device_t *dev)
 +{
 +    if (dev->ecdev) {
 +        ecdev_close(dev->ecdev);
@@ -1599,13 +563,13 @@ index 00000000..c0e4121e
 +    free_netdev(dev->netdev);
 +}
 +
-+/** Offer enet-fec device to master.
++/** Offer userspace-master device to master.
 + */
-+int ec_fec_device_offer(ec_fec_device_t *dev)
++static int ec_usm_device_offer(ec_usm_device_t *dev)
 +{
 +    int ret = 0;
 +
-+    dev->ecdev = ecdev_offer(dev->netdev, ec_fec_poll, THIS_MODULE);
++    dev->ecdev = ecdev_offer(dev->netdev, ec_usm_poll, THIS_MODULE);
 +    if (!dev->ecdev) {
 +        printk("%s(): ecdev_offer failed!\n", __func__);
 +        return -1;
@@ -1623,31 +587,32 @@ index 00000000..c0e4121e
 +    return ret;
 +}
 +
-+int ec_fec_device_xmit(ec_fec_device_t *dev, struct sk_buff *skb)
++static int ec_usm_device_xmit(ec_usm_device_t *dev, struct sk_buff *skb)
 +{
 +    size_t len = skb->len;
 +    int ret = 0;
 +
-+    ret = enet_fec_send_no_copy(skb->data, skb->len, 0);
++    ret = us_drv_send(skb->data, skb->len, 0);
 +    return (ret == len) ? NETDEV_TX_OK : NETDEV_TX_BUSY;
 +}
 +
 +/** Polls the device.
 + */
-+void ec_fec_device_poll(ec_fec_device_t *dev)
++static void ec_usm_device_poll(ec_usm_device_t *dev)
 +{
-+    struct enet_fec_bd_buf_t *ptrb = enet_fec_get_bd_buf();
 +    uint8_t *rx_buf = NULL;
++    uint32_t rx_idx = 0;
 +    uint16_t rx_len = 0;
 +    int i = 0;
 +
-+    srx_cnt = enet_fec_recv_no_copy(NULL, srx_lens, srx_idxs);
-+    if (srx_cnt <= 0)
++    dev->rx_cnt = us_drv_recv(NULL, dev->rx_lens, dev->rx_idxs);
++    if (dev->rx_cnt <= 0)
 +        return;
 +
-+    for (i = 0; i < srx_cnt; i++) {
-+        rx_buf = ptrb->rx_buf[srx_idxs[i]];
-+        rx_len = srx_lens[i];
++    for (i = 0; i < dev->rx_cnt; i++) {
++        rx_idx = dev->rx_idxs[i];
++        rx_buf = dev->rx_buf[rx_idx];
++        rx_len = dev->rx_lens[i];
 +
 +        ecdev_receive(dev->ecdev, rx_buf, rx_len);
 +    }
@@ -1657,31 +622,34 @@ index 00000000..c0e4121e
 +
 +/** Offer device.
 + */
-+static int ec_fec_offer_device(ec_fec_device_t *fec_dev)
++static int ec_usm_offer_device(ec_usm_device_t *usm_dev)
 +{
 +    int ret = 0;
 +
-+    ret = ec_fec_device_init(fec_dev);
++    ret = ec_usm_device_init(usm_dev);
 +    if (ret)
 +        return ret;
 +
-+    ret = ec_fec_device_offer(fec_dev);
++    ret = ec_usm_device_offer(usm_dev);
++    if (ret)
++        return ret;
++
 +    return ret;
 +}
 +
 +/** Clear devices.
 + */
-+static void ec_fec_clear_devices(void)
++static void ec_usm_clear_devices(void)
 +{
-+    ec_fec_device_t *fec_dev = &sec_fec_dev;
++    ec_usm_device_t *usm_dev = &sec_usm_dev;
 +
-+    ec_fec_device_clear(fec_dev);
++    ec_usm_device_clear(usm_dev);
 +}
 +
-+/** Initialize FEC net devices.
++/** Initialize userspace-master net devices.
 + * it should be called before ecus_init
 + */
-+int ec_fec_net_init(uint32_t cycle_ns, uint32_t core_mask)
++int ec_usm_net_init(uint32_t cycle_ns, uint32_t core_mask)
 +{
 +    int ret = 0;
 +
@@ -1689,11 +657,7 @@ index 00000000..c0e4121e
 +
 +    ecus_set_core_mask(core_mask);
 +
-+    ret = enet_fec_alloc_buffer();  /* should be called before enet_fec_dev_init */
-+    if (ret)
-+        goto err_tag;
-+
-+    ret = enet_fec_dev_init();
++    ret = us_drv_lib_init(LINK_100M);
 +    if (ret)
 +        goto err_tag;
 +
@@ -1711,15 +675,15 @@ index 00000000..c0e4121e
 + * Initializes \a master_count masters.
 + * \return 0 on success, else < 0
 + */
-+int __init ec_fec_init_module(void)
++int __init ec_usm_init_module(void)
 +{
 +    int ret = 0;
 +
 +    printk(KERN_INFO PFX "EtherCAT master driver, ver:%s\n", EC_MASTER_VERSION);
 +
-+    ret = ec_fec_offer_device(&sec_fec_dev);
++    ret = ec_usm_offer_device(&sec_usm_dev);
 +    if (ret) {
-+        printk("%s(): offer fec device failed!\n", __func__);
++        printk("%s(): offer userspace-master device failed!\n", __func__);
 +        ret = -1;
 +    }
 +
@@ -1730,702 +694,70 @@ index 00000000..c0e4121e
 + *
 + * Clears all master instances.
 + */
-+void __exit ec_fec_cleanup_module(void)
++void __exit ec_usm_cleanup_module(void)
 +{
-+    ec_fec_clear_devices();
-+    enet_fec_dev_quit();
++    ec_usm_clear_devices();
++    us_drv_lib_exit(0);
 +}
 +
-+module_init(ec_fec_init_module);
-+module_exit(ec_fec_cleanup_module);
-diff --git a/devices/enet_fec/enet_regs.h b/devices/enet_fec/enet_regs.h
++module_init(ec_usm_init_module);
++module_exit(ec_usm_cleanup_module);
+diff --git a/devices/nxp_userspace/usm_main.h b/devices/nxp_userspace/usm_main.h
 new file mode 100644
-index 00000000..645c1249
+index 00000000..e43a5b7b
 --- /dev/null
-+++ b/devices/enet_fec/enet_regs.h
-@@ -0,0 +1,116 @@
++++ b/devices/nxp_userspace/usm_main.h
+@@ -0,0 +1,41 @@
 +/* SPDX-License-Identifier: BSD-3-Clause
-+ * Copyright 2020-2023 NXP
++ * Copyright 2024 NXP
 + */
 +
-+#ifndef __ENETFEC_REGS_H
-+#define __ENETFEC_REGS_H
++#ifndef __US_DRV_LIB__
++#define __US_DRV_LIB__
 +
-+/* Ethernet receive use control and status of buffer descriptor
-+ */
-+#define RX_BD_TR	((ushort)0x0001) /* Truncated */
-+#define RX_BD_OV	((ushort)0x0002) /* Over-run */
-+#define RX_BD_CR	((ushort)0x0004) /* CRC or Frame error */
-+#define RX_BD_SH	((ushort)0x0008) /* Reserved */
-+#define RX_BD_NO	((ushort)0x0010) /* Rcvd non-octet aligned frame */
-+#define RX_BD_LG	((ushort)0x0020) /* Rcvd frame length violation */
-+#define RX_BD_FIRST	((ushort)0x0400) /* Reserved */
-+#define RX_BD_LAST	((ushort)0x0800) /* last buffer in the frame */
-+#define RX_BD_INT	0x00800000
-+#define RX_BD_ICE	0x00000020
-+#define RX_BD_PCR	0x00000010
-+
-+/*
-+ * 0 The next BD in consecutive location
-+ * 1 The next BD in ENETFECn_RDSR.
-+ */
-+#define RX_BD_WRAP	((ushort)0x2000)
-+#define RX_BD_EMPTY	((ushort)0x8000) /* BD is empty */
-+#define RX_BD_STATS	((ushort)0x013f) /* All buffer descriptor status bits */
-+
-+/* Ethernet receive use control and status of enhanced buffer descriptor */
-+#define BD_ENETFEC_RX_VLAN	0x00000004
-+
-+#define RX_FLAG_CSUM_EN		(RX_BD_ICE | RX_BD_PCR)
-+#define RX_FLAG_CSUM_ERR	(RX_BD_ICE | RX_BD_PCR)
-+
-+/* Ethernet transmit use control and status of buffer descriptor */
-+#define TX_BD_TC	((ushort)0x0400) /* Transmit CRC */
-+#define TX_BD_LAST	((ushort)0x0800) /* Last in frame */
-+#define TX_BD_READY	((ushort)0x8000) /* Data is ready */
-+#define TX_BD_STATS	((ushort)0x0fff) /* All buffer descriptor status bits */
-+#define TX_BD_WRAP	((ushort)0x2000)
-+
-+/* Ethernet transmit use control and status of enhanced buffer descriptor */
-+#define TX_BD_IINS		0x08000000
-+#define TX_BD_PINS		0x10000000
-+
-+#define ENETFEC_RD_START(X)	(((X) == 1) ? ENETFEC_RD_START_1 : \
-+				(((X) == 2) ? \
-+				   ENETFEC_RD_START_2 : ENETFEC_RD_START_0))
-+#define ENETFEC_TD_START(X)	(((X) == 1) ? ENETFEC_TD_START_1 : \
-+				(((X) == 2) ? \
-+				   ENETFEC_TD_START_2 : ENETFEC_TD_START_0))
-+#define ENETFEC_MRB_SIZE(X)	(((X) == 1) ? ENETFEC_MRB_SIZE_1 : \
-+				(((X) == 2) ? \
-+				   ENETFEC_MRB_SIZE_2 : ENETFEC_MRB_SIZE_0))
-+
-+#define ENETFEC_ETHEREN		((uint)0x00000002)
-+#define ENETFEC_TXC_DLY		((uint)0x00010000)
-+#define ENETFEC_RXC_DLY		((uint)0x00020000)
-+
-+/* ENETFEC MAC is in controller */
-+#define QUIRK_HAS_ENETFEC_MAC	(1 << 0)
-+/* GBIT supported in controller */
-+#define QUIRK_GBIT		(1 << 3)
-+/* Controller support hardware checksum */
-+#define QUIRK_CSUM		(1 << 5)
-+/* Controller support hardware vlan */
-+#define QUIRK_VLAN		(1 << 6)
-+/* RACC register supported by controller */
-+#define QUIRK_RACC		(1 << 12)
-+/* i.MX8 ENETFEC IP version added the feature to generate the delayed TXC or
-+ * RXC. For its implementation, ENETFEC uses synchronized clocks (250MHz) for
-+ * generating delay of 2ns.
-+ */
-+#define QUIRK_SUPPORT_DELAYED_CLKS	(1 << 18)
-+
-+#define ENETFEC_EIR	0x004 /* Interrupt event register */
-+#define ENETFEC_EIMR	0x008 /* Interrupt mask register */
-+#define ENETFEC_RDAR_0	0x010 /* Receive descriptor active register ring0 */
-+#define ENETFEC_TDAR_0	0x014 /* Transmit descriptor active register ring0 */
-+#define ENETFEC_ECR	0x024 /* Ethernet control register */
-+#define ENETFEC_MSCR	0x044 /* MII speed control register */
-+#define ENETFEC_MIBC	0x064 /* MIB control and status register */
-+#define ENETFEC_RCR	0x084 /* Receive control register */
-+#define ENETFEC_TCR	0x0c4 /* Transmit Control register */
-+#define ENETFEC_PALR	0x0e4 /* MAC address low 32 bits */
-+#define ENETFEC_PAUR	0x0e8 /* MAC address high 16 bits */
-+#define ENETFEC_OPD	0x0ec /* Opcode/Pause duration register */
-+#define ENETFEC_IAUR	0x118 /* hash table 32 bits high */
-+#define ENETFEC_IALR	0x11c /* hash table 32 bits low */
-+#define ENETFEC_GAUR	0x120 /* grp hash table 32 bits high */
-+#define ENETFEC_GALR	0x124 /* grp hash table 32 bits low */
-+#define ENETFEC_TFWR	0x144 /* transmit FIFO water_mark */
-+#define ENETFEC_RACC	0x1c4 /* Receive Accelerator function configuration*/
-+#define ENETFEC_DMA1CFG	0x1d8 /* DMA class based configuration ring1 */
-+#define ENETFEC_DMA2CFG	0x1dc /* DMA class based Configuration ring2 */
-+#define ENETFEC_RDAR_1	0x1e0 /* Rx descriptor active register ring1 */
-+#define ENETFEC_TDAR_1	0x1e4 /* Tx descriptor active register ring1 */
-+#define ENETFEC_RDAR_2	0x1e8 /* Rx descriptor active register ring2 */
-+#define ENETFEC_TDAR_2	0x1ec /* Tx descriptor active register ring2 */
-+#define ENETFEC_RD_START_1	0x160 /* Receive descriptor ring1 start reg */
-+#define ENETFEC_TD_START_1	0x164 /* Transmit descriptor ring1 start reg */
-+#define ENETFEC_MRB_SIZE_1	0x168 /* Max receive buffer size reg ring1 */
-+#define ENETFEC_RD_START_2	0x16c /* Receive descriptor ring2 start reg */
-+#define ENETFEC_TD_START_2	0x170 /* Transmit descriptor ring2 start reg */
-+#define ENETFEC_MRB_SIZE_2	0x174 /* Max receive buffer size reg ring2 */
-+#define ENETFEC_RD_START_0	0x180 /* Receive descriptor ring0 start reg */
-+#define ENETFEC_TD_START_0	0x184 /* Transmit descriptor ring0 start reg */
-+#define ENETFEC_MRB_SIZE_0	0x188 /* Max receive buffer size reg ring0*/
-+#define ENETFEC_R_FIFO_SFL	0x190 /* Rx FIFO full threshold */
-+#define ENETFEC_R_FIFO_SEM	0x194 /* Rx FIFO empty threshold */
-+#define ENETFEC_R_FIFO_AEM	0x198 /* Rx FIFO almost empty threshold */
-+#define ENETFEC_R_FIFO_AFL	0x19c /* Rx FIFO almost full threshold */
-+#define ENETFEC_FRAME_TRL	0x1b0 /* Frame truncation length */
-+
-+#endif /*__ENETFEC_REGS_H */
-diff --git a/devices/enet_fec/enet_rxtx.c b/devices/enet_fec/enet_rxtx.c
-new file mode 100644
-index 00000000..045e3038
---- /dev/null
-+++ b/devices/enet_fec/enet_rxtx.c
-@@ -0,0 +1,183 @@
-+/* SPDX-License-Identifier: BSD-3-Clause
-+ * Copyright 2021-2023 NXP
-+ */
-+
-+#include "enet_regs.h"
-+#include "enet_ethdev.h"
-+
-+#define dccivac(p) \
-+        { asm volatile("dc civac, %0" : : "r"(p) : "memory"); }
-+
-+static inline void rte_prefetch0(const volatile void *p)
-+{
-+	asm volatile ("PRFM PLDL1KEEP, [%0]" : : "r" (p));
-+}
-+
-+#define ENETFEC_DP_LOG(x, y) printf("[%s]: %s", #x, y)
-+
-+uint16_t enetfec_recv_pkts_ecat(uint32_t *pindex, uint16_t *plength)
-+{
-+	struct enetfec_private *fep = enetfec_get_priv_data();
-+	struct enetfec_priv_rx_q *rxq = fep->rx_queues[0];
-+	uint16_t nb_pkts = MAX_RX_BD_RING_SIZE / 2;
-+	struct bufdesc *bdp = NULL;
-+	unsigned int index = 0;
-+	unsigned short pkt_len;
-+	unsigned short status;
-+	uint16_t ret_len = 0;
-+	int pkt_received = 0;
-+	unsigned int i = 0;
-+	void *data = NULL;
-+
-+	bdp = rxq->bd.cur;
-+
-+	/* Process the incoming packet */
-+	status = rte_le_to_cpu_16(rte_read16(&bdp->bd_sc));
-+	while ((status & RX_BD_EMPTY) == 0) {
-+		if (pkt_received >= nb_pkts)
-+			break;
-+
-+		/* Check for errors. */
-+		status ^= RX_BD_LAST;
-+		if (status & (RX_BD_LG | RX_BD_SH | RX_BD_NO |
-+			RX_BD_CR | RX_BD_OV | RX_BD_LAST |
-+			RX_BD_TR)) {
-+			if (status & RX_BD_OV) {
-+				/* FIFO overrun */
-+				/* enet_dump_rx(rxq); */
-+				ENETFEC_DP_LOG(DEBUG, "rx_fifo_error");
-+				goto rx_processing_done;
-+			}
-+			if (status & (RX_BD_LG | RX_BD_SH
-+						| RX_BD_LAST)) {
-+				/* Frame too long or too short. */
-+				ENETFEC_DP_LOG(DEBUG, "rx_length_error");
-+				if (status & RX_BD_LAST)
-+					ENETFEC_DP_LOG(DEBUG, "rcv is not +last");
-+			}
-+			if (status & RX_BD_CR) {     /* CRC Error */
-+				ENETFEC_DP_LOG(DEBUG, "rx_crc_errors");
-+			}
-+			/* Report late collisions as a frame error. */
-+			if (status & (RX_BD_NO | RX_BD_TR))
-+				ENETFEC_DP_LOG(DEBUG, "rx_frame_error");
-+			goto rx_processing_done;
-+		}
-+
-+		/* Process the incoming frame. */
-+		pkt_len = rte_le_to_cpu_16(rte_read16(&bdp->bd_datlen));
-+
-+		/* shows data with respect to the data_off field. */
-+		index = enet_get_bd_index(bdp, &rxq->bd);
-+		data = rxq->rx_buf[index];
-+
-+		for (i = 0; i < pkt_len; i += RTE_CACHE_LINE_SIZE) {
-+			dccivac((uint8_t*)data + i);
-+			rte_prefetch0((uint8_t*)data + i);
-+		}
-+
-+		ret_len = pkt_len - 4;
-+		if (rxq->fep->quirks & QUIRK_RACC)
-+			ret_len -= 2;
-+
-+		if (pindex)
-+			pindex[pkt_received] = index;
-+		if (plength)
-+			plength[pkt_received] = ret_len;
-+
-+		pkt_received++;
-+
-+rx_processing_done:
-+		/* when rx_processing_done clear the status flags
-+		 * for this buffer
-+		 */
-+		status &= ~RX_BD_STATS;
-+
-+		/* Mark the buffer empty */
-+		status |= RX_BD_EMPTY;
-+
-+		/* Make sure the updates to rest of the descriptor are
-+		 * performed before transferring ownership.
-+		 */
-+		rte_wmb();
-+		rte_write16(rte_cpu_to_le_16(status), &bdp->bd_sc);
-+
-+		/* Update BD pointer to next entry */
-+		bdp = enet_get_nextdesc(bdp, &rxq->bd);
-+
-+		/* Doing this here will keep the FEC running while we process
-+		 * incoming frames.
-+		 */
-+		rte_write32(0, rxq->bd.active_reg_desc);
-+		status = rte_le_to_cpu_16(rte_read16(&bdp->bd_sc));
-+	}
-+	rxq->bd.cur = bdp;
-+
-+	return pkt_received;
-+}
-+
-+uint16_t enetfec_xmit_pkts_ecat(void *pbuffer, uint16_t length)
-+{
-+	struct enetfec_private *fep = enetfec_get_priv_data();
-+	struct enetfec_priv_tx_q *txq = fep->tx_queues[0];
-+	unsigned int i = 0, pkt_transmitted = 0;
-+	struct bufdesc *bdp, *last_bdp;
-+	unsigned short status;
-+	unsigned short buflen;
-+	uint16_t nb_pkts = 1;
-+	uint8_t *data = NULL;
-+	int oerrors = 0;
-+	int tx_st = 1;
-+
-+	while (tx_st) {
-+		if (pkt_transmitted >= nb_pkts) {
-+			tx_st = 0;
-+			break;
-+		}
-+
-+		bdp = txq->bd.cur;
-+		status = rte_le_to_cpu_16(rte_read16(&bdp->bd_sc));
-+
-+		if (status & TX_BD_READY) {
-+			oerrors++;
-+			break;
-+		}
-+
-+		/* Fill in a Tx ring entry */
-+		last_bdp = bdp;
-+		status &= ~TX_BD_STATS;
-+
-+		/* Set buffer length and buffer pointer */
-+		buflen = length;
-+
-+		status |= (TX_BD_LAST);
-+		data = pbuffer;
-+		for (i = 0; i <= buflen; i += RTE_CACHE_LINE_SIZE)
-+			dcbf(data + i);
-+
-+		rte_write16(rte_cpu_to_le_16(buflen), &bdp->bd_datlen);
-+
-+		/* Make sure the updates to rest of the descriptor are performed
-+		 * before transferring ownership.
-+		 */
-+		status |= (TX_BD_READY | TX_BD_TC);
-+		rte_wmb();
-+		rte_write16(rte_cpu_to_le_16(status), &bdp->bd_sc);
-+
-+		/* Trigger transmission start */
-+		rte_write32(0, txq->bd.active_reg_desc);
-+		pkt_transmitted++;
-+
-+		/* If this was the last BD in the ring, start at the
-+		 * beginning again.
-+		 */
-+		bdp = enet_get_nextdesc(last_bdp, &txq->bd);
-+
-+		/* Make sure the update to bdp and tx_skbuff are performed
-+		 * before txq->bd.cur.
-+		 */
-+		txq->bd.cur = bdp;
-+	}
-+
-+	return pkt_transmitted;
-+}
-diff --git a/devices/enet_fec/enet_uio.c b/devices/enet_fec/enet_uio.c
-new file mode 100644
-index 00000000..e7a2aae8
---- /dev/null
-+++ b/devices/enet_fec/enet_uio.c
-@@ -0,0 +1,282 @@
-+/* SPDX-License-Identifier: BSD-3-Clause
-+ * Copyright 2021-2023 NXP
-+ */
-+
-+#include <stdbool.h>
-+#include <stdint.h>
-+#include <stdio.h>
-+#include <unistd.h>
-+#include <stdlib.h>
-+#include <dirent.h>
-+#include <string.h>
 +#include <sys/mman.h>
-+#include <errno.h>
++#include <sys/stat.h>
++#include <sys/sysinfo.h>
 +#include <fcntl.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <stdint.h>
++#include <unistd.h>
 +
-+#include "enet_uio.h"
 +
-+static struct uio_job enetfec_uio_job;
-+static int enetfec_count;
++#ifndef MAX_TX_BD_RING_SIZE
++#define MAX_TX_BD_RING_SIZE	(16)
++#endif
 +
-+/** @brief Checks if a file name contains a certain substring.
-+ * This function assumes a filename format of: [text][number].
-+ * @param [in]  filename    File name
-+ * @param [in]  match       String to match in file name
-+ *
-+ * @retval true if file name matches the criteria
-+ * @retval false if file name does not match the criteria
-+ */
-+static bool
-+file_name_match_extract(const char filename[], const char match[])
-+{
-+	char *substr = NULL;
++#ifndef MAX_RX_BD_RING_SIZE
++#define MAX_RX_BD_RING_SIZE	(16)
++#endif
 +
-+	substr = strstr(filename, match);
-+	if (substr == NULL)
-+		return false;
++#define SIZE_OF(x) (sizeof(x)/sizeof(x[0]))
 +
-+	return true;
-+}
++#define LINK_100M	(100)
++#define LINK_1000M	(1000)
 +
-+/*
-+ * @brief Reads first line from a file.
-+ * Composes file name as: root/subdir/filename
-+ *
-+ * @param [in]  root     Root path
-+ * @param [in]  subdir   Subdirectory name
-+ * @param [in]  filename File name
-+ * @param [out] line     The first line read from file.
-+ *
-+ * @retval 0 for success
-+ * @retval other value for error
-+ */
-+static int
-+file_read_first_line(const char root[], const char subdir[],
-+			const char filename[], char *line)
-+{
-+	char absolute_file_name[FEC_UIO_MAX_ATTR_FILE_NAME];
-+	int fd = 0, ret = 0;
++int us_drv_lib_init(int link);
++int us_drv_lib_exit(int stat);
 +
-+	/*compose the file name: root/subdir/filename */
-+	memset(absolute_file_name, 0, sizeof(absolute_file_name));
-+	snprintf(absolute_file_name, FEC_UIO_MAX_ATTR_FILE_NAME,
-+		"%s/%s/%s", root, subdir, filename);
++uint8_t* us_drv_get_rx_buf(int idx);
++uint8_t* us_drv_get_tx_buf(int idx);
 +
-+	fd = open(absolute_file_name, O_RDONLY);
-+	if (fd <= 0)
-+		ENETFEC_PMD_ERR("Error opening file %s", absolute_file_name);
-+
-+	/* read UIO device name from first line in file */
-+	ret = read(fd, line, FEC_UIO_MAX_DEVICE_FILE_NAME_LENGTH);
-+	if (ret <= 0) {
-+		ENETFEC_PMD_ERR("Error reading file %s", absolute_file_name);
-+		return ret;
-+	}
-+	close(fd);
-+
-+	/* NULL-ify string */
-+	line[ret] = '\0';
-+
-+	return 0;
-+}
-+
-+/*
-+ * @brief Maps rx-tx bd range assigned for a bd ring.
-+ *
-+ * @param [in] uio_device_fd    UIO device file descriptor
-+ * @param [in] uio_device_id    UIO device id
-+ * @param [in] uio_map_id       UIO allows maximum 5 different mapping for
-+				each device. Maps start with id 0.
-+ * @param [out] map_size        Map size.
-+ * @param [out] map_addr	Map physical address
-+ *
-+ * @retval  NULL if failed to map registers
-+ * @retval  Virtual address for mapped register address range
-+ */
-+static void *
-+uio_map_mem(int uio_device_fd, int uio_device_id,
-+		int uio_map_id, int *map_size, uint64_t *map_addr)
-+{
-+	void *mapped_address = NULL;
-+	unsigned int uio_map_size = 0;
-+	unsigned int uio_map_p_addr = 0;
-+	char uio_sys_root[FEC_UIO_MAX_ATTR_FILE_NAME];
-+	char uio_sys_map_subdir[FEC_UIO_MAX_ATTR_FILE_NAME];
-+	char uio_map_size_str[FEC_UIO_MAX_DEVICE_FILE_NAME_LENGTH + 1];
-+	char uio_map_p_addr_str[32];
-+	int ret = 0;
-+
-+	/* compose the file name: root/subdir/filename */
-+	memset(uio_sys_root, 0, sizeof(uio_sys_root));
-+	memset(uio_sys_map_subdir, 0, sizeof(uio_sys_map_subdir));
-+	memset(uio_map_size_str, 0, sizeof(uio_map_size_str));
-+	memset(uio_map_p_addr_str, 0, sizeof(uio_map_p_addr_str));
-+
-+	/* Compose string: /sys/class/uio/uioX */
-+	snprintf(uio_sys_root, sizeof(uio_sys_root), "%s/%s%d",
-+			FEC_UIO_DEVICE_SYS_ATTR_PATH, "uio", uio_device_id);
-+	/* Compose string: maps/mapY */
-+	snprintf(uio_sys_map_subdir, sizeof(uio_sys_map_subdir), "%s%d",
-+			FEC_UIO_DEVICE_SYS_MAP_ATTR, uio_map_id);
-+
-+	/* Read first (and only) line from file
-+	 * /sys/class/uio/uioX/maps/mapY/size
-+	 */
-+	ret = file_read_first_line(uio_sys_root, uio_sys_map_subdir,
-+				"size", uio_map_size_str);
-+	if (ret < 0) {
-+		ENETFEC_PMD_ERR("file_read_first_line() failed");
-+		return NULL;
-+	}
-+	ret = file_read_first_line(uio_sys_root, uio_sys_map_subdir,
-+				"addr", uio_map_p_addr_str);
-+	if (ret < 0) {
-+		ENETFEC_PMD_ERR("file_read_first_line() failed");
-+		return NULL;
-+	}
-+	/* Read mapping size and physical address expressed in hexa(base 16) */
-+	uio_map_size = strtol(uio_map_size_str, NULL, 16);
-+	uio_map_p_addr = strtol(uio_map_p_addr_str, NULL, 16);
-+
-+	if (uio_map_id == 0) {
-+		/* Map the register address in user space when map_id is 0 */
-+		mapped_address = mmap(0 /*dynamically choose virtual address */,
-+				uio_map_size, PROT_READ | PROT_WRITE,
-+				MAP_SHARED, uio_device_fd, 0);
-+	} else {
-+		/* Map the BD memory in user space */
-+		mapped_address = mmap(NULL, uio_map_size,
-+				PROT_READ | PROT_WRITE,
-+				MAP_SHARED, uio_device_fd, (1 * MAP_PAGE_SIZE));
-+	}
-+
-+	if (mapped_address == MAP_FAILED) {
-+		ENETFEC_PMD_ERR("Failed to map! errno = %d uio job fd = %d,"
-+			"uio device id = %d, uio map id = %d", errno,
-+			uio_device_fd, uio_device_id, uio_map_id);
-+		return NULL;
-+	}
-+
-+	/* Save the map size to use it later on for munmap-ing */
-+	*map_size = uio_map_size;
-+	*map_addr = uio_map_p_addr;
-+	ENETFEC_PMD_INFO("UIO dev[%d] mapped region [id =%d] size 0x%x at %p\n",
-+		uio_device_id, uio_map_id, uio_map_size, mapped_address);
-+
-+	return mapped_address;
-+}
-+
-+int
-+config_enetfec_uio(struct enetfec_private *fep)
-+{
-+	char uio_device_file_name[32];
-+	struct uio_job *uio_job = NULL;
-+
-+	/* Mapping is done only one time */
-+	if (enetfec_count > 0) {
-+		ENETFEC_PMD_INFO("Mapped!\n");
-+		return 0;
-+	}
-+
-+	uio_job = &enetfec_uio_job;
-+
-+	/* Find UIO device created by ENETFEC-UIO kernel driver */
-+	memset(uio_device_file_name, 0, sizeof(uio_device_file_name));
-+	snprintf(uio_device_file_name, sizeof(uio_device_file_name), "%s%d",
-+			FEC_UIO_DEVICE_FILE_NAME, uio_job->uio_minor_number);
-+
-+	/* Open device file */
-+	uio_job->uio_fd = open(uio_device_file_name, O_RDWR);
-+	if (uio_job->uio_fd < 0) {
-+		ENETFEC_PMD_WARN("Unable to open ENETFEC_UIO file\n");
-+		return -1;
-+	}
-+
-+	ENETFEC_PMD_INFO("US_UIO: Open device(%s) file with uio_fd = %d",
-+			uio_device_file_name, uio_job->uio_fd);
-+
-+	fep->hw_baseaddr_v = uio_map_mem(uio_job->uio_fd,
-+		uio_job->uio_minor_number, FEC_UIO_REG_MAP_ID,
-+		&uio_job->map_size, &uio_job->map_addr);
-+	if (fep->hw_baseaddr_v == NULL)
-+		return -ENOMEM;
-+	fep->hw_baseaddr_p = uio_job->map_addr;
-+	fep->reg_size = uio_job->map_size;
-+
-+	fep->bd_addr_v = uio_map_mem(uio_job->uio_fd,
-+		uio_job->uio_minor_number, FEC_UIO_BD_MAP_ID,
-+		&uio_job->map_size, &uio_job->map_addr);
-+	if (fep->bd_addr_v == NULL)
-+		return -ENOMEM;
-+	fep->bd_addr_p = (uint32_t)uio_job->map_addr;
-+	fep->bd_size = uio_job->map_size;
-+
-+	enetfec_count++;
-+
-+	return 0;
-+}
-+
-+int
-+enetfec_configure(void)
-+{
-+	char uio_name[32];
-+	int uio_minor_number = -1;
-+	int ret;
-+	DIR *d = NULL;
-+	struct dirent *dir;
-+
-+	d = opendir(FEC_UIO_DEVICE_SYS_ATTR_PATH);
-+	if (d == NULL) {
-+		ENETFEC_PMD_ERR("\nError opening directory '%s': %s\n",
-+			FEC_UIO_DEVICE_SYS_ATTR_PATH, strerror(errno));
-+		return -1;
-+	}
-+
-+	/* Iterate through all subdirs */
-+	while ((dir = readdir(d)) != NULL) {
-+		if (!strncmp(dir->d_name, ".", 1) ||
-+				!strncmp(dir->d_name, "..", 2))
-+			continue;
-+
-+		if (file_name_match_extract(dir->d_name, "uio")) {
-+			/*
-+			 * As substring <uio> was found in <d_name>
-+			 * read number following <uio> substring in <d_name>
-+			 */
-+			ret = sscanf(dir->d_name + strlen("uio"), "%d",
-+							&uio_minor_number);
-+			if (ret < 0)
-+				ENETFEC_PMD_ERR("Error: not find minor number\n");
-+			/*
-+			 * Open file uioX/name and read first line which
-+			 * contains the name for the device. Based on the
-+			 * name check if this UIO device is for enetfec.
-+			 */
-+			memset(uio_name, 0, sizeof(uio_name));
-+			ret = file_read_first_line(FEC_UIO_DEVICE_SYS_ATTR_PATH,
-+					dir->d_name, "name", uio_name);
-+			if (ret != 0) {
-+				ENETFEC_PMD_INFO("file_read_first_line failed\n");
-+				closedir(d);
-+				return -1;
-+			}
-+
-+			if (file_name_match_extract(uio_name,
-+						FEC_UIO_DEVICE_NAME)) {
-+				enetfec_uio_job.uio_minor_number =
-+							uio_minor_number;
-+				ENETFEC_PMD_INFO("enetfec device uio name: %s",
-+						 uio_name);
-+			}
-+		}
-+	}
-+	closedir(d);
-+	return 0;
-+}
-+
-+void
-+enetfec_cleanup(struct enetfec_private *fep)
-+{
-+	munmap(fep->hw_baseaddr_v, fep->reg_size);
-+	munmap(fep->bd_addr_v, fep->bd_size);
-+}
-diff --git a/devices/enet_fec/enet_uio.h b/devices/enet_fec/enet_uio.h
-new file mode 100644
-index 00000000..6366e0b5
---- /dev/null
-+++ b/devices/enet_fec/enet_uio.h
-@@ -0,0 +1,74 @@
-+/* SPDX-License-Identifier: BSD-3-Clause
-+ * Copyright 2021-2023 NXP
-+ */
-+
-+#ifndef __ENETFEC_UIO_H__
-+#define __ENETFEC_UIO_H__
-+
-+#include "enet_ethdev.h"
-+
-+#define PRINT printf
-+#define ENETFEC_PMD_INFO PRINT
-+#define ENETFEC_PMD_WARN PRINT
-+#define ENETFEC_PMD_ERR PRINT
-+#define ENETFEC_PMD_LOG PRINT
-+
-+/* Prefix path to sysfs directory where UIO device attributes are exported.
-+ * Path for UIO device X is /sys/class/uio/uioX
-+ */
-+#define FEC_UIO_DEVICE_SYS_ATTR_PATH	"/sys/class/uio"
-+
-+/* Subfolder in sysfs where mapping attributes are exported
-+ * for each UIO device. Path for mapping Y for device X is:
-+ * /sys/class/uio/uioX/maps/mapY
-+ */
-+#define FEC_UIO_DEVICE_SYS_MAP_ATTR	"maps/map"
-+
-+/* Name of UIO device file prefix. Each UIO device will have a device file
-+ * /dev/uioX, where X is the minor device number.
-+ */
-+#define FEC_UIO_DEVICE_FILE_NAME	"/dev/uio"
-+/*
-+ * Name of UIO device. User space FEC will have a corresponding
-+ * UIO device.
-+ * Maximum length is #FEC_UIO_MAX_DEVICE_NAME_LENGTH.
-+ *
-+ * @note  Must be kept in sync with FEC kernel driver
-+ * define #FEC_UIO_DEVICE_NAME !
-+ */
-+#define FEC_UIO_DEVICE_NAME     "enet-fec-uio"
-+
-+/* Maximum length for the name of an UIO device file.
-+ * Device file name format is: /dev/uioX.
-+ */
-+#define FEC_UIO_MAX_DEVICE_FILE_NAME_LENGTH	30
-+
-+/* Maximum length for the name of an attribute file for an UIO device.
-+ * Attribute files are exported in sysfs and have the name formatted as:
-+ * /sys/class/uio/uioX/<attribute_file_name>
-+ */
-+#define FEC_UIO_MAX_ATTR_FILE_NAME	100
-+
-+/* The id for the mapping used to export ENETFEC registers and BD memory to
-+ * user space through UIO device.
-+ */
-+#define FEC_UIO_REG_MAP_ID		0
-+#define FEC_UIO_BD_MAP_ID		1
-+
-+#define MAP_PAGE_SIZE			4096
-+
-+struct uio_job {
-+	uint32_t fec_id;
-+	int uio_fd;
-+	void *bd_start_addr;
-+	void *register_base_addr;
-+	int map_size;
-+	uint64_t map_addr;
-+	int uio_minor_number;
-+};
-+
-+int enetfec_configure(void);
-+int config_enetfec_uio(struct enetfec_private *fep);
-+void enetfec_cleanup(struct enetfec_private *fep);
++int us_drv_recv(void *buf, uint16_t *plen, uint32_t *pindex);
++int us_drv_send(void *buf, uint16_t len, uint32_t addr);
 +
 +#endif
 diff --git a/emulation/linux/jiffies.h b/emulation/linux/jiffies.h
-index eb736b7a..6a3718e8 100644
+index eb736b7a..c977b6dc 100644
 --- a/emulation/linux/jiffies.h
 +++ b/emulation/linux/jiffies.h
 @@ -37,16 +37,29 @@ typedef u64 cycles_t;
  
  static const unsigned int cpu_khz = 1000;  // unit of get_cycles()
  
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +int ec_master_in_noop_mode(void);
 +uint64_t ec_master_cycle_us(void);
 +#define HZ (250)
@@ -2437,7 +769,7 @@ index eb736b7a..6a3718e8 100644
  {
      struct timeval TVal;
 +
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +    if (ec_master_in_noop_mode())
 +        return ec_master_cycle_us();
 +#endif
@@ -2453,7 +785,7 @@ index eb736b7a..6a3718e8 100644
  
  #endif
 diff --git a/emulation/linux/kthread.h b/emulation/linux/kthread.h
-index 82adf54a..8433af37 100644
+index 82adf54a..1d18513c 100644
 --- a/emulation/linux/kthread.h
 +++ b/emulation/linux/kthread.h
 @@ -1,6 +1,7 @@
@@ -2468,7 +800,7 @@ index 82adf54a..8433af37 100644
      (void) sig;
  }
  
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +int ecus_bind_cpu_core(uint32_t core_mask);
 +uint32_t ecus_get_core_mask(void);
 +#endif
@@ -2478,7 +810,7 @@ index 82adf54a..8433af37 100644
      current_task = (struct task_struct *) arg;
      prctl(PR_SET_NAME, current_task->name);
 +
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +    ecus_bind_cpu_core(ecus_get_core_mask());
 +#else
      struct sigaction a;
@@ -2498,7 +830,7 @@ index 82adf54a..8433af37 100644
 +    pthread_attr_t *pthattr = NULL;
 +    int ret = 0;
 +
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +    struct sched_param param;
 +    pthread_attr_t thattr;
 +
@@ -2534,12 +866,42 @@ index 82adf54a..8433af37 100644
  
  static inline void kthread_stop(struct task_struct *task)
  {
-+#ifndef EC_USERSPACE_MASTER_FEC
++#ifndef EC_USERSPACE_MASTER_NEW
      pthread_kill(task->thread, SIGUSR1);  // interrupt blocking system calls
 +#endif
      task->should_stop = 1;
      pthread_join(task->thread, NULL);
      free(task);
+diff --git a/emulation/linux/skbuff.h b/emulation/linux/skbuff.h
+index 569d5768..4b433a41 100644
+--- a/emulation/linux/skbuff.h
++++ b/emulation/linux/skbuff.h
+@@ -12,6 +12,7 @@ struct sk_buff
+     struct net_device   *dev;
+     int                 ip_summed;
+     uint16_t            protocol;
++    uint16_t            free_buf;
+ };
+ 
+ #define eth_type_trans(SKB, DEV) 0
+@@ -22,6 +23,7 @@ static inline struct sk_buff *dev_alloc_skb(unsigned int length)
+     if(!buf)
+         return buf;
+     buf->len = 0;
++    buf->free_buf = 1;
+     buf->data = buf->head = buf->tail = malloc(length);
+     if (!buf->head) {
+         free(buf);
+@@ -32,7 +34,8 @@ static inline struct sk_buff *dev_alloc_skb(unsigned int length)
+ 
+ static inline void dev_kfree_skb(struct sk_buff *skb)
+ {
+-    free(skb->head);
++    if (skb->free_buf)
++        free(skb->head);
+     free(skb);
+ }
+ 
 diff --git a/emulation/linux/wait.h b/emulation/linux/wait.h
 index 66df6f22..61e75973 100644
 --- a/emulation/linux/wait.h
@@ -2552,6 +914,672 @@ index 66df6f22..61e75973 100644
  #include <pthread.h>
  
  struct __wait_queue_head
+diff --git a/examples/Makefile.am b/examples/Makefile.am
+index 9dcbef2c..0a39ef18 100644
+--- a/examples/Makefile.am
++++ b/examples/Makefile.am
+@@ -54,6 +54,10 @@ SUBDIRS += \
+ endif
+ endif
+ 
++if ENABLE_USERSPACE_MASTER
++SUBDIRS += motor_control
++endif
++
+ DIST_SUBDIRS = \
+ 	dc_rtai \
+ 	dc_user \
+@@ -63,6 +67,7 @@ DIST_SUBDIRS = \
+ 	rtai_rtdm_dc \
+ 	tty \
+ 	user \
++	motor_control \
+ 	xenomai \
+ 	xenomai_posix
+ 
+diff --git a/examples/motor_control/Makefile.am b/examples/motor_control/Makefile.am
+new file mode 100644
+index 00000000..12b3f230
+--- /dev/null
++++ b/examples/motor_control/Makefile.am
+@@ -0,0 +1,42 @@
++#------------------------------------------------------------------------------
++#
++#  $Id$
++#
++#  Copyright 2024 NXP
++#
++#  This file is part of the IgH EtherCAT Master.
++#
++#  The IgH EtherCAT Master is free software; you can redistribute it and/or
++#  modify it under the terms of the GNU General Public License version 2, as
++#  published by the Free Software Foundation.
++#
++#  The IgH EtherCAT Master is distributed in the hope that it will be useful,
++#  but WITHOUT ANY WARRANTY; without even the implied warranty of
++#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
++#  Public License for more details.
++#
++#  You should have received a copy of the GNU General Public License along with
++#  the IgH EtherCAT Master; if not, write to the Free Software Foundation,
++#  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++#  ---
++#
++#  The license mentioned above concerns the source code only. Using the
++#  EtherCAT technology and brand is only permitted in compliance with the
++#  industrial property and similar rights of Beckhoff Automation GmbH.
++#
++#------------------------------------------------------------------------------
++
++noinst_PROGRAMS = ec_motor_example
++
++ec_motor_example_SOURCES = main.c
++ec_motor_example_CFLAGS = -I$(top_srcdir)/include -Wall
++
++if ENABLE_USERSPACE_MASTER
++ec_motor_example_CFLAGS += -DEC_MASTER_IN_USERSPACE
++ec_motor_example_LDFLAGS = -L$(top_builddir)/master/.libs -L$(top_builddir)/devices/nxp_userspace -lethercat_master -lpthread
++else
++ec_motor_example_LDFLAGS = -L$(top_builddir)/lib/.libs
++endif
++
++#------------------------------------------------------------------------------
+diff --git a/examples/motor_control/main.c b/examples/motor_control/main.c
+new file mode 100644
+index 00000000..6c2b9229
+--- /dev/null
++++ b/examples/motor_control/main.c
+@@ -0,0 +1,589 @@
++/*****************************************************************************
++ *
++ *  $Id$
++ *
++ *  Copyright 2024 NXP
++ *
++ *  This file is part of the IgH EtherCAT Master.
++ *
++ *  The IgH EtherCAT Master is free software; you can redistribute it and/or
++ *  modify it under the terms of the GNU General Public License version 2, as
++ *  published by the Free Software Foundation.
++ *
++ *  The IgH EtherCAT Master is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
++ *  Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License along
++ *  with the IgH EtherCAT Master; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++ *
++ *  ---
++ *
++ *  The license mentioned above concerns the source code only. Using the
++ *  EtherCAT technology and brand is only permitted in compliance with the
++ *  industrial property and similar rights of Beckhoff Automation GmbH.
++ *
++ ****************************************************************************/
++
++#include <errno.h>
++#include <signal.h>
++#include <stdio.h>
++#include <string.h>
++#include <sys/resource.h>
++#include <sys/time.h>
++#include <time.h>
++#include <sys/types.h>
++#include <unistd.h>
++
++#include "ecrt.h"
++
++#define ECAT_RT1180
++#define RT1180_VID (0x0CC2)
++#define RT1180_PID (0x0002)
++
++static int srt1180_flag = 0;
++
++typedef struct _ec_reg_pdo_cfg_t {
++	uint16_t index;
++	uint8_t subindex;
++	int32_t *poffset;
++} ec_reg_pdo_cfg_t;
++
++typedef enum {
++	no_ready_to_switch_on = 0,
++	switch_on_disable,
++	ready_to_switch_on,
++	switched_on,
++	operation_enable,
++	quick_stop_active,
++	fault_reaction_active,
++	fault,
++	none
++} servo_axle_state;
++
++typedef enum {
++	op_mode_no = 0,
++	op_mode_pp = 1,
++	op_mode_vl = 2,
++	op_mode_pv = 3,
++	op_mode_hm = 6,
++	op_mode_ip = 7,
++	op_mode_csp = 8,
++	op_mode_csv = 9,
++	op_mode_cst = 10
++} mode_of_operation;
++
++typedef struct _motor_axle_info_t {
++	uint32_t product_code;
++	uint32_t vendor_id;
++	int32_t base_pos;
++	int32_t cur_pos;
++	float fratio;
++	int init_flag;
++	int ctrl_flag;
++	int pos_idx;
++	int sec_cnt;
++} motor_axle_info_t;
++
++#define contrlword_shutdown(c)			(((c) | 0x6) & ~0x81)
++#define contrlword_switch_on(c) 		(((c) | 0x7) & ~0x88)
++#define contrlword_enable_operation(c)		(((c) | 0xF) & ~0x80)
++#define contrlword_fault_reset(c)		((c) | 0x80)
++
++#define EC_BIND_CORE_MASK (0x02)  /* working on core1 in default */
++
++#define NUM_OF(x) (sizeof(x) / sizeof(x[0]))
++#define NSEC_PER_SEC (1000000000L)
++#define CYCLE_TIME_NS (1000000)  /* cycle time: 1ms */
++#define TIMESPEC2NS(T) ((uint64_t) (T).tv_sec * NSEC_PER_SEC + (T).tv_nsec)
++
++#define FREE(p) do {if (p) free(p);} while(0)
++#define RET_ERR(r, s) do {printf("Error:%d, %s", (r), (s)); ret = (r); goto ret_tag;} while(0)
++
++static ec_master_t *sec_master = NULL;
++static ec_domain_t *sec_domain = NULL;
++
++static uint32_t sec_rate = 2 << 16;
++static uint32_t sec_axle_num = 1;
++
++static motor_axle_info_t *sp_axle_info = NULL;
++static uint8_t *sec_domain_pd = NULL;
++static uint8_t *sp_axle_data = NULL;
++static int sall_op_flag = 0;
++static int sloop_flag = 1;
++static int sexit_flag = 0;
++
++static inline struct timespec timespec_add(struct timespec t1, struct timespec t2)
++{
++	struct timespec result;
++
++	if ((t1.tv_nsec + t2.tv_nsec) >= NSEC_PER_SEC) {
++		result.tv_sec = t1.tv_sec + t2.tv_sec + 1;
++		result.tv_nsec = t1.tv_nsec + t2.tv_nsec - NSEC_PER_SEC;
++	} else {
++		result.tv_sec = t1.tv_sec + t2.tv_sec;
++		result.tv_nsec = t1.tv_nsec + t2.tv_nsec;
++	}
++
++	return result;
++}
++
++static ec_reg_pdo_cfg_t sec_reg_pdo_cfg[] = {
++	{0x6040, 0x0},  /* controlword */
++	{0x6041, 0x0},  /* statusword */
++	{0x6064, 0x0},  /* actual_position */
++	{0x6060, 0x0},  /* op_mode */
++	{0x6061, 0x0},
++	{0x607A, 0x0},  /* target_position */
++	{0x60FF, 0x0},
++};
++#define sec_ctrl_word(x)	(*(sec_reg_pdo_cfg[0].poffset + (x)))
++#define sec_stat_word(x)	(*(sec_reg_pdo_cfg[1].poffset + (x)))
++#define sec_actual_pos(x)	(*(sec_reg_pdo_cfg[2].poffset + (x)))
++#define sec_op_mode(x)		(*(sec_reg_pdo_cfg[3].poffset + (x)))
++#define sec_target_pos(x)	(*(sec_reg_pdo_cfg[5].poffset + (x)))
++
++static ec_pdo_entry_info_t sec_rx_pdo_entry[] = {
++	{0x6040, 0, 16},  /* controlword */
++	{0x607A, 0, 32},  /* target_position */
++	{0x60FF, 0, 32},  /* target_velocity */
++	{0x6060, 0, 8},   /* op_mode */
++#ifdef ECAT_RT1180
++	{0x0000, 0, 8},   /* gap */
++#endif
++};
++
++static ec_pdo_entry_info_t sec_tx_pdo_entry[] = {
++	{0x6041, 0, 16},  /* statusword */
++	{0x6064, 0, 32},  /* actual_position */
++	{0x606c, 0, 32},  /* actual_velocity */
++	{0x6061, 0, 8},   /* op_mode_display */
++#ifdef ECAT_RT1180
++	{0x0000, 0, 8},   /* gap */
++#endif
++};
++
++static ec_pdo_info_t sec_rx_pdo[] = {
++	{0x1600, NUM_OF(sec_rx_pdo_entry), sec_rx_pdo_entry},
++#ifdef ECAT_RT1180
++	{0x1610, NUM_OF(sec_rx_pdo_entry), sec_rx_pdo_entry},
++#endif
++};
++
++static ec_pdo_info_t sec_tx_pdo[] = {
++	{0x1a00, NUM_OF(sec_tx_pdo_entry), sec_tx_pdo_entry},
++#ifdef ECAT_RT1180
++	{0x1a10, NUM_OF(sec_tx_pdo_entry), sec_tx_pdo_entry},
++#endif
++};
++
++static ec_sync_info_t sec_sync_mgr[] = {
++	{2, EC_DIR_OUTPUT, NUM_OF(sec_rx_pdo), sec_rx_pdo},
++	{3, EC_DIR_INPUT, NUM_OF(sec_tx_pdo), sec_tx_pdo},
++};
++
++#ifdef ECAT_RT1180
++static int get_pdo_entry_offset(void)
++{
++	ec_pdo_entry_info_t *pe = sec_rx_pdo_entry;
++	int bl = 0;
++	int i = 0;
++
++	for (i = 0; i < NUM_OF(sec_rx_pdo_entry); i++)
++		bl += pe[i].bit_length;
++
++	return (bl / 8);
++}
++#endif
++
++static int update_axle_config(int axle_num)
++{
++	ec_reg_pdo_cfg_t *pe = sec_reg_pdo_cfg;
++	int num = NUM_OF(sec_reg_pdo_cfg);
++	uint8_t *p = NULL;
++	int len = 0;
++	int i = 0;
++
++	len = sizeof(int32_t) * axle_num;
++	p = (uint8_t*)calloc(num, len);
++	if (!p)
++		return -1;
++
++	sp_axle_data = p;
++	for (i = 0; i < num; i++) {
++		pe[i].poffset = (int32_t*)p;
++		p += len;
++	}
++
++#ifdef ECAT_RT1180
++	if (!srt1180_flag) {
++		ec_sync_info_t *psync = NULL;
++		ec_pdo_info_t *pdo = NULL;
++		int j = 0;
++
++		for (i = 0; i < NUM_OF(sec_sync_mgr); i++) {
++			psync = sec_sync_mgr + i;
++			psync->n_pdos--;
++
++			for (j = 0; j < psync->n_pdos; j++) {
++				pdo = psync->pdos + j;
++				pdo->n_entries--;
++			}
++		}
++	}
++#endif
++
++	return 0;
++}
++
++static servo_axle_state get_axle_state(uint16_t status_word)
++{
++	if ((status_word & 0x4F) == 0x40)
++		return switch_on_disable;
++	if ((status_word & 0x6F) == 0x21)
++		return ready_to_switch_on;
++	if ((status_word & 0x6F) == 0x23)
++		return switched_on;
++	if ((status_word & 0x6F) == 0x27)
++		return operation_enable;
++	if ((status_word & 0x6F) == 0x07)
++		return quick_stop_active;
++	if ((status_word & 0x4F) == 0xF)
++		return fault_reaction_active;
++	if ((status_word & 0x4F) == 0x08)
++		return fault;
++	else
++		return no_ready_to_switch_on;
++}
++
++static int servo_axle_switch_mode(int axle)
++{
++	uint16_t status_word = 0;
++	servo_axle_state s = 0;
++	int ret = -1;
++
++	status_word = EC_READ_U16(sec_domain_pd + sec_stat_word(axle));
++	s = get_axle_state(status_word);
++
++	switch (s) {
++	case (no_ready_to_switch_on):
++	case (switch_on_disable):
++		EC_WRITE_U16(sec_domain_pd + sec_ctrl_word(axle), contrlword_shutdown(0));
++		break;
++	case (ready_to_switch_on):
++		EC_WRITE_U16(sec_domain_pd + sec_ctrl_word(axle), contrlword_switch_on(0));
++		break;
++	case (switched_on):
++		EC_WRITE_U8(sec_domain_pd + sec_op_mode(axle), op_mode_csp);
++		EC_WRITE_U16(sec_domain_pd + sec_ctrl_word(axle), contrlword_enable_operation(0));
++		break;
++	case (operation_enable):
++		ret = 0;
++		break;
++	case (quick_stop_active):
++	case (fault_reaction_active):
++		ret = -3;
++		break;
++	case (fault):
++		EC_WRITE_U16(sec_domain_pd + sec_ctrl_word(axle), contrlword_fault_reset(0));
++		ret = -4;
++		break;
++	default:
++		ret = -2;
++	}
++
++	return ret;
++}
++
++static int update_motor_position(int axle)
++{
++	motor_axle_info_t *paxle = sp_axle_info + axle;
++	int ret = 0;
++
++	ret = servo_axle_switch_mode(axle);
++	if (ret)
++		return ret;
++
++	if (!paxle->init_flag) {
++		paxle->base_pos = EC_READ_U16(sec_domain_pd + sec_actual_pos(axle));
++		paxle->fratio = sec_rate / 1000.0;
++		paxle->init_flag = 1;
++	}
++
++	if (sexit_flag && (paxle->pos_idx == 0)) {
++		paxle->sec_cnt++;
++		if (paxle->sec_cnt > 3000)
++			sloop_flag = 0;
++		return 0;
++	}
++
++	if (paxle->ctrl_flag) {
++		paxle->pos_idx++;
++		if (sexit_flag && (paxle->pos_idx > 0))
++			paxle->ctrl_flag = 0;
++		else if (paxle->pos_idx >= 10000)  /* rotate forward for 10s */
++			paxle->ctrl_flag = 0;
++	} else {
++		paxle->pos_idx--;
++		if (sexit_flag && (paxle->pos_idx < 0))
++			paxle->ctrl_flag = 1;
++		else if (paxle->pos_idx <= -10000)  /* rotate backward for 10s */
++			paxle->ctrl_flag = 1;
++	}
++
++	paxle->cur_pos = paxle->base_pos + paxle->fratio * paxle->pos_idx;
++	EC_WRITE_U32(sec_domain_pd + sec_target_pos(axle), paxle->cur_pos);
++
++	return 0;
++}
++
++void run_main_cycle_task(void)
++{
++	struct timespec cycletime = {0, CYCLE_TIME_NS};
++	ec_master_state_t master_state;
++	struct timespec wakeupTime;
++	struct timespec start_time;
++	int axle = 0;
++
++#ifdef EC_MASTER_IN_USERSPACE
++	ecus_bind_cpu_core(EC_BIND_CORE_MASK);
++#endif
++
++	clock_gettime(CLOCK_REALTIME, &wakeupTime);
++	while (sloop_flag) {
++		wakeupTime = timespec_add(wakeupTime, cycletime);
++		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &wakeupTime, NULL);
++		clock_gettime(CLOCK_REALTIME, &start_time);
++
++		/* receive process data */
++		ecrt_master_receive(sec_master);
++		ecrt_domain_process(sec_domain);
++
++		/* time sync and reference clock */
++		ecrt_master_application_time(sec_master, TIMESPEC2NS(start_time));
++		ecrt_master_sync_reference_clock(sec_master);
++		ecrt_master_sync_slave_clocks(sec_master);
++
++#ifdef EC_MASTER_IN_USERSPACE
++		ecus_master_operation_loop(sec_master, 1);
++#endif
++
++		if (sall_op_flag) {
++			for (axle = 0; axle < sec_axle_num; axle++)
++			      update_motor_position(axle);
++		} else {
++			ecrt_master_state(sec_master, &master_state);
++			if (master_state.al_states == 0x08) {
++				sall_op_flag = 1;
++				printf("EtherCAT master is ALL_OP\n");
++			}
++		}
++
++		/* send process data */
++		ecrt_domain_queue(sec_domain);
++		ecrt_master_send(sec_master);
++
++#ifdef EC_MASTER_IN_USERSPACE
++		ecus_master_operation_loop(sec_master, 0);
++#endif
++	}
++}
++
++void signal_handler(int signum)
++{
++	if (sall_op_flag) {
++		sexit_flag = 1;
++		printf("\nSystem will exit after several seconds...\n");
++	} else {
++		sloop_flag = 0;
++		printf("\nSystem will exit...\n");
++	}
++}
++
++#ifdef EC_MASTER_IN_USERSPACE
++#define MAX_MASTER_NUM (32)
++static int smaster_count = 1;
++static char *smaster_macs[MAX_MASTER_NUM] = {
++	"04:13:07:02:00:13",
++};
++
++static int sbackup_count = 0;
++static char *sbackup_macs[MAX_MASTER_NUM];
++
++int is_all_slaves_ready(void)
++{
++	int ready = 0;
++	int i = 0;
++
++	for (i = 0; i < sec_axle_num; i++) {
++		ready = ecus_slave_is_ready(0, 0, i);
++		if (!ready)
++			return 0;
++	}
++
++	return 1;
++}
++#endif
++
++int main(int argc, char **argv)
++{
++#ifdef EC_MASTER_IN_USERSPACE
++	const char **masters = (const char **)smaster_macs;
++	const char **backups = (const char **)sbackup_macs;
++#endif
++	ec_slave_config_t *pslave_config = NULL;
++	motor_axle_info_t *paxle = NULL;
++	char *pmotor_type = "EtherCAT";
++	ec_reg_pdo_cfg_t *prp  = NULL;
++	ec_slave_info_t slave_info;
++	int axle_offset = 0;
++	int32_t pdo_oft = 0;
++	int ecat_flag = 0;
++	int axle = 0;
++	int sec = 0;
++	int ret = 0;
++	int i = 0;
++
++	signal(SIGTERM, signal_handler);
++	signal(SIGINT, signal_handler);
++
++	if (argc > 1) {
++		if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
++			printf("Usage:\n  %s [encode_rate] [axle_num]\n\n", argv[0]);
++			return 0;
++		}
++		sec_rate = strtoul(argv[1], NULL, 0);
++
++		if (argc > 2)
++			sec_axle_num = strtoul(argv[2], NULL, 0);
++	}
++	printf("%s ec_rate:%d axle_num:%d\n", argv[0], sec_rate, sec_axle_num);
++
++#ifdef EC_MASTER_IN_USERSPACE
++	ret = ecus_init(smaster_count, masters, sbackup_count, backups, 0, CYCLE_TIME_NS, EC_BIND_CORE_MASK);
++	if (ret)
++		RET_ERR(-1, "Failed to init userspace EtherCAT!\n");
++
++	ecat_flag = 1;
++	printf("waiting for slaves ");
++	for (sec = 0; sec < 60; sec++) {
++		if (sexit_flag)
++			break;
++
++		if (is_all_slaves_ready()) {
++			printf("\nAll slaves are ready, sec:%d\n", sec);
++			break;
++		}
++		printf(".");
++		sleep(1);
++	}
++	if (sec == 60)
++		RET_ERR(-2, "Timeout to wait for slave to be ready!\n");
++#endif
++	/* Requests an EtherCAT master for realtime operation */
++	sec_master = ecrt_request_master(0);
++	if (!sec_master)
++		RET_ERR(-3, "Failed to request master!\n");
++
++#ifdef ECAT_RT1180
++	/* Check vendor_id and product_code of the firt motor */
++	ret = ecrt_master_get_slave(sec_master, 0, &slave_info);
++	if (ret == 0) {
++		if ((slave_info.vendor_id == RT1180_VID) && (slave_info.product_code == RT1180_PID)) {
++			srt1180_flag = 1;
++			sec_axle_num = 2;  /* For 2-axles slave */
++			pmotor_type = "i.MXRT1180";
++			axle_offset = get_pdo_entry_offset();
++		}
++	}
++#endif
++	sp_axle_info = (motor_axle_info_t*)calloc(sec_axle_num, sizeof(motor_axle_info_t));
++	if (!sp_axle_info)
++		RET_ERR(-3, "Failed to calloc memory for sp_axle_info!\n");
++
++	for (i = 0; i < sec_axle_num; i++) {
++		paxle = sp_axle_info + i;
++
++		ret = ecrt_master_get_slave(sec_master, i, &slave_info);
++		if (ret == 0) {
++			paxle->vendor_id = slave_info.vendor_id;
++			paxle->product_code = slave_info.product_code;
++		} else {
++			RET_ERR(-4, "Failed to get slave information!\n");
++		}
++
++		if (srt1180_flag)
++			break;
++	}
++
++	ret = update_axle_config(sec_axle_num);
++	if (ret)
++		RET_ERR(ret, "Failed to update axle config!\n");
++
++	printf("\n ec_motor_example for %s motor control\n\n", pmotor_type);
++
++	/* Creates a new process data domain */
++	sec_domain = ecrt_master_create_domain(sec_master);
++	if (!sec_domain)
++		RET_ERR(-5, "Failed to create domain for master!\n");
++
++axle_cfg:
++	paxle = sp_axle_info + axle;
++	printf("Configuring for axle-%d vendor_id:0x%X product_code:0x%X\n", axle, paxle->vendor_id, paxle->product_code);
++	/* Obtains slave configuration */
++	pslave_config = ecrt_master_slave_config(sec_master, 0, axle, paxle->vendor_id, paxle->product_code);
++	if (!pslave_config)
++		RET_ERR(-6, "Failed to get slave configuration!\n");
++
++	if (!srt1180_flag) {
++		ecrt_slave_config_sdo32(pslave_config, 0x6083, 0, 0x1000);  /* Profile_acceleration */
++		ecrt_slave_config_sdo32(pslave_config, 0x6084, 0, 0x1000);  /* Profile_deceleration */
++		ecrt_slave_config_sdo32(pslave_config, 0x6085, 0, 0x1000);  /* Quick_stop_deceleration */
++	}
++	ecrt_slave_config_watchdog(pslave_config, 0, 4000);
++	ecrt_slave_config_dc(pslave_config, 0x0300, CYCLE_TIME_NS, 0, 0, 0);
++
++	if (ecrt_slave_config_pdos(pslave_config, NUM_OF(sec_sync_mgr), sec_sync_mgr))
++		RET_ERR(-7, "Failed to configure PDOs!\n");
++
++axle_cfg_1180:
++	for (i = 0; i < NUM_OF(sec_reg_pdo_cfg); i++) {
++		prp = sec_reg_pdo_cfg + i;
++
++		pdo_oft = ecrt_slave_config_reg_pdo_entry(pslave_config, prp->index, prp->subindex, sec_domain, NULL);
++		if (pdo_oft < 0)
++			RET_ERR(-8, "Failed to register PDO entry!\n");
++
++		if (prp->poffset)
++			*(prp->poffset + axle) = (pdo_oft + axle * axle_offset);
++	}
++	if (++axle < sec_axle_num) {
++		if (srt1180_flag)
++			goto axle_cfg_1180;
++		else
++			goto axle_cfg;
++	}
++
++	printf("Activating master...\n");
++	if (ecrt_master_activate(sec_master))
++		RET_ERR(-9, "Failed to activate master!\n");
++
++	sec_domain_pd = ecrt_domain_data(sec_domain);
++	if (!sec_domain_pd)
++		RET_ERR(-10, "Failed to get domain data!\n");
++
++	run_main_cycle_task();
++
++ret_tag:
++	FREE(sp_axle_info);
++	FREE(sp_axle_data);
++
++#ifdef EC_MASTER_IN_USERSPACE
++	if (ecat_flag)
++	      ecus_done();
++#endif
++
++	return 0;
++}
 diff --git a/globals.h b/globals.h
 index 3460e348..b161cab6 100644
 --- a/globals.h
@@ -2579,10 +1607,10 @@ index 3460e348..b161cab6 100644
  
  #endif
 diff --git a/include/ecrt.h b/include/ecrt.h
-index 696ca3b3..06601a1b 100644
+index 696ca3b3..c01ab7ad 100644
 --- a/include/ecrt.h
 +++ b/include/ecrt.h
-@@ -541,10 +541,20 @@ extern "C" {
+@@ -541,10 +541,17 @@ extern "C" {
  #endif
  
  #ifdef EC_MASTER_IN_USERSPACE
@@ -2599,11 +1627,8 @@ index 696ca3b3..06601a1b 100644
 +int ecus_master_operation_loop(ec_master_t *master, int cycle);
 +int ecus_enable_ioctl_poll(void);
 +
-+#ifdef EC_USERSPACE_MASTER_FEC
 +int ecus_bind_cpu_core(uint32_t core_mask);
 +uint32_t ecus_get_core_mask(void);
-+#endif
-+
  #endif
  
  /** Returns the version magic of the realtime interface.
@@ -2619,34 +1644,48 @@ index 1d37863d..783bcfb0 100644
      snprintf(path, MAX_PATH_LEN - 1,
  #ifdef USE_RTDM
              "EtherCAT%u",
+diff --git a/libecat.mri b/libecat.mri
+new file mode 100644
+index 00000000..7f2129e6
+--- /dev/null
++++ b/libecat.mri
+@@ -0,0 +1,5 @@
++create libethercat_master.a
++addlib ./ecat_build/lib/libethercat_master.a
++addlib ./devices/nxp_userspace/libus_drv.a
++save
++end
 diff --git a/master/Makefile.am b/master/Makefile.am
-index e9cb23f5..f50c3345 100644
+index e9cb23f5..90bd440a 100644
 --- a/master/Makefile.am
 +++ b/master/Makefile.am
-@@ -105,8 +105,8 @@ libethercat_master_la_LDFLAGS = -version-info 1:0:0
+@@ -101,12 +101,14 @@ pkgconfigdir = $(libdir)/pkgconfig
+ pkgconfig_DATA = libethercat_master.pc
+ EXTRA_DIST += libethercat_master.pc.in
+ 
+-libethercat_master_la_LDFLAGS = -version-info 1:0:0
++libethercat_master_la_LDFLAGS = -version-info 1:0:0 \
++	-L../devices/nxp_userspace/ \
++	-lus_drv
  
  libethercat_master_la_CFLAGS = -I$(srcdir)/.. \
  	-I../emulation \
-+	-I../devices/enet_fec \
++	-I../devices/nxp_userspace/ \
  	-D__KERNEL__ \
 -	-DEC_HAVE_CYCLES \
  	-DEC_USE_HRTIMER \
  	-DEC_MASTER_IN_USERSPACE \
  	-Wall -Werror \
-@@ -150,6 +150,11 @@ libethercat_master_la_SOURCES = \
+@@ -150,6 +152,7 @@ libethercat_master_la_SOURCES = \
  	sync.c \
  	sync_config.c \
  	voe_handler.c \
-+	../devices/enet_fec/enet_uio.c \
-+	../devices/enet_fec/enet_ethdev.c \
-+	../devices/enet_fec/enet_rxtx.c \
-+	../devices/enet_fec/enet_main.c \
-+	../devices/enet_fec/enet_fec.c \
++	../devices/nxp_userspace/usm_main.c \
  	../devices/generic.c
  if ENABLE_EOE
  libethercat_master_la_SOURCES += ethernet.c
 diff --git a/master/cdev.c b/master/cdev.c
-index f16226e8..182a6350 100644
+index 467321f8..d5cab647 100644
 --- a/master/cdev.c
 +++ b/master/cdev.c
 @@ -38,6 +38,11 @@
@@ -2661,7 +1700,7 @@ index f16226e8..182a6350 100644
  #include "cdev.h"
  #include "master.h"
  #include "slave_config.h"
-@@ -56,26 +61,61 @@
+@@ -56,26 +61,62 @@
  typedef struct {
      ec_cdev_t *cdev; /**< Character device. */
      ec_ioctl_context_t ctx; /**< Context. */
@@ -2684,7 +1723,7 @@ index f16226e8..182a6350 100644
 +    int shmid = 0;
 +    key_t key = 0;
 +
-+    key = ftok("./", 0x88A4 + master->index);
++    key = ftok("/tmp/", 0x88A4 + master->index);
 +    if (key == -1) {
 +        EC_MASTER_ERR(master, "%s(): ftok failed! key:%d\n", __func__, key);
 +        return -1;
@@ -2706,6 +1745,7 @@ index f16226e8..182a6350 100644
 +
 +    priv->pmem = pmem;
 +    priv->shmid = shmid;
++    master->ioctl_mem = pmem + 1024;
 +
 +    return 0;
 +}
@@ -2729,7 +1769,7 @@ index f16226e8..182a6350 100644
  
      priv->cdev = &master->cdev;
      priv->ctx.writable = 1;
-@@ -83,14 +123,66 @@ int ec_cdev_usecat_start(ec_master_t *master)
+@@ -83,14 +124,66 @@ int ec_cdev_usecat_start(ec_master_t *master)
      priv->ctx.process_data = NULL;
      priv->ctx.process_data_size = 0;
  
@@ -2797,7 +1837,7 @@ index f16226e8..182a6350 100644
  #else /* EC_MASTER_IN_USERSPACE */
  
  /*****************************************************************************/
-@@ -171,25 +263,7 @@ void ec_cdev_clear(ec_cdev_t *cdev /**< EtherCAT XML device */)
+@@ -171,25 +264,7 @@ void ec_cdev_clear(ec_cdev_t *cdev /**< EtherCAT XML device */)
      cdev_del(&cdev->cdev);
  }
  
@@ -2846,7 +1886,7 @@ index 1a7bd18a..dcf4f861 100644
  int ec_cdev_usecat_stop(ec_master_t *master);
  #endif
 diff --git a/master/datagram.h b/master/datagram.h
-index e902fbd4..deecf9e3 100644
+index e902fbd4..e1b94f99 100644
 --- a/master/datagram.h
 +++ b/master/datagram.h
 @@ -39,10 +39,13 @@
@@ -2857,7 +1897,7 @@ index e902fbd4..deecf9e3 100644
  
  #include "globals.h"
  
-+#ifndef EC_USERSPACE_MASTER_FEC
++#ifndef EC_USERSPACE_MASTER_NEW
 +#include <linux/timex.h>
 +#endif
 +
@@ -2865,16 +1905,15 @@ index e902fbd4..deecf9e3 100644
  
  /** EtherCAT datagram type.
 diff --git a/master/device.c b/master/device.c
-index e25c8301..1303aca8 100644
+index e25c8301..2d5c2376 100644
 --- a/master/device.c
 +++ b/master/device.c
-@@ -60,6 +60,28 @@
+@@ -60,6 +60,30 @@
   *
   * \return 0 in case of success, else < 0
   */
-+#ifdef EC_USERSPACE_MASTER_FEC
-+extern uint8_t *enet_fec_get_tx_buf(int idx);
-+
++#ifdef EC_USERSPACE_MASTER_NEW
++uint8_t* us_drv_get_tx_buf(int idx);
 +static inline struct sk_buff *dev_alloc_ecat_skb(int i)
 +{
 +    struct sk_buff *buf = NULL;
@@ -2884,7 +1923,10 @@ index e25c8301..1303aca8 100644
 +        return NULL;
 +
 +    buf->len = 0;
-+    buf->data = buf->head = buf->tail = enet_fec_get_tx_buf(i);
++    buf->free_buf = 0;
++#ifdef EC_USERSPACE_MASTER_NEW
++    buf->data = buf->head = buf->tail = us_drv_get_tx_buf(i);
++#endif
 +    if (!buf->head) {
 +        free(buf);
 +        return NULL;
@@ -2897,11 +1939,11 @@ index e25c8301..1303aca8 100644
  int ec_device_init(
          ec_device_t *device, /**< EtherCAT device */
          ec_master_t *master /**< master owning the device */
-@@ -82,7 +104,12 @@ int ec_device_init(
+@@ -82,7 +106,12 @@ int ec_device_init(
      for (i = 0; i < EC_TX_RING_SIZE; i++) {
          device->tx_skb[i] = NULL;
      }
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +    device->tx_ring_index = (unsigned int)-1;
 +#else
      device->tx_ring_index = 0;
@@ -2910,11 +1952,11 @@ index e25c8301..1303aca8 100644
  #ifdef EC_HAVE_CYCLES
      device->cycles_poll = 0;
  #endif
-@@ -127,7 +154,11 @@ int ec_device_init(
+@@ -127,7 +156,11 @@ int ec_device_init(
  #endif
  
      for (i = 0; i < EC_TX_RING_SIZE; i++) {
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +        if (!(device->tx_skb[i] = dev_alloc_ecat_skb(i))) {
 +#else
          if (!(device->tx_skb[i] = dev_alloc_skb(ETH_FRAME_LEN))) {
@@ -2922,36 +1964,29 @@ index e25c8301..1303aca8 100644
              EC_MASTER_ERR(master, "Error allocating device socket buffer!\n");
              ret = -ENOMEM;
              goto out_tx_ring;
-@@ -145,9 +176,14 @@ int ec_device_init(
+@@ -144,10 +177,10 @@ int ec_device_init(
+ 
  out_tx_ring:
      for (i = 0; i < EC_TX_RING_SIZE; i++) {
-         if (device->tx_skb[i]) {
-+#ifdef EC_USERSPACE_MASTER_FEC
-+            free(device->tx_skb[i]);
-+#else
+-        if (device->tx_skb[i]) {
++        if (device->tx_skb[i])
              dev_kfree_skb(device->tx_skb[i]);
-+#endif
-         }
+-        }
      }
 +
  #ifdef EC_DEBUG_IF
      ec_debug_clear(&device->dbg);
  out_return:
-@@ -169,7 +205,12 @@ void ec_device_clear(
-         ec_device_close(device);
+@@ -170,6 +203,7 @@ void ec_device_clear(
      }
      for (i = 0; i < EC_TX_RING_SIZE; i++)
-+#ifdef EC_USERSPACE_MASTER_FEC
-+        free(device->tx_skb[i]);
-+#else
          dev_kfree_skb(device->tx_skb[i]);
-+#endif
 +
  #ifdef EC_DEBUG_IF
      ec_debug_clear(&device->dbg);
  #endif
 diff --git a/master/device.h b/master/device.h
-index 2a1b596a..4bca211c 100644
+index 2a1b596a..5a9141e0 100644
 --- a/master/device.h
 +++ b/master/device.h
 @@ -49,8 +49,12 @@
@@ -2959,7 +1994,7 @@ index 2a1b596a..4bca211c 100644
   */
  #ifdef EC_MASTER_IN_USERSPACE
 -#define EC_TX_RING_SIZE 16
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +#define EC_TX_RING_SIZE MAX_TX_BD_RING_SIZE
  #else
 +#define EC_TX_RING_SIZE 16
@@ -2972,7 +2007,7 @@ index 2a1b596a..4bca211c 100644
  
  #endif
  
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +#define MAX_TX_BD_RING_SIZE (16)
 +#define MAX_RX_BD_RING_SIZE (16)
 +#endif
@@ -2981,14 +2016,14 @@ index 2a1b596a..4bca211c 100644
  
  /**
 diff --git a/master/ethercat_master.c b/master/ethercat_master.c
-index c2d6fde9..ccec81fb 100644
+index c2d6fde9..b762918c 100644
 --- a/master/ethercat_master.c
 +++ b/master/ethercat_master.c
 @@ -24,6 +24,25 @@
  
  volatile sig_atomic_t stop = 0;
  
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +int ecus_init(uint32_t master_count, const char *const *master_macs,
 +              uint32_t backup_count, const char *const *backup_macs,
 +              uint32_t debug_level, uint32_t cycle_ns, uint32_t core_mask);
@@ -3005,7 +2040,7 @@ index c2d6fde9..ccec81fb 100644
 +static int sbackup_count = 0;
 +static char *sbackup_macs[MAX_MASTER_NUM];
 +static int sdebug_level = 0;
-+#endif  /* EC_USERSPACE_MASTER_FEC */
++#endif  /* EC_USERSPACE_MASTER_NEW */
 +
  static void handler(int sig)
  {
@@ -3015,7 +2050,7 @@ index c2d6fde9..ccec81fb 100644
      unsigned int master_count = 0;
      unsigned int backup_count = 0;
 +
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +    const char **masters = (const char **)smaster_macs;
 +    const char **backups = (const char **)sbackup_macs;
 +
@@ -3062,14 +2097,14 @@ index c2d6fde9..ccec81fb 100644
      return EXIT_SUCCESS;
  }
 diff --git a/master/globals.h b/master/globals.h
-index 840a160c..eb13f1b1 100644
+index 840a160c..8b2b0162 100644
 --- a/master/globals.h
 +++ b/master/globals.h
 @@ -244,8 +244,12 @@ extern const char *ec_device_names[2]; // only main and backup!
   * \param fmt format string (like in printf())
   * \param args arguments (optional)
   */
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +#define EC_DBG(fmt, args...)
 +#else
  #define EC_DBG(fmt, args...) \
@@ -3078,6 +2113,129 @@ index 840a160c..eb13f1b1 100644
  
  /*****************************************************************************/
  
+diff --git a/master/ioctl.c b/master/ioctl.c
+index 0cd6b3f1..0235b4c6 100644
+--- a/master/ioctl.c
++++ b/master/ioctl.c
+@@ -67,7 +67,7 @@ static void ec_ioctl_strcpy(
+         )
+ {
+     if (source) {
+-        strncpy(target, source, EC_IOCTL_STRING_SIZE);
++        strncpy(target, source, EC_IOCTL_STRING_SIZE - 1);
+         target[EC_IOCTL_STRING_SIZE - 1] = 0;
+     } else {
+         target[0] = 0;
+@@ -812,6 +812,10 @@ static ATTRIBUTES int ec_ioctl_slave_sdo_upload(
+         return -EFAULT;
+     }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    data.target = master->ioctl_mem;
++#endif
++
+     if (!(target = kmalloc(data.target_size, GFP_KERNEL))) {
+         EC_MASTER_ERR(master, "Failed to allocate %zu bytes"
+                 " for SDO upload.\n", data.target_size);
+@@ -858,6 +862,10 @@ static ATTRIBUTES int ec_ioctl_slave_sdo_download(
+         return -EFAULT;
+     }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    data.data = master->ioctl_mem;
++#endif
++
+     if (!(sdo_data = kmalloc(data.data_size, GFP_KERNEL))) {
+         EC_MASTER_ERR(master, "Failed to allocate %zu bytes"
+                 " for SDO download.\n", data.data_size);
+@@ -906,6 +914,10 @@ static ATTRIBUTES int ec_ioctl_slave_sii_read(
+         return -EFAULT;
+     }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    data.words = (uint16_t*)master->ioctl_mem;
++#endif
++
+     if (down_interruptible(&master->master_sem))
+         return -EINTR;
+ 
+@@ -960,6 +972,10 @@ static ATTRIBUTES int ec_ioctl_slave_sii_write(
+         return 0;
+     }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    data.words = (uint16_t*)master->ioctl_mem;
++#endif
++
+     byte_size = sizeof(uint16_t) * data.nwords;
+     if (!(words = kmalloc(byte_size, GFP_KERNEL))) {
+         EC_MASTER_ERR(master, "Failed to allocate %u bytes"
+@@ -1047,6 +1063,10 @@ static ATTRIBUTES int ec_ioctl_slave_reg_read(
+         return 0;
+     }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    io.data = master->ioctl_mem;
++#endif
++
+     // init register request
+     ret = ec_reg_request_init(&request, io.size);
+     if (ret) {
+@@ -1126,6 +1146,10 @@ static ATTRIBUTES int ec_ioctl_slave_reg_write(
+         return 0;
+     }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    io.data = master->ioctl_mem;
++#endif
++
+     // init register request
+     ret = ec_reg_request_init(&request, io.size);
+     if (ret) {
+@@ -3814,6 +3838,10 @@ static ATTRIBUTES int ec_ioctl_slave_foe_read(
+         return -EFAULT;
+     }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    io.buffer = master->ioctl_mem;
++#endif
++
+     ec_foe_request_init(&request, io.file_name);
+     ret = ec_foe_request_alloc(&request, 10000); // FIXME
+     if (ret) {
+@@ -3910,6 +3938,10 @@ static ATTRIBUTES int ec_ioctl_slave_foe_write(
+         return -EFAULT;
+     }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    io.buffer = master->ioctl_mem;
++#endif
++
+     ec_foe_request_init(&request, io.file_name);
+ 
+     ret = ec_foe_request_alloc(&request, io.buffer_size);
+@@ -3997,6 +4029,10 @@ static ATTRIBUTES int ec_ioctl_slave_soe_read(
+         return -EFAULT;
+     }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    ioctl.data = master->ioctl_mem;
++#endif
++
+     data = kmalloc(ioctl.mem_size, GFP_KERNEL);
+     if (!data) {
+         EC_MASTER_ERR(master, "Failed to allocate %zu bytes of IDN data.\n",
+@@ -4046,6 +4082,10 @@ static ATTRIBUTES int ec_ioctl_slave_soe_write(
+         return -EFAULT;
+     }
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    ioctl.data = master->ioctl_mem;
++#endif
++
+     data = kmalloc(ioctl.data_size, GFP_KERNEL);
+     if (!data) {
+         EC_MASTER_ERR(master, "Failed to allocate %zu bytes of IDN data.\n",
 diff --git a/master/ioctl.h b/master/ioctl.h
 index 185f04cc..a42e4319 100644
 --- a/master/ioctl.h
@@ -3095,10 +2253,28 @@ index 185f04cc..a42e4319 100644
  /* Emulated ioctl via TCP connection for userspace master */
  static inline int ioctl_usecat_open(int master_index, const char *host)
 diff --git a/master/master.c b/master/master.c
-index e07c4a66..9538ac3e 100644
+index e07c4a66..c37a087f 100644
 --- a/master/master.c
 +++ b/master/master.c
-@@ -1368,7 +1368,19 @@ void ec_master_update_device_stats(
+@@ -105,6 +105,9 @@ void ec_master_clear_device_stats(ec_master_t *);
+ void ec_master_update_device_stats(ec_master_t *);
+ 
+ #ifdef EC_MASTER_IN_USERSPACE
++static int ec_master_start_ioctl_thread(ec_master_t *master);
++static int ec_master_stop_ioctl_thread(ec_master_t *master);
++
+ void ec_master_nanosleep(const unsigned long nsecs)
+ {
+     struct timespec t = { 0, nsecs }, r;
+@@ -402,6 +405,7 @@ void ec_master_clear(
+     unsigned int dev_idx, i;
+ 
+ #ifdef EC_MASTER_IN_USERSPACE
++    ec_master_stop_ioctl_thread(master);
+     ec_cdev_usecat_stop(master);
+ #else
+ #ifdef EC_RTDM
+@@ -1368,7 +1372,19 @@ void ec_master_update_device_stats(
  
  /*****************************************************************************/
  
@@ -3119,23 +2295,82 @@ index e07c4a66..9538ac3e 100644
  #ifdef EC_USE_HRTIMER
  
  /*
-@@ -1555,6 +1567,11 @@ static int ec_master_idle_thread(void *priv_data)
-     while (!kthread_should_stop()) {
-         ec_datagram_output_stats(&master->fsm_datagram);
+@@ -1535,6 +1551,59 @@ void ec_master_exec_slave_fsms(
+ 
+ /*****************************************************************************/
  
 +#ifdef EC_MASTER_IN_USERSPACE
++static void* ec_master_ioctl_thread(void *priv_data)
++{
++    ec_master_t *master = (ec_master_t *)priv_data;
++
++    EC_MASTER_INFO(master, "Starting master ioctl thread.\n");
++
++    while (master->ioctl_thread_run) {
 +        if (sec_ioctl_poll_flag)
 +            ec_master_ioctl_poll(priv_data);
++
++        ec_master_nanosleep(master->send_interval * 30);
++    }
++
++    EC_MASTER_INFO(master, "Exiting master ioctl thread.\n");
++
++    return NULL;
++}
++
++static int ec_master_start_ioctl_thread(ec_master_t *master)
++{
++    int ret = 0;
++
++    if (!master->ioctl_thread) {
++        ret = pthread_create(&master->ioctl_thread_id, NULL, ec_master_ioctl_thread, master);
++        if (ret == 0) {
++            master->ioctl_thread_run = 1;
++            master->ioctl_thread = &master->ioctl_thread_id;
++	} else {
++            EC_MASTER_WARN(master, "Failed to start master IOCTL thread!\n");
++	}
++    }
++
++    return 0;
++}
++
++static int ec_master_stop_ioctl_thread(ec_master_t *master)
++{
++    int ret = 0;
++
++    if (master->ioctl_thread) {
++        master->ioctl_thread_run = 0;
++
++	ret = pthread_join(*master->ioctl_thread, NULL);
++        master->ioctl_thread = NULL;
++    }
++
++    return ret;
++}
 +#endif
 +
-         // receive
-         down(&master->io_sem);
-         ecrt_master_receive(master);
-@@ -1585,7 +1602,11 @@ static int ec_master_idle_thread(void *priv_data)
++/*****************************************************************************/
++
+ /** Master kernel thread function for IDLE phase.
+  */
+ static int ec_master_idle_thread(void *priv_data)
+@@ -1545,6 +1614,10 @@ static int ec_master_idle_thread(void *priv_data)
+     size_t sent_bytes;
+ #endif
+ 
++#ifdef EC_MASTER_IN_USERSPACE
++    ec_master_start_ioctl_thread(master);
++#endif
++
+     // send interval in IDLE phase
+     ec_master_set_send_interval(master, 1000000 / HZ);
+ 
+@@ -1585,7 +1658,11 @@ static int ec_master_idle_thread(void *priv_data)
  
          if (ec_fsm_master_idle(&master->fsm)) {
  #ifdef EC_USE_HRTIMER
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +            ec_master_nanosleep(master->send_interval * 10);
 +#else
              ec_master_nanosleep(master->send_interval * 1000);
@@ -3143,11 +2378,11 @@ index e07c4a66..9538ac3e 100644
  #else
              set_current_state(TASK_INTERRUPTIBLE);
              schedule_timeout(1);
-@@ -1604,6 +1625,55 @@ static int ec_master_idle_thread(void *priv_data)
+@@ -1604,6 +1681,55 @@ static int ec_master_idle_thread(void *priv_data)
      return 0;
  }
  
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +static uint64_t sop_cycle_us_sum;
 +static uint32_t sop_cycle_us = 0;
 +
@@ -3199,11 +2434,11 @@ index e07c4a66..9538ac3e 100644
  /*****************************************************************************/
  
  /** Master kernel thread function for OPERATION phase.
-@@ -1641,7 +1711,11 @@ static int ec_master_operation_thread(void *priv_data)
+@@ -1641,7 +1767,11 @@ static int ec_master_operation_thread(void *priv_data)
  
  #ifdef EC_USE_HRTIMER
          // the op thread should not work faster than the sending RT thread
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +        ec_master_nanosleep(master->send_interval * 50);
 +#else
          ec_master_nanosleep(master->send_interval * 1000);
@@ -3211,12 +2446,14 @@ index e07c4a66..9538ac3e 100644
  #else
          if (ec_fsm_master_idle(&master->fsm)) {
              set_current_state(TASK_INTERRUPTIBLE);
-@@ -2361,6 +2435,14 @@ int ecrt_master_activate(ec_master_t *master)
+@@ -2361,6 +2491,16 @@ int ecrt_master_activate(ec_master_t *master)
          ec_master_eoe_start(master);
      }
  #endif
 +
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
++    ec_master_stop_ioctl_thread(master);
++
 +    if (ec_master_in_noop_mode()) {
 +        master->thread = NULL;
 +        goto no_op_tag;
@@ -3226,25 +2463,34 @@ index e07c4a66..9538ac3e 100644
      ret = ec_master_thread_start(master, ec_master_operation_thread,
                  "EtherCAT-OP");
      if (ret < 0) {
-@@ -2368,6 +2450,9 @@ int ecrt_master_activate(ec_master_t *master)
+@@ -2368,6 +2508,9 @@ int ecrt_master_activate(ec_master_t *master)
          return ret;
      }
  
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +no_op_tag:
 +#endif
      /* Allow scanning after a topology change. */
      master->allow_scan = 1;
  
+@@ -2708,7 +2851,7 @@ int ecrt_master_get_slave(ec_master_t *master, uint16_t slave_position,
+     slave_info->sync_count = slave->sii.sync_count;
+     slave_info->sdo_count = ec_slave_sdo_count(slave);
+     if (slave->sii.name) {
+-        strncpy(slave_info->name, slave->sii.name, EC_MAX_STRING_LENGTH);
++        strncpy(slave_info->name, slave->sii.name, EC_MAX_STRING_LENGTH - 1);
+     } else {
+         slave_info->name[0] = 0;
+     }
 diff --git a/master/master.h b/master/master.h
-index ad761067..e0315d54 100644
+index ad761067..411ea57b 100644
 --- a/master/master.h
 +++ b/master/master.h
 @@ -108,6 +108,15 @@
   * \param fmt format string (like in printf())
   * \param args arguments (optional)
   */
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +#define EC_MASTER_DBG(master, level, fmt, args...) \
 +    do { \
 +        if (master->debug_level > level) { \
@@ -3265,21 +2511,25 @@ index ad761067..e0315d54 100644
  
  /** Size of the external datagram ring.
   *
-@@ -308,6 +317,9 @@ struct ec_master {
+@@ -308,6 +317,13 @@ struct ec_master {
  
      wait_queue_head_t request_queue; /**< Wait queue for external requests
                                         from user space. */
 +#ifdef EC_MASTER_IN_USERSPACE
++    pthread_t		ioctl_thread_id;
++    pthread_t		*ioctl_thread; /**< Master IOCTL thread. */
++    uint8_t		*ioctl_mem;
++    uint8_t		ioctl_thread_run;
 +    void *priv;
 +#endif
  };
  
  /*****************************************************************************/
-@@ -383,6 +395,11 @@ void ec_master_request_op(ec_master_t *);
+@@ -383,6 +399,11 @@ void ec_master_request_op(ec_master_t *);
  void ec_master_internal_send_cb(void *);
  void ec_master_internal_receive_cb(void *);
  
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +int ec_master_in_noop_mode(void);
 +uint64_t ec_master_cycle_us(void);
 +#endif
@@ -3288,18 +2538,19 @@ index ad761067..e0315d54 100644
  
  /*****************************************************************************/
 diff --git a/master/module.c b/master/module.c
-index 66b6eb6d..3e5aedc7 100644
+index ee39789a..43110542 100644
 --- a/master/module.c
 +++ b/master/module.c
-@@ -699,10 +699,15 @@ ec_master_t *ecrt_open_master(
+@@ -699,10 +699,16 @@ ec_master_t *ecrt_open_master(
      return master;
  }
  
-+#ifdef EC_USERSPACE_MASTER_FEC
-+int ec_fec_net_init(uint32_t cycle_ns, uint32_t core_mask);
-+int __init ec_fec_init_module(void);
-+void __exit ec_fec_cleanup_module(void);
++#ifdef EC_USERSPACE_MASTER_NEW
++int ec_usm_net_init(uint32_t cycle_ns, uint32_t core_mask);
++int __init ec_usm_init_module(void);
++void __exit ec_usm_cleanup_module(void);
 +#endif
++
  int __init ec_gen_init_module(void);
  void __exit ec_gen_cleanup_module(void);
  
@@ -3308,13 +2559,16 @@ index 66b6eb6d..3e5aedc7 100644
                unsigned int backup_count_, const char *const *backup_macs,
                unsigned int debug_level_)
  {
-@@ -734,15 +739,54 @@ int ecrt_init(unsigned int master_count_, const char *const *master_macs,
+@@ -734,15 +740,59 @@ int ecrt_init(unsigned int master_count_, const char *const *master_macs,
      r = ec_init_module();
      if (r)
          return r;
-+#ifdef EC_USERSPACE_MASTER_FEC
-+    r = ec_fec_init_module();
-+#else
++
++#ifdef EC_USERSPACE_MASTER_NEW
++    r = ec_usm_init_module();
++#endif
++
++#ifndef EC_USERSPACE_MASTER_NEW
      r = ec_gen_init_module();
 +#endif
      if (r)
@@ -3325,9 +2579,11 @@ index 66b6eb6d..3e5aedc7 100644
 -void ecrt_done(void)
 +static void ecrt_done(void)
  {
-+#ifdef EC_USERSPACE_MASTER_FEC
-+    ec_fec_cleanup_module();
-+#else
++#ifdef EC_USERSPACE_MASTER_NEW
++    ec_usm_cleanup_module();
++#endif
++
++#ifndef EC_USERSPACE_MASTER_NEW
      ec_gen_cleanup_module();
 +#endif
      ec_cleanup_module();
@@ -3339,17 +2595,17 @@ index 66b6eb6d..3e5aedc7 100644
 +{
 +    int ret = 0;
 +
-+#ifdef EC_USERSPACE_MASTER_FEC
-+    ret = ec_fec_net_init(cycle_ns, core_mask);
++#ifdef EC_USERSPACE_MASTER_NEW
++    ret = ec_usm_net_init(cycle_ns, core_mask);
 +    if (ret) {
-+        EC_ERR("Failed to init enet_fec driver! ret:%d\n", ret);
++        EC_ERR("Failed to init NXP userspace driver! ret:%d\n", ret);
 +        goto err_tag;
 +    }
  #endif
 +
 +    ret = ecrt_init(master_count, master_macs, backup_count, backup_macs, debug_level);
 +    if (ret) {
-+        EC_ERR("Failed to init userspace EtherCAT! %s.\n", strerror(-ret));
++        EC_ERR("Failed to init userspace driver! Error:%s.\n", strerror(-ret));
 +        goto err_tag;
 +    }
 +
@@ -3365,14 +2621,14 @@ index 66b6eb6d..3e5aedc7 100644
 +
 +#endif  /* EC_MASTER_IN_USERSPACE */
 diff --git a/master/slave.h b/master/slave.h
-index b71d57e2..95d2eeef 100644
+index b71d57e2..5ffb1286 100644
 --- a/master/slave.h
 +++ b/master/slave.h
 @@ -103,6 +103,15 @@
   * \param fmt format string (like in printf())
   * \param args arguments (optional)
   */
-+#ifdef EC_USERSPACE_MASTER_FEC
++#ifdef EC_USERSPACE_MASTER_NEW
 +#define EC_SLAVE_DBG(slave, level, fmt, args...) \
 +    do { \
 +        if (slave->master->debug_level > level) { \
@@ -3427,12 +2683,605 @@ index 38347872..192aa6ca 100644
  /*****************************************************************************/
  
  /** Attaches the configuration to the addressed slave object.
+diff --git a/tool/CommandAlias.cpp b/tool/CommandAlias.cpp
+index 87f6435d..9aebfa54 100644
+--- a/tool/CommandAlias.cpp
++++ b/tool/CommandAlias.cpp
+@@ -143,12 +143,12 @@ void CommandAlias::writeSlaveAlias(
+     data.slave_position = slave.position;
+     data.offset = 0;
+     data.nwords = 8;
+-    data.words = new uint16_t[data.nwords];
++    data.words = ioctl_new_buf(uint16_t, data.nwords);
+ 
+     try {
+         m.readSii(&data);
+     } catch (MasterDeviceException &e) {
+-        delete [] data.words;
++        ioctl_del_buf(data.words);
+         err << "Failed to read SII: " << e.what();
+         throwCommandException(err);
+     }
+@@ -166,12 +166,12 @@ void CommandAlias::writeSlaveAlias(
+     try {
+         m.writeSii(&data);
+     } catch (MasterDeviceException &e) {
+-        delete [] data.words;
++        ioctl_del_buf(data.words);
+         err << "Failed to read SII: " << e.what();
+         throwCommandException(err);
+     }
+ 
+-    delete [] data.words;
++    ioctl_del_buf(data.words);
+ }
+ 
+ /*****************************************************************************/
+diff --git a/tool/CommandData.cpp b/tool/CommandData.cpp
+index 89a31eeb..8a6d55ac 100644
+--- a/tool/CommandData.cpp
++++ b/tool/CommandData.cpp
+@@ -109,12 +109,12 @@ void CommandData::outputDomainData(
+     if (!domain.data_size)
+         return;
+ 
+-    processData = new unsigned char[domain.data_size];
++    processData = ioctl_new_buf(uint8_t, domain.data_size);
+ 
+     try {
+         m.getData(&data, domain.index, domain.data_size, processData);
+     } catch (MasterDeviceException &e) {
+-        delete [] processData;
++        ioctl_del_buf(processData);
+         throw e;
+     }
+ 
+@@ -122,7 +122,7 @@ void CommandData::outputDomainData(
+         cout << processData[i];
+     cout.flush();
+ 
+-    delete [] processData;
++    ioctl_del_buf(processData);
+ }
+ 
+ /****************************************************************************/
+diff --git a/tool/CommandDomains.cpp b/tool/CommandDomains.cpp
+index 13fc6cb3..fdc9d0a1 100644
+--- a/tool/CommandDomains.cpp
++++ b/tool/CommandDomains.cpp
+@@ -170,12 +170,12 @@ void CommandDomains::showDomain(
+     if (!domain.data_size || getVerbosity() != Verbose)
+         return;
+ 
+-    processData = new unsigned char[domain.data_size];
++    processData = ioctl_new_buf(uint8_t, domain.data_size);
+ 
+     try {
+         m.getData(&data, domain.index, domain.data_size, processData);
+     } catch (MasterDeviceException &e) {
+-        delete [] processData;
++        ioctl_del_buf(processData);
+         throw e;
+     }
+ 
+@@ -196,7 +196,7 @@ void CommandDomains::showDomain(
+         dataOffset = fmmu.logical_address - domain.logical_base_address;
+         if (dataOffset + fmmu.data_size > domain.data_size) {
+             stringstream err;
+-            delete [] processData;
++            ioctl_del_buf(processData);
+             err << "Fmmu information corrupted!";
+             throwCommandException(err);
+         }
+@@ -211,7 +211,7 @@ void CommandDomains::showDomain(
+         cout << endl;
+     }
+ 
+-    delete [] processData;
++    ioctl_del_buf(processData);
+ }
+ 
+ /*****************************************************************************/
+diff --git a/tool/CommandDownload.cpp b/tool/CommandDownload.cpp
+index 0ee59d32..b010c0a2 100644
+--- a/tool/CommandDownload.cpp
++++ b/tool/CommandDownload.cpp
+@@ -173,16 +173,16 @@ void CommandDownload::execute(const StringVector &args)
+             throwCommandException(err);
+         }
+         data.data_size = contents.size();
+-        data.data = new uint8_t[data.data_size + 1];
++        data.data = ioctl_new_buf(uint8_t, data.data_size + 1);
+ 
+         try {
+             data.data_size = interpretAsType(
+                     dataType, contents, data.data, data.data_size);
+         } catch (SizeException &e) {
+-            delete [] data.data;
++            ioctl_del_buf(data.data);
+             throwCommandException(e.what());
+         } catch (ios::failure &e) {
+-            delete [] data.data;
++            ioctl_del_buf(data.data);
+             err << "Invalid value argument '" << args[2]
+                 << "' for type '" << dataType->name << "'!";
+             throwInvalidUsageException(err);
+@@ -195,16 +195,16 @@ void CommandDownload::execute(const StringVector &args)
+             data.data_size = DefaultBufferSize;
+         }
+ 
+-        data.data = new uint8_t[data.data_size + 1];
++        data.data = ioctl_new_buf(uint8_t, data.data_size + 1);
+ 
+         try {
+             data.data_size = interpretAsType(
+                     dataType, args[valueIndex], data.data, data.data_size);
+         } catch (SizeException &e) {
+-            delete [] data.data;
++            ioctl_del_buf(data.data);
+             throwCommandException(e.what());
+         } catch (ios::failure &e) {
+-            delete [] data.data;
++            ioctl_del_buf(data.data);
+             err << "Invalid value argument '" << args[2]
+                 << "' for type '" << dataType->name << "'!";
+             throwInvalidUsageException(err);
+@@ -215,10 +215,10 @@ void CommandDownload::execute(const StringVector &args)
+         data.data_size = interpretAsType(
+                 dataType, args[valueIndex], data.data, data.data_size);
+     } catch (SizeException &e) {
+-        delete [] data.data;
++        ioctl_del_buf(data.data);
+         throwCommandException(e.what());
+     } catch (ios::failure &e) {
+-        delete [] data.data;
++        ioctl_del_buf(data.data);
+         err << "Invalid value argument '" << args[2]
+             << "' for type '" << dataType->name << "'!";
+         throwInvalidUsageException(err);
+@@ -227,17 +227,17 @@ void CommandDownload::execute(const StringVector &args)
+     try {
+         m.sdoDownload(&data);
+     } catch (MasterDeviceSdoAbortException &e) {
+-        delete [] data.data;
++        ioctl_del_buf(data.data);
+         err << "SDO transfer aborted with code 0x"
+             << setfill('0') << hex << setw(8) << e.abortCode
+             << ": " << abortText(e.abortCode);
+         throwCommandException(err);
+     } catch(MasterDeviceException &e) {
+-        delete [] data.data;
++        ioctl_del_buf(data.data);
+         throw e;
+     }
+ 
+-    delete [] data.data;
++    ioctl_del_buf(data.data);
+ }
+ 
+ /*****************************************************************************/
+diff --git a/tool/CommandFoeRead.cpp b/tool/CommandFoeRead.cpp
+index 7221f40b..1a643e03 100644
+--- a/tool/CommandFoeRead.cpp
++++ b/tool/CommandFoeRead.cpp
+@@ -103,14 +103,14 @@ void CommandFoeRead::execute(const StringVector &args)
+      */
+     data.offset = 0;
+     data.buffer_size = 0x8800;
+-    data.buffer = new uint8_t[data.buffer_size];
++    data.buffer = ioctl_new_buf(uint8_t, data.buffer_size);
+ 
+     strncpy(data.file_name, args[0].c_str(), sizeof(data.file_name));
+ 
+     try {
+         m.readFoe(&data);
+     } catch (MasterDeviceException &e) {
+-        delete [] data.buffer;
++        ioctl_del_buf(data.buffer);
+         if (data.result) {
+             if (data.result == FOE_OPCODE_ERROR) {
+                 err << "FoE read aborted with error code 0x"
+@@ -132,7 +132,7 @@ void CommandFoeRead::execute(const StringVector &args)
+         cout << *(uint8_t *) w ;
+     }
+ 
+-    delete [] data.buffer;
++    ioctl_del_buf(data.buffer);
+ }
+ 
+ /*****************************************************************************/
+diff --git a/tool/CommandFoeWrite.cpp b/tool/CommandFoeWrite.cpp
+index abd6a3fb..a57e1fbe 100644
+--- a/tool/CommandFoeWrite.cpp
++++ b/tool/CommandFoeWrite.cpp
+@@ -126,14 +126,14 @@ void CommandFoeWrite::execute(const StringVector &args)
+         m.open(MasterDevice::ReadWrite);
+     } catch (MasterDeviceException &e) {
+         if (data.buffer_size)
+-            delete [] data.buffer;
++            ioctl_del_buf(data.buffer);
+         throw e;
+     }
+ 
+     slaves = selectedSlaves(m);
+     if (slaves.size() != 1) {
+         if (data.buffer_size)
+-            delete [] data.buffer;
++            ioctl_del_buf(data.buffer);
+         throwSingleSlaveRequired(slaves.size());
+     }
+     data.slave_position = slaves.front().position;
+@@ -146,7 +146,7 @@ void CommandFoeWrite::execute(const StringVector &args)
+         m.writeFoe(&data);
+     } catch (MasterDeviceException &e) {
+         if (data.buffer_size)
+-            delete [] data.buffer;
++            ioctl_del_buf(data.buffer);
+         if (data.result) {
+             if (data.result == FOE_OPCODE_ERROR) {
+                 err << "FoE write aborted with error code 0x"
+@@ -167,7 +167,7 @@ void CommandFoeWrite::execute(const StringVector &args)
+     }
+ 
+     if (data.buffer_size)
+-        delete [] data.buffer;
++        ioctl_del_buf(data.buffer);
+ }
+ 
+ /*****************************************************************************/
+@@ -191,7 +191,7 @@ void CommandFoeWrite::loadFoeData(
+ 
+     if (data->buffer_size) {
+         // allocate buffer and read file into buffer
+-        data->buffer = new uint8_t[data->buffer_size];
++        data->buffer = ioctl_new_buf(uint8_t, data->buffer_size);
+         contents.copy((char *) data->buffer, contents.size());
+     }
+ }
+diff --git a/tool/CommandRegRead.cpp b/tool/CommandRegRead.cpp
+index d1d83140..27a2dbf7 100644
+--- a/tool/CommandRegRead.cpp
++++ b/tool/CommandRegRead.cpp
+@@ -150,23 +150,23 @@ void CommandRegRead::execute(const StringVector &args)
+     }
+     io.slave_position = slaves.front().position;
+ 
+-    io.data = new uint8_t[io.size];
++    io.data = ioctl_new_buf(uint8_t, io.size);
+ 
+     try {
+         m.readReg(&io);
+     } catch (MasterDeviceException &e) {
+-        delete [] io.data;
++        ioctl_del_buf(io.data);
+         throw e;
+     }
+ 
+     try {
+         outputData(cout, dataType, io.data, io.size);
+     } catch (SizeException &e) {
+-        delete [] io.data;
++        ioctl_del_buf(io.data);
+         throwCommandException(e.what());
+     }
+ 
+-    delete [] io.data;
++    ioctl_del_buf(io.data);
+ }
+ 
+ /*****************************************************************************/
+diff --git a/tool/CommandRegWrite.cpp b/tool/CommandRegWrite.cpp
+index 9a8a57e9..1e4f72a7 100644
+--- a/tool/CommandRegWrite.cpp
++++ b/tool/CommandRegWrite.cpp
+@@ -128,16 +128,16 @@ void CommandRegWrite::execute(const StringVector &args)
+             io.size = 1024; // FIXME
+         }
+ 
+-        io.data = new uint8_t[io.size];
++        io.data = ioctl_new_buf(uint8_t, io.size);
+ 
+         try {
+             io.size = interpretAsType(
+                     dataType, args[1], io.data, io.size);
+         } catch (SizeException &e) {
+-            delete [] io.data;
++            ioctl_del_buf(io.data);
+             throwCommandException(e.what());
+         } catch (ios::failure &e) {
+-            delete [] io.data;
++            ioctl_del_buf(io.data);
+             err << "Invalid value argument '" << args[1]
+                 << "' for type '" << dataType->name << "'!";
+             throwInvalidUsageException(err);
+@@ -146,7 +146,7 @@ void CommandRegWrite::execute(const StringVector &args)
+ 
+     if ((uint32_t) io.address + io.size > 0xffff) {
+         err << "Address and size exceeding 64k!";
+-        delete [] io.data;
++        ioctl_del_buf(io.data);
+         throwInvalidUsageException(err);
+     }
+ 
+@@ -154,13 +154,13 @@ void CommandRegWrite::execute(const StringVector &args)
+     try {
+         m.open(MasterDevice::ReadWrite);
+     } catch (MasterDeviceException &e) {
+-        delete [] io.data;
++        ioctl_del_buf(io.data);
+         throw e;
+     }
+ 
+     slaves = selectedSlaves(m);
+     if (slaves.size() != 1) {
+-        delete [] io.data;
++        ioctl_del_buf(io.data);
+         throwSingleSlaveRequired(slaves.size());
+     }
+     io.slave_position = slaves.front().position;
+@@ -169,7 +169,7 @@ void CommandRegWrite::execute(const StringVector &args)
+     try {
+         m.writeReg(&io);
+     } catch (MasterDeviceException &e) {
+-        delete [] io.data;
++        ioctl_del_buf(io.data);
+         throw e;
+     }
+ 
+@@ -177,7 +177,7 @@ void CommandRegWrite::execute(const StringVector &args)
+         cerr << "Register writing finished." << endl;
+     }
+ 
+-    delete [] io.data;
++    ioctl_del_buf(io.data);
+ }
+ 
+ /*****************************************************************************/
+@@ -204,7 +204,7 @@ void CommandRegWrite::loadRegData(
+     io->size = contents.size();
+ 
+     // allocate buffer and read file into buffer
+-    io->data = new uint8_t[io->size];
++    io->data = ioctl_new_buf(uint8_t, io->size);
+     contents.copy((char *) io->data, contents.size());
+ }
+ 
+diff --git a/tool/CommandSiiRead.cpp b/tool/CommandSiiRead.cpp
+index 1c606e38..8aa7e26a 100644
+--- a/tool/CommandSiiRead.cpp
++++ b/tool/CommandSiiRead.cpp
+@@ -104,12 +104,12 @@ void CommandSiiRead::execute(const StringVector &args)
+ 
+     data.offset = 0;
+     data.nwords = slave->sii_nwords;
+-    data.words = new uint16_t[data.nwords];
++    data.words = ioctl_new_buf(uint16_t, data.nwords);
+ 
+     try {
+         m.readSii(&data);
+     } catch (MasterDeviceException &e) {
+-        delete [] data.words;
++        ioctl_del_buf(data.words);
+         throw e;
+     }
+ 
+@@ -175,7 +175,7 @@ void CommandSiiRead::execute(const StringVector &args)
+         }
+     }
+ 
+-    delete [] data.words;
++    ioctl_del_buf(data.words);
+ }
+ 
+ /****************************************************************************/
+diff --git a/tool/CommandSiiWrite.cpp b/tool/CommandSiiWrite.cpp
+index ad02b4f1..e449dc13 100644
+--- a/tool/CommandSiiWrite.cpp
++++ b/tool/CommandSiiWrite.cpp
+@@ -105,7 +105,7 @@ void CommandSiiWrite::execute(const StringVector &args)
+         try {
+             checkSiiData(&data);
+         } catch (CommandException &e) {
+-            delete [] data.words;
++            ioctl_del_buf(data.words);
+             throw e;
+         }
+     }
+@@ -114,13 +114,13 @@ void CommandSiiWrite::execute(const StringVector &args)
+     try {
+         m.open(MasterDevice::ReadWrite);
+     } catch (MasterDeviceException &e) {
+-        delete [] data.words;
++        ioctl_del_buf(data.words);
+         throw e;
+     }
+ 
+     slaves = selectedSlaves(m);
+     if (slaves.size() != 1) {
+-        delete [] data.words;
++        ioctl_del_buf(data.words);
+         throwSingleSlaveRequired(slaves.size());
+     }
+     data.slave_position = slaves.front().position;
+@@ -130,7 +130,7 @@ void CommandSiiWrite::execute(const StringVector &args)
+     try {
+         m.writeSii(&data);
+     } catch (MasterDeviceException &e) {
+-        delete [] data.words;
++        ioctl_del_buf(data.words);
+         throw e;
+     }
+ 
+@@ -138,7 +138,7 @@ void CommandSiiWrite::execute(const StringVector &args)
+         cerr << "SII writing finished." << endl;
+     }
+ 
+-    delete [] data.words;
++    ioctl_del_buf(data.words);
+ }
+ 
+ /*****************************************************************************/
+@@ -166,7 +166,7 @@ void CommandSiiWrite::loadSiiData(
+     data->nwords = contents.size() / 2;
+ 
+     // allocate buffer and read file into buffer
+-    data->words = new uint16_t[data->nwords];
++    data->words = ioctl_new_buf(uint16_t, data->nwords);
+     contents.copy((char *) data->words, contents.size());
+ }
+ 
+diff --git a/tool/CommandSoeRead.cpp b/tool/CommandSoeRead.cpp
+index 2ad4c0f8..eb2c0379 100644
+--- a/tool/CommandSoeRead.cpp
++++ b/tool/CommandSoeRead.cpp
+@@ -148,16 +148,16 @@ void CommandSoeRead::execute(const StringVector &args)
+         ioctl.mem_size = 1024;
+     }
+ 
+-    ioctl.data = new uint8_t[ioctl.mem_size + 1];
++    ioctl.data = ioctl_new_buf(uint8_t, ioctl.mem_size + 1);
+ 
+     try {
+         m.readSoe(&ioctl);
+     } catch (MasterDeviceSoeException &e) {
+-        delete [] ioctl.data;
++        ioctl_del_buf(ioctl.data);
+         err << "SoE read command failed with code " << errorMsg(e.errorCode);
+         throwCommandException(err);
+     } catch (MasterDeviceException &e) {
+-        delete [] ioctl.data;
++        ioctl_del_buf(ioctl.data);
+         throw e;
+     }
+ 
+@@ -166,11 +166,11 @@ void CommandSoeRead::execute(const StringVector &args)
+     try {
+         outputData(cout, dataType, ioctl.data, ioctl.data_size);
+     } catch (SizeException &e) {
+-        delete [] ioctl.data;
++        ioctl_del_buf(ioctl.data);
+         throwCommandException(e.what());
+     }
+ 
+-    delete [] ioctl.data;
++    ioctl_del_buf(ioctl.data);
+ }
+ 
+ /*****************************************************************************/
+diff --git a/tool/CommandSoeWrite.cpp b/tool/CommandSoeWrite.cpp
+index 382ba8d6..3ec75ab6 100644
+--- a/tool/CommandSoeWrite.cpp
++++ b/tool/CommandSoeWrite.cpp
+@@ -158,16 +158,16 @@ void CommandSoeWrite::execute(const StringVector &args)
+         }
+     }
+ 
+-    ioctl.data = new uint8_t[memSize];
++    ioctl.data = ioctl_new_buf(uint8_t, memSize);
+ 
+     try {
+         ioctl.data_size = interpretAsType(
+                 dataType, args[valueArgIndex], ioctl.data, memSize);
+     } catch (SizeException &e) {
+-        delete [] ioctl.data;
++        ioctl_del_buf(ioctl.data);
+         throwCommandException(e.what());
+     } catch (ios::failure &e) {
+-        delete [] ioctl.data;
++        ioctl_del_buf(ioctl.data);
+         err << "Invalid value argument '" << args[valueArgIndex]
+             << "' for type '" << dataType->name << "'!";
+         throwInvalidUsageException(err);
+@@ -176,15 +176,15 @@ void CommandSoeWrite::execute(const StringVector &args)
+     try {
+         m.writeSoe(&ioctl);
+     } catch (MasterDeviceSoeException &e) {
+-        delete [] ioctl.data;
++        ioctl_del_buf(ioctl.data);
+         err << "SoE write command failed with code " << errorMsg(e.errorCode);
+         throwCommandException(err);
+     } catch (MasterDeviceException &e) {
+-        delete [] ioctl.data;
++        ioctl_del_buf(ioctl.data);
+         throw e;
+     }
+ 
+-    delete [] ioctl.data;
++    ioctl_del_buf(ioctl.data);
+ }
+ 
+ /*****************************************************************************/
+diff --git a/tool/CommandUpload.cpp b/tool/CommandUpload.cpp
+index 439eeab3..b5f639fa 100644
+--- a/tool/CommandUpload.cpp
++++ b/tool/CommandUpload.cpp
+@@ -151,18 +151,18 @@ void CommandUpload::execute(const StringVector &args)
+         data.target_size = DefaultBufferSize;
+     }
+ 
+-    data.target = new uint8_t[data.target_size + 1];
++    data.target = ioctl_new_buf(uint8_t, data.target_size + 1);
+ 
+     try {
+         m.sdoUpload(&data);
+     } catch (MasterDeviceSdoAbortException &e) {
+-        delete [] data.target;
++        ioctl_del_buf(data.target);
+         err << "SDO transfer aborted with code 0x"
+             << setfill('0') << hex << setw(8) << e.abortCode
+             << ": " << abortText(e.abortCode);
+         throwCommandException(err);
+     } catch (MasterDeviceException &e) {
+-        delete [] data.target;
++        ioctl_del_buf(data.target);
+         throw e;
+     }
+ 
+@@ -171,11 +171,11 @@ void CommandUpload::execute(const StringVector &args)
+     try {
+         outputData(cout, dataType, data.target, data.data_size);
+     } catch (SizeException &e) {
+-        delete [] data.target;
++        ioctl_del_buf(data.target);
+         throwCommandException(e.what());
+     }
+ 
+-    delete [] data.target;
++    ioctl_del_buf(data.target);
+ }
+ 
+ /*****************************************************************************/
 diff --git a/tool/Makefile.am b/tool/Makefile.am
-index 9d551c7d..69bb1346 100644
+index 9d551c7d..f865be94 100644
 --- a/tool/Makefile.am
 +++ b/tool/Makefile.am
-@@ -128,6 +128,7 @@ REV = `if test -s $(top_srcdir)/revision; then \
- ethercat_CXXFLAGS = \
+@@ -33,9 +33,9 @@
+ 
+ EXTRA_DIST =
+ 
+-bin_PROGRAMS = ethercat
++bin_PROGRAMS = ethercat_userspace
+ 
+-ethercat_SOURCES = \
++ethercat_userspace_SOURCES = \
+ 	soe_errors.c \
+ 	Command.cpp \
+ 	CommandAlias.cpp \
+@@ -73,7 +73,7 @@ ethercat_SOURCES = \
+ 	sii_crc.cpp
+ 
+ if ENABLE_EOE
+-ethercat_SOURCES += CommandEoe.cpp
++ethercat_userspace_SOURCES += CommandEoe.cpp
+ else
+ EXTRA_DIST += CommandEoe.cpp
+ endif
+@@ -125,9 +125,10 @@ REV = `if test -s $(top_srcdir)/revision; then \
+ 		hg id -i $(top_srcdir) 2>/dev/null || echo "unknown"; \
+ 	fi`
+ 
+-ethercat_CXXFLAGS = \
++ethercat_userspace_CXXFLAGS = \
  	-I$(top_srcdir)/include \
  	-I$(top_srcdir)/master \
 +	-DEC_MASTER_IN_USERSPACE \
@@ -3440,16 +3289,18 @@ index 9d551c7d..69bb1346 100644
  	-fno-strict-aliasing
  
 diff --git a/tool/MasterDevice.cpp b/tool/MasterDevice.cpp
-index ca023246..e8da333c 100644
+index ca023246..5c487fb1 100644
 --- a/tool/MasterDevice.cpp
 +++ b/tool/MasterDevice.cpp
-@@ -40,6 +40,101 @@ using namespace std;
+@@ -40,6 +40,122 @@ using namespace std;
  
  #include "MasterDevice.h"
  
 +#ifdef EC_MASTER_IN_USERSPACE
 +#include <sys/ipc.h>
 +#include <sys/shm.h>
++
++#define IOCTL_MEM_SIZE (1024 * 3)
 +
 +extern "C" {
 +
@@ -3461,7 +3312,7 @@ index ca023246..e8da333c 100644
 +    int shmid = 0;
 +    key_t key = 0;
 +
-+    key = ftok("./", 0x88A4 + index);
++    key = ftok("/tmp/", 0x88A4 + index);
 +    if (key == -1) {
 +        printf("%s(): ftok failed! key:%d\n", __func__, key);
 +        return NULL;
@@ -3483,6 +3334,25 @@ index ca023246..e8da333c 100644
 +        *pshmid = shmid;
 +
 +    return pmem;
++}
++
++uint8_t *ecat_get_ioctl_mem(int size)
++{
++    uint8_t *pmem = NULL;
++    int fd = 0;  /* using fd 0 */
++
++    pmem = (uint8_t*)smaster_shmem[fd];
++    if (!pmem) {
++        printf("%s(): smaster_shmem-%d is NULL!\n", __func__, fd);
++        return NULL;
++    }
++
++    if (size > IOCTL_MEM_SIZE) {
++        printf("%s(): size %d is out of range %d!\n", __func__, size, IOCTL_MEM_SIZE);
++        return NULL;
++    }
++
++    return pmem + (4096 - IOCTL_MEM_SIZE);
 +}
 +
 +int ecat_ioctl_len(int fd, unsigned int cmd, void *arg, int len, int flag)
@@ -3545,7 +3415,7 @@ index ca023246..e8da333c 100644
  /****************************************************************************/
  
  MasterDevice::MasterDevice(unsigned int index):
-@@ -67,14 +162,26 @@ void MasterDevice::setIndex(unsigned int i)
+@@ -67,14 +183,26 @@ void MasterDevice::setIndex(unsigned int i)
  
  void MasterDevice::open(Permissions perm)
  {
@@ -3576,7 +3446,7 @@ index ca023246..e8da333c 100644
              stringstream err;
              err << "Failed to open master device " << deviceName.str() << ": "
                  << strerror(errno);
-@@ -97,10 +204,17 @@ void MasterDevice::open(Permissions perm)
+@@ -97,10 +225,17 @@ void MasterDevice::open(Permissions perm)
  
  void MasterDevice::close()
  {
@@ -3594,7 +3464,7 @@ index ca023246..e8da333c 100644
  }
  
  /****************************************************************************/
-@@ -464,7 +578,7 @@ void MasterDevice::writeFoe(
+@@ -464,7 +599,7 @@ void MasterDevice::writeFoe(
  
  void MasterDevice::setDebug(unsigned int debugLevel)
  {
@@ -3603,7 +3473,7 @@ index ca023246..e8da333c 100644
          stringstream err;
          err << "Failed to set debug level: " << strerror(errno);
          throw MasterDeviceException(err);
-@@ -475,7 +589,7 @@ void MasterDevice::setDebug(unsigned int debugLevel)
+@@ -475,7 +610,7 @@ void MasterDevice::setDebug(unsigned int debugLevel)
  
  void MasterDevice::rescan()
  {
@@ -3613,10 +3483,10 @@ index ca023246..e8da333c 100644
          err << "Failed to command rescan: " << strerror(errno);
          throw MasterDeviceException(err);
 diff --git a/tool/MasterDevice.h b/tool/MasterDevice.h
-index 7398f978..1b219b73 100644
+index 7398f978..a5d7f36a 100644
 --- a/tool/MasterDevice.h
 +++ b/tool/MasterDevice.h
-@@ -38,6 +38,22 @@ using namespace std;
+@@ -38,6 +38,28 @@ using namespace std;
  #include "ioctl.h"
  
  /****************************************************************************/
@@ -3625,6 +3495,7 @@ index 7398f978..1b219b73 100644
 +
 +#define MAX_MASTER_NUM (32)
 +
++uint8_t *ecat_get_ioctl_mem(int size);
 +int ecat_ioctl_len(int fd, unsigned int cmd, void *arg, int len, int flag);
 +
 +struct ecat_shm_info {
@@ -3634,11 +3505,16 @@ index 7398f978..1b219b73 100644
 +    uint32_t len;
 +} __attribute__((packed));
 +
++#define ioctl_new_buf(t, s) (t*)ecat_get_ioctl_mem(s)
++#define ioctl_del_buf(p)
 +}  /* extern "C" */
++#else
++#define ioctl_new_buf(t, s) new t[s]
++#define ioctl_del_buf(p) delete [] p
 +#endif
  
  class MasterDeviceException:
      public runtime_error
 -- 
-2.25.1
+2.34.1
 
