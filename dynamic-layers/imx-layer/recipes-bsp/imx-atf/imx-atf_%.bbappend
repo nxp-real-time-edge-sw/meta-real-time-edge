@@ -12,4 +12,5 @@ SRC_URI:append = " \
     file://0005-plat-imx-add-SIP-cpu_off-service-for-imx93.patch \
     file://0006-plat-imx8m-change-dram-dvfs-to-use-intercore-service.patch \
     file://0007-plat-imx8m-add-SIP-cpu_off-service.patch \
+    file://0008-plat-imx91-change-to-use-common-interrupt-service.patch \
 "
