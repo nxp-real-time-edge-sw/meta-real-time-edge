@@ -47,6 +47,7 @@ SRC_URI += "\
     file://0001-Delete-power_runtime-of-mdio-read-and-write.patch \
     file://0001-Add-code-to-support-userspace-IGH-EtherCAT-for-v1.5..patch \
     file://0002-Add-code-to-support-NXP-i.MX-FEC-ethernet-port.patch \
+    file://0001-yocto-not-install-header-file.patch \
 "
 
 SRC_URI += "file://libus_drv.a"
