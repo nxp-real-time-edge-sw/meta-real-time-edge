@@ -1,14 +1,14 @@
-From ad3e821880ddfa56231f23c5227b3a45b375eeb0 Mon Sep 17 00:00:00 2001
-From: Yangbo Lu <yangbo.lu@nxp.com>
-Date: Thu, 27 May 2021 12:06:06 +0800
-Subject: [PATCH 23/23] configs: use neighborPropDelayThresh default value for
+From 32d91b8c94ca77491670e741243a40db67231fdb Mon Sep 17 00:00:00 2001
+From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Date: Tue, 29 Oct 2024 11:13:15 +0800
+Subject: [PATCH 7/7] onfigs: use neighborPropDelayThresh default value for
  gPTP
 
 Link delay between MACs including PHY delay may be larger than 800ns,
 just use default neighborPropDelayThresh value to make synchronization
 happen.
 
-Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 ---
  configs/gPTP.cfg | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -26,5 +26,6 @@ index 04d04c0..bfd1e86 100644
  min_neighbor_prop_delay	-20000000
  assume_two_step		1
  path_trace_enabled	1
---
-2.25.1
+-- 
+2.34.1
+

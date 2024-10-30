@@ -1,7 +1,7 @@
-From 89f6e8da0893cd3f1fca6d8e041aee29b6fc0792 Mon Sep 17 00:00:00 2001
-From: Yangbo Lu <yangbo.lu@nxp.com>
-Date: Wed, 13 Nov 2019 10:46:34 +0800
-Subject: [PATCH 01/23] Add IEEE 802.1AS-2011 time-aware bridge support
+From b4a4ff52a6e611161b7103f878e2e1e529ae0b00 Mon Sep 17 00:00:00 2001
+From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Date: Mon, 28 Oct 2024 17:58:31 +0800
+Subject: [PATCH 1/7] Add IEEE 802.1AS-2011 time-aware bridge support
 
 This patch is to add IEEE 802.1AS-2011 time-aware bridge support
 based on current BC clock type. It implements only time information
@@ -14,45 +14,46 @@ The main code changes are,
   message with time information for relay.
 
 Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 ---
- clock.c | 43 ++++++++++++++++++++++++++++++++-
- clock.h | 45 ++++++++++++++++++++++++++++++++++
- port.c  | 75 ++++++++++++++++++++++++++++++++++++++++++++++++++++++---
- 3 files changed, 158 insertions(+), 5 deletions(-)
+ clock.c | 43 +++++++++++++++++++++++++++++++-
+ clock.h | 45 +++++++++++++++++++++++++++++++++
+ port.c  | 77 ++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ 3 files changed, 160 insertions(+), 5 deletions(-)
 
 diff --git a/clock.c b/clock.c
-index a66d189..667cb79 100644
+index 5a64613..c217459 100644
 --- a/clock.c
 +++ b/clock.c
-@@ -46,7 +46,6 @@
+@@ -47,7 +47,6 @@
  #include "util.h"
-
+ 
  #define N_CLOCK_PFD (N_POLLFD + 1) /* one extra per port, for the fault timer */
 -#define POW2_41 ((double)(1ULL << 41))
-
+ 
  struct interface {
-	STAILQ_ENTRY(interface) list;
-@@ -130,6 +129,7 @@ struct clock {
-	int stats_interval;
-	struct clockcheck *sanity_check;
-	struct interface *udsif;
+ 	STAILQ_ENTRY(interface) list;
+@@ -104,6 +103,7 @@ struct clock {
+ 	struct ClockIdentity ptl[PATH_TRACE_MAX];
+ 	struct foreign_clock *best;
+ 	struct ClockIdentity best_id;
 +	struct syfu_relay_info syfu_relay;
-	LIST_HEAD(clock_subscribers_head, clock_subscriber) subscribers;
-	struct monitor *slave_event_monitor;
- };
-@@ -1161,6 +1161,8 @@ struct clock *clock_create(enum clock_type type, struct config *config,
-		}
-	}
-
+ 	LIST_HEAD(ports_head, port) ports;
+ 	struct port *uds_rw_port;
+ 	struct port *uds_ro_port;
+@@ -1367,6 +1367,8 @@ struct clock *clock_create(enum clock_type type, struct config *config,
+ 		}
+ 	}
+ 
 +	memset(&c->syfu_relay, 0, sizeof(struct syfu_relay_info));
 +
-	/* Initialize the parentDS. */
-	clock_update_grandmaster(c);
-	c->dad.pds.parentStats                           = 0;
-@@ -1258,6 +1260,15 @@ void clock_follow_up_info(struct clock *c, struct follow_up_info_tlv *f)
-	       sizeof(c->status.lastGmPhaseChange));
+ 	/* Initialize the parentDS. */
+ 	clock_update_grandmaster(c);
+ 	c->dad.pds.parentStats                           = 0;
+@@ -1477,6 +1479,15 @@ void clock_follow_up_info(struct clock *c, struct follow_up_info_tlv *f)
+ 	       sizeof(c->status.lastGmPhaseChange));
  }
-
+ 
 +static void clock_get_follow_up_info(struct clock *c, struct follow_up_info_tlv *f)
 +{
 +	f->cumulativeScaledRateOffset = c->status.cumulativeScaledRateOffset;
@@ -64,11 +65,11 @@ index a66d189..667cb79 100644
 +
  int clock_free_running(struct clock *c)
  {
-	return c->free_running ? 1 : 0;
-@@ -1645,6 +1656,16 @@ struct monitor *clock_slave_monitor(struct clock *c)
-	return c->slave_event_monitor;
+ 	return c->free_running ? 1 : 0;
+@@ -1883,6 +1894,16 @@ struct monitor *clock_slave_monitor(struct clock *c)
+ 	return c->slave_event_monitor;
  }
-
+ 
 +tmv_t clock_get_path_delay(struct clock *c)
 +{
 +	return c->path_delay;
@@ -81,18 +82,18 @@ index a66d189..667cb79 100644
 +
  int clock_slave_only(struct clock *c)
  {
-	return c->dds.flags & DDS_SLAVE_ONLY;
-@@ -1867,6 +1888,7 @@ static void handle_state_decision_event(struct clock *c)
-		c->master_local_rr = 1.0;
-		c->nrr = 1.0;
-		fresh_best = 1;
+ 	return c->dds.flags & DDS_SLAVE_ONLY;
+@@ -2206,6 +2227,7 @@ static void handle_state_decision_event(struct clock *c)
+ 		c->master_local_rr = 1.0;
+ 		c->nrr = 1.0;
+ 		fresh_best = 1;
 +		clock_disable_syfu_relay(c);
-	}
-
-	c->best = best;
-@@ -1938,3 +1960,22 @@ enum servo_state clock_servo_state(struct clock *c)
+ 		if (cid_eq(&best_id, &c->dds.clockIdentity)) {
+ 			pr_notice("selected local clock %s as best master",
+ 					cid2str(&best_id));
+@@ -2288,3 +2310,22 @@ enum servo_state clock_servo_state(struct clock *c)
  {
-	return c->servo_state;
+ 	return c->servo_state;
  }
 +
 +void clock_prepare_syfu_relay(struct clock *c, struct ptp_message *sync,
@@ -114,17 +115,17 @@ index a66d189..667cb79 100644
 +	return &c->syfu_relay;
 +}
 diff --git a/clock.h b/clock.h
-index e7daf97..ddd1205 100644
+index ce9ae91..0227476 100644
 --- a/clock.h
 +++ b/clock.h
 @@ -30,8 +30,18 @@
  #include "tmv.h"
  #include "transport.h"
-
+ 
 +#define POW2_41 ((double)(1ULL << 41))
 +
  struct ptp_message; /*forward declaration*/
-
+ 
 +struct syfu_relay_info {
 +	tmv_t precise_origin_ts;
 +	Integer64 correction;
@@ -135,11 +136,11 @@ index e7daf97..ddd1205 100644
 +
  /** Opaque type. */
  struct clock;
-
-@@ -240,6 +250,20 @@ void clock_path_delay(struct clock *c, tmv_t req, tmv_t rx);
+ 
+@@ -248,6 +258,20 @@ void clock_path_delay(struct clock *c, tmv_t req, tmv_t rx);
  void clock_peer_delay(struct clock *c, tmv_t ppd, tmv_t req, tmv_t rx,
-		      double nrr);
-
+ 		      double nrr);
+ 
 +/**
 + * Get the path delay as measured on a slave port.
 + * @param c           The clock instance.
@@ -157,10 +158,10 @@ index e7daf97..ddd1205 100644
  /**
   * Set clock sde
   * @param c     A pointer to a clock instance obtained with clock_create().
-@@ -367,4 +391,25 @@ void clock_check_ts(struct clock *c, uint64_t ts);
+@@ -396,4 +420,25 @@ void clock_check_ts(struct clock *c, uint64_t ts);
   */
  double clock_rate_ratio(struct clock *c);
-
+ 
 +/**
 + * Prepare sync/follow_up relay.
 + * @param c     The clock instance.
@@ -184,35 +185,35 @@ index e7daf97..ddd1205 100644
 +struct syfu_relay_info *clock_get_syfu_relay(struct clock *c);
  #endif
 diff --git a/port.c b/port.c
-index fa49663..277db0a 100644
+index 5803cd3..652cf7d 100644
 --- a/port.c
 +++ b/port.c
-@@ -1282,6 +1282,10 @@ static void port_syfufsm(struct port *p, enum syfu_event event,
-			break;
-		case FUP_MATCH:
-			syn = p->last_syncfup;
+@@ -1474,6 +1474,10 @@ static void port_syfufsm(struct port *p, enum syfu_event event,
+ 			break;
+ 		case FUP_MATCH:
+ 			syn = p->last_syncfup;
 +			if (port_is_ieee8021as(p))
 +				clock_prepare_syfu_relay(p->clock, syn, m);
 +			else
 +				clock_disable_syfu_relay(p->clock);
-			port_synchronize(p, syn->header.sequenceId,
-					 syn->hwts.ts, m->ts.pdu,
-					 syn->header.correction,
-@@ -1304,6 +1308,10 @@ static void port_syfufsm(struct port *p, enum syfu_event event,
-			break;
-		case SYNC_MATCH:
-			fup = p->last_syncfup;
+ 			port_synchronize(p, syn->header.sequenceId,
+ 					 syn->hwts.ts, m->ts.pdu,
+ 					 syn->header.correction,
+@@ -1497,6 +1501,10 @@ static void port_syfufsm(struct port *p, enum syfu_event event,
+ 			break;
+ 		case SYNC_MATCH:
+ 			fup = p->last_syncfup;
 +			if (port_is_ieee8021as(p))
 +				clock_prepare_syfu_relay(p->clock, m, fup);
 +			else
 +				clock_disable_syfu_relay(p->clock);
-			port_synchronize(p, fup->header.sequenceId,
-					 m->hwts.ts, fup->ts.pdu,
-					 m->header.correction,
-@@ -1495,6 +1503,60 @@ int port_tx_announce(struct port *p, struct address *dst)
-	return err;
+ 			port_synchronize(p, fup->header.sequenceId,
+ 					 m->hwts.ts, fup->ts.pdu,
+ 					 m->header.correction,
+@@ -1692,6 +1700,63 @@ int port_tx_announce(struct port *p, struct address *dst, uint16_t sequence_id)
+ 	return err;
  }
-
+ 
 +static void port_syfu_relay_info_insert(struct port *p,
 +					struct ptp_message *sync,
 +					struct ptp_message *fup)
@@ -225,6 +226,9 @@ index fa49663..277db0a 100644
 +	struct timestamp ts;
 +
 +	if (syfu_relay->avail == 0)
++		return;
++
++	if (!fui)
 +		return;
 +
 +	fup->follow_up.preciseOriginTimestamp =
@@ -267,28 +271,28 @@ index fa49663..277db0a 100644
 +	pr_debug("port %hu:   fup_info %.9f", portnum(p), gm_rr);
 +}
 +
- int port_tx_sync(struct port *p, struct address *dst)
+ int port_tx_sync(struct port *p, struct address *dst, uint16_t sequence_id)
  {
-	struct ptp_message *msg, *fup;
-@@ -1588,10 +1650,15 @@ int port_tx_sync(struct port *p, struct address *dst)
-		fup->address = *dst;
-		fup->header.flagField[0] |= UNICAST;
-	}
+ 	struct ptp_message *msg, *fup;
+@@ -1783,10 +1848,14 @@ int port_tx_sync(struct port *p, struct address *dst, uint16_t sequence_id)
+ 		fup->address = *dst;
+ 		fup->header.flagField[0] |= UNICAST;
+ 	}
 -	if (p->follow_up_info && follow_up_info_append(fup)) {
--		pr_err("port %hu: append fup info failed", portnum(p));
+-		pr_err("%s: append fup info failed", p->log_name);
 -		err = -1;
 -		goto out;
-+
 +	if (p->follow_up_info) {
 +		if (follow_up_info_append(fup)) {
-+			pr_err("port %hu: append fup info failed", portnum(p));
++			pr_err("%s: append fup info failed", p->log_name);
 +			err = -1;
 +			goto out;
 +		}
 +
 +		port_syfu_relay_info_insert(p, msg, fup);
-	}
+ 	}
+ 
+ 	err = port_prepare_and_send(p, fup, TRANS_GENERAL);
+-- 
+2.34.1
 
-	err = port_prepare_and_send(p, fup, TRANS_GENERAL);
---
-2.25.1

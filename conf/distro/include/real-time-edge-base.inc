@@ -128,6 +128,3 @@ KERNEL_DEVICETREE:append:imx93-14x14-lpddr4x-evk = " freescale/imx93-14x14-evk-i
 
 # opcua override default log level
 LIBOPEN62541_LOGLEVE = "300"
-
-# Linux PTP
-PREFERRED_VERSION_linuxptp = "3.1.1"
