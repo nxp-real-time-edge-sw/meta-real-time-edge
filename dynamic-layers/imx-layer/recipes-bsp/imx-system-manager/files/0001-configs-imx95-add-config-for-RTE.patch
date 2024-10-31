@@ -1,7 +1,7 @@
-From 0eec621067eced299245588d21c805b22e30c97e Mon Sep 17 00:00:00 2001
+From 1732caa80ca316e3298a51bd21beb924afcfb80c Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 17 Oct 2024 11:30:54 +0800
-Subject: [PATCH] configs: imx95: add config for RTE
+Subject: [PATCH 1/2] configs: imx95: add config for RTE
 
 Assigned the LPUART3 and related pins to A core NS SCMI agent.
 Added 2 more SCMI agents with the same resource assignment
@@ -1004,5 +1004,5 @@ index 0000000..82b99f1
 +CHANNEL             db=0, xport=smt, rpc=scmi, type=a2p
 +CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
 -- 
-2.43.0
+2.47.0
 

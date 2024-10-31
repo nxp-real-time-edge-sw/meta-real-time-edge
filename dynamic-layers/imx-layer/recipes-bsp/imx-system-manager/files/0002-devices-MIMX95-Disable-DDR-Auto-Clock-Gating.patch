@@ -1,0 +1,72 @@
+From 6e442ee63157b34a2d4fdb5413154b6fb2db6a1a Mon Sep 17 00:00:00 2001
+From: Aziz Sellami <aziz.sellami@nxp.com>
+Date: Fri, 30 Aug 2024 14:58:34 +0200
+Subject: [PATCH 2/2] devices: MIMX95: Disable DDR Auto Clock Gating
+
+DDR Auto Clock Gating Feature has an impact on real-time performance.
+Let's disable this feature.
+
+Signed-off-by: Aziz Sellami <aziz.sellami@nxp.com>
+---
+ configs/configtool.pl               | 14 ++++++++++++++
+ configs/other/mx95rte.cfg           |  2 ++
+ devices/MIMX95/system_MIMX95_cm33.c |  5 +++++
+ 3 files changed, 21 insertions(+)
+
+diff --git a/configs/configtool.pl b/configs/configtool.pl
+index 78a9b65..9afae3b 100755
+--- a/configs/configtool.pl
++++ b/configs/configtool.pl
+@@ -1797,6 +1797,20 @@ sub generate_board
+ 			'BOARD_I2C_BAUDRATE', 100000);
+ 	}
+ 
++    # Disable DDR Auto Clock Gating
++	if (my $def = &get_define('DISABLE_DDR_AUTO_CLK_GATING_ON_INIT', $cfgRef))
++	{
++		print $out '/*! Config for DDR Auto Clock Gating at system init */' . "\n";
++		print $out sprintf("#define %*s %s\n", -$w,
++			'BOARD_DISABLE_DDR_AUTO_CLK_GATING_ON_INIT', $def);
++	}
++	else
++	{
++		print $out '/*! Config for DDR Auto Clock Gating at system init */' . "\n";
++		print $out sprintf("#define %*s %s\n", -$w,
++			'BOARD_DISABLE_DDR_AUTO_CLK_GATING_ON_INIT', 0);
++	}
++
+     # Output footer
+     print $out &footer('BOARD');
+ 
+diff --git a/configs/other/mx95rte.cfg b/configs/other/mx95rte.cfg
+index 82b99f1..8ae2cb2 100755
+--- a/configs/other/mx95rte.cfg
++++ b/configs/other/mx95rte.cfg
+@@ -47,6 +47,8 @@ DEBUG_UART_BAUDRATE  115200
+ PMIC_I2C_INSTANCE    1
+ PMIC_I2C_BAUDRATE    400000
+ 
++DISABLE_DDR_AUTO_CLK_GATING_ON_INIT    1
++
+ #==========================================================================#
+ # ELE Domain                                                               #
+ #==========================================================================#
+diff --git a/devices/MIMX95/system_MIMX95_cm33.c b/devices/MIMX95/system_MIMX95_cm33.c
+index d944ab1..cbbe369 100755
+--- a/devices/MIMX95/system_MIMX95_cm33.c
++++ b/devices/MIMX95/system_MIMX95_cm33.c
+@@ -83,6 +83,11 @@ void SystemInit(void)
+     /* Disable all SRC boot reset holds */
+     SRC_GEN->SCR = 0xFFFFFFFFU;
+ 
++#if defined(BOARD_DISABLE_DDR_AUTO_CLK_GATING_ON_INIT) && (BOARD_DISABLE_DDR_AUTO_CLK_GATING_ON_INIT != 0)
++    /* Disable DDR Auto Clock Gating */
++    BLK_CTRL_DDRMIX->AUTO_CG_CTRL &= ~(BLK_CTRL_DDRMIX_AUTO_CG_CTRL_AUTO_CG_ENA_MASK);
++#endif
++
+     /* Mask reset sources handled by SM */
+     SRC_GEN->SRMASK = (1UL << RST_REASON_CM7_LOCKUP) | 
+                       (1UL << RST_REASON_CM7_SWREQ) |
+-- 
+2.47.0
+
