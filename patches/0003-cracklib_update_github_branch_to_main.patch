@@ -1,0 +1,29 @@
+From 39594c12fcdb56193bbbc481b11fd203495b92ab Mon Sep 17 00:00:00 2001
+From: Tim Orling <ticotimo@gmail.com>
+Date: Wed, 15 Mar 2023 18:12:00 -0700
+Subject: cracklib: update github branch to 'main'
+
+(From OE-Core rev: ab041ca5d036c2a1a1514893c6ffb5c7188ff00f)
+
+Signed-off-by: Tim Orling <tim.orling@konsulko.com>
+Signed-off-by: Richard Purdie <richard.purdie@linuxfoundation.org>
+---
+ meta/recipes-extended/cracklib/cracklib_2.9.8.bb | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meta/recipes-extended/cracklib/cracklib_2.9.8.bb b/meta/recipes-extended/cracklib/cracklib_2.9.8.bb
+index 786940a7e0..a3db6eb394 100644
+--- a/meta/recipes-extended/cracklib/cracklib_2.9.8.bb
++++ b/meta/recipes-extended/cracklib/cracklib_2.9.8.bb
+@@ -9,7 +9,7 @@ DEPENDS = "cracklib-native zlib"
+ 
+ EXTRA_OECONF = "--without-python --libdir=${base_libdir}"
+ 
+-SRC_URI = "git://github.com/cracklib/cracklib;protocol=https;branch=master \
++SRC_URI = "git://github.com/cracklib/cracklib;protocol=https;branch=main \
+            file://0001-packlib.c-support-dictionary-byte-order-dependent.patch \
+            file://0002-craklib-fix-testnum-and-teststr-failed.patch \
+            "
+-- 
+cgit 1.2.3-korg
+

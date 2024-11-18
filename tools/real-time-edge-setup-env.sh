@@ -82,6 +82,9 @@ change_conf()
 		#git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0002-atf-set-non-optee-atf-boot-as-default.patch
 		cd -
 	fi
+	cd ${ROOTDIR}/sources/poky/
+	git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0003-cracklib_update_github_branch_to_main.patch
+	cd -
 
 	echo "SKIP_RECIPE[imx-gpu-sdk] = \"skip\"" >> $BUILD_DIR/conf/local.conf
 	echo "SKIP_RECIPE[gstreamer] = \"skip\"" >> $BUILD_DIR/conf/local.conf
