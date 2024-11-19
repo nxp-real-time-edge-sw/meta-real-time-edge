@@ -69,17 +69,24 @@ change_conf()
 	echo "IMAGE_INSTALL:append = \" dtc python3-pip python3-numpy minicom zstd \"" >> $BUILD_DIR/conf/local.conf
 
 	if $fsl_setup_internal eq 'true'; then
-	        echo "IMAGE_INSTALL:append = \" rf-util-la9310 \"" >> $BUILD_DIR/conf/local.conf
-		echo "IMAGE_INSTALL:append = \"  bash git-perltools fr1-fr2-test-tool-la9310 \"" >> $BUILD_DIR/conf/local.conf
+		echo "IMAGE_INSTALL:append = \" bash git-perltools fr1-fr2-test-tool-la9310 \"" >> $BUILD_DIR/conf/local.conf
 		echo "IMAGE_INSTALL:append = \" kernel-module-rfnm \"" >> $BUILD_DIR/conf/local.conf
+	        echo "IMAGE_INSTALL:append = \" rf-util-la9310 \"" >> $BUILD_DIR/conf/local.conf
 	fi
 	echo "IMAGE_INSTALL:remove = \" docker \"" >> $BUILD_DIR/conf/local.conf
 	echo "MACHINE_FEATURES:append:imx8mp-rfnm = \" dpdk\"" >> $BUILD_DIR/conf/local.conf
+	echo "MACHINE_FEATURES:append:imx8mp-seeve = \" dpdk\"" >> $BUILD_DIR/conf/local.conf
 	if [ "${MACHINE}" = "imx8mp-rfnm" ]
 	then
 		cd ${ROOTDIR}/sources/meta-imx/
 		git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0001-rfnm-Add-support-for-rfnm-dtb-support.patch
+		# uncomment it for non-OPTEE build	
 		#git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0002-atf-set-non-optee-atf-boot-as-default.patch
+		cd -
+	elif  [ "${MACHINE}" = "imx8mp-seeve" ]
+	then
+		cd ${ROOTDIR}/sources/meta-imx/
+		git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0004-seeve-Add-support-for-seeve-dtb-support.patch
 		cd -
 	fi
 	cd ${ROOTDIR}/sources/poky/
