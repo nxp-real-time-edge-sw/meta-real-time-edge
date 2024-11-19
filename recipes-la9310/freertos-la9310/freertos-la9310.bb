@@ -60,6 +60,12 @@ if [ imx8mp-rfnm ]; then
     ./clean.sh
     ./build_release.sh -m pcie -t rfnm -b Release
     mv la9310_dfe.bin release
+elif [ imx8mp-seeve ]; then
+    ./build_release.sh -m pcie -t rfnm_dfe -f LA9310_DFE_APP=ON -f LA9310_TURN_ON_COMMAND_LINE=ON
+    cp release/la9310.bin la9310_dfe.bin
+    ./clean.sh
+    ./build_release.sh -m pcie -t seeve -b Release
+    mv la9310_dfe.bin release
 else
     ./build_release.sh -m pcie -t nlm -b Release
 fi

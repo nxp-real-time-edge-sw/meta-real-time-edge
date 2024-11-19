@@ -28,6 +28,7 @@ EXTRA_OEMAKE = " \
   LMS7002M_KERNEL_DIR='${WORKDIR}/LimeSuiteNG' \
 "
 EXTRA_OEMAKE:append:imx8mp-rfnm = " IMX_RFNM='1' IMX_RFLIME='1' IMX_RFMT3812='1' "
+EXTRA_OEMAKE:append:imx8mp-seeve = " IMX_SEEVE='1' IMX_RFMT3812='1' "
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 do_configure () {
@@ -40,7 +41,7 @@ do_install() {
         install -d ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
         install -m 0755 ${S}/kernel_driver/la9310shiva/la9310shiva.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 	install -m 0755 ${S}/kernel_driver/la9310demo/la9310demo.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
-if [ imx8mp-rfnm ]; then
+if [ imx8mp-rfnm -o imx8mp-seeve ]; then
 	install -m 0755 ${S}/kernel_driver/la9310rfnm/*.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 	install -m 0755 ${S}/kernel_driver/la9310mt3812/*.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 fi

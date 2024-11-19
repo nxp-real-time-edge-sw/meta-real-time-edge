@@ -1,0 +1,63 @@
+From 8f728da10adb4f67f073c354b197dac497453ed5 Mon Sep 17 00:00:00 2001
+From: Pramod Kumar <pramod.kumar_1@nxp.com>
+Date: Sun, 28 Jan 2024 19:39:30 +0530
+Subject: [PATCH] seeve: Add support for seeve dtb support
+
+Signed-off-by: Pramod Kumar <pramod.kumar_1@nxp.com>
+---
+ .../0003-iMX8M-soc.mak-seeve-dtb-name.patch    | 26 +++++++++++++++++++
+ .../imx-mkimage/imx-mkimage_git.inc           |  5 ++++
+ 2 files changed, 31 insertions(+)
+ create mode 100644 meta-bsp/recipes-bsp/imx-mkimage/files/0003-iMX8M-soc.mak-seeve-dtb-name.patch
+
+diff --git a/meta-bsp/recipes-bsp/imx-mkimage/files/0003-iMX8M-soc.mak-seeve-dtb-name.patch b/meta-bsp/recipes-bsp/imx-mkimage/files/0003-iMX8M-soc.mak-seeve-dtb-name.patch
+new file mode 100644
+index 0000000000..1ea4c2b490
+--- /dev/null
++++ b/meta-bsp/recipes-bsp/imx-mkimage/files/0003-iMX8M-soc.mak-seeve-dtb-name.patch
+@@ -0,0 +1,26 @@
++From cc9857ebf1263e69c584e403d7deb63db44750de Mon Sep 17 00:00:00 2001
++From: Pramod Kumar <pramod.kumar_1@nxp.com>
++Date: Sat, 27 Jan 2024 11:06:19 +0530
++Subject: [PATCH] fix seeve soc.mak
++
++Signed-off-by: Pramod Kumar <pramod.kumar_1@nxp.com>
++---
++ iMX8M/soc.mak | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/iMX8M/soc.mak b/iMX8M/soc.mak
++index 0a69b71..c5d7268 100644
++--- a/iMX8M/soc.mak
+++++ b/iMX8M/soc.mak
++@@ -144,7 +144,7 @@ u-boot-atf-tee.bin: u-boot.bin bl31.bin $(TEE)
++ clean:
++	@rm -f $(MKIMG) u-boot-atf.bin u-boot-atf-tee.bin u-boot-spl-ddr.bin u-boot.itb u-boot.its u-boot-ddr3l.itb u-boot-ddr3l.its u-boot-spl-ddr3l.bin u-boot-ddr4.itb u-boot-ddr4.its u-boot-spl-ddr4.bin u-boot-ddr4-evk.itb u-boot-ivt.itb u-boot-ddr4-evk.its $(OUTIMG)
++
++-dtb = evk.dtb
+++dtb = imx8mp-seeve.dtb
++ $(dtb):
++	./$(DTB_PREPROC) $(PLAT)-evk.dtb $(dtb) $(dtbs)
++
++--
++2.25.1
++
+diff --git a/meta-bsp/recipes-bsp/imx-mkimage/imx-mkimage_git.inc b/meta-bsp/recipes-bsp/imx-mkimage/imx-mkimage_git.inc
+index 0cef402526..3653c3eca1 100644
+--- a/meta-bsp/recipes-bsp/imx-mkimage/imx-mkimage_git.inc
++++ b/meta-bsp/recipes-bsp/imx-mkimage/imx-mkimage_git.inc
+@@ -9,6 +9,11 @@ IMX_MKIMAGE_SRC ?= "git://github.com/nxp-imx/imx-mkimage.git;protocol=https"
+ SRCBRANCH = "lf-5.15.71_2.2.0"
+ SRCREV = "3bfcfccb71ddf894be9c402732ccb229fe72099e"
+ 
++FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
++SRC_URI:append:imx8mp-seeve = " \
++	file://0003-iMX8M-soc.mak-seeve-dtb-name.patch \
++"
++
+ S = "${WORKDIR}/git"
+ 
+ BOOT_TOOLS = "imx-boot-tools"
+-- 
+2.25.1
+
