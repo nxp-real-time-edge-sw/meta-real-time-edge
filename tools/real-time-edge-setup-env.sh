@@ -91,6 +91,7 @@ change_conf()
 	fi
 	cd ${ROOTDIR}/sources/poky/
 	git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0003-cracklib_update_github_branch_to_main.patch
+	git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0005-bmap-tools_github_branch_to_main.patch
 	cd -
 
 	echo "SKIP_RECIPE[imx-gpu-sdk] = \"skip\"" >> $BUILD_DIR/conf/local.conf
