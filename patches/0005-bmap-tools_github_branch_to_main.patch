@@ -1,0 +1,43 @@
+From 5ea644bb531826187f62c60be5488228ecb62eaa Mon Sep 17 00:00:00 2001
+From: Martin Jansa <Martin.Jansa@gmail.com>
+Date: Wed, 22 Mar 2023 21:46:21 +0100
+Subject: bmap-tools: switch to main branch
+
+* master branch was removed upstream:
+  downloads/git2/github.com.intel.bmap-tools $ git remote prune origin
+  Pruning origin
+  URL: https://github.com/intel/bmap-tools
+   * [pruned] refs/heads/master
+   * [pruned] refs/pull/73/merge
+
+* downloads/git2/github.com.intel.bmap-tools $ git branch -a --contains c0673962a8ec1624b5189dc1d24f33fe4f06785a
+  main
+  release-3.0
+
+(From OE-Core rev: 81223013571ccf4730ca1320b7ac0cd54548ec0a)
+
+Signed-off-by: Martin Jansa <Martin.Jansa@gmail.com>
+Signed-off-by: Alexandre Belloni <alexandre.belloni@bootlin.com>
+(cherry picked from commit 369fee186d6916322b9be9d936b654d0c5910cb3)
+Signed-off-by: Steve Sakoman <steve@sakoman.com>
+Signed-off-by: Richard Purdie <richard.purdie@linuxfoundation.org>
+---
+ meta/recipes-support/bmap-tools/bmap-tools_git.bb | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meta/recipes-support/bmap-tools/bmap-tools_git.bb b/meta/recipes-support/bmap-tools/bmap-tools_git.bb
+index 78c51e7731..89b7bf2b93 100644
+--- a/meta/recipes-support/bmap-tools/bmap-tools_git.bb
++++ b/meta/recipes-support/bmap-tools/bmap-tools_git.bb
+@@ -9,7 +9,7 @@ SECTION = "console/utils"
+ LICENSE = "GPL-2.0-only"
+ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
+ 
+-SRC_URI = "git://github.com/intel/${BPN};branch=master;protocol=https"
++SRC_URI = "git://github.com/intel/${BPN};branch=main;protocol=https"
+ 
+ SRCREV = "c0673962a8ec1624b5189dc1d24f33fe4f06785a"
+ S = "${WORKDIR}/git"
+-- 
+cgit 1.2.3-korg
+
