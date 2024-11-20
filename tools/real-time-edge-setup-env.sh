@@ -70,8 +70,10 @@ change_conf()
 
 	if $fsl_setup_internal eq 'true'; then
 		echo "IMAGE_INSTALL:append = \" bash git-perltools fr1-fr2-test-tool-la9310 \"" >> $BUILD_DIR/conf/local.conf
-		echo "IMAGE_INSTALL:append = \" kernel-module-rfnm \"" >> $BUILD_DIR/conf/local.conf
 	        echo "IMAGE_INSTALL:append = \" rf-util-la9310 \"" >> $BUILD_DIR/conf/local.conf
+		if [ "${MACHINE}" = "imx8mp-rfnm" ]; then
+			echo "IMAGE_INSTALL:append = \" kernel-module-rfnm \"" >> $BUILD_DIR/conf/local.conf
+		fi
 	fi
 	echo "IMAGE_INSTALL:remove = \" docker \"" >> $BUILD_DIR/conf/local.conf
 	echo "MACHINE_FEATURES:append:imx8mp-rfnm = \" dpdk\"" >> $BUILD_DIR/conf/local.conf

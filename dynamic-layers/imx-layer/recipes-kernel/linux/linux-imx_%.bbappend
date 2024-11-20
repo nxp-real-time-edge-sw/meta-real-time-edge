@@ -33,7 +33,15 @@ do_merge_delta_config:append:imx8mp-rfnm() {
     cp ${S}/arch/${ARCH}/configs/imx8mp_rfnm_defconfig  ${WORKDIR}/defconfig
 }
 
+do_merge_delta_config:append:imx8mp-seeve() {
+    cp ${S}/arch/${ARCH}/configs/imx8mp_rfnm_defconfig  ${WORKDIR}/defconfig
+}
+
 do_copy_defconfig:append:imx8mp-rfnm() {
+	cp ${S}/arch/arm64/configs/imx8mp_rfnm_defconfig ${B}/.config
+}
+
+do_copy_defconfig:append:imx8mp-seeve() {
 	cp ${S}/arch/arm64/configs/imx8mp_rfnm_defconfig ${B}/.config
 }
 
