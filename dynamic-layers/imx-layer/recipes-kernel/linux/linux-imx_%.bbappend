@@ -5,7 +5,7 @@ SRCBRANCH:real-time-edge = "${REAL_TIME_EDGE_LINUX_BRANCH}"
 SRCREV:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRCREV}"
 SRC_URI = "${KERNEL_SRC}"
 
-KBUILD_DEFCONFIG ?= "imx8mp_rfnm_defconfig"
+KBUILD_DEFCONFIG ?= "imx8mp_sdr_defconfig"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI:append:real-time-edge = " \
@@ -30,19 +30,19 @@ SRC_URI:append:imx8mp-rfnm = " \
 "
 
 do_merge_delta_config:append:imx8mp-rfnm() {
-    cp ${S}/arch/${ARCH}/configs/imx8mp_rfnm_defconfig  ${WORKDIR}/defconfig
+    cp ${S}/arch/${ARCH}/configs/imx8mp_sdr_defconfig  ${WORKDIR}/defconfig
 }
 
 do_merge_delta_config:append:imx8mp-seeve() {
-    cp ${S}/arch/${ARCH}/configs/imx8mp_rfnm_defconfig  ${WORKDIR}/defconfig
+    cp ${S}/arch/${ARCH}/configs/imx8mp_sdr_defconfig  ${WORKDIR}/defconfig
 }
 
 do_copy_defconfig:append:imx8mp-rfnm() {
-	cp ${S}/arch/arm64/configs/imx8mp_rfnm_defconfig ${B}/.config
+	cp ${S}/arch/arm64/configs/imx8mp_sdr_defconfig ${B}/.config
 }
 
 do_copy_defconfig:append:imx8mp-seeve() {
-	cp ${S}/arch/arm64/configs/imx8mp_rfnm_defconfig ${B}/.config
+	cp ${S}/arch/arm64/configs/imx8mp_sdr_defconfig ${B}/.config
 }
 
 do_configure:prepend:real-time-edge() {

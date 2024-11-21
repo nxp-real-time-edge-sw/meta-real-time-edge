@@ -17,6 +17,9 @@ SRC_URI = "${UBOOT_SRC};branch=${SRCBRANCH}"
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI:append:imx8mp-rfnm = " \
 "
+#SRC_URI:append:imx8mp-seeve = " \
+#	file://0001-la9310-Change-fdt-file-name-for-seeve.patch \
+#"
 
 do_configure:prepend:real-time-edge() {
     mkdir -p ${WORKDIR}/source-date-epoch
