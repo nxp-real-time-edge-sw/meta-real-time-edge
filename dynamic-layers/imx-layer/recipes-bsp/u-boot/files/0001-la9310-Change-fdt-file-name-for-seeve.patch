@@ -1,0 +1,26 @@
+From 884f6c86870271c11b98b5e4cb761e15fb85b694 Mon Sep 17 00:00:00 2001
+From: Nikhil Gupta <nikhil.gupta_2@nxp.com>
+Date: Thu, 21 Nov 2024 15:47:13 +0530
+Subject: [PATCH] la9310:Change fdt file name for seeve
+
+Signed-off-by: Nikhil Gupta <nikhil.gupta_2@nxp.com>
+---
+ configs/imx8mp_rfnm_defconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configs/imx8mp_rfnm_defconfig b/configs/imx8mp_rfnm_defconfig
+index 6476b9da56..527269840e 100644
+--- a/configs/imx8mp_rfnm_defconfig
++++ b/configs/imx8mp_rfnm_defconfig
+@@ -33,7 +33,7 @@ CONFIG_SPL_LOAD_FIT=y
+ CONFIG_OF_BOARD_FIXUP=y
+ CONFIG_OF_BOARD_SETUP=y
+ CONFIG_OF_SYSTEM_SETUP=y
+-CONFIG_DEFAULT_FDT_FILE="imx8mp-rfnm.dtb"
++CONFIG_DEFAULT_FDT_FILE="imx8mp-seeve.dtb"
+ CONFIG_ARCH_MISC_INIT=y
+ CONFIG_BOARD_EARLY_INIT_F=y
+ CONFIG_BOARD_LATE_INIT=y
+-- 
+2.25.1
+
