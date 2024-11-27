@@ -1,0 +1,75 @@
+From d5f40aee7b19187c2087ee13cd47207f05c4aab6 Mon Sep 17 00:00:00 2001
+From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Date: Tue, 26 Nov 2024 14:42:02 +0800
+Subject: [PATCH] vclock: use missing.h to instead linux header
+
+The linux header ethtool_netlink.h is not updated to latest linux
+of real-time-edge. Update it in missing.h and use it to instead the
+linux header.
+
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+---
+ incdefs.sh |  6 +++---
+ missing.h  | 15 ++++-----------
+ 2 files changed, 7 insertions(+), 14 deletions(-)
+
+diff --git a/incdefs.sh b/incdefs.sh
+index a9e94f7..be2c58b 100755
+--- a/incdefs.sh
++++ b/incdefs.sh
+@@ -88,9 +88,9 @@ kernel_flags()
+ 		printf " -DHAVE_ONESTEP_P2P"
+ 	fi
+ 
+-	if grep -q SOF_TIMESTAMPING_BIND_PHC ${prefix}${tstamp}; then
+-		printf " -DHAVE_VCLOCKS"
+-	fi
++#	if grep -q SOF_TIMESTAMPING_BIND_PHC ${prefix}${tstamp}; then
++#		printf " -DHAVE_VCLOCKS"
++#	fi
+ 
+ 	if grep -q adjust_phase ${prefix}${ptp_clock}; then
+ 		printf " -DHAVE_PTP_CAPS_ADJUST_PHASE"
+diff --git a/missing.h b/missing.h
+index 79a87d4..fc80b6d 100644
+--- a/missing.h
++++ b/missing.h
+@@ -67,17 +67,6 @@ enum {
+ };
+ #endif
+ 
+-#ifndef HAVE_VCLOCKS
+-enum {
+-	SOF_TIMESTAMPING_BIND_PHC = (1 << 15),
+-};
+-
+-struct so_timestamping {
+-	int flags;
+-	int bind_phc;
+-};
+-#endif
+-
+ #ifndef HWTSTAMP_FLAG_BONDED_PHC_INDEX
+ enum {
+ 	HWTSTAMP_FLAG_BONDED_PHC_INDEX = (1<<0),
+@@ -360,6 +349,8 @@ enum {
+ 	ETHTOOL_MSG_TSINFO_GET,
+ 	ETHTOOL_MSG_CABLE_TEST_ACT,
+ 	ETHTOOL_MSG_CABLE_TEST_TDR_ACT,
++	ETHTOOL_MSG_PREEMPT_GET,
++	ETHTOOL_MSG_PREEMPT_SET,
+ 	ETHTOOL_MSG_TUNNEL_INFO_GET,
+ 	ETHTOOL_MSG_FEC_GET,
+ 	ETHTOOL_MSG_FEC_SET,
+@@ -398,6 +389,8 @@ enum {
+ 	ETHTOOL_MSG_TSINFO_GET_REPLY,
+ 	ETHTOOL_MSG_CABLE_TEST_NTF,
+ 	ETHTOOL_MSG_CABLE_TEST_TDR_NTF,
++	ETHTOOL_MSG_PREEMPT_GET_REPLY,
++	ETHTOOL_MSG_PREEMPT_NTF,
+ 	ETHTOOL_MSG_TUNNEL_INFO_GET_REPLY,
+ 	ETHTOOL_MSG_FEC_GET_REPLY,
+ 	ETHTOOL_MSG_FEC_NTF,
+-- 
+2.34.1
+
