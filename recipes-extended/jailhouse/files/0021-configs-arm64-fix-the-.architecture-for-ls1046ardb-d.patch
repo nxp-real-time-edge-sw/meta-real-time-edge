@@ -1,8 +1,8 @@
-From 8f8170ca3679fe7590d2f3a1501f0af2267466fe Mon Sep 17 00:00:00 2001
+From 55342781ddf8960349dbcbd7967b8a36a20cc7e8 Mon Sep 17 00:00:00 2001
 From: Tao Yang <Tao.Yang1@nxp.com>
 Date: Mon, 20 Nov 2023 20:54:26 +0800
-Subject: [PATCH] configs: arm64: fix the .architecture for ls1046ardb dpaa
- cell
+Subject: [PATCH 21/22] configs: arm64: fix the .architecture for ls1046ardb
+ dpaa cell
 
 Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
 ---
@@ -22,5 +22,5 @@ index 9754567c..1f2f7110 100644
  		.flags = JAILHOUSE_CELL_PASSIVE_COMMREG,
  
 -- 
-2.25.1
+2.43.0
 

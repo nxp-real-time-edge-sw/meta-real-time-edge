@@ -1,7 +1,7 @@
-From 03e26176e335605f7f930f4cd8789bb83dbb1091 Mon Sep 17 00:00:00 2001
+From 5f24adcae348b7c73b87d6e5850ea9e90a229466 Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Mon, 25 Oct 2021 16:52:55 +0800
-Subject: [PATCH 11/20] add back virtual pci support in root cell
+Subject: [PATCH 11/22] add back virtual pci support in root cell
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
 ---
@@ -111,5 +111,5 @@ index c27ab20e..917e8eb9 100644
 +	},
  };
 -- 
-2.25.1
+2.43.0
 

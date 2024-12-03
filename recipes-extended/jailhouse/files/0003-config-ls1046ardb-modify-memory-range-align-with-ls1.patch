@@ -1,7 +1,7 @@
-From 66f5859b4d389877699b59bf2225c7af96298913 Mon Sep 17 00:00:00 2001
+From f0b981fbe657d1020dd6d276edf5986dc10cad2a Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Sat, 27 Feb 2021 18:46:49 +0800
-Subject: [PATCH 03/20] config: ls1046ardb: modify memory range, align with
+Subject: [PATCH 03/22] config: ls1046ardb: modify memory range, align with
  ls1043ardb
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
@@ -313,5 +313,5 @@ index 7291fda7..82ab974b 100644
  			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
  				JAILHOUSE_MEM_EXECUTE,
 -- 
-2.25.1
+2.43.0
 

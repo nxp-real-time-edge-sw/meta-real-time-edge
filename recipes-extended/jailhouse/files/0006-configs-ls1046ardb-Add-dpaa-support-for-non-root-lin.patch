@@ -1,7 +1,7 @@
-From a58b3c732b43a87d736b6a85c37e808435e1baff Mon Sep 17 00:00:00 2001
+From b536ad45478561a770ca860da1a209f3fc7a3119 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Sun, 28 Feb 2021 08:31:53 +0800
-Subject: [PATCH 06/20] configs: ls1046ardb: Add dpaa support for non-root
+Subject: [PATCH 06/22] configs: ls1046ardb: Add dpaa support for non-root
  linux cell
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
@@ -1207,5 +1207,5 @@ index 00000000..a28e12f4
 +	},
 +};
 -- 
-2.25.1
+2.43.0
 

@@ -60,6 +60,7 @@ SRC_URI += " \
     file://0019-configs-arm64-ls1028a-Update-the-address-used-for-GI.patch \
     file://0020-configs-arm64-fix-the-.architecture-for-ls1028ardb-e.patch \
     file://0021-configs-arm64-fix-the-.architecture-for-ls1046ardb-d.patch \
+    file://0022-configs-ls1028ardb-add-SerDes-MMIO-region.patch \
 "
 
 DEPENDS += " \

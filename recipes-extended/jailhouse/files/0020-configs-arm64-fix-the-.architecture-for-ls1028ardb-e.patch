@@ -1,7 +1,7 @@
-From f099f3a6968694d2554d625e45d11c4002db9107 Mon Sep 17 00:00:00 2001
+From c1a9497d3114b58c5473681f3532c51980507c1f Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 29 Jun 2023 15:32:12 +0800
-Subject: [PATCH 20/20] configs: arm64: fix the .architecture for ls1028ardb
+Subject: [PATCH 20/22] configs: arm64: fix the .architecture for ls1028ardb
  enetc cell
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
@@ -22,5 +22,5 @@ index 05adcfa4..aa9da2e6 100644
  		.flags = JAILHOUSE_CELL_PASSIVE_COMMREG,
  
 -- 
-2.25.1
+2.43.0
 

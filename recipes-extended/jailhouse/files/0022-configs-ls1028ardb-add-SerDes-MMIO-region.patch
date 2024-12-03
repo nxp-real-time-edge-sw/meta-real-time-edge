@@ -1,0 +1,40 @@
+From 73258fe8d319e4ed0b15c93ccba7933dafabc3db Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Tue, 3 Dec 2024 17:51:50 +0800
+Subject: [PATCH 22/22] configs: ls1028ardb: add SerDes MMIO region
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+---
+ configs/arm64/ls1028a-rdb.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/configs/arm64/ls1028a-rdb.c b/configs/arm64/ls1028a-rdb.c
+index 917e8eb9..e279a3b9 100644
+--- a/configs/arm64/ls1028a-rdb.c
++++ b/configs/arm64/ls1028a-rdb.c
+@@ -16,7 +16,7 @@
+ struct {
+ 	struct jailhouse_system header;
+ 	__u64 cpus[1];
+-	struct jailhouse_memory mem_regions[85];
++	struct jailhouse_memory mem_regions[86];
+ 	struct jailhouse_irqchip irqchips[3];
+ 	struct jailhouse_pci_device pci_devices[2];
+ } __attribute__((packed)) config = {
+@@ -145,6 +145,13 @@ struct {
+ 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
+ 				JAILHOUSE_MEM_IO,
+ 		},
++		/* SerDes */ {
++			.phys_start = 0x01ea0000,
++			.virt_start = 0x01ea0000,
++			.size =	0x10000,
++			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
++				JAILHOUSE_MEM_IO,
++		},
+ 		/* scfg */ {
+ 			.phys_start = 0x01fc0000,
+ 			.virt_start = 0x01fc0000,
+-- 
+2.43.0
+

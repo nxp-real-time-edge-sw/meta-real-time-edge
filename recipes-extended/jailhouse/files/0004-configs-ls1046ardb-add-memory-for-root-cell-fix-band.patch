@@ -1,7 +1,7 @@
-From 2275e412201c2cfe85e0f75b1fd3d1241e180dfa Mon Sep 17 00:00:00 2001
+From cebb8a5175bf7e4b4378371afae7f35cf8fb7c65 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Sat, 27 Feb 2021 18:58:09 +0800
-Subject: [PATCH 04/20] configs: ls1046ardb: add memory for root cell, fix
+Subject: [PATCH 04/22] configs: ls1046ardb: add memory for root cell, fix
  bandrate issue
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
@@ -58,5 +58,5 @@ index 82ab974b..84963c3b 100644
  			.phys_start = 0xc0400000,
  			.virt_start = 0xc0400000,
 -- 
-2.25.1
+2.43.0
 

@@ -1,7 +1,7 @@
-From a22ff2fbc0e44ff44d387c69461095580d0971e3 Mon Sep 17 00:00:00 2001
+From b9f937dafccaed0a9bf9b4464d7fe85a687d8784 Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Wed, 3 Nov 2021 19:02:08 +0800
-Subject: [PATCH 16/20] ivshmem demo: change dev_id to 2 for qoriq platforms
+Subject: [PATCH 16/22] ivshmem demo: change dev_id to 2 for qoriq platforms
 
 According to the calculation express in file inmates/demos/ivshmem-demo.c:
 	target = d->id < 2 ? (d->id + 1) : 0
@@ -55,5 +55,5 @@ index a26d387a..35c8d955 100644
  			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_UNDEFINED,
  		},
 -- 
-2.25.1
+2.43.0
 

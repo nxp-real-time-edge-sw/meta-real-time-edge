@@ -1,7 +1,7 @@
-From c127f4b955db1a94671cd68d85d3446d9e92faf1 Mon Sep 17 00:00:00 2001
+From d6b47fb315bba0e434f17feebc364f479aac1d38 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Sat, 27 Feb 2021 17:58:55 +0800
-Subject: [PATCH 01/20] configs: ls1043a-rdb: add fman ucode memory for root
+Subject: [PATCH 01/22] configs: ls1043a-rdb: add fman ucode memory for root
  cell
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
@@ -46,5 +46,5 @@ index e1d3c48e..ab720876 100644
  			.phys_start = 0xc0400000,
  			.virt_start = 0xc0400000,
 -- 
-2.25.1
+2.43.0
 

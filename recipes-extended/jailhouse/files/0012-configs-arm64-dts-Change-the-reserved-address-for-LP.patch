@@ -1,7 +1,7 @@
-From d4d1dd5c5b2eeeefe90d1dbc91509132bed524b6 Mon Sep 17 00:00:00 2001
+From ce689fe47a4755da404c79fe897827b5a8f931a1 Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Fri, 29 Oct 2021 19:22:05 +0800
-Subject: [PATCH 12/20] configs/arm64/dts: Change the reserved address for LPI
+Subject: [PATCH 12/22] configs/arm64/dts: Change the reserved address for LPI
  tables
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
@@ -27,5 +27,5 @@ index aed3e50a..d23ffe43 100644
           };
  
 -- 
-2.25.1
+2.43.0
 
