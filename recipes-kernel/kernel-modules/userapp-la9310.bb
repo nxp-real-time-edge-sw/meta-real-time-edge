@@ -57,6 +57,7 @@ do_install() {
 	install -m 0755 ${S}/app/host_utils/*.sh ${D}/${ROOT_HOME}/host_utils
 	install -m 0755 ${S}/app/host_utils/*.bin ${D}/${ROOT_HOME}/host_utils
 	install -m 0755 ${S}/app/host_utils/fw_iqplayer/*.eld ${D}${nonarch_base_libdir}/firmware
+	install -m 0755 ${S}/app/host_utils/fw_iqplayer/*.elf ${D}${nonarch_base_libdir}/firmware
 	install -m 0755 ${S}/install/usr/lib/libecspi.a "${TMPDIR}/work-shared/${MACHINE}/"
 }
 
