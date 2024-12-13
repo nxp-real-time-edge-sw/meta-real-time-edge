@@ -10,11 +10,11 @@ REAL_TIME_EDGE_UBOOT_SRC ?= "git://github.com/nxp-qoriq/u-boot.git;protocol=http
 REAL_TIME_EDGE_UBOOT_BRANCH ?= "imx8mp-la9310-v2022.04-2.5.0"
 REAL_TIME_EDGE_UBOOT_SRCREV ?= "356e9341c9b3c326d33037d3d36d9c0fbe031368"
 
-DPDK_SRC = "git://github.com/nxp-qoriq/dpdk;protocol=https;nobranch=1"
+DPDK_SRC = "git://github.com/nxp/dpdk;protocol=https;nobranch=1"
 SRCREV_dpdk_rev = "d48d9a4a045eef1d4ef4b8fbccfe5107e1293a5e"
 
 SRC_LA9310_HOST_URI = "git://github.com/nxp-qoriq/la93xx_host_sw;protocol=https;nobranch=1;name=host_repo"
-SRCREV_host_repo = "32445931971b2fb1c65b84872c23d6c6769fe0a4"
+SRCREV_host_repo = "4eaf8d7b4f41b62dd6fc790f57d181fbf89fb8e8"
 
 SRC_LA9310_FRTOS_URI = "git://github.com/nxp-qoriq/la93xx_freertos;protocol=https;nobranch=1;name=freertos_repo"
 SRCREV_freertos_repo = "67a8fcde0f9f51b7ade567556dba0c08c7465fbf"
