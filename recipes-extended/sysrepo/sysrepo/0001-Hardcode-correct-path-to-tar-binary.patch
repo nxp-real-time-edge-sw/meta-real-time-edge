@@ -1,0 +1,33 @@
+From 367e806a9affbfa351fe799b200f2361eb9d7934 Mon Sep 17 00:00:00 2001
+From: Denys Dmytriyenko <denys@konsulko.com>
+Date: Mon, 15 Jul 2024 16:14:23 -0400
+Subject: [PATCH] Hardcode correct path to tar binary
+
+Otherwise the hostpath location gets embedded, which is incorrect for
+the target and trips the "buildpaths" QA error.
+
+Upstream-Status: Inappropriate [OE/crosscompile specific]
+
+Signed-off-by: Denys Dmytriyenko <denys@konsulko.com>
+---
+ CMakeLists.txt | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 22c95420..2ba1f44e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -402,10 +402,7 @@ check_symbol_exists(mkstemps "stdlib.h" SR_HAVE_MKSTEMPS)
+ unset(CMAKE_REQUIRED_DEFINITIONS)
+
+ # tar
+-find_program(TAR_BINARY "tar")
+-if(NOT TAR_BINARY)
+-    message(FATAL_ERROR "tar binary was not found.")
+-endif()
++set(TAR_BINARY "/usr/bin/tar")
+
+ # generate files
+ configure_file("${PROJECT_SOURCE_DIR}/src/config.h.in" "${PROJECT_BINARY_DIR}/config.h" ESCAPE_QUOTES @ONLY)
+--
+2.25.1

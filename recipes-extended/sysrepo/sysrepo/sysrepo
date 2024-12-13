@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Source function library.
+. /etc/init.d/functions
+
+EXEC_PATH="/usr/bin"
+SYSREPOPLUGIND_EXEC="sysrepo-plugind"
+SERVER_OPTS=" -d -v 1"
+
+init_sysrepo() {
+    export NP2_MODULE_DIR="/usr/share/yang/modules/netopeer2"
+    export NP2_MODULE_PERMS="600"
+    export NP2_MODULE_OWNER="root"
+    export NP2_MODULE_GROUP="root"
+    if [ -x /usr/bin/sysrepoctl ]; then
+        sh /etc/netopeer2/scripts/setup.sh
+    fi
+    if [ -x /usr/bin/sysrepocfg ]; then
+        sh /etc/netopeer2/scripts/merge_hostkey.sh
+        sh /etc/netopeer2/scripts/merge_config.sh
+    fi
+    touch /etc/sysrepo/init
+}
+
+
+case "$1" in
+    start)
+        test -r /etc/sysrepo/init || init_sysrepo
+        start-stop-daemon --start --background --exec $EXEC_PATH/$SYSREPOPLUGIND_EXEC -- $SERVER_OPTS
+        ;;
+    stop)
+        start-stop-daemon --stop --quiet --exec $EXEC_PATH/$SYSREPOPLUGIND_EXEC
+        rm -rf /var/run/sysrepo-subscriptions/*
+        ;;
+    status)
+        status $SYSREPOPLUGIND_EXEC
+        ;;
+    reload)
+        echo "not supported"
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status|restart}"
+        exit 1;;
+esac
+
+
+exit 0
