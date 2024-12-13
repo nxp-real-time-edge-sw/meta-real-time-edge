@@ -1,51 +1,47 @@
 SUMMARY = "Netopeer2 is a set of tools implementing network configuration tools based on the NETCONF Protocol."
 DESCRIPTION = "Netopeer2 is based on the new generation of the NETCONF and YANG libraries - libyang and libnetconf2. The Netopeer server uses sysrepo as a NETCONF datastore implementation."
 LICENSE = "BSD-3-Clause"
-LIC_FILES_CHKSUM = "file://../LICENSE;md5=b7cb0021418524c05c4e5b21041d9402"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=41daedff0b24958b2eba4f9086d782e1"
 
-SRC_URI = "git://github.com/CESNET/Netopeer2.git;protocol=https;nobranch=1 \
-           file://scripts/libyang-model-install.sh \
-           file://scripts/server-model-install.sh \
-           file://scripts/netopeer2-keystored.sh \
-           file://scripts/keystored-model-install.sh \
-           file://scripts/stock_config.xml \
-           file://scripts/stock_key_config.xml \
-           file://0001-netopeer2-server-fix-compile-issue.patch \
-           file://0002-change-PIDFILE_PREFIX-to-tmp.patch \
-           file://0003-don-t-checkout-sysrepoctl-and-sysrepocfg.patch \
-           file://netopeer2-server \
-"
+SRC_URI = "git://github.com/CESNET/Netopeer2.git;protocol=https;branch=devel \
+          ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', \
+	        'file://netopeer2-server', '', d)} \
+          ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', \
+	        'file://netopeer2-serverd.service', '', d)} \
+          "
 
-#PV = "0.7.12+git${SRCPV}"
-SRCREV = "49281975ea78808910701b7af4cf8c7a65ae37b7"
+PV = "2.1.59+git"
+SRCREV = "b81788d9a81770313a0eb7f88d4224726b3d6e15"
 
-S = "${WORKDIR}/git/server"
-B = "${WORKDIR}/git"
+S = "${WORKDIR}/git"
 
 DEPENDS = "libyang libnetconf2 sysrepo curl"
 RDEPENDS:${PN} += "bash curl"
 
+FILES:${PN} += "${datadir}/yang* ${datadir}/netopeer2/* ${libdir}/sysrepo-plugind/*"
+
 inherit cmake pkgconfig
+inherit ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}
 
 # Specify any options you want to pass to cmake using EXTRA_OECMAKE:
-EXTRA_OECMAKE = " -DKEYSTORED_KEYS_DIR=/etc/keystored/keys -DSYSREPOCTL_ROOT_PERMS='-p 666' "
+EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE:String=Release -DINSTALL_MODULES=OFF -DGENERATE_HOSTKEY=OFF -DMERGE_LISTEN_CONFIG=OFF"
+
+SYSTEMD_PACKAGES = "${PN}"
+SYSTEMD_SERVICE:${PN} = "netopeer2-serverd.service"
+SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
 do_install:append () {
-    install -d ${D}/usr/share/netopeer2-server
-    install -d ${D}/etc/sysrepo/yang
-    install -d ${D}/etc/Netopeer2/modules
-    install -o root -g root ${S}/../modules/*.yang ${D}/etc/Netopeer2/modules/
-
-    install -d ${D}/etc/Netopeer2/scripts
-    install -o root -g root ${S}/../../scripts/*.sh ${D}/etc/Netopeer2/scripts/
-    install -o root -g root ${S}/../../scripts/*.xml ${D}/etc/Netopeer2/scripts/
-
-    install -d ${D}/etc/netopeer2
-    install -d ${D}/etc/init.d
-    install -m 0755 ${WORKDIR}/netopeer2-server ${D}/etc/init.d/
-
-    install -d ${D}/etc/rc5.d
-    install -d ${D}/etc/rc6.d
-    ln -sfr ${D}/etc/init.d/netopeer2-server ${D}/etc/rc5.d/S91netopeer2-server
-    ln -sfr ${D}/etc/init.d/netopeer2-server ${D}/etc/rc6.d/K50netopeer2-server
+    install -d ${D}${sysconfdir}/netopeer2/scripts
+    install -o root -g root ${S}/scripts/setup.sh ${D}${sysconfdir}/netopeer2/scripts/setup.sh
+    install -o root -g root ${S}/scripts/merge_hostkey.sh ${D}${sysconfdir}/netopeer2/scripts/merge_hostkey.sh
+    install -o root -g root ${S}/scripts/merge_config.sh ${D}${sysconfdir}/netopeer2/scripts/merge_config.sh
+    install -d ${D}${sysconfdir}/netopeer2
+    install -d ${D}${sysconfdir}/init.d
+    if ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'true', 'false', d)}; then
+        install -m 0755 ${WORKDIR}/netopeer2-server ${D}${sysconfdir}/init.d/
+    fi
+    if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+        install -d ${D}${systemd_system_unitdir}
+        install -m 0644 ${WORKDIR}/netopeer2-serverd.service ${D}${systemd_system_unitdir}
+    fi
 }
