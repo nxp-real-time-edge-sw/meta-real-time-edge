@@ -18,8 +18,8 @@ SRC_URI += " \
 
 S = "${WORKDIR}/git"
 
-DEPENDS = "libyang libnetconf2 sysrepo netopeer2-keystored netopeer2-server cjson libnl tsntool"
-RDEPENDS:${PN} += "bash curl libyang libnetconf2 sysrepo netopeer2-keystored netopeer2-server cjson libnl tsntool"
+DEPENDS = "libyang libnetconf2 sysrepo netopeer2-server cjson libnl tsntool"
+RDEPENDS:${PN} += "bash curl libyang libnetconf2 sysrepo netopeer2-server cjson libnl tsntool"
 
 FILES:${PN} += "/etc/sysrepo-tsn"
 
