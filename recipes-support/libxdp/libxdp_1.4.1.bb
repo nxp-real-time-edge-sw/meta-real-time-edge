@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=9ee53f8d06bbdb4c11b1557ecc4f8cd5 \
 
 DEPENDS += " libbpf clang-native"
 
-SRC_URI = "git://github.com/xdp-project/xdp-tools.git;branch=master;protocol=https \
+SRC_URI = "git://github.com/xdp-project/xdp-tools.git;branch=main;protocol=https \
            file://0001-configure-properly-quote-the-toolchain-tools-variabl.patch \
            file://0002-libxdp-add-option-to-skip-building-xdp-bpf-objects-w.patch \
            file://0003-libxdp-do-not-preserve-ownership-when-copying-librar.patch \
