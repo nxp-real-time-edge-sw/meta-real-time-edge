@@ -1,4 +1,4 @@
-# Copyright 2021 NXP
+# Copyright 2021-2025 NXP
 # Released under the MIT license (see COPYING.MIT for the terms)
 
 SUMMARY = "Real-time Edge Package group for Networking"
@@ -22,6 +22,8 @@ genavbtsnimage:imx93-9x9-lpddr4-qsb = "genavb-tsn"
 genavbtsnimage:imx93-14x14-lpddr4x-evk = "genavb-tsn"
 genavbtsnimage:imx8dxlb0-lpddr4-evk = "genavb-tsn"
 genavbtsnimage:imx95-19x19-lpddr5-evk = "genavb-tsn"
+genavbtsnimage:imx943-19x19-lpddr4-evk = "genavb-tsn"
+genavbtsnimage:imx943-19x19-lpddr5-evk = "genavb-tsn"
 
 cantools ?=""
 cantools:ls1021aiot = "libsocketcan can-utils"
