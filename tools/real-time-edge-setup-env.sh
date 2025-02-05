@@ -2,7 +2,7 @@
 #
 # Real-time Edge Yocto Project Build Environment Setup Script
 #
-# Copyright 2021-2024 NXP
+# Copyright 2021-2025 NXP
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,17 +71,17 @@ change_conf()
 	if $fsl_setup_internal eq 'true'; then
 		echo "IMAGE_INSTALL:append = \" bash git-perltools fr1-fr2-test-tool-la9310 \"" >> $BUILD_DIR/conf/local.conf
 	        echo "IMAGE_INSTALL:append = \" rf-util-la9310 \"" >> $BUILD_DIR/conf/local.conf
-		if [ "${MACHINE}" = "imx8mp-rfnm" ]; then
-			echo "IMAGE_INSTALL:append = \" kernel-module-rfnm \"" >> $BUILD_DIR/conf/local.conf
+		if [ "${MACHINE}" = "imx8mp-sdr" ]; then
+			echo "IMAGE_INSTALL:append = \" kernel-module-sdr \"" >> $BUILD_DIR/conf/local.conf
 		fi
 	fi
 	echo "IMAGE_INSTALL:remove = \" docker \"" >> $BUILD_DIR/conf/local.conf
-	echo "MACHINE_FEATURES:append:imx8mp-rfnm = \" dpdk\"" >> $BUILD_DIR/conf/local.conf
+	echo "MACHINE_FEATURES:append:imx8mp-sdr = \" dpdk\"" >> $BUILD_DIR/conf/local.conf
 	echo "MACHINE_FEATURES:append:imx8mp-seeve = \" dpdk\"" >> $BUILD_DIR/conf/local.conf
-	if [ "${MACHINE}" = "imx8mp-rfnm" ]
+	if [ "${MACHINE}" = "imx8mp-sdr" ]
 	then
 		cd ${ROOTDIR}/sources/meta-imx/
-		git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0001-rfnm-Add-support-for-rfnm-dtb-support.patch
+		git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0001-sdr-Add-support-for-sdr-dtb-support.patch
 		# uncomment it for non-OPTEE build	
 		#git am ${ROOTDIR}/sources/meta-real-time-edge/patches/0002-atf-set-non-optee-atf-boot-as-default.patch
 		cd -

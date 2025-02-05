@@ -15,7 +15,7 @@ SRCREV:baremetal = "${REAL_TIME_EDGE_UBOOT_BAREMETAL_SRCREV}"
 SRC_URI = "${UBOOT_SRC};branch=${SRCBRANCH}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
-SRC_URI:append:imx8mp-rfnm = " \
+SRC_URI:append:imx8mp-sdr = " \
 "
 SRC_URI:append:imx8mp-seeve = " \
 	file://0001-la9310-Change-fdt-file-name-for-seeve.patch \

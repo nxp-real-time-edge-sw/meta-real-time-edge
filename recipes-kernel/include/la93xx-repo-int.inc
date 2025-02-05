@@ -1,4 +1,4 @@
-# Copyright 2024 NXP
+# Copyright 2024-2025 NXP
 
 PV = "1.0+git${SRCPV}"
 
@@ -24,8 +24,8 @@ SRCREV_freertos_repo = "${AUTOREV}"
 SRC_LA9310_FW_URI = "git://git@bitbucket.sw.nxp.com/dn5g/la931x_firmware.git;protocol=ssh;branch=master;name=firmware_repo"
 SRCREV_firmware_repo = "${AUTOREV}"
 
-SRC_LA9310_RFNM_CLI_URI = "git://git@bitbucket.sw.nxp.com/dn5g/rfnm-cli.git;protocol=ssh;branch=main;name=rfnm_cli_repo"
-SRCREV_rfnm_cli_repo = "${AUTOREV}"
+SRC_LA9310_SDR_CLI_URI = "git://git@bitbucket.sw.nxp.com/dn5g/rfnm-cli.git;protocol=ssh;branch=main;name=sdr_cli_repo"
+SRCREV_sdr_cli_repo = "${AUTOREV}"
 
 SRC_LA9310_GEUL_RF_UTIL_URI = "git://git@bitbucket.sw.nxp.com/dnnpi/geul_rf_util.git;protocol=ssh;branch=rfnm_mt3812_dev;name=geul_rf_util_repo"
 SRCREV_geul_rf_util_repo = "${AUTOREV}"

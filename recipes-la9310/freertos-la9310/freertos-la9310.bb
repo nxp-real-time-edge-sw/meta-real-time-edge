@@ -54,14 +54,14 @@ do_compile() {
 
     chmod u+x *.sh
     ./clean.sh
-if [ imx8mp-rfnm ]; then
-    ./build_release.sh -m pcie -t rfnm_dfe -f LA9310_DFE_APP=ON -f LA9310_TURN_ON_COMMAND_LINE=ON
+if [ imx8mp-sdr ]; then
+    ./build_release.sh -m pcie -t sdr_dfe -f LA9310_DFE_APP=ON -f LA9310_TURN_ON_COMMAND_LINE=ON
     cp release/la9310.bin la9310_dfe.bin
     ./clean.sh
-    ./build_release.sh -m pcie -t rfnm -b Release
+    ./build_release.sh -m pcie -t sdr -b Release
     mv la9310_dfe.bin release
 elif [ imx8mp-seeve ]; then
-    ./build_release.sh -m pcie -t rfnm_dfe -f LA9310_DFE_APP=ON -f LA9310_TURN_ON_COMMAND_LINE=ON
+    ./build_release.sh -m pcie -t sdr_dfe -f LA9310_DFE_APP=ON -f LA9310_TURN_ON_COMMAND_LINE=ON
     cp release/la9310.bin la9310_dfe.bin
     ./clean.sh
     ./build_release.sh -m pcie -t seeve -b Release

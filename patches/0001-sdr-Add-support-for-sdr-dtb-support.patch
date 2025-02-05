@@ -1,25 +1,25 @@
 From 8f728da10adb4f67f073c354b197dac497453ed5 Mon Sep 17 00:00:00 2001
 From: Pramod Kumar <pramod.kumar_1@nxp.com>
 Date: Sun, 28 Jan 2024 19:39:30 +0530
-Subject: [PATCH 1/2] rfnm: Add support for rfnm dtb support
+Subject: [PATCH 1/2] sdr: Add support for sdr dtb support
 
 Signed-off-by: Pramod Kumar <pramod.kumar_1@nxp.com>
 ---
- .../0002-iMX8M-soc.mak-rfnm-dtb-name.patch    | 26 +++++++++++++++++++
+ .../0002-iMX8M-soc.mak-sdr-dtb-name.patch    | 26 +++++++++++++++++++
  .../imx-mkimage/imx-mkimage_git.inc           |  5 ++++
  2 files changed, 31 insertions(+)
- create mode 100644 meta-bsp/recipes-bsp/imx-mkimage/files/0002-iMX8M-soc.mak-rfnm-dtb-name.patch
+ create mode 100644 meta-bsp/recipes-bsp/imx-mkimage/files/0002-iMX8M-soc.mak-sdr-dtb-name.patch
 
-diff --git a/meta-bsp/recipes-bsp/imx-mkimage/files/0002-iMX8M-soc.mak-rfnm-dtb-name.patch b/meta-bsp/recipes-bsp/imx-mkimage/files/0002-iMX8M-soc.mak-rfnm-dtb-name.patch
+diff --git a/meta-bsp/recipes-bsp/imx-mkimage/files/0002-iMX8M-soc.mak-sdr-dtb-name.patch b/meta-bsp/recipes-bsp/imx-mkimage/files/0002-iMX8M-soc.mak-sdr-dtb-name.patch
 new file mode 100644
 index 0000000000..1ea4c2b490
 --- /dev/null
-+++ b/meta-bsp/recipes-bsp/imx-mkimage/files/0002-iMX8M-soc.mak-rfnm-dtb-name.patch
++++ b/meta-bsp/recipes-bsp/imx-mkimage/files/0002-iMX8M-soc.mak-sdr-dtb-name.patch
 @@ -0,0 +1,26 @@
 +From cc9857ebf1263e69c584e403d7deb63db44750de Mon Sep 17 00:00:00 2001
 +From: Pramod Kumar <pramod.kumar_1@nxp.com>
 +Date: Sat, 27 Jan 2024 11:06:19 +0530
-+Subject: [PATCH] fix rfnm soc.mak
++Subject: [PATCH] fix sdr soc.mak
 +
 +Signed-off-by: Pramod Kumar <pramod.kumar_1@nxp.com>
 +---
@@ -35,7 +35,7 @@ index 0000000000..1ea4c2b490
 +	@rm -f $(MKIMG) u-boot-atf.bin u-boot-atf-tee.bin u-boot-spl-ddr.bin u-boot.itb u-boot.its u-boot-ddr3l.itb u-boot-ddr3l.its u-boot-spl-ddr3l.bin u-boot-ddr4.itb u-boot-ddr4.its u-boot-spl-ddr4.bin u-boot-ddr4-evk.itb u-boot-ivt.itb u-boot-ddr4-evk.its $(OUTIMG)
 +
 +-dtb = evk.dtb
-++dtb = imx8mp-rfnm.dtb
+++dtb = imx8mp-sdr.dtb
 + $(dtb):
 +	./$(DTB_PREPROC) $(PLAT)-evk.dtb $(dtb) $(dtbs)
 +
@@ -51,8 +51,8 @@ index 0cef402526..3653c3eca1 100644
  SRCREV = "3bfcfccb71ddf894be9c402732ccb229fe72099e"
  
 +FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
-+SRC_URI:append:imx8mp-rfnm = " \
-+	file://0002-iMX8M-soc.mak-rfnm-dtb-name.patch \
++SRC_URI:append:imx8mp-sdr = " \
++	file://0002-iMX8M-soc.mak-sdr-dtb-name.patch \
 +"
 +
  S = "${WORKDIR}/git"

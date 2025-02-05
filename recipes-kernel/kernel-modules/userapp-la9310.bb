@@ -52,7 +52,7 @@ do_install() {
 	install -d ${D}/${ROOT_HOME}/host_utils
 	install -d ${D}${nonarch_base_libdir}/firmware
 	install -m 0755 ${S}/install/etc/*.sh ${D}/${ROOT_HOME}/
-	install -m 0755 ${S}/install/etc/rfnm_* ${D}/${ROOT_HOME}/
+	install -m 0755 ${S}/install/etc/sdr_* ${D}/${ROOT_HOME}/
 	install -m 0755 ${S}/app/host_utils/*.py ${D}/${ROOT_HOME}/host_utils
 	install -m 0755 ${S}/app/host_utils/*.sh ${D}/${ROOT_HOME}/host_utils
 	install -m 0755 ${S}/app/host_utils/*.bin ${D}/${ROOT_HOME}/host_utils

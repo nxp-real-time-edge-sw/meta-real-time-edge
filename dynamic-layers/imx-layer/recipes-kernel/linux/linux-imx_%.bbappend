@@ -26,10 +26,10 @@ SRC_URI:append:real-time-edge-plc = " \
     file://0001-FEC_ECAT-rebind-fec-MAC-to-fec-native-driver-for-imx.patch \
 "
 
-SRC_URI:append:imx8mp-rfnm = " \
+SRC_URI:append:imx8mp-sdr = " \
 "
 
-do_merge_delta_config:append:imx8mp-rfnm() {
+do_merge_delta_config:append:imx8mp-sdr() {
     cp ${S}/arch/${ARCH}/configs/imx8mp_sdr_defconfig  ${WORKDIR}/defconfig
 }
 
@@ -37,7 +37,7 @@ do_merge_delta_config:append:imx8mp-seeve() {
     cp ${S}/arch/${ARCH}/configs/imx8mp_sdr_defconfig  ${WORKDIR}/defconfig
 }
 
-do_copy_defconfig:append:imx8mp-rfnm() {
+do_copy_defconfig:append:imx8mp-sdr() {
 	cp ${S}/arch/arm64/configs/imx8mp_sdr_defconfig ${B}/.config
 }
 

@@ -5,18 +5,18 @@ Subject: [PATCH] la9310:Change fdt file name for seeve
 
 Signed-off-by: Nikhil Gupta <nikhil.gupta_2@nxp.com>
 ---
- configs/imx8mp_rfnm_defconfig | 2 +-
+ configs/imx8mp_sdr_defconfig | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/configs/imx8mp_rfnm_defconfig b/configs/imx8mp_rfnm_defconfig
+diff --git a/configs/imx8mp_sdr_defconfig b/configs/imx8mp_sdr_defconfig
 index 6476b9da56..527269840e 100644
---- a/configs/imx8mp_rfnm_defconfig
-+++ b/configs/imx8mp_rfnm_defconfig
+--- a/configs/imx8mp_sdr_defconfig
++++ b/configs/imx8mp_sdr_defconfig
 @@ -33,7 +33,7 @@ CONFIG_SPL_LOAD_FIT=y
  CONFIG_OF_BOARD_FIXUP=y
  CONFIG_OF_BOARD_SETUP=y
  CONFIG_OF_SYSTEM_SETUP=y
--CONFIG_DEFAULT_FDT_FILE="imx8mp-rfnm.dtb"
+-CONFIG_DEFAULT_FDT_FILE="imx8mp-sdr.dtb"
 +CONFIG_DEFAULT_FDT_FILE="imx8mp-seeve.dtb"
  CONFIG_ARCH_MISC_INIT=y
  CONFIG_BOARD_EARLY_INIT_F=y
