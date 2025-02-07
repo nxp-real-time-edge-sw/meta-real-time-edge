@@ -43,6 +43,7 @@ do_install() {
 	install -m 0755 ${S}/kernel_driver/la9310demo/la9310demo.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 if [ imx8mp-sdr -o imx8mp-seeve ]; then
 	install -m 0755 ${S}/kernel_driver/la9310sdr/*.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
+	install -m 0755 ${S}/kernel_driver/la9310rflime/*.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 	install -m 0755 ${S}/kernel_driver/la9310mt3812/*.ko ${D}${nonarch_base_libdir}/modules/${KERNEL_VERSION}/extra
 fi
 }
