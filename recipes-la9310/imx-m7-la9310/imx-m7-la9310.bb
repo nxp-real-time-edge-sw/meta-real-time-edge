@@ -1,4 +1,4 @@
-# Copyright 2024 NXP
+# Copyright 2024-2025 NXP
 
 require ${BSPDIR}/sources/meta-real-time-edge/recipes-kernel/include/la93xx-repo.inc
 
@@ -21,6 +21,7 @@ SRC_URI += "${@bb.utils.contains('NXP_INTERNAL', '0', 'file://0002-M7-enablement
 SRC_URI += "${@bb.utils.contains('NXP_INTERNAL', '0', 'file://0003-Updates-NXP-license-information.patch;patchdir=boards/dart_mx8mp/driver_examples/gpt/imx8mp-m7/', '', d)}"
 SRC_URI += "${@bb.utils.contains('NXP_INTERNAL', '0', 'file://0004-TDD-switching-delay-offset-correction.patch;patchdir=boards/dart_mx8mp/driver_examples/gpt/imx8mp-m7/', '', d)}"
 SRC_URI += "${@bb.utils.contains('NXP_INTERNAL', '0', 'file://0005-la9310-Correct-PCI-addr-offset-according-to.patch;patchdir=boards/dart_mx8mp/driver_examples/gpt/imx8mp-m7/', '', d)}"
+SRC_URI += "${@bb.utils.contains('NXP_INTERNAL', '0', 'file://0006-fix-machine-type-compatible-for-sdr-board.patch;patchdir=boards/dart_mx8mp/driver_examples/gpt/imx8mp-m7/', '', d)}"
 
 inherit cmake
 
@@ -64,6 +65,6 @@ FILES:${PN}= "/lib"
 
 do_install () {
         install -d ${D}${nonarch_base_libdir}/firmware
-        install -m0755 ${IMX8MP-M7_SRC_DIR}/armgcc/release/rfnm_m7_v0.elf ${D}${nonarch_base_libdir}/firmware
+        install -m0755 ${IMX8MP-M7_SRC_DIR}/armgcc/release/sdr_m7_v0.elf ${D}${nonarch_base_libdir}/firmware
 }
 

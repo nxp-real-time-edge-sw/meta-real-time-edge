@@ -1,0 +1,38 @@
+From 752d541a302281fee1bea45c71d8f8981da5e2db Mon Sep 17 00:00:00 2001
+From: Nikhil Gupta <nikhil.gupta@nxp.com>
+Date: Mon, 10 Feb 2025 13:22:39 +0530
+Subject: [PATCH] fix machine type compatible for sdr board
+
+Signed-off-by: Nikhil Gupta <nikhil.gupta@nxp.com>
+---
+ armgcc/CMakeLists.txt | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/armgcc/CMakeLists.txt b/armgcc/CMakeLists.txt
+index 56eb038..df6d6a1 100644
+--- a/armgcc/CMakeLists.txt
++++ b/armgcc/CMakeLists.txt
+@@ -22,9 +22,9 @@ SET(EXECUTABLE_OUTPUT_PATH ${ProjDirPath}/${CMAKE_BUILD_TYPE})
+ SET(LIBRARY_OUTPUT_PATH ${ProjDirPath}/${CMAKE_BUILD_TYPE})
+ 
+ 
+-project(rfnm_m7_v0)
++project(sdr_m7_v0)
+ 
+-set(MCUX_SDK_PROJECT_NAME rfnm_m7_v0.elf)
++set(MCUX_SDK_PROJECT_NAME sdr_m7_v0.elf)
+ 
+ include(${ProjDirPath}/flags.cmake)
+ 
+@@ -107,6 +107,6 @@ target_link_libraries(${MCUX_SDK_PROJECT_NAME} PRIVATE nosys)
+ TARGET_LINK_LIBRARIES(${MCUX_SDK_PROJECT_NAME} PRIVATE -Wl,--end-group)
+ 
+ ADD_CUSTOM_COMMAND(TARGET ${MCUX_SDK_PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_OBJCOPY}
+--Obinary ${EXECUTABLE_OUTPUT_PATH}/${MCUX_SDK_PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH}/rfnm_m7_v0.bin)
++-Obinary ${EXECUTABLE_OUTPUT_PATH}/${MCUX_SDK_PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH}/sdr_m7_v0.bin)
+ 
+-#add_custom_command(TARGET ${MCUX_SDK_PROJECT_NAME} POST_BUILD COMMAND scp ${EXECUTABLE_OUTPUT_PATH}/rfnm_m7_v0.elf root@10.0.0.149:/lib/firmware/rfnm_m7_v0.elf )
++#add_custom_command(TARGET ${MCUX_SDK_PROJECT_NAME} POST_BUILD COMMAND scp ${EXECUTABLE_OUTPUT_PATH}/rfnm_m7_v0.elf root@10.0.0.149:/lib/firmware/sdr_m7_v0.elf )
+-- 
+2.25.1
+
