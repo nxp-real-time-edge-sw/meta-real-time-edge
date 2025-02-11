@@ -11,7 +11,7 @@ SRCREV = "91cd6d75722c65de5c005d908f6d645b48cee89b"
 
 S = "${WORKDIR}/git"
 
-DEPENDS = "libssh openssl libyang libxcrypt libpam"
+DEPENDS = "curl libssh openssl libyang libxcrypt libpam"
 
 FILES:${PN} += "${datadir}/yang/modules/libnetconf2/*"
 
