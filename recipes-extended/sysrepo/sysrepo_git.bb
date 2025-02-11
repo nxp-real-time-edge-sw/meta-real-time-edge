@@ -4,12 +4,12 @@ DESCRIPTION = ""
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=ef345f161efb68c3836e6f5648b2312f"
 
-SRC_URI = "git://github.com/sysrepo/sysrepo.git;protocol=https;branch=devel \
+SRC_URI = "git://github.com/sysrepo/sysrepo.git;protocol=https;branch=master \
            file://0001-Hardcode-correct-path-to-tar-binary.patch \
            ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', \
                 'file://sysrepo','', d)} \
            ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', \
-                'file://sysrepod.service','', d)}"
+                'file://sysrepo-plugind.service','', d)}"
 
 PV = "2.2.71+git"
 SRCREV = "b828f0ab4693c613cc66efd053a146e05854d5c8"
@@ -17,6 +17,7 @@ SRCREV = "b828f0ab4693c613cc66efd053a146e05854d5c8"
 S = "${WORKDIR}/git"
 
 DEPENDS = "libyang protobuf protobuf-c protobuf-c-native libredblack libev libnetconf2"
+DEPENDS += "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}"
 
 FILES:${PN} += "${datadir}/yang/* ${libdir}/sysrepo-plugind/*"
 
@@ -29,7 +30,7 @@ EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE:String=Rel
 BBCLASSEXTEND = "native nativesdk"
 
 SYSTEMD_PACKAGES = "${PN}"
-SYSTEMD_SERVICE:${PN} = "sysrepod.service"
+SYSTEMD_SERVICE:${PN} = "sysrepo-plugind.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
 RDEPENDS:${PN} += "tar"
@@ -48,6 +49,6 @@ do_install:append () {
 
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         install -d ${D}${systemd_system_unitdir}
-        install -m 0644 ${WORKDIR}/sysrepod.service ${D}${systemd_system_unitdir}
+        install -m 0644 ${WORKDIR}/sysrepo-plugind.service ${D}${systemd_system_unitdir}
     fi
 }

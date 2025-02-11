@@ -5,7 +5,7 @@
 
 EXEC_PATH="/usr/bin"
 SYSREPOPLUGIND_EXEC="sysrepo-plugind"
-SERVER_OPTS=" -d -v 1"
+SERVER_OPTS=" -d -v2"
 
 init_sysrepo() {
     export NP2_MODULE_DIR="/usr/share/yang/modules/netopeer2"
@@ -14,6 +14,7 @@ init_sysrepo() {
     export NP2_MODULE_GROUP="root"
     if [ -x /usr/bin/sysrepoctl ]; then
         sh /etc/netopeer2/scripts/setup.sh
+        sh /etc/sysrepo-tsn/install-tsn-yang.sh
     fi
     if [ -x /usr/bin/sysrepocfg ]; then
         sh /etc/netopeer2/scripts/merge_hostkey.sh
