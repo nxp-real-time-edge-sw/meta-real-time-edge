@@ -5,7 +5,7 @@
 
 EXEC_PATH="/usr/sbin"
 SERVER_EXEC="netopeer2-server"
-SERVER_OPTS=" -v 1"
+SERVER_OPTS=" -d -v2"
 
 
 case "$1" in
