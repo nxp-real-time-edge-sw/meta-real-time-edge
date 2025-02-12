@@ -12,6 +12,8 @@ RTOS-INDUSTRIAL-BOARD:imx93-9x9-lpddr4-qsb = "mcimx93qsb"
 RTOS-INDUSTRIAL-BOARD:imx93-14x14-lpddr4x-evk = "mcimx93autoevk"
 RTOS-INDUSTRIAL-BOARD:imx95-15x15-lpddr4x-evk = "imx95lpd4xevk15"
 RTOS-INDUSTRIAL-BOARD:imx95-19x19-lpddr5-evk = "imx95lpd5evk19"
+RTOS-INDUSTRIAL-BOARD:imx91-9x9-lpddr4-qsb = "mcimx91qsb"
+RTOS-INDUSTRIAL-BOARD:imx91-11x11-lpddr4-evk = "mcimx91evk"
 
 # board name for heterogeneous multicore examples
 RTOS-INDUSTRIAL-BOARD-CA:mx8mm-nxp-bsp = "evkmimx8mm_ca53"
@@ -20,6 +22,8 @@ RTOS-INDUSTRIAL-BOARD-CA:imx93evk = "mcimx93evk_ca55"
 RTOS-INDUSTRIAL-BOARD-CA:imx93-14x14-lpddr4x-evk = "mcimx93evk_ca55"
 RTOS-INDUSTRIAL-BOARD-CA:imx95-15x15-lpddr4x-evk = "mcimx95evk_ca55"
 RTOS-INDUSTRIAL-BOARD-CA:imx95-19x19-lpddr5-evk = "mcimx95evk_ca55"
+RTOS-INDUSTRIAL-BOARD-CA:imx91-9x9-lpddr4-qsb = "mcimx91qsb_ca55"
+RTOS-INDUSTRIAL-BOARD-CA:imx91-11x11-lpddr4-evk = "mcimx91evk_ca55"
 
 RTOS-INDUSTRIAL-BOARD-CM:mx8mm-nxp-bsp = "evkmimx8mm_cm4"
 RTOS-INDUSTRIAL-BOARD-CM:mx8mp-nxp-bsp = "evkmimx8mp_cm7"
