@@ -11,6 +11,8 @@ DISTRO_FEATURES:append = " wayland pam systemd"
 
 # System Manager config
 SYSTEM_MANAGER_CONFIG:imx95-19x19-lpddr5-evk = "mx95rte"
+SYSTEM_MANAGER_CONFIG:imx95-15x15-lpddr4x-evk = "mx95rte"
 
 # boot image config
 IMAGE_IMXBOOT_TARGET:imx95-19x19-lpddr5-evk = "${IMXBOOT_TARGETS_BASENAME}_a55"
+IMAGE_IMXBOOT_TARGET:imx95-15x15-lpddr4x-evk = "${IMXBOOT_TARGETS_BASENAME}_a55"
