@@ -51,6 +51,8 @@ heterogeneous-multicore-examples:append:imx93-14x14-lpddr4x-evk = " hello-world-
 heterogeneous-multicore-examples:append:imx93-14x14-lpddr4x-evk = " rt-latency-ca rt-latency-ca-zephyr "
 heterogeneous-multicore-examples:append:imx95-15x15-lpddr4x-evk = " hello-world-ca-zephyr hello-world-ca rt-latency-ca rt-latency-ca-zephyr hmc-tools "
 heterogeneous-multicore-examples:append:imx95-19x19-lpddr5-evk = " hello-world-ca-zephyr hello-world-ca rt-latency-ca rt-latency-ca-zephyr hmc-tools "
+heterogeneous-multicore-examples:append:imx91-9x9-lpddr4-qsb = " hello-world-ca-zephyr hello-world-ca rt-latency-ca rt-latency-ca-zephyr "
+heterogeneous-multicore-examples:append:imx91-11x11-lpddr4-evk = " hello-world-ca-zephyr hello-world-ca rt-latency-ca rt-latency-ca-zephyr "
 
 heterogeneous-multi-soc-examples ?= ""
 heterogeneous-multi-soc-examples:append:mx8mp-nxp-bsp = " dsa-switch-evkmimxrt1180-cm33 "
