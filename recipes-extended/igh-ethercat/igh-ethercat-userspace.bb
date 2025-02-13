@@ -91,8 +91,8 @@ do_compile:prepend() {
 
 do_install:append() {
     install -d ${D}/${EXAMPLE_INSTALL_DIR}/${PN}
-    if [ -f "${S}/examples/motor_control/ec_motor_example" ]; then
-        cp examples/motor_control/ec_motor_example  ${D}/${EXAMPLE_INSTALL_DIR}/${PN}
+    if [ -f "${S}/examples/motor_control/.libs/ec_motor_example" ]; then
+        cp examples/motor_control/.libs/ec_motor_example  ${D}/${EXAMPLE_INSTALL_DIR}/${PN}
     fi
 }
 
