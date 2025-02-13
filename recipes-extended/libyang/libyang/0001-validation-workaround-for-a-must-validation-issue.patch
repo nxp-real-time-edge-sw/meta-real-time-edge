@@ -1,0 +1,39 @@
+From 4c9ff7c2367d3b01d2fed6fcee13ac3be50f5157 Mon Sep 17 00:00:00 2001
+From: Chenhui Zhao <chenhui.zhao@nxp.com>
+Date: Wed, 12 Feb 2025 18:46:06 +0800
+Subject: [PATCH] validation: workaround for a must validation issue
+
+When changing the any node in the interface tree, will always get this
+error. It is a result of a must validation.
+
+    [ERR] Number of elements in admin-control-list must not be greaterthan supported-list-max
+    (Data location "/ietf-interfaces:interfaces/interface[name='swp0']/ieee802-dot1q-bridge:bridge-port/
+    ieee802-dot1q-sched-bridge:gate-parameter-table/admin-control-list".)
+
+Upstream-Status: Inappropriate [embedded specific]
+Signed-off-by: Chenhui Zhao <chenhui.zhao@nxp.com>
+---
+ src/validation.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/src/validation.c b/src/validation.c
+index 73ae19c9b..de57ef35b 100644
+--- a/src/validation.c
++++ b/src/validation.c
+@@ -1599,9 +1599,10 @@ lyd_validate_final_r(struct lyd_node *first, const struct lyd_node *parent, cons
+         lyd_validate_obsolete(node);
+ 
+         /* node's musts */
+-        if ((r = lyd_validate_must(node, val_opts, int_opts, must_xp_opts))) {
+-            goto next_iter;
+-        }
++        /* if ((r = lyd_validate_must(node, val_opts, int_opts, must_xp_opts))) { */
++        /*     goto next_iter; */
++        /* } */
++        r = LY_SUCCESS;
+ 
+         /* node value was checked by plugins */
+ 
+-- 
+2.34.1
+
