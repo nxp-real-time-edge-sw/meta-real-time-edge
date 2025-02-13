@@ -70,7 +70,7 @@ do_install:append () {
 	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
 		install -d ${D}${systemd_system_unitdir}
 
-		install -m0644 ${WORKDIR}/genavb-tsn.service ${D}${systemd_system_unitdir}/genavb-tsn.service
+		install -m0644 ${UNPACKDIR}/genavb-tsn.service ${D}${systemd_system_unitdir}/genavb-tsn.service
 
 		# Remove the auto start config option as we use systemd
 		sed -e '/Set following configuration to 1 to start .* automatically at boot time/,+2d' \
@@ -87,7 +87,7 @@ do_install:append () {
 
 	install -d ${D}${libdir}/pkgconfig
 
-	install -m ug+rw ${WORKDIR}/libgenavb.pc ${D}${libdir}/pkgconfig/
+	install -m ug+rw ${UNPACKDIR}/libgenavb.pc ${D}${libdir}/pkgconfig/
 }
 
 # QA Issue: No GNU_HASH in the elf binary
