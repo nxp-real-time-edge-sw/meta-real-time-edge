@@ -14,6 +14,8 @@ will be not able to load XDP programs from libxdp using xdp_attach_program() for
 We still can use iproute2 to attach a single program.
 
 Signed-off-by: Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
+
+Upstream-Status: Inappropriate [Workaround]
 ---
  lib/libxdp/Makefile | 6 +++++-
  1 file changed, 5 insertions(+), 1 deletion(-)
