@@ -9,6 +9,8 @@ QA Issue: libxdp: /usr/lib/libxdp.so is owned by uid 1000, which is the same as 
 This may be due to host contamination [host-user-contaminated]
 
 Signed-off-by: Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
+
+Upstream-Status: Inappropriate [OE specific]
 ---
  lib/libxdp/Makefile | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
