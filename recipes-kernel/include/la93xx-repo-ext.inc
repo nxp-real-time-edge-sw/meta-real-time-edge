@@ -1,23 +1,23 @@
-# Copyright 2024 NXP
+# Copyright 2024-2025 NXP
 
 NXP_INTERNAL = "0"
 
 REAL_TIME_EDGE_LINUX_SRC = "git://github.com/nxp-qoriq/linux.git;protocol=https"
 REAL_TIME_EDGE_LINUX_BRANCH = "la9310-linux-5.15-rt"
-REAL_TIME_EDGE_LINUX_SRCREV = "d462c158a0ea41b37c10ab32bb34688223314a53"
+REAL_TIME_EDGE_LINUX_SRCREV = "33a16ba6185c1382649fa604027b719ff19248c6"
 
 REAL_TIME_EDGE_UBOOT_SRC ?= "git://github.com/nxp-qoriq/u-boot.git;protocol=https"
 REAL_TIME_EDGE_UBOOT_BRANCH ?= "imx8mp-la9310-v2022.04-2.5.0"
-REAL_TIME_EDGE_UBOOT_SRCREV ?= "356e9341c9b3c326d33037d3d36d9c0fbe031368"
+REAL_TIME_EDGE_UBOOT_SRCREV ?= "4570e4c86390fd507d4fc8398c898b759842b2df"
 
 DPDK_SRC = "git://github.com/nxp/dpdk;protocol=https;nobranch=1"
-SRCREV_dpdk_rev = "d48d9a4a045eef1d4ef4b8fbccfe5107e1293a5e"
+SRCREV_dpdk_rev = "b54bd9eb6f78569237710bf746c9d0e3de84712e"
 
 SRC_LA9310_HOST_URI = "git://github.com/nxp-qoriq/la93xx_host_sw;protocol=https;nobranch=1;name=host_repo"
-SRCREV_host_repo = "4eaf8d7b4f41b62dd6fc790f57d181fbf89fb8e8"
+SRCREV_host_repo = "c02c775d41596d14dfedacd5a2bb0366dc3b3fd5"
 
 SRC_LA9310_FRTOS_URI = "git://github.com/nxp-qoriq/la93xx_freertos;protocol=https;nobranch=1;name=freertos_repo"
-SRCREV_freertos_repo = "67a8fcde0f9f51b7ade567556dba0c08c7465fbf"
+SRCREV_freertos_repo = "80694ba0942b280117d3cd9f483dc2e1a2af08b4"
 	
 SRC_LA9310_FW_URI = " git://github.com/nxp-qoriq/la93xx_firmware;protocol=https;nobranch=1;name=firmware_repo"
 SRCREV_firmware_repo = "5681debf6e0240f33ae930adda5808e577c328a7"
