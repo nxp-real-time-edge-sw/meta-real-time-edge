@@ -93,6 +93,7 @@ KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-uart-sharing-cm3
 				      freescale/imx93-11x11-evk-dsa-fec-swp0.dtb \
 				      freescale/imx93-11x11-evk-dsa-fec-swp3.dtb \
 				      freescale/imx93-11x11-evk-dpdk.dtb \
+				      freescale/imx93-11x11-evk-multicore-rpmsg.dtb \
 				      freescale/imx93-11x11-evk-multicore-rtos.dtb"
 KERNEL_DEVICETREE:append:imx93-9x9-lpddr4-qsb = " freescale/imx93-9x9-qsb-inmate.dtb \
 						  freescale/imx93-9x9-qsb-root.dtb \
@@ -101,6 +102,7 @@ KERNEL_DEVICETREE:append:imx93-9x9-lpddr4-qsb = " freescale/imx93-9x9-qsb-inmate
 KERNEL_DEVICETREE:append:imx93-14x14-lpddr4x-evk = " freescale/imx93-14x14-evk-uart-sharing-cm33.dtb \
 						     freescale/imx93-14x14-evk-virtio-net-ca55.dtb \
 						     freescale/imx93-14x14-evk-virtio-net-cm33.dtb \
+						     freescale/imx93-14x14-evk-multicore-rpmsg.dtb \
 						     freescale/imx93-14x14-evk-multicore-rtos.dtb"
 
 KERNEL_DEVICETREE:append:imx95-19x19-lpddr5-evk = " freescale/imx95-19x19-evk-multicore-rtos.dtb"
