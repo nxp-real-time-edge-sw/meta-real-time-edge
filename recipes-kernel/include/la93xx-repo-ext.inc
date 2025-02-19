@@ -8,10 +8,10 @@ REAL_TIME_EDGE_LINUX_SRCREV = "33a16ba6185c1382649fa604027b719ff19248c6"
 
 REAL_TIME_EDGE_UBOOT_SRC ?= "git://github.com/nxp-qoriq/u-boot.git;protocol=https"
 REAL_TIME_EDGE_UBOOT_BRANCH ?= "imx8mp-la9310-v2022.04-2.5.0"
-REAL_TIME_EDGE_UBOOT_SRCREV ?= "4570e4c86390fd507d4fc8398c898b759842b2df"
+REAL_TIME_EDGE_UBOOT_SRCREV ?= "b3196070cdca40ba259028b8e55fbd90bae5a17b"
 
 DPDK_SRC = "git://github.com/nxp/dpdk;protocol=https;nobranch=1"
-SRCREV_dpdk_rev = "b54bd9eb6f78569237710bf746c9d0e3de84712e"
+SRCREV_dpdk_rev = "3de046c173af1426221129a8cb38bd2c5a139d58"
 
 SRC_LA9310_HOST_URI = "git://github.com/nxp-qoriq/la93xx_host_sw;protocol=https;nobranch=1;name=host_repo"
 SRCREV_host_repo = "c02c775d41596d14dfedacd5a2bb0366dc3b3fd5"
