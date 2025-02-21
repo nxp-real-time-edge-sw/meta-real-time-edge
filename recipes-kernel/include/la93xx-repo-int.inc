@@ -52,4 +52,4 @@ SRC_LA9310_IMX8MP_M7_URI = "git://git@bitbucket.sw.nxp.com/dn5g/imx8mp-m7.git;pr
 SRCREV_imx8mp-m7_repo = "${AUTOREV}"
 
 SRC_LA9310_FR1_FR2_TEST_TOOL_URI = "git://git@bitbucket.sw.nxp.com/dn5g/fr1_fr2_test_tool.git;protocol=ssh;branch=master;name=fr1_fr2_test_tool_repo"
-SRCREV_fr1_fr2_test_tool_repo = "${AUTOREV}"
+SRCREV_fr1_fr2_test_tool_repo = "037853ced6e535e6a1db340d6b6cdcbeb8e57ac6"
