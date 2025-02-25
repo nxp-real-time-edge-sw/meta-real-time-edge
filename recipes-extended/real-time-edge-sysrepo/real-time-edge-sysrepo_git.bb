@@ -7,7 +7,9 @@ REAL_TIME_EDGE_SYSREPO_SRC ?= "git://git@bitbucket.sw.nxp.com/dnind/real-time-ed
 REAL_TIME_EDGE_SYSREPO_BRANCH ?= "master"
 REAL_TIME_EDGE_SYSREPO_SRCREV ?= "${AUTOREV}"
 
-SRC_URI = "${REAL_TIME_EDGE_SYSREPO_SRC};branch=${REAL_TIME_EDGE_SYSREPO_BRANCH}"
+SRC_URI = "${REAL_TIME_EDGE_SYSREPO_SRC};branch=${REAL_TIME_EDGE_SYSREPO_BRANCH} \
+           ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'file://sysrepo-tsn', '', d)}"
+
 SRCREV = "${REAL_TIME_EDGE_SYSREPO_SRCREV}"
 
 S = "${WORKDIR}/git"
@@ -23,7 +25,7 @@ FILES:${PN} += "${datadir}/yang/*"
 PACKAGECONFIG ??= ""
 PACKAGECONFIG[real-time-edge-sysrepo-tc] = "-DCONF_SYSREPO_TSN_TC=ON,-DCONF_SYSREPO_TSN_TC=OFF,"
 
-inherit cmake pkgconfig
+inherit cmake pkgconfig update-rc.d
 inherit ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}
 
 EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE:String=Release "
@@ -31,3 +33,14 @@ EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE:String=Release 
 SYSTEMD_PACKAGES = "${PN}"
 SYSTEMD_SERVICE:${PN} = "sysrepo-tsn.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
+
+INITSCRIPT_NAME = "sysrepo-tsn"
+INITSCRIPT_PARAMS = "start 70 5 2 3 . stop 70 0 1 6 ."
+
+do_install:append () {
+    if ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'true', 'false', d)}; then
+        install -d ${D}${sysconfdir}/init.d
+        install -m 0755 ${WORKDIR}/sysrepo-tsn ${D}${sysconfdir}/init.d/
+    fi
+}
+

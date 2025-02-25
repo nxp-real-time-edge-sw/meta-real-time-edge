@@ -1,16 +1,15 @@
 #!/bin/sh
 
-# Source function library.
 . /etc/init.d/functions
 
-EXEC_PATH="/usr/sbin"
-SERVER_EXEC="netopeer2-server"
-SERVER_OPTS=" -d -v2"
+EXEC_PATH="/usr/bin"
+SYSREPOTSN_EXEC="sysrepo-tsn"
+SERVER_OPTS=" -d"
 
 case "$1" in
     start)
-        echo -n "Starting netopeer2-server: "
-        start-stop-daemon --start --background --exec $EXEC_PATH/$SERVER_EXEC -- $SERVER_OPTS
+		echo -n "Starting sysrepo-tsn: "
+        start-stop-daemon --start --background --exec $EXEC_PATH/$SYSREPOTSN_EXEC -- $SERVER_OPTS
         RETVAL=$?
         if [ $RETVAL -eq 0 ] ; then
             echo "OK"
@@ -20,8 +19,8 @@ case "$1" in
         fi
         ;;
     stop)
-        echo -n "Stopping netopeer2-server: "
-        start-stop-daemon --stop --pidfile /var/run/netopeer2-server.pid
+		echo -n "Stopping sysrepo-tsn: "
+        start-stop-daemon --stop --pidfile /var/run/sysrepo-tsn.pid
         RETVAL=$?
         if [ $RETVAL -eq 0 ] ; then
             echo "OK"
@@ -31,16 +30,16 @@ case "$1" in
         fi
         ;;
     status)
-        status $SERVER_EXEC
+        status $SYSREPOTSN_EXEC
         exit $?
         ;;
     restart)
         $0 stop && sleep 1 && $0 start
         ;;
-    *)
-        echo "Usage: $0 {start|stop|status|restart}"
-        exit 1
-        ;;
+   *)
+       echo "Usage: $0 {start|stop|status|restart}"
+       exit 1
+       ;;
 esac
 
 exit 0

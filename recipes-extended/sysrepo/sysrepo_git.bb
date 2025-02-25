@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=ef345f161efb68c3836e6f5648b2312f"
 SRC_URI = "git://github.com/sysrepo/sysrepo.git;protocol=https;branch=master \
            file://0001-Hardcode-correct-path-to-tar-binary.patch \
            ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', \
-                'file://sysrepo','', d)} \
+                'file://sysrepo-plugind','', d)} \
            ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', \
                 'file://sysrepo-plugind.service','', d)}"
 
@@ -21,7 +21,7 @@ DEPENDS += "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)
 
 FILES:${PN} += "${datadir}/yang/* ${libdir}/sysrepo-plugind/*"
 
-inherit cmake pkgconfig python3native python3-dir
+inherit cmake pkgconfig python3native python3-dir update-rc.d
 inherit ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}
 
 # Specify any options you want to pass to cmake using EXTRA_OECMAKE:
@@ -33,6 +33,9 @@ SYSTEMD_PACKAGES = "${PN}"
 SYSTEMD_SERVICE:${PN} = "sysrepo-plugind.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
+INITSCRIPT_NAME = "sysrepo-plugind"
+INITSCRIPT_PARAMS = "start 60 5 2 3 . stop 80 0 1 6 ."
+
 RDEPENDS:${PN} += "tar"
 
 do_install:append () {
@@ -43,7 +46,7 @@ do_install:append () {
     install -o root -g root ${S}/modules/ietf-netconf.yang ${D}${sysconfdir}/sysrepo/yang/ietf-netconf@2011-06-01.yang
     install -d ${D}${sysconfdir}/init.d
     if ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'true', 'false', d)}; then
-        install -m 0775 ${WORKDIR}/sysrepo ${D}${sysconfdir}/init.d/
+        install -m 0755 ${WORKDIR}/sysrepo-plugind ${D}${sysconfdir}/init.d/
         install -d ${D}${libdir}/sysrepo/plugins
     fi
 

@@ -23,30 +23,43 @@ init_sysrepo() {
     touch /etc/sysrepo/init
 }
 
-
 case "$1" in
     start)
         test -r /etc/sysrepo/init || init_sysrepo
+
+        echo -n "Starting sysrepo-plugind: "
         start-stop-daemon --start --background --exec $EXEC_PATH/$SYSREPOPLUGIND_EXEC -- $SERVER_OPTS
+        RETVAL=$?
+        if [ $RETVAL -eq 0 ] ; then
+            echo "OK"
+        else
+            echo "FAIL"
+            exit 1
+        fi
         ;;
     stop)
-        start-stop-daemon --stop --quiet --exec $EXEC_PATH/$SYSREPOPLUGIND_EXEC
-        rm -rf /var/run/sysrepo-subscriptions/*
+        echo -n "Stopping sysrepo-plugind: "
+        start-stop-daemon --stop --exec $EXEC_PATH/$SYSREPOPLUGIND_EXEC
+        RETVAL=$?
+        if [ $RETVAL -eq 0 ] ; then
+            echo "OK"
+        else
+            echo "FAIL"
+            exit 1
+        fi
         ;;
     status)
         status $SYSREPOPLUGIND_EXEC
-        ;;
-    reload)
-        echo "not supported"
+        exit $?
         ;;
     restart)
-        $0 stop
-        $0 start
+        $0 stop && sleep 1 && $0 start
         ;;
     *)
         echo "Usage: $0 {start|stop|status|restart}"
-        exit 1;;
+        exit 1
+        ;;
 esac
 
-
 exit 0
+

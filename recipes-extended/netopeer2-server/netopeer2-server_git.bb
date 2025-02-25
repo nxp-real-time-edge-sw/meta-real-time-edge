@@ -23,7 +23,7 @@ RDEPENDS:${PN} += "bash curl"
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 FILES:${PN} += "${datadir}/yang* ${datadir}/netopeer2/* ${libdir}/sysrepo-plugind/*"
 
-inherit cmake pkgconfig
+inherit cmake pkgconfig update-rc.d
 inherit ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}
 
 # Specify any options you want to pass to cmake using EXTRA_OECMAKE:
@@ -33,16 +33,20 @@ SYSTEMD_PACKAGES = "${PN}"
 SYSTEMD_SERVICE:${PN} = "netopeer2-server.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
+INITSCRIPT_NAME = "netopeer2-server"
+INITSCRIPT_PARAMS = "start 80 5 2 3 . stop 60 0 1 6 ."
+
 do_install:append () {
     install -d ${D}${sysconfdir}/netopeer2/scripts
     install -o root -g root ${S}/scripts/setup.sh ${D}${sysconfdir}/netopeer2/scripts/setup.sh
     install -o root -g root ${S}/scripts/merge_hostkey.sh ${D}${sysconfdir}/netopeer2/scripts/merge_hostkey.sh
     install -o root -g root ${S}/scripts/merge_config.sh ${D}${sysconfdir}/netopeer2/scripts/merge_config.sh
     install -d ${D}${sysconfdir}/netopeer2
-    install -d ${D}${sysconfdir}/init.d
     if ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'true', 'false', d)}; then
+        install -d ${D}${sysconfdir}/init.d
         install -m 0755 ${WORKDIR}/netopeer2-server ${D}${sysconfdir}/init.d/
     fi
+
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         install -d ${D}${systemd_system_unitdir}
         install -m 0644 ${WORKDIR}/netopeer2-server.service ${D}${systemd_system_unitdir}
