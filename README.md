@@ -1,4 +1,4 @@
-# Real-time Edge Software Project v3.0 Release
+# Real-time Edge Software Project v3.1 Release
 
 ======================================================
 
@@ -32,12 +32,12 @@ $ repo sync
 
 #### Examples
 
-To download the Real-time Edge 3.0 release
+To download the Real-time Edge 3.1 release
 
 ```
 $ mkdir yocto-real-time-edge
 $ cd yocto-real-time-edge
-$ repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-scarthgap -m real-time-edge-3.0.0.xml
+$ repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-scarthgap -m real-time-edge-3.1.0.xml
 $ repo sync
 ```
 
