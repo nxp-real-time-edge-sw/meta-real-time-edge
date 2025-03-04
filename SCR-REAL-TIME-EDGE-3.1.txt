@@ -1,15 +1,15 @@
 NXP Software Content Register
 
-Release - Real-time Edge Software 3.0
- December 2024
+Release - Real-time Edge Software 3.1
+ March 2025
 
-Outgoing License: LA_OPT_NXP_Software_License v57 July 2024 - Additional distribution license granted - Section 2.3 applies
+Outgoing License: LA_OPT_NXP_Software_License v58 November 2024 - Additional distribution license granted - Section 2.3 applies
 License File:     LICENSE.txt
 
 Yocto Project recipe manifest:
-repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-scarthgap -m real-time-edge-3.0.0.xml
+repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-scarthgap -m real-time-edge-3.1.0.xml
 
-Release tag: Real-Time-Edge-v3.0-202412
+Release tag: Real-Time-Edge-v3.1-202503
 Release Location: https://www.nxp.com/design/software/development-software/real-time-edge-software:REALTIME-EDGE-SOFTWARE
 
 --------------------------------------------
@@ -74,7 +74,7 @@ License File:                Licenses/gpl-2.0.txt
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Bootloader with Real-time Edge specific capabilities
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b uboot_v2024.04-3.0.0
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b uboot_v2024.04-3.1.0
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -102,7 +102,7 @@ License File:                Licenses/gpl-2.0.txt
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A baremetal framework
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2024.04-3.0.0
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2024.04-3.1.0
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -147,7 +147,7 @@ Origin:                      Michal Kubecek (GPL-2.0)
 --------------------------------------------
 
 Package:                     genavb-tsn
-Version:                     6.5
+Version:                     7.1
 Outgoing License:            GPL-2.0-or-later, BSD-3-Clause
 License Files:               licenses/COPYING, licenses/BSD-3-Clause
 Package Category:            Real-time Networking
@@ -171,7 +171,7 @@ Origin:                      Stephen Hemminger (GPL-2.0)
 --------------------------------------------
 
 Package:                     libnetconf2
-Version:                     0.12
+Version:                     2.1.34
 Outgoing License:            BSD-3-Clause
 License File:                LICENCE
 Package Category:            Real-time Networking
@@ -195,7 +195,7 @@ Origin:                      Sysrepo (LGPLv-2.1)
 --------------------------------------------
 
 Package:                     libyang
-Version:                     1.0
+Version:                     2.1.77
 Outgoing License:            BSD-3-Clause
 License Files:               LICENCE
 Package Category:            Real-time Networking
@@ -231,7 +231,7 @@ Origin:                      lldpd (ISC) - https://github.com/lldpd/lldpd.git
 --------------------------------------------
 
 Package:                     netopeer2
-Version:                     0.7
+Version:                     2.1.59
 Outgoing License:            BSD-3-Clause
 License Files:               LICENCE
 Package Category:            Real-time Networking
@@ -243,7 +243,7 @@ Origin:                      CESNET (BSD-3-Clause)
 --------------------------------------------
 
 Package:                     real-time-edge-sysrepo.git
-Version:                     1.0
+Version:                     2.0
 Outgoing License:            Apache-2.0
 License Files:               LICENSE
 Package Category:            Real-time Networking
@@ -255,14 +255,14 @@ Origin:                      NXP (Apache-2.0)
 --------------------------------------------
 
 Package:                     sysrepo
-Version:                     0.7.8
-Outgoing License:            Apache-2.0
+Version:                     2.2.71
+Outgoing License:            BSD-3-Clause
 License Files:               LICENSE
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    YANG-based configuration and operational state data store
 Release Location:            https://github.com/sysrepo/sysrepo.git
-Origin:                      Sysrepo (Apache-2.0)
+Origin:                      Sysrepo (BSD-3-Clause)
 
 --------------------------------------------
 
