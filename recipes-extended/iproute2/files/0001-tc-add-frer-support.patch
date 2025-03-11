@@ -359,7 +359,7 @@ index 00000000..649630b4
 +		print_int(PRINT_ANY, "resets", "\tresets %d", cnt);
 +	}
 +
-+	print_action_control(f, "\n\t", parm->action, "");
++	print_action_control("\n\t", parm->action, "");
 +
 +	print_uint(PRINT_ANY, "index", "\n\t index %u", parm->index);
 +	print_int(PRINT_ANY, "ref", " ref %d", parm->refcnt);
@@ -369,7 +369,7 @@ index 00000000..649630b4
 +		if (tb[TCA_FRER_TM]) {
 +			struct tcf_t *tm = RTA_DATA(tb[TCA_FRER_TM]);
 +
-+			print_tm(f, tm);
++			print_tm(tm);
 +		}
 +	}
 +
