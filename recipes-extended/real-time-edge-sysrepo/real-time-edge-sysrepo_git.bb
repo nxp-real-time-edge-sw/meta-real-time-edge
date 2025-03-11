@@ -40,7 +40,7 @@ INITSCRIPT_PARAMS = "start 70 5 2 3 . stop 70 0 1 6 ."
 do_install:append () {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'true', 'false', d)}; then
         install -d ${D}${sysconfdir}/init.d
-        install -m 0755 ${WORKDIR}/sysrepo-tsn ${D}${sysconfdir}/init.d/
+        install -m 0755 ${UNPACKDIR}/sysrepo-tsn ${D}${sysconfdir}/init.d/
     fi
 }
 
