@@ -18,7 +18,7 @@ inherit setuptools3
 
 do_install:append () {
         install -d ${D}/${sysconfdir}
-        install -m 0644 ${WORKDIR}/rteval.conf ${D}/${sysconfdir}/
+       # install -m 0644 ${WORKDIR}/rteval.conf ${D}/${sysconfdir}/
 
         if [ -e ${D}/${sysconfdir}/rteval.conf ]; then
             sed -e '/stressng/d' -i ${D}/${sysconfdir}/rteval.conf

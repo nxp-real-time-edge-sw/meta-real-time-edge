@@ -4,6 +4,7 @@ Date: Wed, 30 Jun 2021 16:45:48 +0800
 Subject: [PATCH 17/18] enetc: mq is useless to ndev struct
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  devices/enetc/enetc_pf.c | 2 +-
  devices/enetc/enetc_vf.c | 2 +-

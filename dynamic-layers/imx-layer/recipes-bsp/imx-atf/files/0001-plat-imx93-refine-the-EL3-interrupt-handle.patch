@@ -8,6 +8,7 @@ more EL3 interrupt.
 Modify DRAM driver to use the common interrupt API.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/common/imx_interrupt_mgmt.c         | 73 ++++++++++++++++++++
  plat/imx/common/include/imx_interrupt_mgmt.h | 23 ++++++

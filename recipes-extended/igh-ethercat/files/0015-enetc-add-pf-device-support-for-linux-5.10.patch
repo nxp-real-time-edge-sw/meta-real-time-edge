@@ -4,6 +4,7 @@ Date: Wed, 30 Jun 2021 16:58:01 +0800
 Subject: [PATCH 15/18] enetc: add pf device support for linux 5.10
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  configure.ac              |    4 +-
  devices/enetc/Kbuild.in   |   13 +-

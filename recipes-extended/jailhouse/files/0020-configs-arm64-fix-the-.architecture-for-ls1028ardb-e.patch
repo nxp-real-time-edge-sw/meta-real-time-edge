@@ -5,6 +5,7 @@ Subject: [PATCH 20/22] configs: arm64: fix the .architecture for ls1028ardb
  enetc cell
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/ls1028a-rdb-linux-enetc-demo.c | 1 +
  1 file changed, 1 insertion(+)

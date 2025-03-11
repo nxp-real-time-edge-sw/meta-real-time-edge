@@ -22,8 +22,6 @@ RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'libnfc-nci', 'libnfc-nci', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'canfestival', 'canfestival', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'modbus-simulator', 'modbus-simulator', '', d)} \
-    igh-ethercat \
-    real-time-edge-servo \
     ${userscapce-servo} \
     libopen62541 \
     libmodbus \

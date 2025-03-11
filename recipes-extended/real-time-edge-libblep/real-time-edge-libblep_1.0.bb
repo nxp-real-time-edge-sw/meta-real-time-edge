@@ -9,7 +9,7 @@ SRC_URI = "file://acilib.c \
            file://blep.c \
            file://services.h"
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/src"
 
 do_install () {
     install -d ${D}/${bindir}

@@ -3,6 +3,7 @@ From: Tao Yang <Tao.Yang1@nxp.com>
 Date: Thu, 15 Sep 2022 13:21:11 +0800
 Subject: [PATCH] feat(examples): Add pubsub TSN sample applications
 
+Upstream-Status: Pending
 ---
  CMakeLists.txt                                |    5 +
  examples/CMakeLists.txt                       |   17 +-

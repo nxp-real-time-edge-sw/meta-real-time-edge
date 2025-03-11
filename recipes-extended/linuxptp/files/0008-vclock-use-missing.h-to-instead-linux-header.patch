@@ -8,6 +8,7 @@ of real-time-edge. Update it in missing.h and use it to instead the
 linux header.
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  incdefs.sh |  6 +++---
  missing.h  | 15 ++++-----------

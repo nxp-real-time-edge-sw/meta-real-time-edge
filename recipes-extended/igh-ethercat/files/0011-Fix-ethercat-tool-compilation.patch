@@ -20,6 +20,7 @@ Date:   Tue Jun 23 17:08:25 2020 +0300
     
     Signed-off-by: Anton Kikin <a.kikin@tano-systems.com>
     Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 
 diff --git a/tool/Makefile.am b/tool/Makefile.am
 index 3cf4ee06..9d551c7d 100644

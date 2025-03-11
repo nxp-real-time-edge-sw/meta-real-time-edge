@@ -4,6 +4,7 @@ Date: Mon, 17 Jul 2023 23:22:24 +0800
 Subject: [PATCH] Native Driver: fix ec_fec kernel module insmod failure issue
 
 Signed-off-by: qizhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
 ---
  devices/fec/fec_main.c | 9 +--------
  1 file changed, 1 insertion(+), 8 deletions(-)

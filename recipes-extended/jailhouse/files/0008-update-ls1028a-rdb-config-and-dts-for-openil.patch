@@ -4,6 +4,7 @@ Date: Mon, 29 Mar 2021 10:38:47 +0800
 Subject: [PATCH 08/22] update ls1028a-rdb config and dts for openil
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/dts/inmate-ls1028a-rdb.dts |   4 +-
  configs/arm64/ls1028a-rdb-inmate-demo.c  |  28 +++---

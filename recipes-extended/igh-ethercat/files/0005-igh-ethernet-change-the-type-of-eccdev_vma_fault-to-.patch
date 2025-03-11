@@ -12,6 +12,7 @@ eccdev_vma_fault, change it to unsigned int with Linux-5.4.
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  master/cdev.c | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)

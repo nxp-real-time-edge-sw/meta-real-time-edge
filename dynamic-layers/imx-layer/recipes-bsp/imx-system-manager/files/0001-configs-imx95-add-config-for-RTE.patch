@@ -8,6 +8,7 @@ Added 2 more SCMI agents with the same resource assignment
 for A core NS env.
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
 ---
  configs/other/mx95rte.cfg | 984 ++++++++++++++++++++++++++++++++++++++
  1 file changed, 984 insertions(+)

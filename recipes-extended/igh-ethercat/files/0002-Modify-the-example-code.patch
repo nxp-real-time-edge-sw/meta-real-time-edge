@@ -10,6 +10,7 @@ control the datagram sending cycle.
 
 Signed-off-by: XianyuWei <xianyu.wei@nxp.com>
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  examples/user/main.c | 395 ++++++++++++++++---------------------------
  1 file changed, 149 insertions(+), 246 deletions(-)

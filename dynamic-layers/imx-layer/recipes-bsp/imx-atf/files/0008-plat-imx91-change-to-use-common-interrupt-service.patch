@@ -8,6 +8,7 @@ to use common interrupt service driver, initialize common interrupt
 service for imx91.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/imx91/imx91_bl31_setup.c     | 5 +++++
  plat/imx/imx91/include/platform_def.h | 3 +++

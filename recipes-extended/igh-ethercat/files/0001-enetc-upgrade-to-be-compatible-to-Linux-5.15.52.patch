@@ -4,6 +4,7 @@ Date: Tue, 6 Sep 2022 10:21:40 +0800
 Subject: [PATCH] enetc: upgrade to be compatible to Linux 5.15.52
 
 Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
+Upstream-Status: Pending
 ---
  devices/enetc/enetc_pf.c  | 16 ++++++++++------
  devices/enetc/enetc_pf.h  |  4 ++--

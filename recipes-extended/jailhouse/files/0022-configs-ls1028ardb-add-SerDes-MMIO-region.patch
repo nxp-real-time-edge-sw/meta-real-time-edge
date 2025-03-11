@@ -4,6 +4,7 @@ Date: Tue, 3 Dec 2024 17:51:50 +0800
 Subject: [PATCH 22/22] configs: ls1028ardb: add SerDes MMIO region
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/ls1028a-rdb.c | 9 ++++++++-
  1 file changed, 8 insertions(+), 1 deletion(-)

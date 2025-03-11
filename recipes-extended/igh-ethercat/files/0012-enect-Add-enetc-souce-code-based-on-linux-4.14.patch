@@ -4,6 +4,7 @@ Date: Fri, 14 Jun 2019 10:52:39 +0000
 Subject: [PATCH 12/18] enect Add enetc souce code based on linux 4.14
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  devices/enetc/enetc.c         | 1823 +++++++++++++++++++++++++++++++
  devices/enetc/enetc.h         |  284 +++++

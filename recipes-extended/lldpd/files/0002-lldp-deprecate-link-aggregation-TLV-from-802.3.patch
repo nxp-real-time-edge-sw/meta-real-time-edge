@@ -8,6 +8,7 @@ standardized as IEEE Std 802.1AX, which is part of the IEEE 802.1. This
 patch update the type and subtype of link aggregation TLV.
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  src/daemon/lldp-tlv.h       | 1 +
  src/daemon/protocols/lldp.c | 8 ++++----

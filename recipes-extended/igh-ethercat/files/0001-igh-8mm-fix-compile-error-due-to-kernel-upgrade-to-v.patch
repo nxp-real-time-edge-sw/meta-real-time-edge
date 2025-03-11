@@ -4,6 +4,7 @@ Date: Tue, 7 May 2024 17:41:30 +0800
 Subject: [PATCH] igh 8mm: fix compile error due to kernel upgrade to v6.6.3
 
 Signed-off-by: qizhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
 ---
  devices/fec/fec.h      |   9 +-
  devices/fec/fec_main.c | 221 +++++++++++++++++++++++++++--------------

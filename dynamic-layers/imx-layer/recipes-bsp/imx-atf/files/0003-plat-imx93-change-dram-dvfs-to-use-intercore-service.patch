@@ -6,6 +6,7 @@ Subject: [PATCH 3/7] plat: imx93: change dram dvfs to use intercore service
 So that SGI irq can be shared with SIP cpu_off service.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/imx93/ddr/dram.c             | 17 +++--------------
  plat/imx/imx93/imx93_bl31_setup.c     |  2 ++

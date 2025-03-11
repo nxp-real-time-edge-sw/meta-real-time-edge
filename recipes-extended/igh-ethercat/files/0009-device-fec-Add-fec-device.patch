@@ -4,6 +4,7 @@ Date: Sat, 8 May 2021 15:36:13 +0800
 Subject: [PATCH 09/18] device/fec: Add fec device
 
 Signed-off-by: Wenbin Song  <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  configure.ac            |   25 +
  devices/Kbuild.in       |    4 +

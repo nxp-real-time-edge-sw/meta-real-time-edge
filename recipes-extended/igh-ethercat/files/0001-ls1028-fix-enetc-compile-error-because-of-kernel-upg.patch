@@ -5,6 +5,7 @@ Subject: [PATCH] ls1028: fix enetc compile error because of kernel upgrade to
  v6.6.3
 
 Signed-off-by: qizhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
 ---
  devices/enetc/enetc_pf.c  | 114 ++++++++++++++++++++++----------------
  devices/enetc/enetc_qos.c |   6 +-

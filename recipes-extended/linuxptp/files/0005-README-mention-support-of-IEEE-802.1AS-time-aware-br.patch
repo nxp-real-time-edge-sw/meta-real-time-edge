@@ -8,6 +8,7 @@ boundary clocks with IEEE 802.1AS, as well as the IEEE 802.1AS specific
 BMCA. Mention this in the README.
 
 Signed-off-by: Vladimir Oltean <vladimir.oltean@nxp.com>
+Upstream-Status: Pending
 ---
  README.org | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)

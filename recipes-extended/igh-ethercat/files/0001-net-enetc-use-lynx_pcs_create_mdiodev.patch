@@ -7,6 +7,7 @@ Use the newly introduced lynx_pcs_create_mdiodev() which simplifies the
 creation and destruction of the lynx PCS.
 
 Signed-off-by: qizhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
 ---
  devices/enetc/enetc_pf.c | 19 +++----------------
  1 file changed, 3 insertions(+), 16 deletions(-)

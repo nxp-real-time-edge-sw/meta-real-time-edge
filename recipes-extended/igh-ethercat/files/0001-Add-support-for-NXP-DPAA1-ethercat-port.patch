@@ -7,6 +7,7 @@ if want to enable this feature, should add "--enable-dpaa1" in compile configura
 if want to support ethercat master and backup, should add "--with-devices=2" in configuration.
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  configure.ac                   |  25 +++++++
  devices/Kbuild.in              |   4 ++

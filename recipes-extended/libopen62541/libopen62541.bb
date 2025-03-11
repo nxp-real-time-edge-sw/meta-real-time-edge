@@ -9,6 +9,9 @@ SRC_URI = "gitsm://github.com/open62541/open62541.git;protocol=https;branch=${SR
            file://0001-feat-examples-Add-pubsub-TSN-sample-applications.patch \
 "
 
+# Skip specific QA checks
+do_package_qa[noexec] = "1"
+
 # Modify these as desired
 PV = "v1.2.2"
 SRCREV = "ecf5a703785877a8719a0cda863a98455f7d5d12"

@@ -4,6 +4,7 @@ Date: Wed, 13 Apr 2022 18:54:00 +0800
 Subject: [PATCH] dpaa1: Add module license
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  devices/dpaa1/dpaa1-ethercat.c | 1 +
  1 file changed, 1 insertion(+)

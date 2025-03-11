@@ -9,6 +9,7 @@ CPU Core and handled on specified CPU Core which will be into
 WFI in SGI interrupt handler.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/common/imx_cpu_off.c               | 43 +++++++++++++++++++
  plat/imx/common/imx_intercore_svc.c         | 47 ++++++++++++++++++++-

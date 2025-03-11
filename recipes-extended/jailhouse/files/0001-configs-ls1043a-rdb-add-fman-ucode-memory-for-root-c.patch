@@ -5,6 +5,7 @@ Subject: [PATCH 01/22] configs: ls1043a-rdb: add fman ucode memory for root
  cell
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/ls1043a-rdb.c | 11 +++++++++--
  1 file changed, 9 insertions(+), 2 deletions(-)

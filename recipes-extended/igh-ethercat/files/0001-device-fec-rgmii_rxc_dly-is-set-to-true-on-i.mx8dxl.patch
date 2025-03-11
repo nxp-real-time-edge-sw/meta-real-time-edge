@@ -10,6 +10,7 @@ This fixes the following issue on i.mx8dxl:
     EtherCAT ERROR 0-0: Failed to fetch SII contents.
 
 Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
+Upstream-Status: Pending
 ---
  devices/fec/fec_main.c | 47 ++++++++++++++++++++++++++++++++++--------
  1 file changed, 38 insertions(+), 9 deletions(-)

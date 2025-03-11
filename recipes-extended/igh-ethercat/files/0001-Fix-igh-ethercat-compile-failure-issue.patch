@@ -4,6 +4,7 @@ Date: Fri, 28 Apr 2023 02:08:58 +0800
 Subject: [PATCH] Fix: igh-ethercat compile failure issue
 
 Signed-off-by: qizhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
 ---
  devices/fec/fec_main.c |  8 ++++++--
  master/ethernet.c      | 12 +++++++++---

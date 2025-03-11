@@ -9,6 +9,7 @@ When dev_id is 1, the inmate cell will send the IRQ to device 2, instead
 of root cell 0.
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/ls1028a-rdb-inmate-demo.c | 2 +-
  configs/arm64/ls1043a-rdb-inmate-demo.c | 2 +-

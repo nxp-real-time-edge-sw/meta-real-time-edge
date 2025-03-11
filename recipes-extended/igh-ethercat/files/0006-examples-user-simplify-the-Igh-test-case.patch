@@ -9,6 +9,7 @@ test environment. On the new case, we only need to check
 whether the LED0 on the EL2008 is blinking with 1Hz.
 
 Signed-off-by: Wenbin Song  <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  examples/user/main.c | 13 ++++---------
  1 file changed, 4 insertions(+), 9 deletions(-)

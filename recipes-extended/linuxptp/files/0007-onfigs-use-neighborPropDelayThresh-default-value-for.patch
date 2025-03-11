@@ -9,6 +9,7 @@ just use default neighborPropDelayThresh value to make synchronization
 happen.
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  configs/gPTP.cfg | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

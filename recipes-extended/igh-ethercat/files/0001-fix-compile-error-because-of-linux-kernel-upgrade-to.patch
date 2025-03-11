@@ -4,6 +4,7 @@ Date: Tue, 30 Apr 2024 23:32:43 +0800
 Subject: [PATCH] fix compile error because of linux kernel upgrade to v6.6.3
 
 Signed-off-by: qizhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
 ---
  master/cdev.c   | 2 +-
  master/module.c | 2 +-

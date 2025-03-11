@@ -4,6 +4,7 @@ Date: Fri, 7 May 2021 15:08:05 +0800
 Subject: [PATCH 07/18] configure: Fix the subdir-objects error
 
 Signed-off-by: Wenbin Song  <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  configure.ac | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

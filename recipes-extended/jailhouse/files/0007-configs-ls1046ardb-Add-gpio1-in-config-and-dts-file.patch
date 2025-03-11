@@ -4,6 +4,7 @@ Date: Sun, 28 Feb 2021 08:45:46 +0800
 Subject: [PATCH 07/22] configs: ls1046ardb: Add gpio1 in config and dts file
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts | 10 ++++++++++
  configs/arm64/ls1046a-rdb-dpaa-linux-demo.c   | 11 +++++++++--

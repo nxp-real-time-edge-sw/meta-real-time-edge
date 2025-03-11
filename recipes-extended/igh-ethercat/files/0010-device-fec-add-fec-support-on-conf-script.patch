@@ -4,6 +4,7 @@ Date: Sat, 8 May 2021 16:09:22 +0800
 Subject: [PATCH 10/18] device/fec: add fec support on conf script
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  script/ethercat.conf | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)

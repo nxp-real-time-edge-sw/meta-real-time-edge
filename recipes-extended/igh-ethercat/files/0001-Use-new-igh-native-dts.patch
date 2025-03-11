@@ -4,6 +4,7 @@ Date: Thu, 29 Feb 2024 19:56:23 +0800
 Subject: [PATCH] Use new igh native dts
 
 Signed-off-by: qizhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
 ---
  devices/fec/fec_main.c | 20 ++++++++++----------
  1 file changed, 10 insertions(+), 10 deletions(-)

@@ -5,6 +5,7 @@ Subject: [PATCH 13/18] ec_enetc: Add ec_enetc native driver based on linux
  4.14
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  configure.ac               |  25 +
  devices/Kbuild.in          |   4 +

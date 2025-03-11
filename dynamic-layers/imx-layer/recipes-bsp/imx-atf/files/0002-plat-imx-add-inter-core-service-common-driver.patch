@@ -7,6 +7,7 @@ Add common layer of inter-core service, so that we can use single
 SGI interrupt to more inter-core notifyication service.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/common/imx_intercore_svc.c         | 86 +++++++++++++++++++++
  plat/imx/common/include/imx_intercore_svc.h | 38 +++++++++

@@ -8,6 +8,7 @@ Add the memory region for GIC distributor and re-distributor MMIO,
 allow the non-root cell Linux access them.
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/ls1028a-rdb-linux-enetc-demo.c | 19 ++++++++++++++++++-
  1 file changed, 18 insertions(+), 1 deletion(-)

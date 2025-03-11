@@ -8,6 +8,7 @@ not be removed directly. So the ethernet driver is still built in
 kernel as before, and unbind it when ethercat driver "ec_enetc" is required.
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  script/ethercat.conf  |  2 +-
  script/ethercatctl.in | 47 ++++++++++++++++++++++++++++++++++++++++---

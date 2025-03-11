@@ -9,6 +9,7 @@ Frank's patches are for EtherCAT_v1.5.0-7.
 link: https://fh-soft.de/src/ethercat-userspace.html
 
 Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  Makefile.am                     |   8 +-
  configure.ac                    |  37 ++

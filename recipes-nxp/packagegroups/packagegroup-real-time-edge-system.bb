@@ -19,7 +19,4 @@ BAREMETAL_INSTALL = " \
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'baremetal',  \
     '${BAREMETAL_INSTALL}', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'jailhouse',  \
-    'jailhouse', '', d)} \
-    opencv-demo \
 "

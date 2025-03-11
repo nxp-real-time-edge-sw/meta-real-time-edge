@@ -5,6 +5,7 @@ Subject: [PATCH 02/22] configs: ls1043ardb: Add gpio1 in non-root config and
  dts file
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/dts/inmate-ls1043a-rdb-dpaa.dts | 12 +++++++++++-
  configs/arm64/ls1043a-rdb-dpaa-linux-demo.c   | 13 ++++++++++---

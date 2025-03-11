@@ -7,6 +7,7 @@ Because the ec_enetc_vf module works in phy-less mode,
 ec_master can not be notified dynamically when the link status changed.
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  devices/enetc/enetc.c    | 1 -
  devices/enetc/enetc_pf.c | 5 +++++

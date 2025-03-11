@@ -48,5 +48,4 @@ RDEPENDS:${PN} = " \
     ${cantools} \
     openssh-sftp-server \
     openssh-keygen \
-    pktgen-scripts \
 "

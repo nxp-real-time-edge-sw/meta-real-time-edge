@@ -6,6 +6,7 @@ Subject: [PATCH 7/7] plat: imx8m: add SIP cpu_off service
 Added SIP cpu_off service for imx8mm/n/p.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/common/imx_sip_handler.c            | 3 +--
  plat/imx/common/imx_sip_svc.c                | 2 +-

@@ -10,6 +10,7 @@ Add two new APIs:
    and disable all SGIs/PPIs on this redistributor interface.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  drivers/arm/gic/v3/gicv3_helpers.c | 40 ++++++++++++++++++++++++++++++
  drivers/arm/gic/v3/gicv3_main.c    | 28 +++++++++++++++++++++

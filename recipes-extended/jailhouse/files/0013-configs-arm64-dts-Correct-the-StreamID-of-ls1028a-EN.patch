@@ -8,6 +8,7 @@ The Stream ID of ENETC is change to starting from 0x29 by U-Boot fixup,
 so correct it in the non-root cell Linux DTS.
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)

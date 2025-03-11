@@ -5,6 +5,7 @@ Subject: [PATCH 12/22] configs/arm64/dts: Change the reserved address for LPI
  tables
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/dts/inmate-ls1028a-rdb-enetc.dts | 6 ++----
  1 file changed, 2 insertions(+), 4 deletions(-)

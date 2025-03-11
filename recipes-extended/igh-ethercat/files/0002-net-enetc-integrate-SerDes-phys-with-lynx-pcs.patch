@@ -7,6 +7,7 @@ Get an optional "phys" phandle and pass it to the Lynx PCS module, which
 can use it for dynamic protocol reconfiguration and/or C73.
 
 Signed-off-by: qizhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
 ---
  devices/enetc/enetc_pf.c | 11 ++++++++++-
  1 file changed, 10 insertions(+), 1 deletion(-)

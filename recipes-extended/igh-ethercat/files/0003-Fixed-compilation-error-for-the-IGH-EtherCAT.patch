@@ -7,6 +7,7 @@ Fix two compilation errors in files cdev.c and master.c.
 
 Signed-off-by: weixy <xianyu.wei@nxp.com>
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  master/cdev.c   | 8 ++------
  master/master.c | 1 +

@@ -4,6 +4,7 @@ Date: Thu, 11 Jul 2024 18:01:27 +0800
 Subject: [PATCH] Delete power_runtime of mdio read and write
 
 Signed-off-by: qizhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
 ---
  devices/fec/fec_main.c | 70 +++++++++++++-----------------------------
  1 file changed, 21 insertions(+), 49 deletions(-)

@@ -4,6 +4,7 @@ Date: Wed, 20 Apr 2022 14:52:15 +0800
 Subject: [PATCH] fec: fix the compile error when upgrading to Linux-5.15.y
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  devices/fec/fec_main.c | 14 ++++++++------
  1 file changed, 8 insertions(+), 6 deletions(-)

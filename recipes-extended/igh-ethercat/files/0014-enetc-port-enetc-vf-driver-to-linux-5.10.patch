@@ -4,6 +4,7 @@ Date: Mon, 28 Jun 2021 19:18:55 +0800
 Subject: [PATCH 14/18] enetc: port enetc vf driver to linux 5.10
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  devices/enetc/Kbuild.in       |    1 +
  devices/enetc/Makefile.am     |    1 +

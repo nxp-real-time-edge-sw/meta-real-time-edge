@@ -9,6 +9,7 @@ need to install the herder files again. Otherwise, yocto
 will report the error.
 
 Signed-off-by: Minghuan Lian <minghuan.lian@nxp.com>
+Upstream-Status: Pending
 ---
  include/Makefile.am | 4 +---
  1 file changed, 1 insertion(+), 3 deletions(-)

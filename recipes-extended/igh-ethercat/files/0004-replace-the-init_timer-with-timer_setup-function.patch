@@ -14,6 +14,7 @@ otherwise, there will be compile issue:
 
 Signed-off-by: Jerry Huang <jerry.huang@nxp.com>
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  examples/mini/mini.c | 5 ++---
  1 file changed, 2 insertions(+), 3 deletions(-)

@@ -8,6 +8,7 @@ when this region is enabled in inmate cell,
 there are some commands (related to hardware) can't be implemented.
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/ls1028a-rdb-linux-enetc-demo.c | 10 +---------
  1 file changed, 1 insertion(+), 9 deletions(-)

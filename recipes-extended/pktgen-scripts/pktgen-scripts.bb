@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=801f80980d171dd6425610833a22dbe6"
 SRC_URI = "file://LICENSE \
            file://pktgen"
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/pktgen"
 
 do_install() {
     install -d ${D}/home/root/samples/pktgen

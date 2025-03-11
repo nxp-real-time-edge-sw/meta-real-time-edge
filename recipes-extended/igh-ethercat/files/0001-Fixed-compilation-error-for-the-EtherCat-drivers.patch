@@ -11,6 +11,7 @@ so this patch is added to solve the compilation error.
 
 Signed-off-by: XianyuWei <xianyu.wei@nxp.com>
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  devices/generic.c | 7 ++++---
  master/ethernet.c | 4 +++-

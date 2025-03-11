@@ -4,6 +4,7 @@ Date: Tue, 2 Mar 2021 11:22:22 +0800
 Subject: [PATCH 05/22] configs: ls1046ardb: Add fman ucode dtsi file
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  .../dts/inmate-ls1046a-rdb-fman-ucode.dtsi    | 1038 +++++++++++++++++
  1 file changed, 1038 insertions(+)

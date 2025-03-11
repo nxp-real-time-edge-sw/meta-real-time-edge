@@ -6,6 +6,7 @@ Subject: [PATCH] enetc: fix the compile errors when upgrading to Linux-5.15.y
 The struct ethtool_ops is changed on Linux-5.15.y
 
 Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
 ---
  devices/enetc/enetc_ethtool.c | 104 ++++++++--------------------------
  1 file changed, 24 insertions(+), 80 deletions(-)

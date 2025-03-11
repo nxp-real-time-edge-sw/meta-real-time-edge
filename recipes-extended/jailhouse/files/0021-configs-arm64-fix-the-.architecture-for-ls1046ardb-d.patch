@@ -5,6 +5,7 @@ Subject: [PATCH 21/22] configs: arm64: fix the .architecture for ls1046ardb
  dpaa cell
 
 Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/ls1046a-rdb-dpaa-linux-demo.c | 1 +
  1 file changed, 1 insertion(+)

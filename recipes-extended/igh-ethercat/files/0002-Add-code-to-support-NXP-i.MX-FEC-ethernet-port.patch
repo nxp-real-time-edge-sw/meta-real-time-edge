@@ -47,6 +47,7 @@ Usage for i.MXRT1180 motors:
 Signed-off-by: Yuhang Wang <yuhang.wang@nxp.com>
 Signed-off-by: Lyrix Liu <lyrix.liu@nxp.com>
 Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  Readme_For_User_Space_IGH_EtherCAT.txt | 216 +++++++++
  compile.sh                             |  21 +

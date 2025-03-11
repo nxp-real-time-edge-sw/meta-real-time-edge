@@ -10,6 +10,7 @@ rmmod: ERROR: Module ec_dpaa1 is in use
 it can avoid kernel calltrace.
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  devices/dpaa1/dpaa1-ethercat.c | 4 +---
  1 file changed, 1 insertion(+), 3 deletions(-)
