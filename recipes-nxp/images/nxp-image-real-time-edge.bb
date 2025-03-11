@@ -1,7 +1,7 @@
 # Copyright 2021-2022 NXP
 # Released under the MIT license (see COPYING.MIT for the terms)
 
-real-time-edge-IMAGE_BASE ?= "recipes-fsl/images/imx-image-multimedia.bb"
+real-time-edge-IMAGE_BASE ?= "recipes-core/images/core-image-minimal.bb"
 real-time-edge-IMAGE_BASE:qoriq = "recipes-fsl/images/fsl-image-networking.bb"
 
 require ${real-time-edge-IMAGE_BASE}
@@ -28,7 +28,6 @@ IMAGE_INSTALL:append:ls1028ardb = " \
 "
 IMAGE_INSTALL:append:imx-nxp-bsp = " \
     packagegroup-real-time-edge-rtos \
-    packagegroup-harpoon \
 "
 
 # do_image[mcdepends] = "mc:imx8mp-lpddr4-evk:evkmimx8mp:demo-hello-world:do_install"
