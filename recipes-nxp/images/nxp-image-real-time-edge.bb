@@ -30,4 +30,5 @@ IMAGE_INSTALL:append:imx-nxp-bsp = " \
     packagegroup-real-time-edge-rtos \
 "
 
+IMAGE_INSTALL:append = " kernel-modules"
 # do_image[mcdepends] = "mc:imx8mp-lpddr4-evk:evkmimx8mp:demo-hello-world:do_install"
