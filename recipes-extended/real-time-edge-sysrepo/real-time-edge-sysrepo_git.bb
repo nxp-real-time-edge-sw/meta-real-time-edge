@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
 REAL_TIME_EDGE_SYSREPO_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-sysrepo.git;protocol=https"
 REAL_TIME_EDGE_SYSREPO_BRANCH ?= "master"
-REAL_TIME_EDGE_SYSREPO_SRCREV ?= "3b940e5ceceb7bd75c8e0bfba5b1fe59cfdcbda3"
+REAL_TIME_EDGE_SYSREPO_SRCREV ?= "a6119642c3f224b270228d1f9781f03f4b6cb235"
 
 SRC_URI = "${REAL_TIME_EDGE_SYSREPO_SRC};branch=${REAL_TIME_EDGE_SYSREPO_BRANCH} \
            ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'file://sysrepo-tsn', '', d)}"
