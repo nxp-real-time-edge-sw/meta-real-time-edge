@@ -57,6 +57,7 @@ heterogeneous-multicore-examples:append:imx91-11x11-lpddr4-evk = " hello-world-c
 heterogeneous-multi-soc-examples ?= ""
 heterogeneous-multi-soc-examples:append:mx8mp-nxp-bsp = " dsa-switch-evkmimxrt1180-cm33 "
 heterogeneous-multi-soc-examples:append:imx93evk = " dsa-switch-evkmimxrt1180-cm33 "
+heterogeneous-multi-soc-examples:append:mx943-nxp-bsp = " dsa-switch-evkmimxrt1180-cm33 "
 
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'rtos-industrial',  \
