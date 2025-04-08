@@ -23,6 +23,9 @@ DISTRO_FEATURES:append:ls1021aiot = " canfestival"
 # For imx8dxlevk remove jailhouse feature until the board is added into jailhouse.
 DISTRO_FEATURES:remove:mx8dxl-nxp-bsp = " jailhouse"
 
+# For i.MX943
+DISTRO_FEATURES:append:mx943-nxp-bsp = " real-time-edge-sysrepo"
+
 # For ls1028ardb
 DISTRO_FEATURES:remove:ls1028ardb = " x11"
 
@@ -47,11 +50,8 @@ DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = "${@bb.utils.contains('DISTRO_FEAT
 DELTA_KERNEL_DEFCONFIG:append:ls1043ardb = " linux-dpaa-ethercat.config"
 DELTA_KERNEL_DEFCONFIG:append:ls1046ardb = " linux-dpaa-ethercat.config"
 
+REAL_TIME_EDGE_SYSREPO ?= "real-time-edge-sysrepo-tc"
 REAL_TIME_EDGE_SYSREPO:ls1028ardb = ""
-REAL_TIME_EDGE_SYSREPO:ls1021atsn = "real-time-edge-sysrepo-tc"
-REAL_TIME_EDGE_SYSREPO:mx8dxl-nxp-bsp = "real-time-edge-sysrepo-tc"
-REAL_TIME_EDGE_SYSREPO:mx8mp-nxp-bsp = "real-time-edge-sysrepo-tc"
-REAL_TIME_EDGE_SYSREPO:mx93-nxp-bsp = "real-time-edge-sysrepo-tc"
 PACKAGECONFIG:append:pn-real-time-edge-sysrepo = "${REAL_TIME_EDGE_SYSREPO}"
 
 # dtb for jailhouse
