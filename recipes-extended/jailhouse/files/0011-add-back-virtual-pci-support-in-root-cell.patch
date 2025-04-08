@@ -4,6 +4,7 @@ Date: Mon, 25 Oct 2021 16:52:55 +0800
 Subject: [PATCH 11/22] add back virtual pci support in root cell
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/ls1028a-rdb.c | 64 ++++++++++++++++++++++++++++++++++++-
  1 file changed, 63 insertions(+), 1 deletion(-)

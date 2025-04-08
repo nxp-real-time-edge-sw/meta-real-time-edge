@@ -6,6 +6,7 @@ Subject: [PATCH 15/22] configs: arm64: ls1028a: add LPI tables memory region
 Add memory region for GICv3 LPI property and pending tables.
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/ls1028a-rdb-linux-enetc-demo.c | 10 +++++++++-
  1 file changed, 9 insertions(+), 1 deletion(-)

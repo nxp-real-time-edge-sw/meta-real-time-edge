@@ -4,6 +4,7 @@ Date: Mon, 11 Oct 2021 17:53:02 +0800
 Subject: [PATCH 09/22] ls1028ardb: add gpio3 for linux demo
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/dts/inmate-ls1028a-rdb.dts | 11 +++++++++++
  configs/arm64/ls1028a-rdb-linux-demo.c   |  9 ++++++++-

@@ -5,6 +5,7 @@ Subject: [PATCH 06/22] configs: ls1046ardb: Add dpaa support for non-root
  linux cell
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/dts/inmate-ls1046a-rdb-dpaa.dts | 969 ++++++++++++++++++
  configs/arm64/ls1046a-rdb-dpaa-linux-demo.c   | 213 ++++

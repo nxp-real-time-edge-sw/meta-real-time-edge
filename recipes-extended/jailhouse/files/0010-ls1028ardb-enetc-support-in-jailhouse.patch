@@ -4,6 +4,7 @@ Date: Tue, 12 Oct 2021 11:13:24 +0800
 Subject: [PATCH 10/22] ls1028ardb: enetc support in jailhouse
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  .../arm64/dts/inmate-ls1028a-rdb-enetc.dts    | 381 ++++++++++++++++++
  configs/arm64/ls1028a-rdb-linux-enetc-demo.c  | 117 ++++++

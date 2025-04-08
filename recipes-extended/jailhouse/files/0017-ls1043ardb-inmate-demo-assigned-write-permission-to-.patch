@@ -5,6 +5,7 @@ Subject: [PATCH 17/22] ls1043ardb-inmate-demo: assigned write permission to
  address 0xc050e000
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  configs/arm64/ls1043a-rdb-inmate-demo.c | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
