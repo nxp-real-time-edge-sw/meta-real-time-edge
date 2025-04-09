@@ -7,6 +7,7 @@ DDR Auto Clock Gating Feature has an impact on real-time performance.
 Let's disable this feature.
 
 Signed-off-by: Aziz Sellami <aziz.sellami@nxp.com>
+Upstream-Status: Pending
 ---
  configs/configtool.pl               | 14 ++++++++++++++
  configs/other/mx95rte.cfg           |  2 ++
