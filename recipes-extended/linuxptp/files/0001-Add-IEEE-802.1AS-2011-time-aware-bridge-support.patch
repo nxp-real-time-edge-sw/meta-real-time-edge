@@ -15,6 +15,7 @@ The main code changes are,
 
 Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  clock.c | 43 +++++++++++++++++++++++++++++++-
  clock.h | 45 +++++++++++++++++++++++++++++++++

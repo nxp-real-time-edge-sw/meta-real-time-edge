@@ -27,6 +27,7 @@ Signed-off-by: Erik Hons <erik.hons@ni.com>
 Signed-off-by: Rodney Greenstreet <rodney.greenstreet@ni.com>
 Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  fsm.c  | 13 +++++++++++++
  fsm.h  | 10 ++++++++++

@@ -6,6 +6,7 @@ Subject: [PATCH 6/7] configs: increase tx_timestamp_timeout for default/gPTP
 This is to avoid time out for i.MX ENET.
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  configs/default.cfg | 2 +-
  configs/gPTP.cfg    | 1 +

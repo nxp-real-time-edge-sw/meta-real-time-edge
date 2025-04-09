@@ -12,6 +12,7 @@ either on a MASTER to SLAVE, or on a MASTER to UNCALIBRATED transition.
 
 Signed-off-by: Vladimir Oltean <olteanv@gmail.com>
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  port.c | 9 ++++++++-
  1 file changed, 8 insertions(+), 1 deletion(-)
