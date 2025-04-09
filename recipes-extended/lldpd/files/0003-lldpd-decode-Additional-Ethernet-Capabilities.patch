@@ -12,6 +12,7 @@ preemption.
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
+Upstream-Status: Pending
 ---
  include/linux/ethtool.h       |  3 +++
  src/daemon/interfaces-linux.c |  4 ++--

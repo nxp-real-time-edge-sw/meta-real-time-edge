@@ -8,6 +8,7 @@ Its subtype is 7, and the first 4 bits indicate preemption capability
 and status. The preemption status is got from ethtool ioctl in Linux.
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  include/linux/ethtool.h       | 13 +++++++++++++
  src/daemon/interfaces-linux.c | 31 +++++++++++++++++++++++++++++++

@@ -7,6 +7,7 @@ The preemption of ethtool added a new disabled parameter in Linux,
 update it in ethtool.h on lldpd.
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
 ---
  include/linux/ethtool.h | 1 +
  1 file changed, 1 insertion(+)
