@@ -3,6 +3,7 @@ From: Tao Yang <Tao.Yang1@nxp.com>
 Date: Tue, 30 Aug 2022 21:36:25 -0500
 Subject: [PATCH] rteval: setup.py: replace distutils.core with setuptools
 
+Upstream-Status: Pending
 ---
  setup.py | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

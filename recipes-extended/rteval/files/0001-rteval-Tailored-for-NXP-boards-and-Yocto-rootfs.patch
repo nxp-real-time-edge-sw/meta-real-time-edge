@@ -3,6 +3,7 @@ From: Tao Yang <Tao.Yang1@nxp.com>
 Date: Fri, 15 Apr 2022 10:37:16 +0800
 Subject: [PATCH] rteval: Tailored for NXP boards and Yocto rootfs
 
+Upstream-Status: Pending
 ---
  rteval-cmd                        |  8 +-------
  rteval/__init__.py                |  1 -
