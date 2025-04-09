@@ -1,7 +1,7 @@
-From df80c9908ed7b54999061c1d0b5bd5010240b112 Mon Sep 17 00:00:00 2001
+From 8f5942f21085597a7339fe3c1fe416e6782740f0 Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Fri, 4 Aug 2023 16:59:41 +0800
-Subject: [PATCH 1/2] Add code to support userspace IGH-EtherCAT for v1.5.2
+Subject: [PATCH 5/7] Add code to support userspace IGH-EtherCAT for v1.5.2
 
 This patch refers to the patches of Frank Heckenbach,
 Frank's patches are for EtherCAT_v1.5.0-7.
@@ -9,6 +9,7 @@ Frank's patches are for EtherCAT_v1.5.0-7.
 link: https://fh-soft.de/src/ethercat-userspace.html
 
 Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  Makefile.am                     |   8 +-
  configure.ac                    |  37 ++
@@ -92,7 +93,7 @@ Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
  create mode 100644 master/libethercat_master.pc.in
 
 diff --git a/Makefile.am b/Makefile.am
-index 38c8b699..64558032 100644
+index 38c8b69..6455803 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -32,8 +32,12 @@ ACLOCAL_AMFLAGS = -I m4
@@ -111,7 +112,7 @@ index 38c8b699..64558032 100644
  if BUILD_TOOL
  SUBDIRS += tool
 diff --git a/configure.ac b/configure.ac
-index 8e924e8a..953af99d 100644
+index 8e924e8..953af99 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -56,10 +56,44 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
@@ -180,7 +181,7 @@ index 8e924e8a..953af99d 100644
          script/ethercat.service
          script/ethercatctl
 diff --git a/devices/generic.c b/devices/generic.c
-index 4be3f449..8fb52ebd 100644
+index 4be3f44..8fb52eb 100644
 --- a/devices/generic.c
 +++ b/devices/generic.c
 @@ -54,6 +54,9 @@
@@ -206,7 +207,7 @@ index 4be3f449..8fb52ebd 100644
          return ret;
 diff --git a/emulation/linux/cdev.h b/emulation/linux/cdev.h
 new file mode 100644
-index 00000000..c23bfa58
+index 0000000..c23bfa5
 --- /dev/null
 +++ b/emulation/linux/cdev.h
 @@ -0,0 +1,15 @@
@@ -227,7 +228,7 @@ index 00000000..c23bfa58
 +#endif
 diff --git a/emulation/linux/delay.h b/emulation/linux/delay.h
 new file mode 100644
-index 00000000..3817ea68
+index 0000000..3817ea6
 --- /dev/null
 +++ b/emulation/linux/delay.h
 @@ -0,0 +1,6 @@
@@ -239,7 +240,7 @@ index 00000000..3817ea68
 +#endif
 diff --git a/emulation/linux/device.h b/emulation/linux/device.h
 new file mode 100644
-index 00000000..1c0164ff
+index 0000000..1c0164f
 --- /dev/null
 +++ b/emulation/linux/device.h
 @@ -0,0 +1,9 @@
@@ -254,7 +255,7 @@ index 00000000..1c0164ff
 +#endif
 diff --git a/emulation/linux/err.h b/emulation/linux/err.h
 new file mode 100644
-index 00000000..393b7e96
+index 0000000..393b7e9
 --- /dev/null
 +++ b/emulation/linux/err.h
 @@ -0,0 +1,16 @@
@@ -276,7 +277,7 @@ index 00000000..393b7e96
 +#endif
 diff --git a/emulation/linux/etherdevice.h b/emulation/linux/etherdevice.h
 new file mode 100644
-index 00000000..b3f879fb
+index 0000000..b3f879f
 --- /dev/null
 +++ b/emulation/linux/etherdevice.h
 @@ -0,0 +1,7 @@
@@ -289,7 +290,7 @@ index 00000000..b3f879fb
 +#endif
 diff --git a/emulation/linux/fs.h b/emulation/linux/fs.h
 new file mode 100644
-index 00000000..4dcfa600
+index 0000000..4dcfa60
 --- /dev/null
 +++ b/emulation/linux/fs.h
 @@ -0,0 +1,9 @@
@@ -304,7 +305,7 @@ index 00000000..4dcfa600
 +#endif
 diff --git a/emulation/linux/hrtimer.h b/emulation/linux/hrtimer.h
 new file mode 100644
-index 00000000..d6c8a3ac
+index 0000000..d6c8a3a
 --- /dev/null
 +++ b/emulation/linux/hrtimer.h
 @@ -0,0 +1,4 @@
@@ -314,7 +315,7 @@ index 00000000..d6c8a3ac
 +#endif
 diff --git a/emulation/linux/interrupt.h b/emulation/linux/interrupt.h
 new file mode 100644
-index 00000000..2d371020
+index 0000000..2d37102
 --- /dev/null
 +++ b/emulation/linux/interrupt.h
 @@ -0,0 +1,6 @@
@@ -326,7 +327,7 @@ index 00000000..2d371020
 +#endif
 diff --git a/emulation/linux/jiffies.h b/emulation/linux/jiffies.h
 new file mode 100644
-index 00000000..eb736b7a
+index 0000000..eb736b7
 --- /dev/null
 +++ b/emulation/linux/jiffies.h
 @@ -0,0 +1,52 @@
@@ -384,7 +385,7 @@ index 00000000..eb736b7a
 +#endif
 diff --git a/emulation/linux/kobject.h b/emulation/linux/kobject.h
 new file mode 100644
-index 00000000..e82c255d
+index 0000000..e82c255
 --- /dev/null
 +++ b/emulation/linux/kobject.h
 @@ -0,0 +1,6 @@
@@ -396,7 +397,7 @@ index 00000000..e82c255d
 +#endif
 diff --git a/emulation/linux/kthread.h b/emulation/linux/kthread.h
 new file mode 100644
-index 00000000..82adf54a
+index 0000000..82adf54
 --- /dev/null
 +++ b/emulation/linux/kthread.h
 @@ -0,0 +1,70 @@
@@ -472,7 +473,7 @@ index 00000000..82adf54a
 +#endif
 diff --git a/emulation/linux/list.h b/emulation/linux/list.h
 new file mode 100644
-index 00000000..6b505793
+index 0000000..6b50579
 --- /dev/null
 +++ b/emulation/linux/list.h
 @@ -0,0 +1,746 @@
@@ -1224,7 +1225,7 @@ index 00000000..6b505793
 +#endif
 diff --git a/emulation/linux/mm.h b/emulation/linux/mm.h
 new file mode 100644
-index 00000000..dbb8b71e
+index 0000000..dbb8b71
 --- /dev/null
 +++ b/emulation/linux/mm.h
 @@ -0,0 +1,4 @@
@@ -1234,7 +1235,7 @@ index 00000000..dbb8b71e
 +#endif
 diff --git a/emulation/linux/module.h b/emulation/linux/module.h
 new file mode 100644
-index 00000000..385ba105
+index 0000000..385ba10
 --- /dev/null
 +++ b/emulation/linux/module.h
 @@ -0,0 +1,29 @@
@@ -1269,7 +1270,7 @@ index 00000000..385ba105
 +#endif
 diff --git a/emulation/linux/netdevice.h b/emulation/linux/netdevice.h
 new file mode 100644
-index 00000000..e79d2d79
+index 0000000..e79d2d7
 --- /dev/null
 +++ b/emulation/linux/netdevice.h
 @@ -0,0 +1,265 @@
@@ -1540,7 +1541,7 @@ index 00000000..e79d2d79
 +#endif
 diff --git a/emulation/linux/printk.h b/emulation/linux/printk.h
 new file mode 100644
-index 00000000..7d55af7f
+index 0000000..7d55af7
 --- /dev/null
 +++ b/emulation/linux/printk.h
 @@ -0,0 +1,15 @@
@@ -1561,7 +1562,7 @@ index 00000000..7d55af7f
 +#endif
 diff --git a/emulation/linux/semaphore.h b/emulation/linux/semaphore.h
 new file mode 100644
-index 00000000..037feb39
+index 0000000..037feb3
 --- /dev/null
 +++ b/emulation/linux/semaphore.h
 @@ -0,0 +1,23 @@
@@ -1590,7 +1591,7 @@ index 00000000..037feb39
 +#endif
 diff --git a/emulation/linux/skbuff.h b/emulation/linux/skbuff.h
 new file mode 100644
-index 00000000..569d5768
+index 0000000..569d576
 --- /dev/null
 +++ b/emulation/linux/skbuff.h
 @@ -0,0 +1,60 @@
@@ -1656,7 +1657,7 @@ index 00000000..569d5768
 +#endif
 diff --git a/emulation/linux/slab.h b/emulation/linux/slab.h
 new file mode 100644
-index 00000000..cbd8b084
+index 0000000..cbd8b08
 --- /dev/null
 +++ b/emulation/linux/slab.h
 @@ -0,0 +1,6 @@
@@ -1668,7 +1669,7 @@ index 00000000..cbd8b084
 +#endif
 diff --git a/emulation/linux/time.h b/emulation/linux/time.h
 new file mode 100644
-index 00000000..32d499fb
+index 0000000..32d499f
 --- /dev/null
 +++ b/emulation/linux/time.h
 @@ -0,0 +1,7 @@
@@ -1681,7 +1682,7 @@ index 00000000..32d499fb
 +#endif
 diff --git a/emulation/linux/timer.h b/emulation/linux/timer.h
 new file mode 100644
-index 00000000..dabb2d1a
+index 0000000..dabb2d1
 --- /dev/null
 +++ b/emulation/linux/timer.h
 @@ -0,0 +1,4 @@
@@ -1691,7 +1692,7 @@ index 00000000..dabb2d1a
 +#endif
 diff --git a/emulation/linux/vmalloc.h b/emulation/linux/vmalloc.h
 new file mode 100644
-index 00000000..0715569d
+index 0000000..0715569
 --- /dev/null
 +++ b/emulation/linux/vmalloc.h
 @@ -0,0 +1,19 @@
@@ -1716,7 +1717,7 @@ index 00000000..0715569d
 +#endif
 diff --git a/emulation/linux/wait.h b/emulation/linux/wait.h
 new file mode 100644
-index 00000000..66df6f22
+index 0000000..66df6f2
 --- /dev/null
 +++ b/emulation/linux/wait.h
 @@ -0,0 +1,38 @@
@@ -1759,7 +1760,7 @@ index 00000000..66df6f22
 +
 +#endif
 diff --git a/globals.h b/globals.h
-index b5927729..3460e348 100644
+index b592772..3460e34 100644
 --- a/globals.h
 +++ b/globals.h
 @@ -60,5 +60,16 @@
@@ -1780,7 +1781,7 @@ index b5927729..3460e348 100644
  
  #endif
 diff --git a/include/ecrt.h b/include/ecrt.h
-index 283adf06..696ca3b3 100644
+index 283adf0..696ca3b 100644
 --- a/include/ecrt.h
 +++ b/include/ecrt.h
 @@ -540,6 +540,13 @@ typedef enum {
@@ -1825,7 +1826,7 @@ index 283adf06..696ca3b3 100644
  #if __BYTE_ORDER == __LITTLE_ENDIAN
  
 diff --git a/lib/Makefile.am b/lib/Makefile.am
-index 1b08d93a..f062589c 100644
+index 1b08d93..f062589 100644
 --- a/lib/Makefile.am
 +++ b/lib/Makefile.am
 @@ -53,6 +53,10 @@ noinst_HEADERS = \
@@ -1840,7 +1841,7 @@ index 1b08d93a..f062589c 100644
  
  if ENABLE_RTDM
 diff --git a/lib/common.c b/lib/common.c
-index 853f232c..1d37863d 100644
+index 853f232..1d37863 100644
 --- a/lib/common.c
 +++ b/lib/common.c
 @@ -41,6 +41,10 @@
@@ -1888,7 +1889,7 @@ index 853f232c..1d37863d 100644
  }
  
 diff --git a/lib/domain.c b/lib/domain.c
-index 1ee838b8..0524d88f 100644
+index 1ee838b..0524d88 100644
 --- a/lib/domain.c
 +++ b/lib/domain.c
 @@ -80,7 +80,7 @@ size_t ecrt_domain_size(const ec_domain_t *domain)
@@ -1928,7 +1929,7 @@ index 1ee838b8..0524d88f 100644
          fprintf(stderr, "Failed to queue domain: %s\n",
                  strerror(EC_IOCTL_ERRNO(ret)));
 diff --git a/lib/ioctl.h b/lib/ioctl.h
-index c79a9a26..dc28f374 100644
+index c79a9a2..dc28f37 100644
 --- a/lib/ioctl.h
 +++ b/lib/ioctl.h
 @@ -45,6 +45,24 @@
@@ -1966,7 +1967,7 @@ index c79a9a26..dc28f374 100644
  
 diff --git a/lib/libethercat.pc.in b/lib/libethercat.pc.in
 new file mode 100644
-index 00000000..48efb05d
+index 0000000..48efb05
 --- /dev/null
 +++ b/lib/libethercat.pc.in
 @@ -0,0 +1,10 @@
@@ -1981,7 +1982,7 @@ index 00000000..48efb05d
 +Libs: -L${libdir} -lethercat
 +Cflags: -I${includedir} -fno-strict-aliasing -DEC_MASTER_IN_USERSPACE
 diff --git a/lib/master.c b/lib/master.c
-index b4809914..dc6f77ce 100644
+index b480991..dc6f77c 100644
 --- a/lib/master.c
 +++ b/lib/master.c
 @@ -215,7 +215,7 @@ int ecrt_master_select_reference_clock(ec_master_t *master,
@@ -2014,7 +2015,7 @@ index b4809914..dc6f77ce 100644
          // Access the mapped region to cause the initial page fault
          master->process_data[0] = 0x00;
 diff --git a/master/Makefile.am b/master/Makefile.am
-index ab855f61..e9cb23f5 100644
+index ab855f6..e9cb23f 100644
 --- a/master/Makefile.am
 +++ b/master/Makefile.am
 @@ -91,3 +91,76 @@ clean-local:
@@ -2095,7 +2096,7 @@ index ab855f61..e9cb23f5 100644
 +
 +endif
 diff --git a/master/cdev.c b/master/cdev.c
-index d16e405c..467321f8 100644
+index d16e405..467321f 100644
 --- a/master/cdev.c
 +++ b/master/cdev.c
 @@ -51,6 +51,50 @@
@@ -2211,7 +2212,7 @@ index d16e405c..467321f8 100644
 +
  /*****************************************************************************/
 diff --git a/master/cdev.h b/master/cdev.h
-index a06bb1c9..1a7bd18a 100644
+index a06bb1c..1a7bd18 100644
 --- a/master/cdev.h
 +++ b/master/cdev.h
 @@ -52,6 +52,10 @@ typedef struct {
@@ -2226,7 +2227,7 @@ index a06bb1c9..1a7bd18a 100644
  int ec_cdev_init(ec_cdev_t *, ec_master_t *, dev_t);
  void ec_cdev_clear(ec_cdev_t *);
 diff --git a/master/device.h b/master/device.h
-index 0a0e889b..2a1b596a 100644
+index 0a0e889..2a1b596 100644
 --- a/master/device.h
 +++ b/master/device.h
 @@ -48,7 +48,11 @@
@@ -2243,7 +2244,7 @@ index 0a0e889b..2a1b596a 100644
  #include "debug.h"
 diff --git a/master/ethercat_master.c b/master/ethercat_master.c
 new file mode 100644
-index 00000000..c2d6fde9
+index 0000000..c2d6fde
 --- /dev/null
 +++ b/master/ethercat_master.c
 @@ -0,0 +1,106 @@
@@ -2354,7 +2355,7 @@ index 00000000..c2d6fde9
 +    return EXIT_SUCCESS;
 +}
 diff --git a/master/ethernet.c b/master/ethernet.c
-index ebec2cbc..30f5dfd1 100644
+index ebec2cb..30f5dfd 100644
 --- a/master/ethernet.c
 +++ b/master/ethernet.c
 @@ -146,11 +146,11 @@ int ec_eoe_init(
@@ -2394,7 +2395,7 @@ index ebec2cbc..30f5dfd1 100644
  }
  
 diff --git a/master/foe_request.c b/master/foe_request.c
-index 794d3d9c..afb0c358 100644
+index 794d3d9..afb0c35 100644
 --- a/master/foe_request.c
 +++ b/master/foe_request.c
 @@ -56,7 +56,7 @@ void ec_foe_request_clear_data(ec_foe_request_t *);
@@ -2407,7 +2408,7 @@ index 794d3d9c..afb0c358 100644
      INIT_LIST_HEAD(&req->list);
      req->buffer = NULL;
 diff --git a/master/foe_request.h b/master/foe_request.h
-index 25b9e638..d6ca8289 100644
+index 25b9e63..d6ca828 100644
 --- a/master/foe_request.h
 +++ b/master/foe_request.h
 @@ -64,14 +64,14 @@ typedef struct {
@@ -2428,7 +2429,7 @@ index 25b9e638..d6ca8289 100644
  
  int ec_foe_request_alloc(ec_foe_request_t *, size_t);
 diff --git a/master/fsm_coe.c b/master/fsm_coe.c
-index cea0b023..c38dade2 100644
+index cea0b02..c38dade 100644
 --- a/master/fsm_coe.c
 +++ b/master/fsm_coe.c
 @@ -1139,7 +1139,7 @@ void ec_fsm_coe_dict_entry_response(
@@ -2441,7 +2442,7 @@ index cea0b023..c38dade2 100644
                  EC_SLAVE_ERR(slave, "Failed to allocate SDO entry name!\n");
                  fsm->state = ec_fsm_coe_error;
 diff --git a/master/fsm_foe.c b/master/fsm_foe.c
-index 26ccd79b..4ac13887 100644
+index 26ccd79..4ac1388 100644
 --- a/master/fsm_foe.c
 +++ b/master/fsm_foe.c
 @@ -183,7 +183,7 @@ void ec_fsm_foe_transfer(
@@ -2474,7 +2475,7 @@ index 26ccd79b..4ac13887 100644
          }
          ec_foe_set_rx_error(fsm, FOE_OPCODE_ERROR);
 diff --git a/master/fsm_foe.h b/master/fsm_foe.h
-index 91d6df54..37d7f4ac 100644
+index 91d6df5..37d7f4a 100644
 --- a/master/fsm_foe.h
 +++ b/master/fsm_foe.h
 @@ -67,7 +67,7 @@ struct ec_fsm_foe {
@@ -2496,7 +2497,7 @@ index 91d6df54..37d7f4ac 100644
  };
  
 diff --git a/master/fsm_slave_config.c b/master/fsm_slave_config.c
-index 2ca63f0c..10d11ef0 100644
+index 2ca63f0..10d11ef 100644
 --- a/master/fsm_slave_config.c
 +++ b/master/fsm_slave_config.c
 @@ -34,7 +34,9 @@
@@ -2510,7 +2511,7 @@ index 2ca63f0c..10d11ef0 100644
  #include "globals.h"
  #include "master.h"
 diff --git a/master/ioctl.c b/master/ioctl.c
-index 8565efb6..0cd6b3f1 100644
+index 8565efb..0cd6b3f 100644
 --- a/master/ioctl.c
 +++ b/master/ioctl.c
 @@ -1522,7 +1522,7 @@ static ATTRIBUTES int ec_ioctl_eoe_handler(
@@ -2523,7 +2524,7 @@ index 8565efb6..0cd6b3f1 100644
      data.rx_bytes = eoe->stats.tx_bytes;
      data.rx_rate = eoe->tx_rate;
 diff --git a/master/ioctl.h b/master/ioctl.h
-index 105e54e9..185f04cc 100644
+index 105e54e..185f04c 100644
 --- a/master/ioctl.h
 +++ b/master/ioctl.h
 @@ -279,7 +279,7 @@ typedef struct {
@@ -2607,7 +2608,7 @@ index 105e54e9..185f04cc 100644
   */
 diff --git a/master/libethercat_master.pc.in b/master/libethercat_master.pc.in
 new file mode 100644
-index 00000000..6e5b8a87
+index 0000000..6e5b8a8
 --- /dev/null
 +++ b/master/libethercat_master.pc.in
 @@ -0,0 +1,10 @@
@@ -2622,7 +2623,7 @@ index 00000000..6e5b8a87
 +Libs: -L${libdir} -lethercat_master -lpthread
 +Cflags: -I${includedir} -fno-strict-aliasing -DEC_MASTER_IN_USERSPACE
 diff --git a/master/master.c b/master/master.c
-index 7a677228..e07c4a66 100644
+index 7a67722..e07c4a6 100644
 --- a/master/master.c
 +++ b/master/master.c
 @@ -44,7 +44,9 @@
@@ -2793,7 +2794,7 @@ index 7a677228..e07c4a66 100644
  
      EC_MASTER_DBG(master, 1, "EoE thread exiting...\n");
 diff --git a/master/master.h b/master/master.h
-index d3ea23b7..ad761067 100644
+index d3ea23b..ad76106 100644
 --- a/master/master.h
 +++ b/master/master.h
 @@ -176,7 +176,7 @@ typedef struct {
@@ -2806,7 +2807,7 @@ index d3ea23b7..ad761067 100644
  
  /*****************************************************************************/
 diff --git a/master/module.c b/master/module.c
-index 4f8170ba..ee39789a 100644
+index 4f8170b..ee39789 100644
 --- a/master/module.c
 +++ b/master/module.c
 @@ -103,6 +103,7 @@ int __init ec_init_module(void)
@@ -2925,7 +2926,7 @@ index 4f8170ba..ee39789a 100644
 +}
 +#endif
 diff --git a/master/sdo_request.h b/master/sdo_request.h
-index 80b1c101..16a0f2c5 100644
+index 80b1c10..16a0f2c 100644
 --- a/master/sdo_request.h
 +++ b/master/sdo_request.h
 @@ -41,6 +41,12 @@
@@ -2942,5 +2943,5 @@ index 80b1c101..16a0f2c5 100644
  
  /** CANopen SDO request.
 -- 
-2.34.1
+2.25.1
 

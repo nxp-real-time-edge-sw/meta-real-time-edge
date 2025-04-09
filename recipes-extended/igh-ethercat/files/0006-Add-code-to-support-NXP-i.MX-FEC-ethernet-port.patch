@@ -1,7 +1,7 @@
-From 4010d4372fa8e4416358616591f662c219eca0f6 Mon Sep 17 00:00:00 2001
+From 97e5425f876cee2bd3099b1f996e279f6a71a744 Mon Sep 17 00:00:00 2001
 From: Hongbo Wang <hongbo.wang@nxp.com>
 Date: Thu, 23 Nov 2023 22:05:20 +0800
-Subject: [PATCH 2/2] Add code to support NXP i.MX FEC ethernet port
+Subject: [PATCH 6/7] Add code to support NXP i.MX FEC ethernet port
 
 the verified platform: i.MX8MP, i.MX8MM and i.MX93
 
@@ -47,6 +47,7 @@ Usage for i.MXRT1180 motors:
 Signed-off-by: Yuhang Wang <yuhang.wang@nxp.com>
 Signed-off-by: Lyrix Liu <lyrix.liu@nxp.com>
 Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
 ---
  Readme_For_User_Space_IGH_EtherCAT.txt | 216 +++++++++
  compile.sh                             |  21 +
@@ -106,7 +107,7 @@ Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
 
 diff --git a/Readme_For_User_Space_IGH_EtherCAT.txt b/Readme_For_User_Space_IGH_EtherCAT.txt
 new file mode 100644
-index 00000000..7e465b39
+index 0000000..7e465b3
 --- /dev/null
 +++ b/Readme_For_User_Space_IGH_EtherCAT.txt
 @@ -0,0 +1,216 @@
@@ -328,7 +329,7 @@ index 00000000..7e465b39
 +	Example: 'mem=4096M'
 diff --git a/compile.sh b/compile.sh
 new file mode 100755
-index 00000000..617abcb7
+index 0000000..617abcb
 --- /dev/null
 +++ b/compile.sh
 @@ -0,0 +1,21 @@
@@ -354,7 +355,7 @@ index 00000000..617abcb7
 +
 +ar -M < ./libecat.mri
 diff --git a/configure.ac b/configure.ac
-index 953af99d..3fcb5b60 100644
+index 953af99..3fcb5b6 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -80,7 +80,7 @@ AC_ARG_ENABLE([usecat],
@@ -390,7 +391,7 @@ index 953af99d..3fcb5b60 100644
          include/Makefile
 diff --git a/devices/nxp_userspace/usm_main.c b/devices/nxp_userspace/usm_main.c
 new file mode 100644
-index 00000000..28972ec7
+index 0000000..28972ec
 --- /dev/null
 +++ b/devices/nxp_userspace/usm_main.c
 @@ -0,0 +1,308 @@
@@ -704,7 +705,7 @@ index 00000000..28972ec7
 +module_exit(ec_usm_cleanup_module);
 diff --git a/devices/nxp_userspace/usm_main.h b/devices/nxp_userspace/usm_main.h
 new file mode 100644
-index 00000000..e43a5b7b
+index 0000000..e43a5b7
 --- /dev/null
 +++ b/devices/nxp_userspace/usm_main.h
 @@ -0,0 +1,41 @@
@@ -750,7 +751,7 @@ index 00000000..e43a5b7b
 +
 +#endif
 diff --git a/emulation/linux/jiffies.h b/emulation/linux/jiffies.h
-index eb736b7a..c977b6dc 100644
+index eb736b7..c977b6d 100644
 --- a/emulation/linux/jiffies.h
 +++ b/emulation/linux/jiffies.h
 @@ -37,16 +37,29 @@ typedef u64 cycles_t;
@@ -785,7 +786,7 @@ index eb736b7a..c977b6dc 100644
  
  #endif
 diff --git a/emulation/linux/kthread.h b/emulation/linux/kthread.h
-index 82adf54a..1d18513c 100644
+index 82adf54..1d18513 100644
 --- a/emulation/linux/kthread.h
 +++ b/emulation/linux/kthread.h
 @@ -1,6 +1,7 @@
@@ -873,7 +874,7 @@ index 82adf54a..1d18513c 100644
      pthread_join(task->thread, NULL);
      free(task);
 diff --git a/emulation/linux/skbuff.h b/emulation/linux/skbuff.h
-index 569d5768..4b433a41 100644
+index 569d576..4b433a4 100644
 --- a/emulation/linux/skbuff.h
 +++ b/emulation/linux/skbuff.h
 @@ -12,6 +12,7 @@ struct sk_buff
@@ -903,7 +904,7 @@ index 569d5768..4b433a41 100644
  }
  
 diff --git a/emulation/linux/wait.h b/emulation/linux/wait.h
-index 66df6f22..61e75973 100644
+index 66df6f2..61e7597 100644
 --- a/emulation/linux/wait.h
 +++ b/emulation/linux/wait.h
 @@ -1,6 +1,6 @@
@@ -915,7 +916,7 @@ index 66df6f22..61e75973 100644
  
  struct __wait_queue_head
 diff --git a/examples/Makefile.am b/examples/Makefile.am
-index 9dcbef2c..0a39ef18 100644
+index 9dcbef2..0a39ef1 100644
 --- a/examples/Makefile.am
 +++ b/examples/Makefile.am
 @@ -54,6 +54,10 @@ SUBDIRS += \
@@ -939,7 +940,7 @@ index 9dcbef2c..0a39ef18 100644
  
 diff --git a/examples/motor_control/Makefile.am b/examples/motor_control/Makefile.am
 new file mode 100644
-index 00000000..12b3f230
+index 0000000..12b3f23
 --- /dev/null
 +++ b/examples/motor_control/Makefile.am
 @@ -0,0 +1,42 @@
@@ -987,7 +988,7 @@ index 00000000..12b3f230
 +#------------------------------------------------------------------------------
 diff --git a/examples/motor_control/main.c b/examples/motor_control/main.c
 new file mode 100644
-index 00000000..6c2b9229
+index 0000000..6c2b922
 --- /dev/null
 +++ b/examples/motor_control/main.c
 @@ -0,0 +1,589 @@
@@ -1581,7 +1582,7 @@ index 00000000..6c2b9229
 +	return 0;
 +}
 diff --git a/globals.h b/globals.h
-index 3460e348..b161cab6 100644
+index 3460e34..b161cab 100644
 --- a/globals.h
 +++ b/globals.h
 @@ -57,10 +57,11 @@
@@ -1607,7 +1608,7 @@ index 3460e348..b161cab6 100644
  
  #endif
 diff --git a/include/ecrt.h b/include/ecrt.h
-index 696ca3b3..c01ab7ad 100644
+index 696ca3b..c01ab7a 100644
 --- a/include/ecrt.h
 +++ b/include/ecrt.h
 @@ -541,10 +541,17 @@ extern "C" {
@@ -1633,7 +1634,7 @@ index 696ca3b3..c01ab7ad 100644
  
  /** Returns the version magic of the realtime interface.
 diff --git a/lib/common.c b/lib/common.c
-index 1d37863d..783bcfb0 100644
+index 1d37863..783bcfb 100644
 --- a/lib/common.c
 +++ b/lib/common.c
 @@ -96,6 +96,7 @@ ec_master_t *ecrt_open_master(unsigned int master_index)
@@ -1646,7 +1647,7 @@ index 1d37863d..783bcfb0 100644
              "EtherCAT%u",
 diff --git a/libecat.mri b/libecat.mri
 new file mode 100644
-index 00000000..7f2129e6
+index 0000000..7f2129e
 --- /dev/null
 +++ b/libecat.mri
 @@ -0,0 +1,5 @@
@@ -1656,7 +1657,7 @@ index 00000000..7f2129e6
 +save
 +end
 diff --git a/master/Makefile.am b/master/Makefile.am
-index e9cb23f5..90bd440a 100644
+index e9cb23f..90bd440 100644
 --- a/master/Makefile.am
 +++ b/master/Makefile.am
 @@ -101,12 +101,14 @@ pkgconfigdir = $(libdir)/pkgconfig
@@ -1685,7 +1686,7 @@ index e9cb23f5..90bd440a 100644
  if ENABLE_EOE
  libethercat_master_la_SOURCES += ethernet.c
 diff --git a/master/cdev.c b/master/cdev.c
-index 467321f8..d5cab647 100644
+index 467321f..d5cab64 100644
 --- a/master/cdev.c
 +++ b/master/cdev.c
 @@ -38,6 +38,11 @@
@@ -1865,7 +1866,7 @@ index 467321f8..d5cab647 100644
  /******************************************************************************
   * File operations
 diff --git a/master/cdev.h b/master/cdev.h
-index 1a7bd18a..dcf4f861 100644
+index 1a7bd18..dcf4f86 100644
 --- a/master/cdev.h
 +++ b/master/cdev.h
 @@ -51,8 +51,15 @@ typedef struct {
@@ -1886,7 +1887,7 @@ index 1a7bd18a..dcf4f861 100644
  int ec_cdev_usecat_stop(ec_master_t *master);
  #endif
 diff --git a/master/datagram.h b/master/datagram.h
-index e902fbd4..e1b94f99 100644
+index e902fbd..e1b94f9 100644
 --- a/master/datagram.h
 +++ b/master/datagram.h
 @@ -39,10 +39,13 @@
@@ -1905,7 +1906,7 @@ index e902fbd4..e1b94f99 100644
  
  /** EtherCAT datagram type.
 diff --git a/master/device.c b/master/device.c
-index e25c8301..2d5c2376 100644
+index e25c830..2d5c237 100644
 --- a/master/device.c
 +++ b/master/device.c
 @@ -60,6 +60,30 @@
@@ -1986,7 +1987,7 @@ index e25c8301..2d5c2376 100644
      ec_debug_clear(&device->dbg);
  #endif
 diff --git a/master/device.h b/master/device.h
-index 2a1b596a..5a9141e0 100644
+index 2a1b596..5a9141e 100644
 --- a/master/device.h
 +++ b/master/device.h
 @@ -49,8 +49,12 @@
@@ -2016,7 +2017,7 @@ index 2a1b596a..5a9141e0 100644
  
  /**
 diff --git a/master/ethercat_master.c b/master/ethercat_master.c
-index c2d6fde9..b762918c 100644
+index c2d6fde..b762918 100644
 --- a/master/ethercat_master.c
 +++ b/master/ethercat_master.c
 @@ -24,6 +24,25 @@
@@ -2097,7 +2098,7 @@ index c2d6fde9..b762918c 100644
      return EXIT_SUCCESS;
  }
 diff --git a/master/globals.h b/master/globals.h
-index 840a160c..8b2b0162 100644
+index 840a160..8b2b016 100644
 --- a/master/globals.h
 +++ b/master/globals.h
 @@ -244,8 +244,12 @@ extern const char *ec_device_names[2]; // only main and backup!
@@ -2114,7 +2115,7 @@ index 840a160c..8b2b0162 100644
  /*****************************************************************************/
  
 diff --git a/master/ioctl.c b/master/ioctl.c
-index 0cd6b3f1..0235b4c6 100644
+index 0cd6b3f..0235b4c 100644
 --- a/master/ioctl.c
 +++ b/master/ioctl.c
 @@ -67,7 +67,7 @@ static void ec_ioctl_strcpy(
@@ -2237,7 +2238,7 @@ index 0cd6b3f1..0235b4c6 100644
      if (!data) {
          EC_MASTER_ERR(master, "Failed to allocate %zu bytes of IDN data.\n",
 diff --git a/master/ioctl.h b/master/ioctl.h
-index 185f04cc..a42e4319 100644
+index 185f04c..a42e431 100644
 --- a/master/ioctl.h
 +++ b/master/ioctl.h
 @@ -759,10 +759,9 @@ typedef struct {
@@ -2253,7 +2254,7 @@ index 185f04cc..a42e4319 100644
  /* Emulated ioctl via TCP connection for userspace master */
  static inline int ioctl_usecat_open(int master_index, const char *host)
 diff --git a/master/master.c b/master/master.c
-index e07c4a66..c37a087f 100644
+index e07c4a6..c37a087 100644
 --- a/master/master.c
 +++ b/master/master.c
 @@ -105,6 +105,9 @@ void ec_master_clear_device_stats(ec_master_t *);
@@ -2483,7 +2484,7 @@ index e07c4a66..c37a087f 100644
          slave_info->name[0] = 0;
      }
 diff --git a/master/master.h b/master/master.h
-index ad761067..411ea57b 100644
+index ad76106..411ea57 100644
 --- a/master/master.h
 +++ b/master/master.h
 @@ -108,6 +108,15 @@
@@ -2538,7 +2539,7 @@ index ad761067..411ea57b 100644
  
  /*****************************************************************************/
 diff --git a/master/module.c b/master/module.c
-index ee39789a..43110542 100644
+index ee39789..4311054 100644
 --- a/master/module.c
 +++ b/master/module.c
 @@ -699,10 +699,16 @@ ec_master_t *ecrt_open_master(
@@ -2621,7 +2622,7 @@ index ee39789a..43110542 100644
 +
 +#endif  /* EC_MASTER_IN_USERSPACE */
 diff --git a/master/slave.h b/master/slave.h
-index b71d57e2..5ffb1286 100644
+index b71d57e..5ffb128 100644
 --- a/master/slave.h
 +++ b/master/slave.h
 @@ -103,6 +103,15 @@
@@ -2649,7 +2650,7 @@ index b71d57e2..5ffb1286 100644
  /*****************************************************************************/
  
 diff --git a/master/slave_config.c b/master/slave_config.c
-index 38347872..192aa6ca 100644
+index 3834787..192aa6c 100644
 --- a/master/slave_config.c
 +++ b/master/slave_config.c
 @@ -198,6 +198,30 @@ int ec_slave_config_prepare_fmmu(
@@ -2684,7 +2685,7 @@ index 38347872..192aa6ca 100644
  
  /** Attaches the configuration to the addressed slave object.
 diff --git a/tool/CommandAlias.cpp b/tool/CommandAlias.cpp
-index 87f6435d..9aebfa54 100644
+index 87f6435..9aebfa5 100644
 --- a/tool/CommandAlias.cpp
 +++ b/tool/CommandAlias.cpp
 @@ -143,12 +143,12 @@ void CommandAlias::writeSlaveAlias(
@@ -2718,7 +2719,7 @@ index 87f6435d..9aebfa54 100644
  
  /*****************************************************************************/
 diff --git a/tool/CommandData.cpp b/tool/CommandData.cpp
-index 89a31eeb..8a6d55ac 100644
+index 89a31ee..8a6d55a 100644
 --- a/tool/CommandData.cpp
 +++ b/tool/CommandData.cpp
 @@ -109,12 +109,12 @@ void CommandData::outputDomainData(
@@ -2746,7 +2747,7 @@ index 89a31eeb..8a6d55ac 100644
  
  /****************************************************************************/
 diff --git a/tool/CommandDomains.cpp b/tool/CommandDomains.cpp
-index 13fc6cb3..fdc9d0a1 100644
+index 13fc6cb..fdc9d0a 100644
 --- a/tool/CommandDomains.cpp
 +++ b/tool/CommandDomains.cpp
 @@ -170,12 +170,12 @@ void CommandDomains::showDomain(
@@ -2783,7 +2784,7 @@ index 13fc6cb3..fdc9d0a1 100644
  
  /*****************************************************************************/
 diff --git a/tool/CommandDownload.cpp b/tool/CommandDownload.cpp
-index 0ee59d32..b010c0a2 100644
+index 0ee59d3..b010c0a 100644
 --- a/tool/CommandDownload.cpp
 +++ b/tool/CommandDownload.cpp
 @@ -173,16 +173,16 @@ void CommandDownload::execute(const StringVector &args)
@@ -2861,7 +2862,7 @@ index 0ee59d32..b010c0a2 100644
  
  /*****************************************************************************/
 diff --git a/tool/CommandFoeRead.cpp b/tool/CommandFoeRead.cpp
-index 7221f40b..1a643e03 100644
+index 7221f40..1a643e0 100644
 --- a/tool/CommandFoeRead.cpp
 +++ b/tool/CommandFoeRead.cpp
 @@ -103,14 +103,14 @@ void CommandFoeRead::execute(const StringVector &args)
@@ -2891,7 +2892,7 @@ index 7221f40b..1a643e03 100644
  
  /*****************************************************************************/
 diff --git a/tool/CommandFoeWrite.cpp b/tool/CommandFoeWrite.cpp
-index abd6a3fb..a57e1fbe 100644
+index abd6a3f..a57e1fb 100644
 --- a/tool/CommandFoeWrite.cpp
 +++ b/tool/CommandFoeWrite.cpp
 @@ -126,14 +126,14 @@ void CommandFoeWrite::execute(const StringVector &args)
@@ -2939,7 +2940,7 @@ index abd6a3fb..a57e1fbe 100644
      }
  }
 diff --git a/tool/CommandRegRead.cpp b/tool/CommandRegRead.cpp
-index d1d83140..27a2dbf7 100644
+index d1d8314..27a2dbf 100644
 --- a/tool/CommandRegRead.cpp
 +++ b/tool/CommandRegRead.cpp
 @@ -150,23 +150,23 @@ void CommandRegRead::execute(const StringVector &args)
@@ -2971,7 +2972,7 @@ index d1d83140..27a2dbf7 100644
  
  /*****************************************************************************/
 diff --git a/tool/CommandRegWrite.cpp b/tool/CommandRegWrite.cpp
-index 9a8a57e9..1e4f72a7 100644
+index 9a8a57e..1e4f72a 100644
 --- a/tool/CommandRegWrite.cpp
 +++ b/tool/CommandRegWrite.cpp
 @@ -128,16 +128,16 @@ void CommandRegWrite::execute(const StringVector &args)
@@ -3047,7 +3048,7 @@ index 9a8a57e9..1e4f72a7 100644
  }
  
 diff --git a/tool/CommandSiiRead.cpp b/tool/CommandSiiRead.cpp
-index 1c606e38..8aa7e26a 100644
+index 1c606e3..8aa7e26 100644
 --- a/tool/CommandSiiRead.cpp
 +++ b/tool/CommandSiiRead.cpp
 @@ -104,12 +104,12 @@ void CommandSiiRead::execute(const StringVector &args)
@@ -3075,7 +3076,7 @@ index 1c606e38..8aa7e26a 100644
  
  /****************************************************************************/
 diff --git a/tool/CommandSiiWrite.cpp b/tool/CommandSiiWrite.cpp
-index ad02b4f1..e449dc13 100644
+index ad02b4f..e449dc1 100644
 --- a/tool/CommandSiiWrite.cpp
 +++ b/tool/CommandSiiWrite.cpp
 @@ -105,7 +105,7 @@ void CommandSiiWrite::execute(const StringVector &args)
@@ -3131,7 +3132,7 @@ index ad02b4f1..e449dc13 100644
  }
  
 diff --git a/tool/CommandSoeRead.cpp b/tool/CommandSoeRead.cpp
-index 2ad4c0f8..eb2c0379 100644
+index 2ad4c0f..eb2c037 100644
 --- a/tool/CommandSoeRead.cpp
 +++ b/tool/CommandSoeRead.cpp
 @@ -148,16 +148,16 @@ void CommandSoeRead::execute(const StringVector &args)
@@ -3169,7 +3170,7 @@ index 2ad4c0f8..eb2c0379 100644
  
  /*****************************************************************************/
 diff --git a/tool/CommandSoeWrite.cpp b/tool/CommandSoeWrite.cpp
-index 382ba8d6..3ec75ab6 100644
+index 382ba8d..3ec75ab 100644
 --- a/tool/CommandSoeWrite.cpp
 +++ b/tool/CommandSoeWrite.cpp
 @@ -158,16 +158,16 @@ void CommandSoeWrite::execute(const StringVector &args)
@@ -3212,7 +3213,7 @@ index 382ba8d6..3ec75ab6 100644
  
  /*****************************************************************************/
 diff --git a/tool/CommandUpload.cpp b/tool/CommandUpload.cpp
-index 439eeab3..b5f639fa 100644
+index 439eeab..b5f639f 100644
 --- a/tool/CommandUpload.cpp
 +++ b/tool/CommandUpload.cpp
 @@ -151,18 +151,18 @@ void CommandUpload::execute(const StringVector &args)
@@ -3252,7 +3253,7 @@ index 439eeab3..b5f639fa 100644
  
  /*****************************************************************************/
 diff --git a/tool/Makefile.am b/tool/Makefile.am
-index 9d551c7d..f865be94 100644
+index 9d551c7..f865be9 100644
 --- a/tool/Makefile.am
 +++ b/tool/Makefile.am
 @@ -33,9 +33,9 @@
@@ -3289,7 +3290,7 @@ index 9d551c7d..f865be94 100644
  	-fno-strict-aliasing
  
 diff --git a/tool/MasterDevice.cpp b/tool/MasterDevice.cpp
-index ca023246..5c487fb1 100644
+index ca02324..5c487fb 100644
 --- a/tool/MasterDevice.cpp
 +++ b/tool/MasterDevice.cpp
 @@ -40,6 +40,122 @@ using namespace std;
@@ -3483,7 +3484,7 @@ index ca023246..5c487fb1 100644
          err << "Failed to command rescan: " << strerror(errno);
          throw MasterDeviceException(err);
 diff --git a/tool/MasterDevice.h b/tool/MasterDevice.h
-index 7398f978..a5d7f36a 100644
+index 7398f97..a5d7f36 100644
 --- a/tool/MasterDevice.h
 +++ b/tool/MasterDevice.h
 @@ -38,6 +38,28 @@ using namespace std;
@@ -3516,5 +3517,5 @@ index 7398f978..a5d7f36a 100644
  class MasterDeviceException:
      public runtime_error
 -- 
-2.34.1
+2.25.1
 

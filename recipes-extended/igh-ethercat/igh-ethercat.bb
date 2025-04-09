@@ -11,40 +11,9 @@ SRCREV = "418dc4b24f4eeba78f644984894b740428da3e84"
 
 SRC_URI += "\
     file://0001-Fixed-compilation-error-for-the-EtherCat-drivers.patch \
-    file://0002-Modify-the-example-code.patch \
-    file://0003-Fixed-compilation-error-for-the-IGH-EtherCAT.patch \
-    file://0004-replace-the-init_timer-with-timer_setup-function.patch \
-    file://0005-igh-ethernet-change-the-type-of-eccdev_vma_fault-to-.patch \
-    file://0006-examples-user-simplify-the-Igh-test-case.patch \
-    file://0007-configure-Fix-the-subdir-objects-error.patch \
-    file://0008-master-master-fix-the-issue-of-sched_setscheduler-un.patch \
-    file://0009-device-fec-Add-fec-device.patch \
-    file://0010-device-fec-add-fec-support-on-conf-script.patch \
-    file://0011-Fix-ethercat-tool-compilation.patch \
-    file://0012-enect-Add-enetc-souce-code-based-on-linux-4.14.patch \
-    file://0013-ec_enetc-Add-ec_enetc-native-driver-based-on-linux-4.patch \
-    file://0014-enetc-port-enetc-vf-driver-to-linux-5.10.patch \
-    file://0015-enetc-add-pf-device-support-for-linux-5.10.patch \
-    file://0016-enetc-adjust-the-link-status-dynamically-for-ec_mast.patch \
-    file://0017-enetc-mq-is-useless-to-ndev-struct.patch \
-    file://0018-enetc-add-enetc-support-on-scripts.patch \
-    file://0001-Add-support-for-NXP-DPAA1-ethercat-port.patch \
-    file://0002-igh_ethercat-fix-calltrace-issue-caused-by-ethercatc.patch \
-    file://0001-enetc-fix-the-compile-errors-when-upgrading-to-Linux.patch \
-    file://0001-dpaa1-Add-module-license.patch \
-    file://0001-fec-fix-the-compile-error-when-upgrading-to-Linux-5..patch \
-    file://0001-enetc-upgrade-to-be-compatible-to-Linux-5.15.52.patch \
-    file://0001-device-fec-rgmii_rxc_dly-is-set-to-true-on-i.mx8dxl.patch \
-    file://0001-Fix-igh-ethercat-compile-failure-issue.patch \
-    file://0001-igh-fix-igh-compile-failed-on-ls1028.patch \
-    file://0001-Native-Driver-fix-ec_fec-kernel-module-insmod-failur.patch \
-    file://0001-net-enetc-use-lynx_pcs_create_mdiodev.patch \
-    file://0002-net-enetc-integrate-SerDes-phys-with-lynx-pcs.patch \
-    file://0001-Use-new-igh-native-dts.patch \
-    file://0001-fix-compile-error-because-of-linux-kernel-upgrade-to.patch \
-    file://0001-igh-8mm-fix-compile-error-due-to-kernel-upgrade-to-v.patch \
-    file://0001-ls1028-fix-enetc-compile-error-because-of-kernel-upg.patch \
-    file://0001-Delete-power_runtime-of-mdio-read-and-write.patch \
+    file://0002-fec-enect-Add-fec-and-enect-device.patch \
+    file://0003-Fixed-compilation-errors-when-upgrading-to-Linux-5.x.patch \
+    file://0004-Fixed-compilation-errors-because-of-linux-kernel-upg.patch \
 "
 S = "${WORKDIR}/git"
 
