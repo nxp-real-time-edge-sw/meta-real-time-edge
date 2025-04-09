@@ -15,7 +15,7 @@ SRC_URI = "file://bee.c \
            file://Reset_Routines.h \
            file://Reset_Routines.c"
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/src"
 
 do_install () {
     install -d ${D}/${bindir}

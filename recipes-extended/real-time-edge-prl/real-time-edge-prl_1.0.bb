@@ -7,9 +7,9 @@ SRC_URI = "file://LICENSE \
            file://Makefile \
 "
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/src"
 
 do_install:append() {
     install -d ${D}/${bindir}
-    install -m 0755 prl ${D}/${bindir}
+    install -m 0755 ${S}/prl ${D}/${bindir}
 }

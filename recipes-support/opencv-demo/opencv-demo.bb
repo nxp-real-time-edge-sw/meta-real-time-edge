@@ -6,11 +6,11 @@ SRC_URI = "file://app.py \
 	   file://ip.py \
 "
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/src"
 
 do_install() {
 	install -d -m 0755 ${D}/usr/demo
-	install -p ${S}/*.py ${D}/usr/demo
+	install -p ${UNPACKDIR}/*.py ${D}/usr/demo
 }
 
 FILES:${PN} += " \
