@@ -8,7 +8,6 @@ SRC_URI:append = " \
     file://0005-README-mention-support-of-IEEE-802.1AS-time-aware-br.patch \
     file://0006-configs-increase-tx_timestamp_timeout-for-default-gP.patch \
     file://0007-onfigs-use-neighborPropDelayThresh-default-value-for.patch \
-    file://0008-vclock-use-missing.h-to-instead-linux-header.patch \
 "
 
 do_install:append () {
