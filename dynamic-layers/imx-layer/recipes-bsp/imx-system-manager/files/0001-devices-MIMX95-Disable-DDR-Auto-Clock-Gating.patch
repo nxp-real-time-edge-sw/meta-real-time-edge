@@ -1,7 +1,7 @@
-From 6e442ee63157b34a2d4fdb5413154b6fb2db6a1a Mon Sep 17 00:00:00 2001
+From 5120708d953889bfa29bdec7a2e8b77757dbcc44 Mon Sep 17 00:00:00 2001
 From: Aziz Sellami <aziz.sellami@nxp.com>
 Date: Fri, 30 Aug 2024 14:58:34 +0200
-Subject: [PATCH 2/2] devices: MIMX95: Disable DDR Auto Clock Gating
+Subject: [PATCH] devices: MIMX95: Disable DDR Auto Clock Gating
 
 DDR Auto Clock Gating Feature has an impact on real-time performance.
 Let's disable this feature.
@@ -15,12 +15,12 @@ Upstream-Status: Pending
  3 files changed, 21 insertions(+)
 
 diff --git a/configs/configtool.pl b/configs/configtool.pl
-index 78a9b65..9afae3b 100755
+index df7bca4..3117ccb 100755
 --- a/configs/configtool.pl
 +++ b/configs/configtool.pl
-@@ -1797,6 +1797,20 @@ sub generate_board
- 			'BOARD_I2C_BAUDRATE', 100000);
- 	}
+@@ -2002,6 +2002,20 @@ sub generate_board
+ 	print $out sprintf("#define %*s %sU\n", -$w,
+ 		'BOARD_I2C_BAUDRATE', $boardI2cBaudrate);
  
 +    # Disable DDR Auto Clock Gating
 +	if (my $def = &get_define('DISABLE_DDR_AUTO_CLK_GATING_ON_INIT', $cfgRef))
@@ -40,23 +40,23 @@ index 78a9b65..9afae3b 100755
      print $out &footer('BOARD');
  
 diff --git a/configs/other/mx95rte.cfg b/configs/other/mx95rte.cfg
-index 82b99f1..8ae2cb2 100755
+index 54acd1e..95d3390 100755
 --- a/configs/other/mx95rte.cfg
 +++ b/configs/other/mx95rte.cfg
-@@ -47,6 +47,8 @@ DEBUG_UART_BAUDRATE  115200
- PMIC_I2C_INSTANCE    1
- PMIC_I2C_BAUDRATE    400000
+@@ -37,6 +37,8 @@ DOX     name=MX95RTE, desc="i.MX95 EVK Real-time-edge Configuration Data"
+ 
+ include ../../devices/MIMX95/configtool/device.cfg
  
 +DISABLE_DDR_AUTO_CLK_GATING_ON_INIT    1
 +
  #==========================================================================#
- # ELE Domain                                                               #
+ # Board                                                                    #
  #==========================================================================#
 diff --git a/devices/MIMX95/system_MIMX95_cm33.c b/devices/MIMX95/system_MIMX95_cm33.c
-index d944ab1..cbbe369 100755
+index f8fe8f0..f0a223b 100755
 --- a/devices/MIMX95/system_MIMX95_cm33.c
 +++ b/devices/MIMX95/system_MIMX95_cm33.c
-@@ -83,6 +83,11 @@ void SystemInit(void)
+@@ -78,6 +78,11 @@ void SystemInit(void)
      /* Disable all SRC boot reset holds */
      SRC_GEN->SCR = 0xFFFFFFFFU;
  
@@ -69,5 +69,5 @@ index d944ab1..cbbe369 100755
      SRC_GEN->SRMASK = (1UL << RST_REASON_CM7_LOCKUP) | 
                        (1UL << RST_REASON_CM7_SWREQ) |
 -- 
-2.47.0
+2.43.0
 
