@@ -8,6 +8,7 @@ UART4 is shared between A53 cores and M4 core.
 Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
 Signed-off-by: Yi Zhao <yi.zhao@nxp.com>
 Signed-off-by: Mingkai Hu <mingkai.hu@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/imx8m/imx8mm/imx8mm_bl31_setup.c | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
