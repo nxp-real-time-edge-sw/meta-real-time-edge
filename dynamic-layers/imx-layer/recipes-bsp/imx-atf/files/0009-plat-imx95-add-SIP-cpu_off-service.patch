@@ -1,26 +1,27 @@
-From 606d1dcd340a5f4bf030a73e65f9795fdc69d62a Mon Sep 17 00:00:00 2001
+From 218319620e4b7eb4e5f62c0926a7fdcf285071f9 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 2 Jan 2025 15:43:30 +0800
-Subject: [PATCH] plat: imx95: add SIP cpu_off service
+Subject: [PATCH 9/9] plat: imx95: add SIP cpu_off service
 
 Added SIP cpu_off service for imx95.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
- plat/imx/common/imx_sip_handler.c     | 2 +-
- plat/imx/common/imx_sip_svc.c         | 2 +-
- plat/imx/common/include/imx_sip_svc.h | 2 +-
- plat/imx/imx95/imx95_bl31_setup.c     | 7 +++++++
- plat/imx/imx95/include/platform_def.h | 3 +++
- plat/imx/imx95/platform.mk            | 3 +++
+ plat/imx/common/imx_sip_handler.c          | 2 +-
+ plat/imx/common/imx_sip_svc.c              | 2 +-
+ plat/imx/common/include/imx_sip_svc.h      | 2 +-
+ plat/imx/imx9/imx95/imx95_bl31_setup.c     | 7 +++++++
+ plat/imx/imx9/imx95/include/platform_def.h | 3 +++
+ plat/imx/imx9/imx95/platform.mk            | 3 +++
  6 files changed, 16 insertions(+), 3 deletions(-)
 
 diff --git a/plat/imx/common/imx_sip_handler.c b/plat/imx/common/imx_sip_handler.c
-index a9199b8a3..d9d9cf2b7 100644
+index bcc270ee7..7210241b9 100644
 --- a/plat/imx/common/imx_sip_handler.c
 +++ b/plat/imx/common/imx_sip_handler.c
-@@ -332,7 +332,7 @@ int imx_get_partition_number(void *handle) {
- 
+@@ -341,7 +341,7 @@ int imx_get_partition_number(void *handle) {
+ }
  #endif
  
 -#if defined(PLAT_imx93) || defined(PLAT_imx8mm) || defined(PLAT_imx8mn) || defined(PLAT_imx8mp)
@@ -29,10 +30,10 @@ index a9199b8a3..d9d9cf2b7 100644
  			u_register_t x1,
  			u_register_t x2,
 diff --git a/plat/imx/common/imx_sip_svc.c b/plat/imx/common/imx_sip_svc.c
-index c6f1a17fd..28a514acb 100644
+index 6d7faa903..8d94825bf 100644
 --- a/plat/imx/common/imx_sip_svc.c
 +++ b/plat/imx/common/imx_sip_svc.c
-@@ -112,7 +112,7 @@ static uintptr_t imx_sip_handler(unsigned int smc_fid,
+@@ -123,7 +123,7 @@ static uintptr_t imx_sip_handler(unsigned int smc_fid,
  	case IMX_SIP_GET_PARTITION_NUMBER:
  		return imx_get_partition_number(handle);
  #endif
@@ -42,22 +43,22 @@ index c6f1a17fd..28a514acb 100644
  		SMC_RET1(handle, imx_sip_cpuoff_handler(smc_fid, x1, x2, x3, x4));
  #endif
 diff --git a/plat/imx/common/include/imx_sip_svc.h b/plat/imx/common/include/imx_sip_svc.h
-index 7f9429aa6..720cea37e 100644
+index 32083c425..33bb2a7e3 100644
 --- a/plat/imx/common/include/imx_sip_svc.h
 +++ b/plat/imx/common/include/imx_sip_svc.h
-@@ -151,7 +151,7 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
- int imx_src_handler(uint32_t smc_fid, u_register_t x1,
- 		    u_register_t x2, u_register_t x3, void *handle);
+@@ -172,7 +172,7 @@ int imx_src_handler(uint32_t smc_fid, u_register_t x1,
+ 		    u_register_t x2, u_register_t x3,
+ 		    u_register_t x4, void *handle);
  #endif
 -#if defined(PLAT_imx93) || defined(PLAT_imx8mm) || defined(PLAT_imx8mn) || defined(PLAT_imx8mp)
 +#if defined(PLAT_imx93) || defined(PLAT_imx95) || defined(PLAT_imx8mm) || defined(PLAT_imx8mn) || defined(PLAT_imx8mp)
  uint64_t imx_sip_cpuoff_handler(uint32_t smc_fid, u_register_t x1,
      u_register_t x2, u_register_t x3, u_register_t x4);
  #endif
-diff --git a/plat/imx/imx95/imx95_bl31_setup.c b/plat/imx/imx95/imx95_bl31_setup.c
-index 175a78a20..658827454 100644
---- a/plat/imx/imx95/imx95_bl31_setup.c
-+++ b/plat/imx/imx95/imx95_bl31_setup.c
+diff --git a/plat/imx/imx9/imx95/imx95_bl31_setup.c b/plat/imx/imx9/imx95/imx95_bl31_setup.c
+index 6f8d68b60..aab449cb0 100644
+--- a/plat/imx/imx9/imx95/imx95_bl31_setup.c
++++ b/plat/imx/imx9/imx95/imx95_bl31_setup.c
 @@ -19,6 +19,9 @@
  #include <plat/common/platform.h>
  
@@ -65,10 +66,10 @@ index 175a78a20..658827454 100644
 +#include <imx_cpu_off.h>
 +#include <imx_interrupt_mgmt.h>
 +#include <imx_intercore_svc.h>
+ #include <imx_scmi_client.h>
  #include <imx8_lpuart.h>
  #include <platform_def.h>
- #include <plat_imx8.h>
-@@ -166,6 +169,10 @@ void bl31_platform_setup(void)
+@@ -167,6 +170,10 @@ void bl31_platform_setup(void)
  	/* get soc info */
  	ele_get_soc_info();
  
@@ -76,26 +77,26 @@ index 175a78a20..658827454 100644
 +	imx_intercore_svc_init();
 +	imx_cpuoff_init();
 +
- 	extern void plat_imx95_setup(void);
- 	plat_imx95_setup();
+ 	plat_imx9_scmi_setup();
  }
-diff --git a/plat/imx/imx95/include/platform_def.h b/plat/imx/imx95/include/platform_def.h
-index 4af8f7902..595e87810 100644
---- a/plat/imx/imx95/include/platform_def.h
-+++ b/plat/imx/imx95/include/platform_def.h
-@@ -89,4 +89,7 @@
- #define IMX_TRUSTY_STACK_SIZE 0x100
+ 
+diff --git a/plat/imx/imx9/imx95/include/platform_def.h b/plat/imx/imx9/imx95/include/platform_def.h
+index e156b63c7..a55a16bbd 100644
+--- a/plat/imx/imx9/imx95/include/platform_def.h
++++ b/plat/imx/imx9/imx95/include/platform_def.h
+@@ -91,4 +91,7 @@
+ #define IMX_TRUSTY_STACK_SIZE 0x200
  #define TRUSTY_SHARED_MEMORY_OBJ_SIZE (12 * 1024)
  
 +/*Use SGI-8 as Inter-Core Service IRQ */
 +#define INTERCORE_SVC_IRQ   0x8
 +
  #endif /* platform_def.h */
-diff --git a/plat/imx/imx95/platform.mk b/plat/imx/imx95/platform.mk
-index 8a06b0787..c0e87d82d 100644
---- a/plat/imx/imx95/platform.mk
-+++ b/plat/imx/imx95/platform.mk
-@@ -40,6 +40,9 @@ BL31_SOURCES		+=	drivers/arm/css/scmi/scmi_common.c		\
+diff --git a/plat/imx/imx9/imx95/platform.mk b/plat/imx/imx9/imx95/platform.mk
+index 08340fa75..23be0651d 100644
+--- a/plat/imx/imx9/imx95/platform.mk
++++ b/plat/imx/imx9/imx95/platform.mk
+@@ -42,6 +42,9 @@ BL31_SOURCES		+=	drivers/arm/css/scmi/scmi_common.c		\
  				lib/cpus/aarch64/cortex_a55.S			\
  				drivers/delay_timer/delay_timer.c		\
  				drivers/delay_timer/generic_delay_timer.c	\

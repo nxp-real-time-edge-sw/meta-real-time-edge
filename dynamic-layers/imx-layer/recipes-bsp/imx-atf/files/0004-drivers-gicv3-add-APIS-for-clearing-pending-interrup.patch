@@ -1,7 +1,7 @@
-From a8f7ede9c6131e6228eab061f1ea4a78a5df68a6 Mon Sep 17 00:00:00 2001
+From 7c5a14ed39f2518958f06983d0e0b3f0d1945c67 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Sat, 12 Oct 2024 16:33:29 +0800
-Subject: [PATCH 4/7] drivers: gicv3: add APIS for clearing pending interrupts
+Subject: [PATCH 4/9] drivers: gicv3: add APIS for clearing pending interrupts
 
 Add two new APIs:
 1. Clean interrupts from distributor for a CPU Core, it will clear pending
@@ -10,6 +10,7 @@ Add two new APIs:
    and disable all SGIs/PPIs on this redistributor interface.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  drivers/arm/gic/v3/gicv3_helpers.c | 40 ++++++++++++++++++++++++++++++
  drivers/arm/gic/v3/gicv3_main.c    | 28 +++++++++++++++++++++
@@ -69,7 +70,7 @@ index e85970dde..345270fd8 100644
   * Helper function to configure the default attributes of (E)PPIs/SGIs
   ******************************************************************************/
 diff --git a/drivers/arm/gic/v3/gicv3_main.c b/drivers/arm/gic/v3/gicv3_main.c
-index 11ccc91f7..cabd8b624 100644
+index 228ca184a..f7b9efdfa 100644
 --- a/drivers/arm/gic/v3/gicv3_main.c
 +++ b/drivers/arm/gic/v3/gicv3_main.c
 @@ -230,6 +230,34 @@ void gicv3_distif_clear(void)
@@ -121,10 +122,10 @@ index ac7c5199f..6de9de7cb 100644
  		const interrupt_prop_t *interrupt_props,
  		unsigned int interrupt_props_num);
 diff --git a/include/drivers/arm/gicv3.h b/include/drivers/arm/gicv3.h
-index 77b7a42d5..0ee62c294 100644
+index c4448e090..c4ec9be26 100644
 --- a/include/drivers/arm/gicv3.h
 +++ b/include/drivers/arm/gicv3.h
-@@ -549,6 +549,8 @@ void gicv3_driver_init(const gicv3_driver_data_t *plat_driver_data);
+@@ -550,6 +550,8 @@ void gicv3_driver_init(const gicv3_driver_data_t *plat_driver_data);
  int gicv3_rdistif_probe(const uintptr_t gicr_frame);
  void gicv3_distif_init(void);
  void gicv3_distif_clear(void);

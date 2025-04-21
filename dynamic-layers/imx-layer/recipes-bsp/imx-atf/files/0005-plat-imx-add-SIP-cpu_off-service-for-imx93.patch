@@ -1,7 +1,7 @@
-From 5e23b7f4632116d0590b68e3c7fac7ba2ef49219 Mon Sep 17 00:00:00 2001
+From 4465ecbe556f67484de6dfd8ab2e11d0ad72f360 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Sat, 21 Sep 2024 16:51:22 +0800
-Subject: [PATCH 5/7] plat: imx: add SIP cpu_off service for imx93
+Subject: [PATCH 5/9] plat: imx: add SIP cpu_off service for imx93
 
 SIP cpu_off service is used to turn off specified CPU Core by any
 other management CPU Core, SGI interrupt is trigged by managment
@@ -9,6 +9,7 @@ CPU Core and handled on specified CPU Core which will be into
 WFI in SGI interrupt handler.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/common/imx_cpu_off.c               | 43 +++++++++++++++++++
  plat/imx/common/imx_intercore_svc.c         | 47 ++++++++++++++++++++-
@@ -178,7 +179,7 @@ index 2b24fe45c..df0a2dbbc 100644
  }
  
 diff --git a/plat/imx/common/imx_sip_handler.c b/plat/imx/common/imx_sip_handler.c
-index 1b764ad5d..588a421cc 100644
+index 5f006898b..5634a9da1 100644
 --- a/plat/imx/common/imx_sip_handler.c
 +++ b/plat/imx/common/imx_sip_handler.c
 @@ -1,5 +1,5 @@
@@ -188,16 +189,16 @@ index 1b764ad5d..588a421cc 100644
   *
   * SPDX-License-Identifier: BSD-3-Clause
   */
-@@ -12,6 +12,7 @@
- #include <platform_def.h>
+@@ -13,6 +13,7 @@
  #include <common/debug.h>
  #include <common/runtime_svc.h>
+ #include <platform_def.h>
 +#include <imx_intercore_svc.h>
  #include <imx_sip_svc.h>
- #include <lib/mmio.h>
  #include <lib/el3_runtime/context_mgmt.h>
-@@ -331,3 +332,26 @@ int imx_get_partition_number(void *handle) {
- 
+ #include <lib/mmio.h>
+@@ -340,3 +341,26 @@ int imx_get_partition_number(void *handle) {
+ }
  #endif
  
 +
@@ -224,10 +225,10 @@ index 1b764ad5d..588a421cc 100644
 +}
 +#endif
 diff --git a/plat/imx/common/imx_sip_svc.c b/plat/imx/common/imx_sip_svc.c
-index e65540851..9957b3df4 100644
+index 6d39e308d..0773d1d91 100644
 --- a/plat/imx/common/imx_sip_svc.c
 +++ b/plat/imx/common/imx_sip_svc.c
-@@ -111,6 +111,10 @@ static uintptr_t imx_sip_handler(unsigned int smc_fid,
+@@ -122,6 +122,10 @@ static uintptr_t imx_sip_handler(unsigned int smc_fid,
  		return imx_configure_memory_for_vpu(handle, x1);
  	case IMX_SIP_GET_PARTITION_NUMBER:
  		return imx_get_partition_number(handle);
@@ -294,10 +295,10 @@ index 3e58b9485..b045bda29 100644
 -#endif		/*	IMX_INTERCORE_SVC_H	*/
 +#endif	/* IMX_INTERCORE_SVC_H	*/
 diff --git a/plat/imx/common/include/imx_sip_svc.h b/plat/imx/common/include/imx_sip_svc.h
-index 6cd76cfaf..b74ba5231 100644
+index 7399a924a..d0ee0640e 100644
 --- a/plat/imx/common/include/imx_sip_svc.h
 +++ b/plat/imx/common/include/imx_sip_svc.h
-@@ -66,6 +66,8 @@
+@@ -69,6 +69,8 @@
  
  #define IMX_SIP_MISC_SET_TEMP		0xC200000C
  
@@ -306,9 +307,9 @@ index 6cd76cfaf..b74ba5231 100644
  #define IMX_SIP_AARCH32			0xC20000FD
  
  int imx_kernel_entry_handler(uint32_t smc_fid, u_register_t x1,
-@@ -149,4 +151,8 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
- int imx_src_handler(uint32_t smc_fid, u_register_t x1,
- 		    u_register_t x2, u_register_t x3, void *handle);
+@@ -170,4 +172,8 @@ int imx_src_handler(uint32_t smc_fid, u_register_t x1,
+ 		    u_register_t x2, u_register_t x3,
+ 		    u_register_t x4, void *handle);
  #endif
 +#if defined(PLAT_imx93)
 +uint64_t imx_sip_cpuoff_handler(uint32_t smc_fid, u_register_t x1,
@@ -316,7 +317,7 @@ index 6cd76cfaf..b74ba5231 100644
 +#endif
  #endif /* __IMX_SIP_SVC_H__ */
 diff --git a/plat/imx/imx93/imx93_bl31_setup.c b/plat/imx/imx93/imx93_bl31_setup.c
-index f7cc0967b..88c8f889f 100644
+index 0a55cec37..b01ab8a8b 100644
 --- a/plat/imx/imx93/imx93_bl31_setup.c
 +++ b/plat/imx/imx93/imx93_bl31_setup.c
 @@ -21,6 +21,7 @@
@@ -327,7 +328,7 @@ index f7cc0967b..88c8f889f 100644
  #include <imx_interrupt_mgmt.h>
  #include <imx_intercore_svc.h>
  #include <imx8_lpuart.h>
-@@ -157,6 +158,7 @@ void bl31_platform_setup(void)
+@@ -161,6 +162,7 @@ void bl31_platform_setup(void)
  
  	imx_el3_interrupt_config();
  	imx_intercore_svc_init();
@@ -336,10 +337,10 @@ index f7cc0967b..88c8f889f 100644
  	/* Init the dram info */
  	dram_info_init(SAVED_DRAM_TIMING_BASE);
 diff --git a/plat/imx/imx93/platform.mk b/plat/imx/imx93/platform.mk
-index 9dff4c219..d4d118fa7 100644
+index 8f828d901..297b4df3b 100644
 --- a/plat/imx/imx93/platform.mk
 +++ b/plat/imx/imx93/platform.mk
-@@ -40,6 +40,7 @@ BL31_SOURCES		+=	plat/common/aarch64/crash_console_helpers.S   \
+@@ -41,6 +41,7 @@ BL31_SOURCES		+=	common/desc_image_load.c			\
  				plat/imx/common/imx_sip_handler.c			\
  				plat/imx/common/imx_interrupt_mgmt.c		\
  				plat/imx/common/imx_intercore_svc.c			\

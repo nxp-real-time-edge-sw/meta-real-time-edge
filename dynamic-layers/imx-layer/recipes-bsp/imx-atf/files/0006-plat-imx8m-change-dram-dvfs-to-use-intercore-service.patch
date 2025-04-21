@@ -1,11 +1,12 @@
-From b4d564727143387ea0fd3df584927b90c1a2ff03 Mon Sep 17 00:00:00 2001
+From 1cea1f37d6ded263f8cec841a2a23189b638d01a Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Wed, 25 Sep 2024 17:33:47 +0800
-Subject: [PATCH 6/7] plat: imx8m: change dram dvfs to use intercore service
+Subject: [PATCH 6/9] plat: imx8m: change dram dvfs to use intercore service
 
 So that the same SGI irq can be shared with SIP cpu_off service.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/imx8m/ddr/dram.c | 22 ++++------------------
  1 file changed, 4 insertions(+), 18 deletions(-)

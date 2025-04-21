@@ -1,11 +1,12 @@
-From 54b4c39e8e4472923c12c4ebdac29ff098537afd Mon Sep 17 00:00:00 2001
+From 393ba0ddfbf426072c3810edb333caaad8c279da Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Wed, 25 Sep 2024 18:06:38 +0800
-Subject: [PATCH 3/7] plat: imx93: change dram dvfs to use intercore service
+Subject: [PATCH 3/9] plat: imx93: change dram dvfs to use intercore service
 
 So that SGI irq can be shared with SIP cpu_off service.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/imx93/ddr/dram.c             | 17 +++--------------
  plat/imx/imx93/imx93_bl31_setup.c     |  2 ++
@@ -80,7 +81,7 @@ index ade2e1810..dcdffb872 100644
  	/* Make sure all the cpu in WFE */
  	while (1) {
 diff --git a/plat/imx/imx93/imx93_bl31_setup.c b/plat/imx/imx93/imx93_bl31_setup.c
-index 6f447e3b8..f7cc0967b 100644
+index 03384f8e9..0a55cec37 100644
 --- a/plat/imx/imx93/imx93_bl31_setup.c
 +++ b/plat/imx/imx93/imx93_bl31_setup.c
 @@ -22,6 +22,7 @@
@@ -89,9 +90,9 @@ index 6f447e3b8..f7cc0967b 100644
  #include <imx_interrupt_mgmt.h>
 +#include <imx_intercore_svc.h>
  #include <imx8_lpuart.h>
+ #include <plat_common.h>
  #include <plat_imx8.h>
- #include <platform_def.h>
-@@ -155,6 +156,7 @@ void bl31_platform_setup(void)
+@@ -159,6 +160,7 @@ void bl31_platform_setup(void)
  	ele_get_soc_info();
  
  	imx_el3_interrupt_config();
@@ -100,11 +101,11 @@ index 6f447e3b8..f7cc0967b 100644
  	/* Init the dram info */
  	dram_info_init(SAVED_DRAM_TIMING_BASE);
 diff --git a/plat/imx/imx93/include/platform_def.h b/plat/imx/imx93/include/platform_def.h
-index 2d140400d..ddc52fb8b 100644
+index 1c5a517fe..6b04bb2d7 100644
 --- a/plat/imx/imx93/include/platform_def.h
 +++ b/plat/imx/imx93/include/platform_def.h
-@@ -124,4 +124,7 @@
- #define IMX_TRUSTY_STACK_SIZE 0x100
+@@ -127,4 +127,7 @@
+ #define IMX_TRUSTY_STACK_SIZE 0x200
  #define TRUSTY_SHARED_MEMORY_OBJ_SIZE (12 * 1024)
  
 +/*Use SGI-8 as Inter-Core Service IRQ */
@@ -112,10 +113,10 @@ index 2d140400d..ddc52fb8b 100644
 +
  #endif /* platform_def.h */
 diff --git a/plat/imx/imx93/platform.mk b/plat/imx/imx93/platform.mk
-index 64363aec2..9dff4c219 100644
+index bf09ca906..8f828d901 100644
 --- a/plat/imx/imx93/platform.mk
 +++ b/plat/imx/imx93/platform.mk
-@@ -39,6 +39,7 @@ BL31_SOURCES		+=	plat/common/aarch64/crash_console_helpers.S   \
+@@ -40,6 +40,7 @@ BL31_SOURCES		+=	common/desc_image_load.c			\
  				plat/imx/common/imx_sip_svc.c			\
  				plat/imx/common/imx_sip_handler.c			\
  				plat/imx/common/imx_interrupt_mgmt.c		\

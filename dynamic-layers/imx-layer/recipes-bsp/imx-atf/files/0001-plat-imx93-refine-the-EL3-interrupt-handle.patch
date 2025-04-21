@@ -1,13 +1,14 @@
-From 56daa28a5a6184991233e8dc4c6a8f2c023e920a Mon Sep 17 00:00:00 2001
+From ddeecdc4c91c88ab6dcde074497e99905b78a101 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 5 Sep 2024 18:28:59 +0800
-Subject: [PATCH 1/7] plat: imx93: refine the EL3 interrupt handle
+Subject: [PATCH 1/9] plat: imx93: refine the EL3 interrupt handle
 
 Added a common interrupt handler for all EL3 interrupt, so can handle
 more EL3 interrupt.
 Modify DRAM driver to use the common interrupt API.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/common/imx_interrupt_mgmt.c         | 73 ++++++++++++++++++++
  plat/imx/common/include/imx_interrupt_mgmt.h | 23 ++++++
@@ -193,7 +194,7 @@ index 99220bb53..ade2e1810 100644
  	/* Make sure all the cpu in WFE */
  	while (1) {
 diff --git a/plat/imx/imx93/imx93_bl31_setup.c b/plat/imx/imx93/imx93_bl31_setup.c
-index 7b7aa30f3..6f447e3b8 100644
+index fc4ad9a8e..03384f8e9 100644
 --- a/plat/imx/imx93/imx93_bl31_setup.c
 +++ b/plat/imx/imx93/imx93_bl31_setup.c
 @@ -1,5 +1,5 @@
@@ -209,9 +210,9 @@ index 7b7aa30f3..6f447e3b8 100644
  #include <dram.h>
 +#include <imx_interrupt_mgmt.h>
  #include <imx8_lpuart.h>
+ #include <plat_common.h>
  #include <plat_imx8.h>
- #include <platform_def.h>
-@@ -153,6 +154,8 @@ void bl31_platform_setup(void)
+@@ -157,6 +158,8 @@ void bl31_platform_setup(void)
  	/* get soc info */
  	ele_get_soc_info();
  
@@ -221,10 +222,10 @@ index 7b7aa30f3..6f447e3b8 100644
  	dram_info_init(SAVED_DRAM_TIMING_BASE);
  
 diff --git a/plat/imx/imx93/platform.mk b/plat/imx/imx93/platform.mk
-index a43d3c4f5..64363aec2 100644
+index 5384fb4da..bf09ca906 100644
 --- a/plat/imx/imx93/platform.mk
 +++ b/plat/imx/imx93/platform.mk
-@@ -38,6 +38,7 @@ BL31_SOURCES		+=	plat/common/aarch64/crash_console_helpers.S   \
+@@ -39,6 +39,7 @@ BL31_SOURCES		+=	common/desc_image_load.c			\
  				plat/imx/imx93/src.c			\
  				plat/imx/common/imx_sip_svc.c			\
  				plat/imx/common/imx_sip_handler.c			\

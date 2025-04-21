@@ -1,13 +1,14 @@
-From c88af69d4f49b558578c716cca79d7ce1ceb6551 Mon Sep 17 00:00:00 2001
+From 0867102ac1caa72ebca58efb9185aadf6a20f9b7 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Tue, 22 Oct 2024 14:51:23 +0800
-Subject: [PATCH 8/8] plat: imx91: change to use common interrupt service
+Subject: [PATCH 8/9] plat: imx91: change to use common interrupt service
 
 As imx91 and imx93 shares the same dram driver which has beend changed
 to use common interrupt service driver, initialize common interrupt
 service for imx91.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/imx91/imx91_bl31_setup.c     | 5 +++++
  plat/imx/imx91/include/platform_def.h | 3 +++

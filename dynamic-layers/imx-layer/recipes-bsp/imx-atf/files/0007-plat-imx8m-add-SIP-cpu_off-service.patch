@@ -1,11 +1,12 @@
-From 49144c8582d3b08f4918100984b80924c73ceaaa Mon Sep 17 00:00:00 2001
+From 2a57b0005c2785bd9db1dbdc9a5db66286c042e5 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Wed, 25 Sep 2024 17:34:55 +0800
-Subject: [PATCH 7/7] plat: imx8m: add SIP cpu_off service
+Subject: [PATCH 7/9] plat: imx8m: add SIP cpu_off service
 
 Added SIP cpu_off service for imx8mm/n/p.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
 ---
  plat/imx/common/imx_sip_handler.c            | 3 +--
  plat/imx/common/imx_sip_svc.c                | 2 +-
@@ -22,11 +23,11 @@ Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
  12 files changed, 50 insertions(+), 6 deletions(-)
 
 diff --git a/plat/imx/common/imx_sip_handler.c b/plat/imx/common/imx_sip_handler.c
-index 588a421cc..a9199b8a3 100644
+index 5634a9da1..bcc270ee7 100644
 --- a/plat/imx/common/imx_sip_handler.c
 +++ b/plat/imx/common/imx_sip_handler.c
-@@ -332,8 +332,7 @@ int imx_get_partition_number(void *handle) {
- 
+@@ -341,8 +341,7 @@ int imx_get_partition_number(void *handle) {
+ }
  #endif
  
 -
@@ -36,10 +37,10 @@ index 588a421cc..a9199b8a3 100644
  			u_register_t x1,
  			u_register_t x2,
 diff --git a/plat/imx/common/imx_sip_svc.c b/plat/imx/common/imx_sip_svc.c
-index 9957b3df4..c6f1a17fd 100644
+index 0773d1d91..6d7faa903 100644
 --- a/plat/imx/common/imx_sip_svc.c
 +++ b/plat/imx/common/imx_sip_svc.c
-@@ -112,7 +112,7 @@ static uintptr_t imx_sip_handler(unsigned int smc_fid,
+@@ -123,7 +123,7 @@ static uintptr_t imx_sip_handler(unsigned int smc_fid,
  	case IMX_SIP_GET_PARTITION_NUMBER:
  		return imx_get_partition_number(handle);
  #endif
@@ -49,12 +50,12 @@ index 9957b3df4..c6f1a17fd 100644
  		SMC_RET1(handle, imx_sip_cpuoff_handler(smc_fid, x1, x2, x3, x4));
  #endif
 diff --git a/plat/imx/common/include/imx_sip_svc.h b/plat/imx/common/include/imx_sip_svc.h
-index b74ba5231..7f9429aa6 100644
+index d0ee0640e..32083c425 100644
 --- a/plat/imx/common/include/imx_sip_svc.h
 +++ b/plat/imx/common/include/imx_sip_svc.h
-@@ -151,7 +151,7 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
- int imx_src_handler(uint32_t smc_fid, u_register_t x1,
- 		    u_register_t x2, u_register_t x3, void *handle);
+@@ -172,7 +172,7 @@ int imx_src_handler(uint32_t smc_fid, u_register_t x1,
+ 		    u_register_t x2, u_register_t x3,
+ 		    u_register_t x4, void *handle);
  #endif
 -#if defined(PLAT_imx93)
 +#if defined(PLAT_imx93) || defined(PLAT_imx8mm) || defined(PLAT_imx8mn) || defined(PLAT_imx8mp)
@@ -62,7 +63,7 @@ index b74ba5231..7f9429aa6 100644
      u_register_t x2, u_register_t x3, u_register_t x4);
  #endif
 diff --git a/plat/imx/imx8m/imx8mm/imx8mm_bl31_setup.c b/plat/imx/imx8m/imx8mm/imx8mm_bl31_setup.c
-index 179b6226f..5b49b8ef1 100644
+index d90ea51a1..2cee53a4a 100644
 --- a/plat/imx/imx8m/imx8mm/imx8mm_bl31_setup.c
 +++ b/plat/imx/imx8m/imx8mm/imx8mm_bl31_setup.c
 @@ -1,5 +1,6 @@
@@ -82,7 +83,7 @@ index 179b6226f..5b49b8ef1 100644
  #include <gpc.h>
  #include <imx_aipstz.h>
  #include <imx_uart.h>
-@@ -293,6 +297,10 @@ void bl31_platform_setup(void)
+@@ -321,6 +325,10 @@ void bl31_platform_setup(void)
  	/* select the CKIL source to 32K OSC */
  	mmio_write_32(IMX_ANAMIX_BASE + ANAMIX_MISC_CTL, 0x1);
  
@@ -94,7 +95,7 @@ index 179b6226f..5b49b8ef1 100644
  	dram_info_init(SAVED_DRAM_TIMING_BASE);
  
 diff --git a/plat/imx/imx8m/imx8mm/include/platform_def.h b/plat/imx/imx8m/imx8mm/include/platform_def.h
-index 430164d2c..0a47412fc 100644
+index 86d9d056c..c5704ff8a 100644
 --- a/plat/imx/imx8m/imx8mm/include/platform_def.h
 +++ b/plat/imx/imx8m/imx8mm/include/platform_def.h
 @@ -1,8 +1,11 @@
@@ -109,7 +110,7 @@ index 430164d2c..0a47412fc 100644
  
  #include <arch.h>
  #include <common/tbbr/tbbr_img_def.h>
-@@ -195,3 +198,8 @@
+@@ -204,3 +207,8 @@
  #define PLAT_IMX8M_DTO_BASE		0x53000000
  #define PLAT_IMX8M_DTO_MAX_SIZE		0x1000
  #define PLAT_IMX_EVENT_LOG_MAX_SIZE	UL(0x400)
@@ -119,10 +120,10 @@ index 430164d2c..0a47412fc 100644
 +
 +#endif /* platform_def.h */
 diff --git a/plat/imx/imx8m/imx8mm/platform.mk b/plat/imx/imx8m/imx8mm/platform.mk
-index 0a8f12a26..d00bb9941 100644
+index f5e892916..5d0de37f1 100644
 --- a/plat/imx/imx8m/imx8mm/platform.mk
 +++ b/plat/imx/imx8m/imx8mm/platform.mk
-@@ -44,6 +44,9 @@ BL31_SOURCES		+=	plat/imx/common/imx8_helpers.S			\
+@@ -49,6 +49,9 @@ BL31_SOURCES		+=	common/desc_image_load.c			\
  				plat/imx/imx8m/imx8mm/imx8mm_psci.c		\
  				plat/imx/imx8m/imx8mm/gpc.c			\
  				plat/imx/common/imx8_topology.c			\
@@ -131,9 +132,9 @@ index 0a8f12a26..d00bb9941 100644
 +				plat/imx/common/imx_interrupt_mgmt.c		\
  				plat/imx/common/imx_sip_handler.c		\
  				plat/imx/common/imx_sip_svc.c			\
- 				plat/imx/common/imx_uart_console.S		\
+ 				plat/imx/common/imx_common.c			\
 diff --git a/plat/imx/imx8m/imx8mn/imx8mn_bl31_setup.c b/plat/imx/imx8m/imx8mn/imx8mn_bl31_setup.c
-index 312eb32d1..42486633e 100644
+index cc2d63c88..ffa7b3f85 100644
 --- a/plat/imx/imx8m/imx8mn/imx8mn_bl31_setup.c
 +++ b/plat/imx/imx8m/imx8mn/imx8mn_bl31_setup.c
 @@ -1,5 +1,5 @@
@@ -153,7 +154,7 @@ index 312eb32d1..42486633e 100644
  #include <gpc.h>
  #include <imx_aipstz.h>
  #include <imx_uart.h>
-@@ -301,6 +304,10 @@ void bl31_platform_setup(void)
+@@ -309,6 +312,10 @@ void bl31_platform_setup(void)
  	/* select the CKIL source to 32K OSC */
  	mmio_write_32(IMX_ANAMIX_BASE + ANAMIX_MISC_CTL, 0x1);
  
@@ -165,10 +166,10 @@ index 312eb32d1..42486633e 100644
  	dram_info_init(SAVED_DRAM_TIMING_BASE);
  
 diff --git a/plat/imx/imx8m/imx8mn/include/platform_def.h b/plat/imx/imx8m/imx8mn/include/platform_def.h
-index 0d5424c6d..51df51f2f 100644
+index 8a784fc03..a1aac575e 100644
 --- a/plat/imx/imx8m/imx8mn/include/platform_def.h
 +++ b/plat/imx/imx8m/imx8mn/include/platform_def.h
-@@ -190,4 +190,7 @@
+@@ -199,4 +199,7 @@
  #define IMX_SEPARATE_NOBITS_BASE	U(0x950000)
  #define IMX_SEPARATE_NOBITS_LIMIT	U(0x960000)
  
@@ -177,10 +178,10 @@ index 0d5424c6d..51df51f2f 100644
 +
  #endif /* platform_def.h */
 diff --git a/plat/imx/imx8m/imx8mn/platform.mk b/plat/imx/imx8m/imx8mn/platform.mk
-index da4e40aa3..cb0f99043 100644
+index de5b0e43f..f6eefc97c 100644
 --- a/plat/imx/imx8m/imx8mn/platform.mk
 +++ b/plat/imx/imx8m/imx8mn/platform.mk
-@@ -39,6 +39,9 @@ BL31_SOURCES		+=	plat/imx/common/imx8_helpers.S			\
+@@ -44,6 +44,9 @@ BL31_SOURCES		+=	common/desc_image_load.c			\
  				plat/imx/imx8m/imx8mn/imx8mn_psci.c		\
  				plat/imx/imx8m/imx8mn/gpc.c			\
  				plat/imx/common/imx8_topology.c			\
@@ -189,9 +190,9 @@ index da4e40aa3..cb0f99043 100644
 +				plat/imx/common/imx_interrupt_mgmt.c		\
  				plat/imx/common/imx_sip_handler.c		\
  				plat/imx/common/imx_sip_svc.c			\
- 				plat/imx/common/imx_uart_console.S		\
+ 				plat/imx/common/imx_common.c			\
 diff --git a/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c b/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c
-index 1eefdaa81..5b42189ea 100644
+index 559d0e9a1..970774aa5 100644
 --- a/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c
 +++ b/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c
 @@ -1,5 +1,5 @@
@@ -211,7 +212,7 @@ index 1eefdaa81..5b42189ea 100644
  #include <gpc.h>
  #include <imx_aipstz.h>
  #include <imx_uart.h>
-@@ -323,6 +326,10 @@ void bl31_platform_setup(void)
+@@ -365,6 +368,10 @@ void bl31_platform_setup(void)
  	/* select the CKIL source to 32K OSC */
  	mmio_write_32(IMX_ANAMIX_BASE + ANAMIX_MISC_CTL, 0x1);
  
@@ -223,10 +224,10 @@ index 1eefdaa81..5b42189ea 100644
  	dram_info_init(SAVED_DRAM_TIMING_BASE);
  
 diff --git a/plat/imx/imx8m/imx8mp/include/platform_def.h b/plat/imx/imx8m/imx8mp/include/platform_def.h
-index 3b2329196..a313c02d5 100644
+index 216698752..fb2528277 100644
 --- a/plat/imx/imx8m/imx8mp/include/platform_def.h
 +++ b/plat/imx/imx8m/imx8mp/include/platform_def.h
-@@ -232,4 +232,7 @@
+@@ -242,4 +242,7 @@
  #define IMX_SEPARATE_NOBITS_BASE	U(0x960000)
  #define IMX_SEPARATE_NOBITS_LIMIT	U(0x970000)
  
@@ -235,10 +236,10 @@ index 3b2329196..a313c02d5 100644
 +
  #endif /* platform_def.h */
 diff --git a/plat/imx/imx8m/imx8mp/platform.mk b/plat/imx/imx8m/imx8mp/platform.mk
-index 7982a6a4f..c1a9a4819 100644
+index f3b93d443..5e222c485 100644
 --- a/plat/imx/imx8m/imx8mp/platform.mk
 +++ b/plat/imx/imx8m/imx8mp/platform.mk
-@@ -40,6 +40,9 @@ BL31_SOURCES		+=	plat/imx/common/imx8_helpers.S			\
+@@ -45,6 +45,9 @@ BL31_SOURCES		+=	common/desc_image_load.c			\
  				plat/imx/imx8m/imx8mp/imx8mp_psci.c		\
  				plat/imx/imx8m/imx8mp/gpc.c			\
  				plat/imx/common/imx8_topology.c			\
@@ -247,7 +248,7 @@ index 7982a6a4f..c1a9a4819 100644
 +				plat/imx/common/imx_interrupt_mgmt.c		\
  				plat/imx/common/imx_sip_handler.c		\
  				plat/imx/common/imx_sip_svc.c			\
- 				plat/imx/common/imx_uart_console.S		\
+ 				plat/imx/common/imx_common.c			\
 -- 
 2.34.1
 
