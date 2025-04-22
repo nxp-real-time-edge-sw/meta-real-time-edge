@@ -17,6 +17,9 @@ S = "${WORKDIR}/git"
 
 DEPENDS = "openssl"
 
+ERROR_QA:remove = "buildpaths"
+WARN_QA:append = " buildpaths"
+
 do_install:append () {
 	if [ -d ${B}/bin/examples ] && [ -z $(find ${B}/bin/examples -maxdepth 0 -empty) ]
 	then
