@@ -1,4 +1,4 @@
-From 3cbac8c2a1c7d5f853bd7da842bdf09b4e788f00 Mon Sep 17 00:00:00 2001
+From 0fba296f5ca18bc81a4c5cc3e3f364e5900fe2b4 Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Tue, 29 Oct 2024 11:12:08 +0800
 Subject: [PATCH 6/7] configs: increase tx_timestamp_timeout for default/gPTP
@@ -13,10 +13,10 @@ Upstream-Status: Pending
  2 files changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/configs/default.cfg b/configs/default.cfg
-index 00429b9..ca709f4 100644
+index c3ad618..7182aed 100644
 --- a/configs/default.cfg
 +++ b/configs/default.cfg
-@@ -57,7 +57,7 @@ hybrid_e2e		0
+@@ -61,7 +61,7 @@ hybrid_e2e		0
  inhibit_multicast_service	0
  net_sync_monitor	0
  tc_spanning_tree	0

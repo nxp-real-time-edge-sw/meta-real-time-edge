@@ -1,4 +1,4 @@
-From b757121b8f7e36b75eb013908546fd395a80ceac Mon Sep 17 00:00:00 2001
+From 55866de97dde75c36f17b2e71fb710d556a637c9 Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Mon, 28 Oct 2024 18:20:52 +0800
 Subject: [PATCH 3/7] clock: redecide state if get EV_FAULT_DETECTED event
@@ -21,10 +21,10 @@ Upstream-Status: Pending
  1 file changed, 3 insertions(+)
 
 diff --git a/clock.c b/clock.c
-index c217459..0708902 100644
+index 23c9763..91c17d7 100644
 --- a/clock.c
 +++ b/clock.c
-@@ -1815,6 +1815,9 @@ int clock_poll(struct clock *c)
+@@ -1849,6 +1849,9 @@ int clock_poll(struct clock *c)
  				if (EV_ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES == event) {
  					c->sde = 1;
  				}

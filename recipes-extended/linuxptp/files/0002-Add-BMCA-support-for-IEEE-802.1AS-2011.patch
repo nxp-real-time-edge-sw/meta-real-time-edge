@@ -1,6 +1,6 @@
-From f16bd33f29ef2874c687ebc1fc500ecc494d0aa1 Mon Sep 17 00:00:00 2001
+From 7d64d64485e970a8aa67e30e8fc8d39b57bc1c3a Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
-Date: Wed, 30 Oct 2024 17:36:52 +0800
+Date: Sun, 20 Apr 2025 05:36:25 +0800
 Subject: [PATCH 2/7] Add BMCA support for IEEE 802.1AS-2011
 
 According to IEEE 802.1AS-2011, the BMCA used in gPTP is the same
@@ -75,7 +75,7 @@ index 857af05..7f22dc1 100644
 +
  #endif
 diff --git a/port.c b/port.c
-index 652cf7d..d512aef 100644
+index 7fb3ce1..bb26746 100644
 --- a/port.c
 +++ b/port.c
 @@ -316,12 +316,16 @@ void fc_clear(struct foreign_clock *fc)
@@ -128,15 +128,15 @@ index 652cf7d..d512aef 100644
  		broke_threshold = 1;
  	}
  
-@@ -2672,6 +2682,7 @@ void port_close(struct port *p)
+@@ -2862,6 +2872,7 @@ void port_close(struct port *p)
  struct foreign_clock *port_compute_best(struct port *p)
  {
- 	int (*dscmp)(struct dataset *a, struct dataset *b);
+ 	int (*clk_dscmp)(struct dataset *a, struct dataset *b);
 +	int threshold = FOREIGN_MASTER_THRESHOLD;
  	struct foreign_clock *fc;
  	struct ptp_message *tmp;
  
-@@ -2690,7 +2701,10 @@ struct foreign_clock *port_compute_best(struct port *p)
+@@ -2880,7 +2891,10 @@ struct foreign_clock *port_compute_best(struct port *p)
  
  		fc_prune(fc);
  
@@ -148,7 +148,7 @@ index 652cf7d..d512aef 100644
  			continue;
  
  		if (!p->best)
-@@ -3399,19 +3413,6 @@ struct port *port_open(const char *phc_device,
+@@ -3649,19 +3663,6 @@ struct port *port_open(const char *phc_device,
  		goto err_log_name;
  	}
  
@@ -168,9 +168,9 @@ index 652cf7d..d512aef 100644
  	if (port_is_uds(p)) {
  		; /* UDS cannot have a PHC. */
  	} else if (!interface_tsinfo_valid(interface)) {
-@@ -3475,6 +3476,26 @@ struct port *port_open(const char *phc_device,
- 		config_get_int(cfg, p->name, "power_profile.2017.totalTimeInaccuracy");
- 	p->slave_event_monitor = clock_slave_monitor(clock);
+@@ -3728,6 +3729,26 @@ struct port *port_open(const char *phc_device,
+ 	p->spp = config_get_int(cfg, p->name, "spp");
+ 	p->active_key_id = config_get_uint(cfg, p->name, "active_key_id");
  
 +	if (config_get_int(cfg, p->name, "asCapable") == AS_CAPABLE_TRUE) {
 +		p->asCapable = ALWAYS_CAPABLE;

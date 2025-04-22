@@ -1,7 +1,7 @@
-From 32d91b8c94ca77491670e741243a40db67231fdb Mon Sep 17 00:00:00 2001
+From 2230d0b904a927e47e1351df34632d156302c74b Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Date: Tue, 29 Oct 2024 11:13:15 +0800
-Subject: [PATCH 7/7] onfigs: use neighborPropDelayThresh default value for
+Subject: [PATCH 7/7] configs: use neighborPropDelayThresh default value for
  gPTP
 
 Link delay between MACs including PHY delay may be larger than 800ns,
