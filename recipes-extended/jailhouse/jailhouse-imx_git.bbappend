@@ -1,6 +1,6 @@
 
-SRCBRANCH = "lf-6.6.36_2.1.0"
-SRCREV = "327e56941e3e96ef9a291d2decb7add21078d8de"
+SRCBRANCH = "master"
+SRCREV = "399d65450e9a377b4aaff4b0627619174e1c8c46"
 
 PV = "2023.03+git${SRCPV}"
 
@@ -10,6 +10,9 @@ SRC_URI = "${IMX_JAILHOUSE_SRC};branch=${SRCBRANCH}"
 RDEPENDS:${PN} += " \
     pyjailhouse \
 "
+
+ERROR_QA:remove = "buildpaths"
+WARN_QA:append = " buildpaths"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
@@ -69,10 +72,10 @@ DEPENDS += " \
 
 do_install:append() {
     install -d ${D}${JH_DATADIR}/scripts
-    install ${S}/../scripts/*.sh ${D}${JH_DATADIR}/scripts
+    install ${UNPACKDIR}/scripts/*.sh ${D}${JH_DATADIR}/scripts
 
     install -d ${D}${INMATES_DIR}/rootfs
-    install ${S}/../rootfs.cpio ${D}${INMATES_DIR}/rootfs/
+    install ${UNPACKDIR}/rootfs.cpio ${D}${INMATES_DIR}/rootfs/
 
     install -d ${D}${INMATES_DIR}/dtb
     install ${B}/configs/${JH_ARCH}/dts/inmate-ls1043a*.dtb ${D}${INMATES_DIR}/dtb
