@@ -1,0 +1,126 @@
+From 0ef7276ab7a4010adfdd69967cbdd1e63669e5ae Mon Sep 17 00:00:00 2001
+From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Date: Thu, 24 Apr 2025 16:23:07 +0800
+Subject: [PATCH] lldpd: decode Additional Ethernet Capabilities
+
+The preemption capability is enabled in the transmit direction only if
+it is determined that the link partner supports the preemption capability.
+
+This patch adds the decode of Additional Ethernet Capabilities TLV,
+enable the preemption of local port when the preemption status of
+partner is enabled.
+
+Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
+Upstream-Status: Pending
+---
+ src/daemon/protocols/lldp.c | 59 +++++++++++++++++++++++++++++++++----
+ 1 file changed, 54 insertions(+), 5 deletions(-)
+
+diff --git a/src/daemon/protocols/lldp.c b/src/daemon/protocols/lldp.c
+index d123331..4a39064 100644
+--- a/src/daemon/protocols/lldp.c
++++ b/src/daemon/protocols/lldp.c
+@@ -24,6 +24,8 @@
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
++#include <linux/ethtool.h>
++#include <linux/sockios.h>
+ 
+ static int
+ lldpd_af_to_lldp_proto(int af)
+@@ -583,6 +585,7 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
+ {
+ 	struct lldpd_chassis *chassis;
+ 	struct lldpd_port *port;
++	struct lldpd_port *lport = &hardware->h_lport;
+ 	char lldpaddr[ETHER_ADDR_LEN];
+ 	const char dot1[] = LLDP_TLV_ORG_DOT1;
+ 	const char dot3[] = LLDP_TLV_ORG_DOT3;
+@@ -608,6 +611,10 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
+ #ifdef ENABLE_CUSTOM
+ 	struct lldpd_custom *custom = NULL;
+ #endif
++	u_int8_t fp_tlv;
++	struct ethtool_fp sfp;
++	struct ifreq ifr = {};
++	u_int8_t mm_verify;
+ 
+ 	log_debug("lldp", "receive LLDP PDU on %s", hardware->h_ifname);
+ 
+@@ -937,6 +944,11 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
+ 					TAILQ_INSERT_TAIL(&port->p_pids, pi, p_entries);
+ 					pi = NULL;
+ 					break;
++				case LLDP_TLV_DOT1_LA:
++					CHECK_TLV_SIZE(9, "Link aggregation");
++					PEEK_DISCARD_UINT8;
++					port->p_aggregid = PEEK_UINT32;
++					break;
+ 				default:
+ 					/* Unknown Dot1 TLV, ignore it */
+ 					unrecognized = 1;
+@@ -948,6 +960,48 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
+ #else
+ 				/* Dot3 */
+ 				switch (tlv_subtype) {
++				case LLDP_TLV_DOT3_FP:
++					CHECK_TLV_SIZE(6, "IEEE 802.3br");
++					fp_tlv = PEEK_UINT16;
++					port->p_fp.support = fp_tlv & 0x1;
++					port->p_fp.status = (fp_tlv & 0x2) >> 1;
++					port->p_fp.active = (fp_tlv & 0x4) >> 2;
++					port->p_fp.frag_size = (fp_tlv & 0x18) >> 3;
++					if (lport->p_fp.support && port->p_fp.support &&
++					    lport->p_fp.status && port->p_fp.status &&
++					    !lport->p_fp.active) {
++						strlcpy(ifr.ifr_name, hardware->h_ifname, sizeof(ifr.ifr_name));
++						memset(&sfp, 0, sizeof(sfp));
++						ifr.ifr_data = (caddr_t)&sfp;
++
++						sfp.cmd = ETHTOOL_GMM;
++						ioctl(cfg->g_sock, SIOCETHTOOL, &ifr);
++						mm_verify = sfp.verify_enabled;
++
++						if (sfp.tx_enabled) {
++							sfp.cmd = ETHTOOL_SMM;
++							sfp.tx_enabled = 0;
++							sfp.verify_enabled = 0;
++							ioctl(cfg->g_sock, SIOCETHTOOL, &ifr);
++						}
++
++						sfp.tx_enabled = 1;
++						sfp.verify_enabled = mm_verify;
++						ioctl(cfg->g_sock, SIOCETHTOOL, &ifr);
++					} else if ((!port->p_fp.support || !port->p_fp.status) &&
++						    lport->p_fp.active) {
++						strlcpy(ifr.ifr_name, hardware->h_ifname, sizeof(ifr.ifr_name));
++						memset(&sfp, 0, sizeof(sfp));
++						ifr.ifr_data = (caddr_t)&sfp;
++
++						sfp.cmd = ETHTOOL_GMM;
++						ioctl(cfg->g_sock, SIOCETHTOOL, &ifr);
++
++						sfp.cmd = ETHTOOL_SMM;
++						sfp.tx_enabled = 0;
++						ioctl(cfg->g_sock, SIOCETHTOOL, &ifr);
++					}
++					break;
+ 				case LLDP_TLV_DOT3_MAC:
+ 					CHECK_TLV_SIZE(9, "MAC/PHY");
+ 					port->p_macphy.autoneg_support = PEEK_UINT8;
+@@ -958,11 +1012,6 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
+ 					port->p_macphy.autoneg_advertised = PEEK_UINT16;
+ 					port->p_macphy.mau_type = PEEK_UINT16;
+ 					break;
+-				case LLDP_TLV_DOT3_LA:
+-					CHECK_TLV_SIZE(9, "Link aggregation");
+-					PEEK_DISCARD_UINT8;
+-					port->p_aggregid = PEEK_UINT32;
+-					break;
+ 				case LLDP_TLV_DOT3_MFS:
+ 					CHECK_TLV_SIZE(6, "MFS");
+ 					port->p_mfs = PEEK_UINT16;
+-- 
+2.34.1
+
