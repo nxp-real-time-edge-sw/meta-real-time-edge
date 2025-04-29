@@ -1,0 +1,97 @@
+From 3b8a8930f1e11864b8e01be80351a03a61ca02e5 Mon Sep 17 00:00:00 2001
+From: qizhang <jony.zhang@nxp.com>
+Date: Tue, 29 Apr 2025 20:29:27 +0800
+Subject: [PATCH 2/2] fec: fix compile error because of kernel upgrade to
+ 6.12.20
+
+Signed-off-by: qizhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
+---
+ devices/fec/fec_main.c | 16 +++++++---------
+ devices/fec/fec_ptp.c  |  2 +-
+ 2 files changed, 8 insertions(+), 10 deletions(-)
+
+diff --git a/devices/fec/fec_main.c b/devices/fec/fec_main.c
+index e794075..9219a4c 100644
+--- a/devices/fec/fec_main.c
++++ b/devices/fec/fec_main.c
+@@ -1774,13 +1774,13 @@ static int fec_enet_mii_probe(struct net_device *ndev)
+ 				continue;
+ 			if (dev_id--)
+ 				continue;
+-			strlcpy(mdio_bus_id, fep->mii_bus->id, MII_BUS_ID_SIZE);
++			strscpy(mdio_bus_id, fep->mii_bus->id, MII_BUS_ID_SIZE);
+ 			break;
+ 		}
+ 
+ 		if (phy_id >= PHY_MAX_ADDR) {
+ 			netdev_info(ndev, "no PHY, assuming direct connection to switch\n");
+-			strlcpy(mdio_bus_id, "fixed-0", MII_BUS_ID_SIZE);
++			strscpy(mdio_bus_id, "fixed-0", MII_BUS_ID_SIZE);
+ 			phy_id = 0;
+ 		}
+ 
+@@ -1969,9 +1969,9 @@ static void fec_enet_get_drvinfo(struct net_device *ndev,
+ {
+ 	struct fec_enet_private *fep = netdev_priv(ndev);
+ 
+-	strlcpy(info->driver, fep->pdev->dev.driver->name,
++	strscpy(info->driver, fep->pdev->dev.driver->name,
+ 		sizeof(info->driver));
+-	strlcpy(info->bus_info, dev_name(&ndev->dev), sizeof(info->bus_info));
++	strscpy(info->bus_info, dev_name(&ndev->dev), sizeof(info->bus_info));
+ }
+ 
+ static int fec_enet_get_regs_len(struct net_device *ndev)
+@@ -2062,7 +2062,7 @@ static void fec_enet_get_regs(struct net_device *ndev,
+ }
+ 
+ static int fec_enet_get_ts_info(struct net_device *ndev,
+-				struct ethtool_ts_info *info)
++				struct kernel_ethtool_ts_info *info)
+ {
+ 	struct fec_enet_private *fep = netdev_priv(ndev);
+ 
+@@ -3369,7 +3369,7 @@ failed_ioremap:
+ 	return ret;
+ }
+ 
+-static int
++static void
+ fec_drv_remove(struct platform_device *pdev)
+ {
+ 	struct net_device *ndev = platform_get_drvdata(pdev);
+@@ -3395,8 +3395,6 @@ fec_drv_remove(struct platform_device *pdev)
+ 
+ 	clk_disable_unprepare(fep->clk_ahb);
+ 	clk_disable_unprepare(fep->clk_ipg);
+-
+-	return 0;
+ }
+ 
+ static struct platform_driver fec_driver = {
+@@ -3406,7 +3404,7 @@ static struct platform_driver fec_driver = {
+ 	},
+ 	.id_table = fec_devtype,
+ 	.probe	= fec_probe,
+-	.remove	= fec_drv_remove,
++	.remove_new	= fec_drv_remove,
+ };
+ 
+ module_platform_driver(fec_driver);
+diff --git a/devices/fec/fec_ptp.c b/devices/fec/fec_ptp.c
+index 34be459..76a4910 100644
+--- a/devices/fec/fec_ptp.c
++++ b/devices/fec/fec_ptp.c
+@@ -582,7 +582,7 @@ void fec_ptp_init(struct platform_device *pdev, int irq_idx)
+ 	int ret;
+ 
+ 	fep->ptp_caps.owner = THIS_MODULE;
+-	strlcpy(fep->ptp_caps.name, "fec ptp", sizeof(fep->ptp_caps.name));
++	strscpy(fep->ptp_caps.name, "fec ptp", sizeof(fep->ptp_caps.name));
+ 
+ 	fep->ptp_caps.max_adj = 250000000;
+ 	fep->ptp_caps.n_alarm = 0;
+-- 
+2.43.0
+

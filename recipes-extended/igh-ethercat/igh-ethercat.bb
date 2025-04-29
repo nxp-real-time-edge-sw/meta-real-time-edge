@@ -14,8 +14,13 @@ SRC_URI += "\
     file://0002-fec-enect-Add-fec-and-enect-device.patch \
     file://0003-Fixed-compilation-errors-when-upgrading-to-Linux-5.x.patch \
     file://0004-Fixed-compilation-errors-because-of-linux-kernel-upg.patch \
+    file://0001-enetc4-port-enetc4.patch \
+    file://0002-fec-fix-compile-error-because-of-kernel-upgrade-to-6.patch \
 "
 S = "${WORKDIR}/git"
+
+ERROR_QA:remove = "buildpaths"
+WARN_QA:append = " buildpaths"
 
 PACKAGECONFIG ??= "generic"
 
