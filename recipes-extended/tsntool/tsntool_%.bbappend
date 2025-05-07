@@ -2,10 +2,12 @@ DESCRIPTION = "A tool to configure TSN funtionalities in user space for industri
 
 SAVED_DIR := "${THISDIR}"
 
-SRC_URI = "git://github.com/nxp-qoriq/tsntool;protocol=https;nobranch=1"
+TSNTOOL_SRC ?= "git://github.com/nxp-qoriq/tsntool;protocol=https"
+TSNTOOL_BRANCH ?= "master"
+TSNTOOL_SRCREV ?= "dbe0feb2bcf7bf2be2c009cf82398f9fee30ff89"
 
-SRCREV:qoriq = "dbe0feb2bcf7bf2be2c009cf82398f9fee30ff89"
-SRCREV:imx-nxp-bsp = "dbe0feb2bcf7bf2be2c009cf82398f9fee30ff89"
+SRC_URI = "${TSNTOOL_SRC};branch=${TSNTOOL_BRANCH}"
+SRCREV = "${TSNTOOL_SRCREV}"
 
 PREFIX ?= "/usr"
 BINDIR ?= "${PREFIX}/bin"
