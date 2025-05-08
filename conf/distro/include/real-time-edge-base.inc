@@ -109,13 +109,13 @@ KERNEL_DEVICETREE:append:imx95-19x19-lpddr5-evk = " freescale/imx95-19x19-evk-mu
 KERNEL_DEVICETREE:append:imx95-15x15-lpddr4x-evk = " freescale/imx95-15x15-evk-multicore-rtos.dtb"
 
 # dtb for igh
-KERNEL_DEVICETREE:append:imx6ull14x14evk = " imx6ull-14x14-evk-igh.dtb"
+KERNEL_DEVICETREE:append:imx6ull14x14evk = " nxp/imx/imx6ull-14x14-evk-igh.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-igh.dtb"
 KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-igh.dtb"
 KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-igh.dtb"
 
 # dtb for plc
-KERNEL_DEVICETREE:append:imx6ull14x14evk = " imx6ull-14x14-evk-ecat.dtb"
+KERNEL_DEVICETREE:append:imx6ull14x14evk = " nxp/imx/imx6ull-14x14-evk-ecat.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-ecat.dtb"
 KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-ecat.dtb"
 KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-ecat.dtb"
@@ -126,7 +126,7 @@ KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-ecat-userspa
 KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-ecat-userspace.dtb"
 
 # dtb for lpuart
-KERNEL_DEVICETREE:append:imx6ull14x14evk = " imx6ull-14x14-evk-lpuart.dtb"
+KERNEL_DEVICETREE:append:imx6ull14x14evk = " nxp/imx/imx6ull-14x14-evk-lpuart.dtb"
 
 # dtb for imxai2eth-ath
 KERNEL_DEVICETREE:append:imx93-14x14-lpddr4x-evk = " freescale/imx93-14x14-evk-imxai2eth-ath.dtb"

@@ -6,7 +6,7 @@ DELTA_KERNEL_DEFCONFIG:append:lx2160a    = " linux-baremetal-lx2160a.config"
 DELTA_KERNEL_DEFCONFIG:append:ls1021aiot = " linux-baremetal-ls1021a.config"
 
 # update baremetal dts
-KERNEL_DEVICETREE:append:ls1021aiot = " ls1021a-iot-bm.dtb"
+KERNEL_DEVICETREE:append:ls1021aiot = " nxp/ls/ls1021a-iot-bm.dtb"
 KERNEL_DEVICETREE:append:ls1043ardb = " freescale/fsl-ls1043a-rdb-sdk-bm.dtb"
 KERNEL_DEVICETREE:append:ls1046ardb = " freescale/fsl-ls1046a-rdb-sdk-bm.dtb"
 KERNEL_DEVICETREE:append:ls1028ardb = " freescale/fsl-ls1028a-rdb-sdk-bm.dtb"
