@@ -24,7 +24,7 @@ SRC_URI:append:lx2160ardb-rev2 = "file://lx2160ardb-rev2_boot.cmd \
 
 inherit deploy
 
-B = "${WORKDIR}"
+B = "${UNPACKDIR}"
 
 do_configure[noexec] = "1"
 
