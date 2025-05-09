@@ -1,7 +1,7 @@
-From 3b8a8930f1e11864b8e01be80351a03a61ca02e5 Mon Sep 17 00:00:00 2001
+From 08386c6de52da23d2490fb4f72186ce11b1d9c3f Mon Sep 17 00:00:00 2001
 From: qizhang <jony.zhang@nxp.com>
 Date: Tue, 29 Apr 2025 20:29:27 +0800
-Subject: [PATCH 2/2] fec: fix compile error because of kernel upgrade to
+Subject: [PATCH 2/3] fec: fix compile error because of kernel upgrade to
  6.12.20
 
 Signed-off-by: qizhang <jony.zhang@nxp.com>
