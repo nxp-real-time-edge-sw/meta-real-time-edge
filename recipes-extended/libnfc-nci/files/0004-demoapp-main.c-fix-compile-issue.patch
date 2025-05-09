@@ -1,0 +1,135 @@
+From 04e575819cd08726530e1e932d1a0277e3c68890 Mon Sep 17 00:00:00 2001
+From: Minghuan Lian <minghuan.lian@nxp.com>
+Date: Fri, 9 May 2025 15:57:21 +0800
+Subject: [PATCH] demoapp/main.c: fix compile issue
+
+Signed-off-by: Minghuan Lian <minghuan.lian@nxp.com>
+Upstream-Status: Pending
+---
+ demoapp/main.c                         | 1 +
+ src/libnfc-nci/adaptation/libmain.c    | 1 +
+ src/libnfc-nci/gki/ulinux/gki_ulinux.c | 5 +++++
+ src/libnfc-nci/nfa/ee/nfa_ee_act.c     | 1 +
+ src/libnfc-nci/nfa/hci/nfa_hci_api.c   | 1 +
+ src/libnfc-nci/nfc/nfc/nfc_ncif.c      | 4 +++-
+ src/libnfc-nci/nfc/nfc/nfc_task.c      | 2 ++
+ src/libnfc-nci/nfc/tags/rw_t4t.c       | 3 +++
+ 8 files changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/demoapp/main.c b/demoapp/main.c
+index 381f491..9765ff9 100644
+--- a/demoapp/main.c
++++ b/demoapp/main.c
+@@ -90,6 +90,7 @@ static T4T_NDEF_EMU_Callback_t *pT4T_NDEF_EMU_PushCb = NULL;
+ void help(int mode);
+ int InitEnv();
+ int LookForTag(char** args, int args_len, char* tag, char** data, int format);
++void PrintNDEFContent(nfc_tag_info_t* TagInfo, ndef_info_t* NDEFinfo, unsigned char* ndefRaw, unsigned int ndefRawLen);
+ /********************************** HCE **********************************/
+ static void T4T_NDEF_EMU_FillRsp (unsigned char *pRsp, unsigned short offset, unsigned char length)
+ {
+diff --git a/src/libnfc-nci/adaptation/libmain.c b/src/libnfc-nci/adaptation/libmain.c
+index 2a24643..676c500 100644
+--- a/src/libnfc-nci/adaptation/libmain.c
++++ b/src/libnfc-nci/adaptation/libmain.c
+@@ -36,6 +36,7 @@
+  ******************************************************************************/
+ 
+ #include "OverrideLog.h"
++#include <unistd.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <malloc.h>
+diff --git a/src/libnfc-nci/gki/ulinux/gki_ulinux.c b/src/libnfc-nci/gki/ulinux/gki_ulinux.c
+index 8d3c1fc..c6b0e9b 100644
+--- a/src/libnfc-nci/gki/ulinux/gki_ulinux.c
++++ b/src/libnfc-nci/gki/ulinux/gki_ulinux.c
+@@ -41,7 +41,12 @@
+ 
+ #define GKI_DEBUG   FALSE
+ 
++#define _GNU_SOURCE
+ #include <pthread.h>  /* must be 1st header defined  */
++#include <unistd.h>
++#include <sys/times.h>
++#include <string.h>
++
+ #include <time.h>
+ #include "gki_int.h"
+ #include "gki_target.h"
+diff --git a/src/libnfc-nci/nfa/ee/nfa_ee_act.c b/src/libnfc-nci/nfa/ee/nfa_ee_act.c
+index b320d31..29d0fba 100644
+--- a/src/libnfc-nci/nfa/ee/nfa_ee_act.c
++++ b/src/libnfc-nci/nfa/ee/nfa_ee_act.c
+@@ -115,6 +115,7 @@ UINT8 nfa_ee_ce_route_strict_disable = 0x01;
+ 
+ static void nfa_ee_report_discover_req_evt(void);
+ static void nfa_ee_build_discover_req_evt (tNFA_EE_DISCOVER_REQ *p_evt_data);
++void find_and_resolve_tech_conflict();
+ /*******************************************************************************
+ **
+ ** Function         nfa_ee_trace_aid
+diff --git a/src/libnfc-nci/nfa/hci/nfa_hci_api.c b/src/libnfc-nci/nfa/hci/nfa_hci_api.c
+index 19f0436..219dfd9 100644
+--- a/src/libnfc-nci/nfa/hci/nfa_hci_api.c
++++ b/src/libnfc-nci/nfa/hci/nfa_hci_api.c
+@@ -40,6 +40,7 @@
+  *
+  ******************************************************************************/
+ #include <string.h>
++#include <unistd.h>
+ #include "nfc_api.h"
+ #include "nfa_sys.h"
+ #include "nfa_sys_int.h"
+diff --git a/src/libnfc-nci/nfc/nfc/nfc_ncif.c b/src/libnfc-nci/nfc/nfc/nfc_ncif.c
+index 1a8d628..ce9c7b1 100644
+--- a/src/libnfc-nci/nfc/nfc/nfc_ncif.c
++++ b/src/libnfc-nci/nfc/nfc/nfc_ncif.c
+@@ -45,6 +45,7 @@
+  ******************************************************************************/
+ #include <string.h>
+ #include "nfc_target.h"
++#include <stdbool.h>
+ 
+ #if NFC_INCLUDED == TRUE
+ #include "nfc_hal_api.h"
+@@ -82,7 +83,8 @@ extern tNFA_CE_CB nfa_ce_cb;
+ BOOLEAN core_reset_init_num_buff = FALSE;
+ UINT8 nfcc_dh_conn_id;
+ #endif
+-extern etsi_reader_in_progress;
++extern bool etsi_reader_in_progress;
++void disc_deact_ntf_timeout_handler(tNFC_RESPONSE_EVT event);
+ /*******************************************************************************
+ **
+ ** Function         nfc_ncif_update_window
+diff --git a/src/libnfc-nci/nfc/nfc/nfc_task.c b/src/libnfc-nci/nfc/nfc/nfc_task.c
+index f614cfb..3702df8 100644
+--- a/src/libnfc-nci/nfc/nfc/nfc_task.c
++++ b/src/libnfc-nci/nfc/nfc/nfc_task.c
+@@ -64,6 +64,8 @@
+ #include "nfa_dm_int.h"
+ #endif
+ 
++extern void nfa_dm_p2p_prio_logic_cleanup();
++
+ /*******************************************************************************
+ **
+ ** Function         nfc_start_timer
+diff --git a/src/libnfc-nci/nfc/tags/rw_t4t.c b/src/libnfc-nci/nfc/tags/rw_t4t.c
+index dca0fc1..b93e894 100644
+--- a/src/libnfc-nci/nfc/tags/rw_t4t.c
++++ b/src/libnfc-nci/nfc/tags/rw_t4t.c
+@@ -129,6 +129,9 @@ static void rw_t4t_data_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p_
+ static void rw_t4t_sm_ndef_format (BT_HDR  *p_r_apdu);
+ static void rw_t3Bt_sm_get_card_id(BT_HDR *p_r_apdu);
+ #endif
++
++extern void nfa_rw_update_pupi_id(UINT8 *p, UINT8 len);
++
+ /*******************************************************************************
+ **
+ ** Function         rw_t4t_send_to_lower
+-- 
+2.43.0
+
