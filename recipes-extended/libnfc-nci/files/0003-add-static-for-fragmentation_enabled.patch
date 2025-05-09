@@ -4,6 +4,7 @@ Date: Mon, 26 Apr 2021 17:20:36 +0800
 Subject: [PATCH 3/3] add static for fragmentation_enabled
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  src/halimpl/pn54x/tml/i2c/phTmlNfc_i2c.h             | 2 +-
  src/halimpl/pn54x/tml/lpcusbsio/phTmlNfc_lpcusbsio.h | 2 +-

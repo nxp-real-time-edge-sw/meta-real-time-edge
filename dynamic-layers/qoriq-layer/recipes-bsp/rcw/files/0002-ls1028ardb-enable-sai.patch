@@ -5,6 +5,7 @@ Subject: [PATCH 2/2] ls1028ardb: enable sai
 
 Signed-off-by: Minghuan Lian <Minghuan.Lian@nxp.com>
 Signed-off-by: Jerry Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  .../R_SQPP_0x85bb/rcw_1500_gpu600_sai.rcw     | 48 +++++++++++++++++++
  1 file changed, 48 insertions(+)

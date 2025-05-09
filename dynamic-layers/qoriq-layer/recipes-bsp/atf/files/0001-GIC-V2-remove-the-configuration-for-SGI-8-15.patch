@@ -8,6 +8,7 @@ and continue to use group1 (non-secure) for SGI 8 ~ 15 for ls1043ardb and ls1046
 
 Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  include/plat/arm/common/arm_def.h | 31 +++----------------------------
  1 file changed, 3 insertions(+), 28 deletions(-)

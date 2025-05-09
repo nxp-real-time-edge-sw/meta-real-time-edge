@@ -4,6 +4,7 @@ Date: Fri, 1 Jul 2022 16:16:16 +0800
 Subject: [PATCH] ls1046ardb gpio2
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  .../rcw_1800_gpio2_sdboot.rcw                 | 119 ++++++++++++++++++
  1 file changed, 119 insertions(+)

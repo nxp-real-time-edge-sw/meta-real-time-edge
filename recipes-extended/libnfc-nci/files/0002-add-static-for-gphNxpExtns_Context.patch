@@ -4,6 +4,7 @@ Date: Mon, 26 Apr 2021 17:14:46 +0800
 Subject: [PATCH 2/3] add static for gphNxpExtns_Context
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
+Upstream-Status: Pending
 ---
  src/service/extns/src/mifare/phNxpExtns_MifareStd.c | 2 +-
  src/service/extns/src/phNxpExtns.c                  | 2 +-

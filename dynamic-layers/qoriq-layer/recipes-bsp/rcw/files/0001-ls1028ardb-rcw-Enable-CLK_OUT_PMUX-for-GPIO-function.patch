@@ -6,6 +6,7 @@ Subject: [PATCH 1/2] ls1028ardb/rcw: Enable CLK_OUT_PMUX for GPIO function
 Signed-off-by: Jianchao Wang <jianchao.wang@nxp.com>
 Signed-off-by: Jerry Huang <jerry.huang@nxp.com>
 Signed-off-by: Minghuan Lian <Minghuan.Lian@nxp.com>
+Upstream-Status: Pending
 ---
  ls1028ardb/R_SQPP_0x85bb/rcw_1500_gpu600.rcw | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
