@@ -8,8 +8,7 @@ SRC_URI = " \
     file://pktgen/ \
 "
 
-S = "${WORKDIR}/src"
-UNPACKDIR = "${S}"
+S = "${UNPACKDIR}"
 
 do_install() {
     install -d ${D}${datadir}/samples/pktgen

@@ -6,7 +6,7 @@ SRC_URI = "file://app.py \
 	   file://ip.py \
 "
 
-S = "${WORKDIR}/src"
+S = "${UNPACKDIR}"
 
 do_install() {
 	install -d -m 0755 ${D}/usr/demo
