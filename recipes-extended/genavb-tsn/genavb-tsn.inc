@@ -3,11 +3,12 @@ LIC_FILES_CHKSUM = "file://licenses/COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263
                     file://licenses/BSD-3-Clause;md5=5cc0aa6b0086f08ef02006d8a2679704 \
 "
 
-GENAVB_TSN_URL = "git://github.com/NXP/GenAVB_TSN.git;protocol=https"
+GENAVB_TSN_SRC ?= "git://github.com/NXP/GenAVB_TSN.git;protocol=https"
+GENAVB_TSN_SRCREV ?= "609be86df6fd472c8b32e9eef201ffa2a0b46f78"
 
-SRC_URI = "${GENAVB_TSN_URL};nobranch=1"
+SRC_URI = "${GENAVB_TSN_SRC};"
 
-SRCREV = "609be86df6fd472c8b32e9eef201ffa2a0b46f78"
+SRCREV = "${GENAVB_TSN_SRCREV}"
 
 PV = "7.1+git${SRCPV}"
 
