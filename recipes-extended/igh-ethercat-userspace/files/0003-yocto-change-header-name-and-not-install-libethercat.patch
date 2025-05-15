@@ -1,0 +1,78 @@
+From a533c03a2ad6771d67e745b2ad2ea55aa7737384 Mon Sep 17 00:00:00 2001
+From: Minghuan Lian <minghuan.lian@nxp.com>
+Date: Fri, 16 May 2025 11:16:22 +0800
+Subject: [PATCH] yocto: change header name and not install libethercat
+
+Signed-off-by: Minghuan Lian <minghuan.lian@nxp.com>
+Upstream-Status: Pending
+---
+ include/Makefile.am | 4 ++--
+ include/ecrt_us.h   | 1 +
+ include/ectty_us.h  | 1 +
+ lib/Makefile.am     | 8 +++++---
+ 4 files changed, 9 insertions(+), 5 deletions(-)
+ create mode 120000 include/ecrt_us.h
+ create mode 120000 include/ectty_us.h
+
+diff --git a/include/Makefile.am b/include/Makefile.am
+index 3ae0eeff..68033a15 100644
+--- a/include/Makefile.am
++++ b/include/Makefile.am
+@@ -20,7 +20,7 @@
+ #-----------------------------------------------------------------------------
+ 
+ include_HEADERS = \
+-	ecrt.h \
+-	ectty.h
++	ecrt_us.h \
++	ectty_us.h
+ 
+ #-----------------------------------------------------------------------------
+diff --git a/include/ecrt_us.h b/include/ecrt_us.h
+new file mode 120000
+index 00000000..4938dcdf
+--- /dev/null
++++ b/include/ecrt_us.h
+@@ -0,0 +1 @@
++ecrt.h
+\ No newline at end of file
+diff --git a/include/ectty_us.h b/include/ectty_us.h
+new file mode 120000
+index 00000000..44a5175e
+--- /dev/null
++++ b/include/ectty_us.h
+@@ -0,0 +1 @@
++ectty.h
+\ No newline at end of file
+diff --git a/lib/Makefile.am b/lib/Makefile.am
+index 3dff4ba3..22bc8868 100644
+--- a/lib/Makefile.am
++++ b/lib/Makefile.am
+@@ -20,7 +20,9 @@
+ #
+ #------------------------------------------------------------------------------
+ 
+-lib_LTLIBRARIES = libethercat.la
++lib_LTLIBRARIES =
++
++noinst_LTLIBRARIES = libethercat.la
+ 
+ #------------------------------------------------------------------------------
+ 
+@@ -79,11 +81,11 @@ libethercat_la_LDFLAGS = -version-info 3:0:2 \
+ 
+ libethercat_la_DEPENDENCIES = libethercat.map
+ 
+-pkgconfig_DATA = libethercat.pc
++# pkgconfig_DATA = libethercat.pc
+ 
+ cmakedir = $(libdir)/cmake/ethercat
+ 
+-cmake_DATA = ethercat-config.cmake
++# cmake_DATA = ethercat-config.cmake
+ 
+ EXTRA_DIST = ethercat-config.cmake.in libethercat.map
+ 
+-- 
+2.43.0
+

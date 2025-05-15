@@ -1,7 +1,7 @@
-From 8f5942f21085597a7339fe3c1fe416e6782740f0 Mon Sep 17 00:00:00 2001
-From: "hongbo.wang" <hongbo.wang@nxp.com>
-Date: Fri, 4 Aug 2023 16:59:41 +0800
-Subject: [PATCH 5/7] Add code to support userspace IGH-EtherCAT for v1.5.2
+From fb8d56b219a359a4427c21db3b99c8813a12c2c2 Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Thu, 15 May 2025 16:19:45 +0800
+Subject: [PATCH 1/2] Add code to support userspace IGH-EtherCAT for v1.6
 
 This patch refers to the patches of Frank Heckenbach,
 Frank's patches are for EtherCAT_v1.5.0-7.
@@ -11,60 +11,64 @@ link: https://fh-soft.de/src/ethercat-userspace.html
 Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
 Upstream-Status: Pending
 ---
- Makefile.am                     |   8 +-
- configure.ac                    |  37 ++
- devices/generic.c               |   7 +-
+ Makefile.am                     |  11 +-
+ configure.ac                    |  33 ++
+ devices/generic.c               |   4 +
  emulation/linux/cdev.h          |  15 +
  emulation/linux/delay.h         |   6 +
  emulation/linux/device.h        |   9 +
  emulation/linux/err.h           |  16 +
- emulation/linux/etherdevice.h   |   7 +
+ emulation/linux/etherdevice.h   |  11 +
  emulation/linux/fs.h            |   9 +
  emulation/linux/hrtimer.h       |   4 +
  emulation/linux/interrupt.h     |   6 +
+ emulation/linux/irq_work.h      |   0
  emulation/linux/jiffies.h       |  52 +++
  emulation/linux/kobject.h       |   6 +
- emulation/linux/kthread.h       |  70 +++
- emulation/linux/list.h          | 746 ++++++++++++++++++++++++++++++++
+ emulation/linux/kthread.h       |  71 +++
+ emulation/linux/list.h          | 750 ++++++++++++++++++++++++++++++++
  emulation/linux/mm.h            |   4 +
  emulation/linux/module.h        |  29 ++
- emulation/linux/netdevice.h     | 265 ++++++++++++
- emulation/linux/printk.h        |  15 +
- emulation/linux/semaphore.h     |  23 +
+ emulation/linux/netdevice.h     | 265 +++++++++++
+ emulation/linux/printk.h        |  16 +
+ emulation/linux/rtmutex.h       |   0
+ emulation/linux/semaphore.h     |  33 ++
  emulation/linux/skbuff.h        |  60 +++
  emulation/linux/slab.h          |   6 +
  emulation/linux/time.h          |   7 +
  emulation/linux/timer.h         |   4 +
  emulation/linux/vmalloc.h       |  19 +
  emulation/linux/wait.h          |  38 ++
+ emulation/linux/workqueue.h     |   0
  globals.h                       |  11 +
- include/ecrt.h                  |  13 +-
- lib/Makefile.am                 |   4 +
+ include/ecrt.h                  |  17 +-
+ lib/Makefile.am                 |   3 +
  lib/common.c                    |  13 +-
- lib/domain.c                    |   8 +-
+ lib/domain.c                    |   6 +-
  lib/ioctl.h                     |  19 +
- lib/libethercat.pc.in           |  10 +
- lib/master.c                    |   8 +-
- master/Makefile.am              |  73 ++++
- master/cdev.c                   |  79 +++-
- master/cdev.h                   |   4 +
+ lib/libethercat.pc.in           |   2 +-
+ lib/master.c                    |  10 +-
+ master/Makefile.am              |  75 ++++
+ master/cdev.c                   |  73 +++-
+ master/cdev.h                   |   5 +
  master/device.h                 |   4 +
  master/ethercat_master.c        | 106 +++++
- master/ethernet.c               |  12 +-
+ master/ethernet.c               |   2 +-
+ master/flag.c                   |   2 +-
  master/foe_request.c            |   2 +-
  master/foe_request.h            |   4 +-
  master/fsm_coe.c                |   2 +-
- master/fsm_foe.c                |   8 +-
+ master/fsm_foe.c                |   4 +-
  master/fsm_foe.h                |   4 +-
  master/fsm_slave_config.c       |   2 +
- master/ioctl.c                  |   2 +-
+ master/ioctl.c                  |  10 +-
  master/ioctl.h                  |  30 +-
  master/libethercat_master.pc.in |  10 +
- master/master.c                 |  47 +-
- master/master.h                 |   2 +-
+ master/master.c                 |  63 ++-
+ master/master.h                 |  10 +-
  master/module.c                 |  74 ++++
  master/sdo_request.h            |   6 +
- 53 files changed, 1976 insertions(+), 49 deletions(-)
+ 57 files changed, 2009 insertions(+), 44 deletions(-)
  create mode 100644 emulation/linux/cdev.h
  create mode 100644 emulation/linux/delay.h
  create mode 100644 emulation/linux/device.h
@@ -73,6 +77,7 @@ Upstream-Status: Pending
  create mode 100644 emulation/linux/fs.h
  create mode 100644 emulation/linux/hrtimer.h
  create mode 100644 emulation/linux/interrupt.h
+ create mode 100644 emulation/linux/irq_work.h
  create mode 100644 emulation/linux/jiffies.h
  create mode 100644 emulation/linux/kobject.h
  create mode 100644 emulation/linux/kthread.h
@@ -81,6 +86,7 @@ Upstream-Status: Pending
  create mode 100644 emulation/linux/module.h
  create mode 100644 emulation/linux/netdevice.h
  create mode 100644 emulation/linux/printk.h
+ create mode 100644 emulation/linux/rtmutex.h
  create mode 100644 emulation/linux/semaphore.h
  create mode 100644 emulation/linux/skbuff.h
  create mode 100644 emulation/linux/slab.h
@@ -88,41 +94,50 @@ Upstream-Status: Pending
  create mode 100644 emulation/linux/timer.h
  create mode 100644 emulation/linux/vmalloc.h
  create mode 100644 emulation/linux/wait.h
- create mode 100644 lib/libethercat.pc.in
+ create mode 100644 emulation/linux/workqueue.h
  create mode 100644 master/ethercat_master.c
  create mode 100644 master/libethercat_master.pc.in
 
 diff --git a/Makefile.am b/Makefile.am
-index 38c8b69..6455803 100644
+index a70206a6..f58ee3ba 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -32,8 +32,12 @@ ACLOCAL_AMFLAGS = -I m4
+@@ -27,8 +27,7 @@ AM_DISTCHECK_CONFIGURE_FLAGS = \
+ 	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir)
+ 
  SUBDIRS = \
- 	devices \
- 	include \
--	master \
+-	include \
 -	script
-+	master
-+
++	include
+ 
+ if ENABLE_KERNEL
+ SUBDIRS += \
+@@ -36,6 +35,14 @@ SUBDIRS += \
+ 	master
+ endif
+ 
 +if ENABLE_USERSPACE_MASTER
++SUBDIRS += \
++	devices \
++	master
 +else
 +SUBDIRS += script
 +endif
- 
++
  if BUILD_TOOL
  SUBDIRS += tool
+ endif
 diff --git a/configure.ac b/configure.ac
-index 8e924e8..953af99 100644
+index abea7e06..37a8bf6d 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -56,10 +56,44 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
- AC_PROG_CXX
- AC_PROG_LIBTOOL
+@@ -53,6 +53,38 @@ AC_PROG_CXX
+ dnl Use LT_INIT instead of AC_PROG_LIBTOOL, if available
+ m4_ifdef([LT_INIT], [LT_INIT], [AC_PROG_LIBTOOL])
  
-+
-+#------------------------------------------------------------------------------
++#-----------------------------------------------------------------------------
 +# Userspace EtherCAT library (optional)
-+#------------------------------------------------------------------------------
++#-----------------------------------------------------------------------------
 +
 +AC_MSG_CHECKING([whether to build Userspace EtherCAT library])
 +
@@ -152,62 +167,35 @@ index 8e924e8..953af99 100644
 +AM_CONDITIONAL(ENABLE_USERSPACE_MASTER, test "x$enable_usecat" = "x1")
 +AC_SUBST(ENABLE_USERSPACE_MASTER,[$enable_usecat])
 +
- #------------------------------------------------------------------------------
- # Linux sources
- #------------------------------------------------------------------------------
- 
-+if test "x${enable_usecat}" = "x0"; then
- AC_ARG_WITH([linux-dir],
-     AC_HELP_STRING(
-         [--with-linux-dir=<DIR>],
-@@ -115,6 +149,7 @@ linuxversion=`echo $kernelrelease | grep -oE "$regex"`
- 
- AC_SUBST(LINUX_SOURCE_DIR,[$sourcedir])
- AC_MSG_RESULT([$LINUX_SOURCE_DIR (Kernel $linuxversion)])
-+fi
- 
- #------------------------------------------------------------------------------
- # Linux module installation subdirectory
-@@ -1037,9 +1072,11 @@ AC_CONFIG_FILES([
-         examples/xenomai_posix/Makefile
-         include/Makefile
-         lib/Makefile
-+        lib/libethercat.pc
-         m4/Makefile
+ #-----------------------------------------------------------------------------
+ # Kernel modules
+ #-----------------------------------------------------------------------------
+@@ -1415,6 +1447,7 @@ AC_CONFIG_FILES([
+         lib/libethercat.pc
          master/Kbuild
          master/Makefile
 +        master/libethercat_master.pc
          script/Makefile
-         script/ethercat.service
-         script/ethercatctl
+         tool/Makefile
+         tty/Kbuild
 diff --git a/devices/generic.c b/devices/generic.c
-index 4be3f44..8fb52eb 100644
+index f6cef9b5..6738d82f 100644
 --- a/devices/generic.c
 +++ b/devices/generic.c
-@@ -54,6 +54,9 @@
- int __init ec_gen_init_module(void);
+@@ -58,6 +58,10 @@ int __init ec_gen_init_module(void);
  void __exit ec_gen_cleanup_module(void);
+ void ec_gen_poll(struct net_device *);
  
 +#ifdef EC_MASTER_IN_USERSPACE
 +static int init_net;
 +#endif
- /*****************************************************************************/
++
+ /****************************************************************************/
  
  /** \cond */
-@@ -208,8 +211,8 @@ int ec_gen_device_create_socket(
-         return -ENOMEM;
-     }
- 
--	ret = sock_create_kern(&init_net, PF_PACKET, SOCK_RAW,
--			htons(ETH_P_ETHERCAT), &dev->socket);
-+    ret = sock_create_kern(&init_net, PF_PACKET, SOCK_RAW,
-+            htons(ETH_P_ETHERCAT), &dev->socket);
-     if (ret) {
-         printk(KERN_ERR PFX "Failed to create socket (ret = %i).\n", ret);
-         return ret;
 diff --git a/emulation/linux/cdev.h b/emulation/linux/cdev.h
 new file mode 100644
-index 0000000..c23bfa5
+index 00000000..c23bfa58
 --- /dev/null
 +++ b/emulation/linux/cdev.h
 @@ -0,0 +1,15 @@
@@ -228,7 +216,7 @@ index 0000000..c23bfa5
 +#endif
 diff --git a/emulation/linux/delay.h b/emulation/linux/delay.h
 new file mode 100644
-index 0000000..3817ea6
+index 00000000..3817ea68
 --- /dev/null
 +++ b/emulation/linux/delay.h
 @@ -0,0 +1,6 @@
@@ -240,7 +228,7 @@ index 0000000..3817ea6
 +#endif
 diff --git a/emulation/linux/device.h b/emulation/linux/device.h
 new file mode 100644
-index 0000000..1c0164f
+index 00000000..1c0164ff
 --- /dev/null
 +++ b/emulation/linux/device.h
 @@ -0,0 +1,9 @@
@@ -255,7 +243,7 @@ index 0000000..1c0164f
 +#endif
 diff --git a/emulation/linux/err.h b/emulation/linux/err.h
 new file mode 100644
-index 0000000..393b7e9
+index 00000000..393b7e96
 --- /dev/null
 +++ b/emulation/linux/err.h
 @@ -0,0 +1,16 @@
@@ -277,20 +265,24 @@ index 0000000..393b7e9
 +#endif
 diff --git a/emulation/linux/etherdevice.h b/emulation/linux/etherdevice.h
 new file mode 100644
-index 0000000..b3f879f
+index 00000000..313dd231
 --- /dev/null
 +++ b/emulation/linux/etherdevice.h
-@@ -0,0 +1,7 @@
+@@ -0,0 +1,11 @@
 +#ifndef _LINUX_ETHERDEVICE_H
 +#define _LINUX_ETHERDEVICE_H
 +
 +#include <unistd.h>
 +#include <sys/ioctl.h>
 +
++#ifndef ETH_ALEN
++#define ETH_ALEN (6)
++#endif
++
 +#endif
 diff --git a/emulation/linux/fs.h b/emulation/linux/fs.h
 new file mode 100644
-index 0000000..4dcfa60
+index 00000000..4dcfa600
 --- /dev/null
 +++ b/emulation/linux/fs.h
 @@ -0,0 +1,9 @@
@@ -305,7 +297,7 @@ index 0000000..4dcfa60
 +#endif
 diff --git a/emulation/linux/hrtimer.h b/emulation/linux/hrtimer.h
 new file mode 100644
-index 0000000..d6c8a3a
+index 00000000..d6c8a3ac
 --- /dev/null
 +++ b/emulation/linux/hrtimer.h
 @@ -0,0 +1,4 @@
@@ -315,7 +307,7 @@ index 0000000..d6c8a3a
 +#endif
 diff --git a/emulation/linux/interrupt.h b/emulation/linux/interrupt.h
 new file mode 100644
-index 0000000..2d37102
+index 00000000..2d371020
 --- /dev/null
 +++ b/emulation/linux/interrupt.h
 @@ -0,0 +1,6 @@
@@ -325,9 +317,12 @@ index 0000000..2d37102
 +#include <linux/types.h>
 +
 +#endif
+diff --git a/emulation/linux/irq_work.h b/emulation/linux/irq_work.h
+new file mode 100644
+index 00000000..e69de29b
 diff --git a/emulation/linux/jiffies.h b/emulation/linux/jiffies.h
 new file mode 100644
-index 0000000..eb736b7
+index 00000000..eb736b7a
 --- /dev/null
 +++ b/emulation/linux/jiffies.h
 @@ -0,0 +1,52 @@
@@ -385,7 +380,7 @@ index 0000000..eb736b7
 +#endif
 diff --git a/emulation/linux/kobject.h b/emulation/linux/kobject.h
 new file mode 100644
-index 0000000..e82c255
+index 00000000..e82c255d
 --- /dev/null
 +++ b/emulation/linux/kobject.h
 @@ -0,0 +1,6 @@
@@ -397,10 +392,10 @@ index 0000000..e82c255
 +#endif
 diff --git a/emulation/linux/kthread.h b/emulation/linux/kthread.h
 new file mode 100644
-index 0000000..82adf54
+index 00000000..4b046c35
 --- /dev/null
 +++ b/emulation/linux/kthread.h
-@@ -0,0 +1,70 @@
+@@ -0,0 +1,71 @@
 +#ifndef _LINUX_KTHREAD_H
 +#define _LINUX_KTHREAD_H
 +
@@ -459,6 +454,7 @@ index 0000000..82adf54
 +    free(task);
 +    return ERR_PTR(-ret);
 +}
++#define kthread_create kthread_run
 +
 +static inline void kthread_stop(struct task_struct *task)
 +{
@@ -473,12 +469,16 @@ index 0000000..82adf54
 +#endif
 diff --git a/emulation/linux/list.h b/emulation/linux/list.h
 new file mode 100644
-index 0000000..6b50579
+index 00000000..5816a0a6
 --- /dev/null
 +++ b/emulation/linux/list.h
-@@ -0,0 +1,746 @@
+@@ -0,0 +1,750 @@
 +#ifndef _LINUX_LIST_H
 +#define _LINUX_LIST_H
++
++#ifndef NULL
++#define NULL ((void*)0)
++#endif
 +
 +#ifdef __compiler_offsetof
 +#define offsetof(TYPE,MEMBER) __compiler_offsetof(TYPE,MEMBER)
@@ -1225,7 +1225,7 @@ index 0000000..6b50579
 +#endif
 diff --git a/emulation/linux/mm.h b/emulation/linux/mm.h
 new file mode 100644
-index 0000000..dbb8b71
+index 00000000..dbb8b71e
 --- /dev/null
 +++ b/emulation/linux/mm.h
 @@ -0,0 +1,4 @@
@@ -1235,7 +1235,7 @@ index 0000000..dbb8b71
 +#endif
 diff --git a/emulation/linux/module.h b/emulation/linux/module.h
 new file mode 100644
-index 0000000..385ba10
+index 00000000..385ba105
 --- /dev/null
 +++ b/emulation/linux/module.h
 @@ -0,0 +1,29 @@
@@ -1270,7 +1270,7 @@ index 0000000..385ba10
 +#endif
 diff --git a/emulation/linux/netdevice.h b/emulation/linux/netdevice.h
 new file mode 100644
-index 0000000..e79d2d7
+index 00000000..721de0e1
 --- /dev/null
 +++ b/emulation/linux/netdevice.h
 @@ -0,0 +1,265 @@
@@ -1294,8 +1294,8 @@ index 0000000..e79d2d7
 +#include <linux/if_tun.h>
 +
 +# define errno (*__errno_location ())
-+#define read_lock(LOCK)
-+#define read_unlock(LOCK)
++#define rcu_read_lock()
++#define rcu_read_unlock()
 +
 +#define ARPHRD_ETHER  1               /* Ethernet 10Mbps */
 +#define NET_NAME_UNKNOWN  0
@@ -1367,7 +1367,7 @@ index 0000000..e79d2d7
 +    return r;
 +}
 +
-+#define for_each_netdev(DUMMY, DEV) \
++#define for_each_netdev_rcu(DUMMY, DEV) \
 +    struct ifaddrs *interfaces, *a; \
 +    if (getifaddrs(&interfaces) == 0) \
 +        for (a = interfaces; a || (freeifaddrs(interfaces), 0); a = a->ifa_next) \
@@ -1541,15 +1541,16 @@ index 0000000..e79d2d7
 +#endif
 diff --git a/emulation/linux/printk.h b/emulation/linux/printk.h
 new file mode 100644
-index 0000000..7d55af7
+index 00000000..1a412382
 --- /dev/null
 +++ b/emulation/linux/printk.h
-@@ -0,0 +1,15 @@
+@@ -0,0 +1,16 @@
 +#ifndef _LINUX_PRINTK_H
 +#define _LINUX_PRINTK_H
 +
 +#include <stdio.h>
 +
++#define KERN_CONT	""
 +#define KERN_ERR	"[ERROR] "
 +#define KERN_WARNING	"[WARNING] "
 +#define KERN_INFO	"[INFO] "
@@ -1560,16 +1561,28 @@ index 0000000..7d55af7
 +#define printk_ratelimit() 1
 +
 +#endif
+diff --git a/emulation/linux/rtmutex.h b/emulation/linux/rtmutex.h
+new file mode 100644
+index 00000000..e69de29b
 diff --git a/emulation/linux/semaphore.h b/emulation/linux/semaphore.h
 new file mode 100644
-index 0000000..037feb3
+index 00000000..cfd57ebd
 --- /dev/null
 +++ b/emulation/linux/semaphore.h
-@@ -0,0 +1,23 @@
+@@ -0,0 +1,33 @@
 +#ifndef _LINUX_SEMAPHORE_H
 +#define _LINUX_SEMAPHORE_H
 +
 +#include <pthread.h>
++
++struct rt_mutex {};
++struct work_struct {};
++struct irq_work {};
++
++#define rt_mutex_lock_interruptible(x) (0)
++#define rt_mutex_unlock(x)
++#define schedule_work(x)
++#define rt_mutex_init(x)
 +
 +struct semaphore
 +{
@@ -1582,6 +1595,7 @@ index 0000000..037feb3
 +#define down(SEM) pthread_mutex_lock(&(SEM)->mutex)
 +#define down_interruptible(SEM) (down(SEM), 0)
 +#define up(SEM) pthread_mutex_unlock(&(SEM)->mutex)
++#define down_trylock down
 +
 +typedef pthread_mutex_t spinlock_t;
 +#define SPIN_LOCK_UNLOCKED (spinlock_t) PTHREAD_MUTEX_INITIALIZER
@@ -1591,7 +1605,7 @@ index 0000000..037feb3
 +#endif
 diff --git a/emulation/linux/skbuff.h b/emulation/linux/skbuff.h
 new file mode 100644
-index 0000000..569d576
+index 00000000..569d5768
 --- /dev/null
 +++ b/emulation/linux/skbuff.h
 @@ -0,0 +1,60 @@
@@ -1657,7 +1671,7 @@ index 0000000..569d576
 +#endif
 diff --git a/emulation/linux/slab.h b/emulation/linux/slab.h
 new file mode 100644
-index 0000000..cbd8b08
+index 00000000..cbd8b084
 --- /dev/null
 +++ b/emulation/linux/slab.h
 @@ -0,0 +1,6 @@
@@ -1669,7 +1683,7 @@ index 0000000..cbd8b08
 +#endif
 diff --git a/emulation/linux/time.h b/emulation/linux/time.h
 new file mode 100644
-index 0000000..32d499f
+index 00000000..32d499fb
 --- /dev/null
 +++ b/emulation/linux/time.h
 @@ -0,0 +1,7 @@
@@ -1682,7 +1696,7 @@ index 0000000..32d499f
 +#endif
 diff --git a/emulation/linux/timer.h b/emulation/linux/timer.h
 new file mode 100644
-index 0000000..dabb2d1
+index 00000000..dabb2d1a
 --- /dev/null
 +++ b/emulation/linux/timer.h
 @@ -0,0 +1,4 @@
@@ -1692,7 +1706,7 @@ index 0000000..dabb2d1
 +#endif
 diff --git a/emulation/linux/vmalloc.h b/emulation/linux/vmalloc.h
 new file mode 100644
-index 0000000..0715569
+index 00000000..0715569d
 --- /dev/null
 +++ b/emulation/linux/vmalloc.h
 @@ -0,0 +1,19 @@
@@ -1717,7 +1731,7 @@ index 0000000..0715569
 +#endif
 diff --git a/emulation/linux/wait.h b/emulation/linux/wait.h
 new file mode 100644
-index 0000000..66df6f2
+index 00000000..66df6f22
 --- /dev/null
 +++ b/emulation/linux/wait.h
 @@ -0,0 +1,38 @@
@@ -1759,11 +1773,14 @@ index 0000000..66df6f2
 +};
 +
 +#endif
+diff --git a/emulation/linux/workqueue.h b/emulation/linux/workqueue.h
+new file mode 100644
+index 00000000..e69de29b
 diff --git a/globals.h b/globals.h
-index b592772..3460e34 100644
+index d2a470e9..c484cda3 100644
 --- a/globals.h
 +++ b/globals.h
-@@ -60,5 +60,16 @@
+@@ -51,5 +51,16 @@
  #define EC_MASTER_VERSION VERSION " " EC_STR(REV)
  
  /*****************************************************************************/
@@ -1781,10 +1798,22 @@ index b592772..3460e34 100644
  
  #endif
 diff --git a/include/ecrt.h b/include/ecrt.h
-index 283adf0..696ca3b 100644
+index 3ab462fb..3eef9022 100644
 --- a/include/ecrt.h
 +++ b/include/ecrt.h
-@@ -540,6 +540,13 @@ typedef enum {
+@@ -144,7 +144,11 @@
+ #include <asm/byteorder.h>
+ #include <linux/types.h>
+ #include <linux/time.h>
++#ifdef EC_MASTER_IN_USERSPACE
++#include <netinet/in.h> // struct in_addr
++#else
+ #include <linux/in.h> // struct in_addr
++#endif
+ #else
+ #include <stdlib.h> // for size_t
+ #include <stdint.h>
+@@ -627,6 +631,13 @@ typedef enum {
  extern "C" {
  #endif
  
@@ -1797,8 +1826,8 @@ index 283adf0..696ca3b 100644
 +
  /** Returns the version magic of the realtime interface.
   *
-  * \return Value of ECRT_VERSION_MAGIC() at EtherCAT master compile time.
-@@ -617,7 +624,7 @@ int ecrt_master_reserve(
+  * \apiusage{master_any,rt_safe}
+@@ -714,7 +725,7 @@ EC_PUBLIC_API int ecrt_master_reserve(
  
  #endif // #ifndef __KERNEL__
  
@@ -1807,7 +1836,7 @@ index 283adf0..696ca3b 100644
  
  /** Sets the locking callbacks.
   *
-@@ -1649,7 +1656,7 @@ size_t ecrt_domain_size(
+@@ -2178,7 +2189,7 @@ EC_PUBLIC_API size_t ecrt_domain_size(
          const ec_domain_t *domain /**< Domain. */
          );
  
@@ -1816,9 +1845,9 @@ index 283adf0..696ca3b 100644
  
  /** Provide external memory to store the domain's process data.
   *
-@@ -2057,7 +2064,7 @@ void ecrt_reg_request_read(
+@@ -2870,7 +2881,7 @@ EC_PUBLIC_API int ecrt_reg_request_read(
   * Byte-swapping functions for user space
-  *****************************************************************************/
+  ****************************************************************************/
  
 -#ifndef __KERNEL__
 +#if defined(EC_MASTER_IN_USERSPACE) || !defined(__KERNEL__)
@@ -1826,25 +1855,24 @@ index 283adf0..696ca3b 100644
  #if __BYTE_ORDER == __LITTLE_ENDIAN
  
 diff --git a/lib/Makefile.am b/lib/Makefile.am
-index 1b08d93..f062589 100644
+index 644d4ea8..3dff4ba3 100644
 --- a/lib/Makefile.am
 +++ b/lib/Makefile.am
-@@ -53,6 +53,10 @@ noinst_HEADERS = \
- libethercat_la_CFLAGS = -fno-strict-aliasing -Wall
- libethercat_la_LDFLAGS = -version-info 1:0:0
+@@ -89,6 +89,9 @@ EXTRA_DIST = ethercat-config.cmake.in libethercat.map
+ 
+ CLEANFILES = $(cmake_DATA)
  
 +if ENABLE_USERSPACE_MASTER
 +libethercat_la_CFLAGS += -DEC_MASTER_IN_USERSPACE
 +endif
-+
+ 
  #------------------------------------------------------------------------------
  
- if ENABLE_RTDM
 diff --git a/lib/common.c b/lib/common.c
-index 853f232..1d37863 100644
+index 4dbdee72..0ee9a15b 100644
 --- a/lib/common.c
 +++ b/lib/common.c
-@@ -41,6 +41,10 @@
+@@ -33,6 +33,10 @@
  #include "ioctl.h"
  #include "master.h"
  
@@ -1852,10 +1880,10 @@ index 853f232..1d37863 100644
 +#include "master/ioctl.h"
 +#endif
 +
- /*****************************************************************************/
+ /****************************************************************************/
  
  unsigned int ecrt_version_magic(void)
-@@ -70,10 +74,12 @@ ec_master_t *ecrt_request_master(unsigned int master_index)
+@@ -62,10 +66,12 @@ ec_master_t *ecrt_request_master(unsigned int master_index)
  
  ec_master_t *ecrt_open_master(unsigned int master_index)
  {
@@ -1869,18 +1897,18 @@ index 853f232..1d37863 100644
  
      master = malloc(sizeof(ec_master_t));
      if (!master) {
-@@ -86,6 +92,10 @@ ec_master_t *ecrt_open_master(unsigned int master_index)
+@@ -78,6 +84,10 @@ ec_master_t *ecrt_open_master(unsigned int master_index)
      master->first_domain = NULL;
      master->first_config = NULL;
  
-+#ifdef EC_MASTER_IN_USERSPACE
++#if defined(EC_MASTER_IN_USERSPACE)
 +    master->fd = ioctl_usecat_open(master_index, NULL);
 +    return master;
 +#else
      snprintf(path, MAX_PATH_LEN - 1,
- #ifdef USE_RTDM
+ #if defined(USE_RTDM)
              "EtherCAT%u",
-@@ -125,6 +135,7 @@ ec_master_t *ecrt_open_master(unsigned int master_index)
+@@ -119,6 +129,7 @@ ec_master_t *ecrt_open_master(unsigned int master_index)
  out_clear:
      ec_master_clear(master);
      free(master);
@@ -1889,10 +1917,10 @@ index 853f232..1d37863 100644
  }
  
 diff --git a/lib/domain.c b/lib/domain.c
-index 1ee838b..0524d88 100644
+index 7382a24b..6de9433c 100644
 --- a/lib/domain.c
 +++ b/lib/domain.c
-@@ -80,7 +80,7 @@ size_t ecrt_domain_size(const ec_domain_t *domain)
+@@ -72,7 +72,7 @@ size_t ecrt_domain_size(const ec_domain_t *domain)
  {
      int ret;
  
@@ -1901,40 +1929,31 @@ index 1ee838b..0524d88 100644
      if (EC_IOCTL_IS_ERROR(ret)) {
          fprintf(stderr, "Failed to get domain size: %s\n",
                  strerror(EC_IOCTL_ERRNO(ret)));
-@@ -96,7 +96,7 @@ uint8_t *ecrt_domain_data(ec_domain_t *domain)
-     if (!domain->process_data) {
-         int offset = 0;
- 
--        offset = ioctl(domain->master->fd, EC_IOCTL_DOMAIN_OFFSET,
-+        offset = ioctl_l(domain->master->fd, EC_IOCTL_DOMAIN_OFFSET,
-                 domain->index);
-         if (EC_IOCTL_IS_ERROR(offset)) {
-             fprintf(stderr, "Failed to get domain offset: %s\n",
-@@ -116,7 +116,7 @@ void ecrt_domain_process(ec_domain_t *domain)
+@@ -94,7 +94,7 @@ int ecrt_domain_process(ec_domain_t *domain)
  {
      int ret;
  
 -    ret = ioctl(domain->master->fd, EC_IOCTL_DOMAIN_PROCESS, domain->index);
 +    ret = ioctl_l(domain->master->fd, EC_IOCTL_DOMAIN_PROCESS, domain->index);
      if (EC_IOCTL_IS_ERROR(ret)) {
-         fprintf(stderr, "Failed to process domain: %s\n",
-                 strerror(EC_IOCTL_ERRNO(ret)));
-@@ -129,7 +129,7 @@ void ecrt_domain_queue(ec_domain_t *domain)
+         return -EC_IOCTL_ERRNO(ret);
+     }
+@@ -107,7 +107,7 @@ int ecrt_domain_queue(ec_domain_t *domain)
  {
      int ret;
  
 -    ret = ioctl(domain->master->fd, EC_IOCTL_DOMAIN_QUEUE, domain->index);
 +    ret = ioctl_l(domain->master->fd, EC_IOCTL_DOMAIN_QUEUE, domain->index);
      if (EC_IOCTL_IS_ERROR(ret)) {
-         fprintf(stderr, "Failed to queue domain: %s\n",
-                 strerror(EC_IOCTL_ERRNO(ret)));
+         return -EC_IOCTL_ERRNO(ret);
+     }
 diff --git a/lib/ioctl.h b/lib/ioctl.h
-index c79a9a2..dc28f37 100644
+index 8584582e..7e9d9a29 100644
 --- a/lib/ioctl.h
 +++ b/lib/ioctl.h
-@@ -45,6 +45,24 @@
+@@ -37,6 +37,24 @@
  
- /*****************************************************************************/
+ /****************************************************************************/
  
 +#ifdef EC_MASTER_IN_USERSPACE
 +static inline int ioctl_us_ecat(int fd, unsigned int cmd, void *arg, int len, int flag)
@@ -1957,35 +1976,29 @@ index c79a9a2..dc28f37 100644
  #ifdef USE_RTDM
  
  #define ioctl rt_dev_ioctl
-@@ -64,6 +82,7 @@
+@@ -56,6 +74,7 @@
  #include <errno.h>
  
  #endif
 +#endif /* EC_MASTER_IN_USERSPACE */
  
- /*****************************************************************************/
+ /****************************************************************************/
  
 diff --git a/lib/libethercat.pc.in b/lib/libethercat.pc.in
-new file mode 100644
-index 0000000..48efb05
---- /dev/null
+index 453a0911..21cd4150 100644
+--- a/lib/libethercat.pc.in
 +++ b/lib/libethercat.pc.in
-@@ -0,0 +1,10 @@
-+prefix=@prefix@
-+exec_prefix=@exec_prefix@
-+libdir=@libdir@
-+includedir=@includedir@
-+
-+Name: libethercat
-+Description: EtherCAT userspace library
-+Version: @VERSION@
-+Libs: -L${libdir} -lethercat
+@@ -31,4 +31,4 @@ Description: Client support library for the EtherCAT Master
+ URL: http://www.etherlab.org
+ Version: @VERSION@
+ Libs:  -L${libdir} -lethercat
+-Cflags: -I${includedir}
 +Cflags: -I${includedir} -fno-strict-aliasing -DEC_MASTER_IN_USERSPACE
 diff --git a/lib/master.c b/lib/master.c
-index b480991..dc6f77c 100644
+index 2a9018e5..77902204 100644
 --- a/lib/master.c
 +++ b/lib/master.c
-@@ -215,7 +215,7 @@ int ecrt_master_select_reference_clock(ec_master_t *master,
+@@ -219,7 +219,7 @@ int ecrt_master_select_reference_clock(ec_master_t *master,
          config_index = 0xFFFFFFFF;
      }
  
@@ -1994,7 +2007,7 @@ index b480991..dc6f77c 100644
      if (EC_IOCTL_IS_ERROR(ret)) {
          fprintf(stderr, "Failed to select reference clock: %s\n",
                  strerror(EC_IOCTL_ERRNO(ret)));
-@@ -547,6 +547,11 @@ int ecrt_master_activate(ec_master_t *master)
+@@ -571,6 +571,11 @@ int ecrt_master_activate(ec_master_t *master)
      master->process_data_size = io.process_data_size;
  
      if (master->process_data_size) {
@@ -2006,7 +2019,7 @@ index b480991..dc6f77c 100644
  #ifdef USE_RTDM
          /* memory-mapping was already done in kernel. The user-space addess is
           * provided in the ioctl data.
-@@ -563,6 +568,7 @@ int ecrt_master_activate(ec_master_t *master)
+@@ -587,6 +592,7 @@ int ecrt_master_activate(ec_master_t *master)
              return -errno;
          }
  #endif
@@ -2014,23 +2027,31 @@ index b480991..dc6f77c 100644
  
          // Access the mapped region to cause the initial page fault
          master->process_data[0] = 0x00;
+@@ -595,7 +601,7 @@ int ecrt_master_activate(ec_master_t *master)
+     // pick up process data pointers for all created domains
+     ec_domain_t *domain = master->first_domain;
+     while (domain) {
+-        int offset = ioctl(domain->master->fd, EC_IOCTL_DOMAIN_OFFSET,
++        int offset = ioctl_l(domain->master->fd, EC_IOCTL_DOMAIN_OFFSET,
+                 domain->index);
+         if (EC_IOCTL_IS_ERROR(offset)) {
+             fprintf(stderr, "Failed to get domain offset: %s\n",
 diff --git a/master/Makefile.am b/master/Makefile.am
-index ab855f6..e9cb23f 100644
+index 1a0ef30a..709f496b 100644
 --- a/master/Makefile.am
 +++ b/master/Makefile.am
-@@ -91,3 +91,76 @@ clean-local:
- 	$(MAKE) -C "$(LINUX_SOURCE_DIR)" M="@abs_srcdir@" clean
+@@ -74,3 +74,78 @@ noinst_HEADERS = \
+ 	voe_handler.c voe_handler.h
  
- #------------------------------------------------------------------------------
+ #-----------------------------------------------------------------------------
 +
 +# user-space library
 +if ENABLE_USERSPACE_MASTER
 +
 +lib_LTLIBRARIES = libethercat_master.la
 +
-+pkgconfigdir = $(libdir)/pkgconfig
 +pkgconfig_DATA = libethercat_master.pc
-+EXTRA_DIST += libethercat_master.pc.in
++EXTRA_DIST = libethercat_master.pc.in
 +
 +libethercat_master_la_LDFLAGS = -version-info 1:0:0
 +
@@ -2050,10 +2071,13 @@ index ab855f6..e9cb23f 100644
 +	datagram_pair.c \
 +	device.c \
 +	domain.c \
++	eoe_request.c \
++	flag.c \
 +	fmmu_config.c \
 +	foe_request.c \
 +	fsm_change.c \
 +	fsm_coe.c \
++	fsm_eoe.c \
 +	fsm_foe.c \
 +	fsm_master.c \
 +	fsm_pdo.c \
@@ -2096,13 +2120,15 @@ index ab855f6..e9cb23f 100644
 +
 +endif
 diff --git a/master/cdev.c b/master/cdev.c
-index d16e405..467321f 100644
+index eb95bfe9..404e0fcf 100644
 --- a/master/cdev.c
 +++ b/master/cdev.c
-@@ -51,6 +51,50 @@
+@@ -41,6 +41,50 @@
+  */
+ #define DEBUG 0
  
- /*****************************************************************************/
- 
++/*****************************************************************************/
++
 +/** Private data structure for file handles.
 + */
 +typedef struct {
@@ -2145,30 +2171,24 @@ index d16e405..467321f 100644
 +
 +#else /* EC_MASTER_IN_USERSPACE */
 +
-+/*****************************************************************************/
-+
- static int eccdev_open(struct inode *, struct file *);
- static int eccdev_release(struct inode *, struct file *);
- static long eccdev_ioctl(struct file *, unsigned int, unsigned long);
-@@ -90,16 +134,7 @@ struct vm_operations_struct eccdev_vm_ops = {
- #endif
- };
+ /****************************************************************************/
  
--/*****************************************************************************/
--
+ static int eccdev_open(struct inode *, struct file *);
+@@ -84,12 +128,7 @@ struct vm_operations_struct eccdev_vm_ops = {
+ 
+ /****************************************************************************/
+ 
 -/** Private data structure for file handles.
 - */
 -typedef struct {
 -    ec_cdev_t *cdev; /**< Character device. */
 -    ec_ioctl_context_t ctx; /**< Context. */
 -} ec_cdev_priv_t;
--
--/*****************************************************************************/
 +#endif /* EC_MASTER_IN_USERSPACE */
  
- /** Constructor.
-  *
-@@ -136,6 +171,26 @@ void ec_cdev_clear(ec_cdev_t *cdev /**< EtherCAT XML device */)
+ /****************************************************************************/
+ 
+@@ -128,6 +167,26 @@ void ec_cdev_clear(ec_cdev_t *cdev /**< EtherCAT XML device */)
      cdev_del(&cdev->cdev);
  }
  
@@ -2192,45 +2212,37 @@ index d16e405..467321f 100644
 +
 +#else /* EC_MASTER_IN_USERSPACE */
 +
- /******************************************************************************
+ /*****************************************************************************
   * File operations
-  *****************************************************************************/
-@@ -257,7 +312,7 @@ static unsigned int eccdev_vma_fault(
-         )
- {
-     unsigned long offset = vmf->pgoff << PAGE_SHIFT;
--	ec_cdev_priv_t *priv = (ec_cdev_priv_t *) vmf->vma->vm_private_data;
-+    ec_cdev_priv_t *priv = (ec_cdev_priv_t *) vmf->vma->vm_private_data;
-     struct page *page;
- 
-     if (offset >= priv->ctx.process_data_size) {
-@@ -313,4 +368,6 @@ struct page *eccdev_vma_nopage(
- 
- #endif
+  ****************************************************************************/
+@@ -278,4 +337,6 @@ static FAULT_RETURN_TYPE eccdev_vma_fault(
+     return 0;
+ }
  
 +#endif  /* EC_MASTER_IN_USERSPACE */
 +
- /*****************************************************************************/
+ /****************************************************************************/
 diff --git a/master/cdev.h b/master/cdev.h
-index a06bb1c..1a7bd18 100644
+index 825d360e..429180ad 100644
 --- a/master/cdev.h
 +++ b/master/cdev.h
-@@ -52,6 +52,10 @@ typedef struct {
- } ec_cdev_t;
+@@ -45,6 +45,11 @@ typedef struct {
  
- /*****************************************************************************/
+ /****************************************************************************/
+ 
 +#ifdef EC_MASTER_IN_USERSPACE
 +int ec_cdev_usecat_start(ec_master_t *master);
 +int ec_cdev_usecat_stop(ec_master_t *master);
 +#endif
- 
++
  int ec_cdev_init(ec_cdev_t *, ec_master_t *, dev_t);
  void ec_cdev_clear(ec_cdev_t *);
+ 
 diff --git a/master/device.h b/master/device.h
-index 0a0e889..2a1b596 100644
+index 77430931..82425e34 100644
 --- a/master/device.h
 +++ b/master/device.h
-@@ -48,7 +48,11 @@
+@@ -40,7 +40,11 @@
   * different memory regions, because otherwise the network device DMA could
   * send the same data twice, if it is called twice.
   */
@@ -2244,7 +2256,7 @@ index 0a0e889..2a1b596 100644
  #include "debug.h"
 diff --git a/master/ethercat_master.c b/master/ethercat_master.c
 new file mode 100644
-index 0000000..c2d6fde
+index 00000000..c2d6fde9
 --- /dev/null
 +++ b/master/ethercat_master.c
 @@ -0,0 +1,106 @@
@@ -2355,50 +2367,36 @@ index 0000000..c2d6fde
 +    return EXIT_SUCCESS;
 +}
 diff --git a/master/ethernet.c b/master/ethernet.c
-index ebec2cb..30f5dfd 100644
+index 55cff311..e1d6db9a 100644
 --- a/master/ethernet.c
 +++ b/master/ethernet.c
-@@ -146,11 +146,11 @@ int ec_eoe_init(
+@@ -153,7 +153,7 @@ int ec_eoe_init(
                  "eoe%us%u", slave->master->index, slave->ring_position);
      }
  
 -    snprintf(eoe->datagram.name, EC_DATAGRAM_NAME_SIZE, name);
 +    snprintf(eoe->datagram.name, EC_DATAGRAM_NAME_SIZE, "%s", name);
  
--	eoe->dev = alloc_netdev(sizeof(ec_eoe_t *), name, NET_NAME_UNKNOWN,
--			ether_setup);
--	if (!eoe->dev) {
-+    eoe->dev = alloc_netdev(sizeof(ec_eoe_t *), name, NET_NAME_UNKNOWN,
-+            ether_setup);
-+    if (!eoe->dev) {
-         EC_SLAVE_ERR(slave, "Unable to allocate net_device %s"
-                 " for EoE handler!\n", name);
-         ret = -ENODEV;
-@@ -781,7 +781,9 @@ int ec_eoedev_open(struct net_device *dev /**< EoE net_device */)
- #if EOE_DEBUG_LEVEL >= 2
-     EC_SLAVE_DBG(eoe->slave, 0, "%s opened.\n", dev->name);
- #endif
-+#ifndef EC_MASTER_IN_USERSPACE
-     ec_slave_request_state(eoe->slave, EC_SLAVE_STATE_OP);
-+#endif
-     return 0;
- }
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)
+     eoe->dev = alloc_netdev(sizeof(ec_eoe_t *), name, NET_NAME_UNKNOWN,
+diff --git a/master/flag.c b/master/flag.c
+index 652d35b1..58ffc2c9 100644
+--- a/master/flag.c
++++ b/master/flag.c
+@@ -43,7 +43,7 @@ int ec_flag_init(
+         return -EINVAL;
+     }
  
-@@ -803,7 +805,9 @@ int ec_eoedev_stop(struct net_device *dev /**< EoE net_device */)
- #if EOE_DEBUG_LEVEL >= 2
-     EC_SLAVE_DBG(eoe->slave, 0, "%s stopped.\n", dev->name);
- #endif
-+#ifndef EC_MASTER_IN_USERSPACE
-     ec_slave_request_state(eoe->slave, EC_SLAVE_STATE_PREOP);
-+#endif
-     return 0;
- }
+-    if (!(flag->key = (uint8_t *) kmalloc(strlen(key) + 1, GFP_KERNEL))) {
++    if (!(flag->key = (char *) kmalloc(strlen(key) + 1, GFP_KERNEL))) {
+         return -ENOMEM;
+     }
  
 diff --git a/master/foe_request.c b/master/foe_request.c
-index 794d3d9..afb0c35 100644
+index 3b68f734..fc64954b 100644
 --- a/master/foe_request.c
 +++ b/master/foe_request.c
-@@ -56,7 +56,7 @@ void ec_foe_request_clear_data(ec_foe_request_t *);
+@@ -51,7 +51,7 @@ void ec_foe_request_clear_data(ec_foe_request_t *);
   */
  void ec_foe_request_init(
          ec_foe_request_t *req, /**< FoE request. */
@@ -2408,10 +2406,10 @@ index 794d3d9..afb0c35 100644
      INIT_LIST_HEAD(&req->list);
      req->buffer = NULL;
 diff --git a/master/foe_request.h b/master/foe_request.h
-index 25b9e63..d6ca828 100644
+index ba5ceb66..f23e1392 100644
 --- a/master/foe_request.h
 +++ b/master/foe_request.h
-@@ -64,14 +64,14 @@ typedef struct {
+@@ -56,14 +56,14 @@ typedef struct {
      unsigned long jiffies_start; /**< Jiffies, when the request was issued. */
      unsigned long jiffies_sent; /**< Jiffies, when the upload/download
                                       request was sent. */
@@ -2421,7 +2419,7 @@ index 25b9e63..d6ca828 100644
      uint32_t error_code; /**< Error code from an FoE Error Request. */
  } ec_foe_request_t;
  
- /*****************************************************************************/
+ /****************************************************************************/
  
 -void ec_foe_request_init(ec_foe_request_t *, uint8_t *file_name);
 +void ec_foe_request_init(ec_foe_request_t *, char *file_name);
@@ -2429,10 +2427,10 @@ index 25b9e63..d6ca828 100644
  
  int ec_foe_request_alloc(ec_foe_request_t *, size_t);
 diff --git a/master/fsm_coe.c b/master/fsm_coe.c
-index cea0b02..c38dade 100644
+index 69765cd0..597144e2 100644
 --- a/master/fsm_coe.c
 +++ b/master/fsm_coe.c
-@@ -1139,7 +1139,7 @@ void ec_fsm_coe_dict_entry_response(
+@@ -1147,7 +1147,7 @@ void ec_fsm_coe_dict_entry_response(
          entry->write_access[EC_SDO_ENTRY_ACCESS_OP] = (word >> 5)  & 0x0001;
  
          if (data_size) {
@@ -2442,28 +2440,10 @@ index cea0b02..c38dade 100644
                  EC_SLAVE_ERR(slave, "Failed to allocate SDO entry name!\n");
                  fsm->state = ec_fsm_coe_error;
 diff --git a/master/fsm_foe.c b/master/fsm_foe.c
-index 26ccd79..4ac1388 100644
+index 378ae369..2475ec35 100644
 --- a/master/fsm_foe.c
 +++ b/master/fsm_foe.c
-@@ -183,7 +183,7 @@ void ec_fsm_foe_transfer(
-         fsm->tx_buffer_size = fsm->request->data_size;
-         fsm->tx_buffer_offset = 0;
- 
--        fsm->tx_filename = fsm->request->file_name;
-+        fsm->tx_filename = (char*)fsm->request->file_name;
-         fsm->tx_filename_len = strlen(fsm->tx_filename);
- 
-         fsm->state = ec_fsm_foe_write_start;
-@@ -192,7 +192,7 @@ void ec_fsm_foe_transfer(
-         fsm->rx_buffer = fsm->request->buffer;
-         fsm->rx_buffer_size = fsm->request->buffer_size;
- 
--        fsm->rx_filename = fsm->request->file_name;
-+        fsm->rx_filename = (char*)fsm->request->file_name;
-         fsm->rx_filename_len = strlen(fsm->rx_filename);
- 
-         fsm->state = ec_fsm_foe_read_start;
-@@ -790,8 +790,8 @@ void ec_fsm_foe_state_data_read(
+@@ -775,8 +775,8 @@ void ec_fsm_foe_state_data_read(
          EC_SLAVE_ERR(slave, "Received FoE Error Request (code 0x%08x).\n",
                  fsm->request->error_code);
          if (rec_size > 6) {
@@ -2475,10 +2455,10 @@ index 26ccd79..4ac1388 100644
          }
          ec_foe_set_rx_error(fsm, FOE_OPCODE_ERROR);
 diff --git a/master/fsm_foe.h b/master/fsm_foe.h
-index 91d6df5..37d7f4a 100644
+index 55711dcc..d240a9d7 100644
 --- a/master/fsm_foe.h
 +++ b/master/fsm_foe.h
-@@ -67,7 +67,7 @@ struct ec_fsm_foe {
+@@ -60,7 +60,7 @@ struct ec_fsm_foe {
      uint32_t tx_last_packet; /**< Current packet is last one to send. */
      uint32_t tx_packet_no; /**< FoE packet number. */
      uint32_t tx_current_size; /**< Size of current packet to send. */
@@ -2487,7 +2467,7 @@ index 91d6df5..37d7f4a 100644
      uint32_t tx_filename_len; /**< Lenth of transmit file name. */
  
      uint8_t *rx_buffer; /**< Buffer for received data. */
-@@ -75,7 +75,7 @@ struct ec_fsm_foe {
+@@ -68,7 +68,7 @@ struct ec_fsm_foe {
      uint32_t rx_buffer_offset; /**< Offset in receive buffer. */
      uint32_t rx_expected_packet_no; /**< Expected receive packet number. */
      uint32_t rx_last_packet; /**< Current packet is the last to receive. */
@@ -2497,12 +2477,12 @@ index 91d6df5..37d7f4a 100644
  };
  
 diff --git a/master/fsm_slave_config.c b/master/fsm_slave_config.c
-index 2ca63f0..10d11ef 100644
+index 47e750f4..fa0e56e7 100644
 --- a/master/fsm_slave_config.c
 +++ b/master/fsm_slave_config.c
-@@ -34,7 +34,9 @@
+@@ -25,7 +25,9 @@
  
- /*****************************************************************************/
+ /****************************************************************************/
  
 +#ifndef EC_MASTER_IN_USERSPACE
  #include <asm/div64.h>
@@ -2511,10 +2491,10 @@ index 2ca63f0..10d11ef 100644
  #include "globals.h"
  #include "master.h"
 diff --git a/master/ioctl.c b/master/ioctl.c
-index 8565efb..0cd6b3f 100644
+index c590d5d2..a3d4ddd5 100644
 --- a/master/ioctl.c
 +++ b/master/ioctl.c
-@@ -1522,7 +1522,7 @@ static ATTRIBUTES int ec_ioctl_eoe_handler(
+@@ -1691,7 +1691,7 @@ static ATTRIBUTES int ec_ioctl_eoe_handler(
      } else {
          data.slave_position = 0xffff;
      }
@@ -2523,11 +2503,38 @@ index 8565efb..0cd6b3f 100644
      data.open = eoe->opened;
      data.rx_bytes = eoe->stats.tx_bytes;
      data.rx_rate = eoe->tx_rate;
+@@ -2376,11 +2376,17 @@ static ATTRIBUTES int ec_ioctl_reset(
+         ec_ioctl_context_t *ctx /**< Private data structure of file handle. */
+         )
+ {
++#ifdef EC_MASTER_IN_USERSPACE
++    down(&master->master_sem);
++    ecrt_master_reset(master);
++    up(&master->master_sem);
++#else
+ #ifdef EC_IOCTL_RTDM
+     /* Xenomai/LXRT is like NMI context, so we do a two-stage schedule. */
+     irq_work_queue(&master->sc_reset_work_kicker);
+ #else
+     schedule_work(&master->sc_reset_work);
++#endif
+ #endif
+     return 0;
+ }
+@@ -3295,7 +3301,7 @@ static ATTRIBUTES int ec_ioctl_sc_flag(
+ {
+     ec_ioctl_sc_flag_t ioctl;
+     ec_slave_config_t *sc;
+-    uint8_t *key;
++    char *key;
+     int ret;
+ 
+     if (unlikely(!ctx->requested)) {
 diff --git a/master/ioctl.h b/master/ioctl.h
-index 105e54e..185f04c 100644
+index 0c51e638..33bd8b9d 100644
 --- a/master/ioctl.h
 +++ b/master/ioctl.h
-@@ -279,7 +279,7 @@ typedef struct {
+@@ -288,7 +288,7 @@ typedef struct {
      // outputs
      uint16_t index;
      uint8_t entry_count;
@@ -2535,8 +2542,8 @@ index 105e54e..185f04c 100644
 +    char name[EC_IOCTL_STRING_SIZE];
  } ec_ioctl_slave_sync_pdo_t;
  
- /*****************************************************************************/
-@@ -295,7 +295,7 @@ typedef struct {
+ /****************************************************************************/
+@@ -304,7 +304,7 @@ typedef struct {
      uint16_t index;
      uint8_t subindex;
      uint8_t bit_length;
@@ -2544,8 +2551,8 @@ index 105e54e..185f04c 100644
 +    char name[EC_IOCTL_STRING_SIZE];
  } ec_ioctl_slave_sync_pdo_entry_t;
  
- /*****************************************************************************/
-@@ -355,7 +355,7 @@ typedef struct {
+ /****************************************************************************/
+@@ -364,7 +364,7 @@ typedef struct {
      // outputs
      uint16_t sdo_index;
      uint8_t max_subindex;
@@ -2553,8 +2560,8 @@ index 105e54e..185f04c 100644
 +    char name[EC_IOCTL_STRING_SIZE];
  } ec_ioctl_slave_sdo_t;
  
- /*****************************************************************************/
-@@ -371,7 +371,7 @@ typedef struct {
+ /****************************************************************************/
+@@ -380,7 +380,7 @@ typedef struct {
      uint16_t bit_length;
      uint8_t read_access[EC_SDO_ENTRY_ACCESS_COUNT];
      uint8_t write_access[EC_SDO_ENTRY_ACCESS_COUNT];
@@ -2562,8 +2569,8 @@ index 105e54e..185f04c 100644
 +    char description[EC_IOCTL_STRING_SIZE];
  } ec_ioctl_slave_sdo_entry_t;
  
- /*****************************************************************************/
-@@ -506,7 +506,7 @@ typedef struct {
+ /****************************************************************************/
+@@ -517,7 +517,7 @@ typedef struct {
      // outputs
      uint16_t index;
      uint8_t entry_count;
@@ -2571,8 +2578,8 @@ index 105e54e..185f04c 100644
 +    char name[EC_IOCTL_STRING_SIZE];
  } ec_ioctl_config_pdo_t;
  
- /*****************************************************************************/
-@@ -522,7 +522,7 @@ typedef struct {
+ /****************************************************************************/
+@@ -533,7 +533,7 @@ typedef struct {
      uint16_t index;
      uint8_t subindex;
      uint8_t bit_length;
@@ -2580,10 +2587,10 @@ index 105e54e..185f04c 100644
 +    char name[EC_IOCTL_STRING_SIZE];
  } ec_ioctl_config_pdo_entry_t;
  
- /*****************************************************************************/
-@@ -755,7 +755,23 @@ typedef struct {
+ /****************************************************************************/
+@@ -843,7 +843,23 @@ typedef struct {
  
- /*****************************************************************************/
+ /****************************************************************************/
  
 -#ifdef __KERNEL__
 +#ifdef EC_MASTER_IN_USERSPACE
@@ -2608,7 +2615,7 @@ index 105e54e..185f04c 100644
   */
 diff --git a/master/libethercat_master.pc.in b/master/libethercat_master.pc.in
 new file mode 100644
-index 0000000..6e5b8a8
+index 00000000..6e5b8a87
 --- /dev/null
 +++ b/master/libethercat_master.pc.in
 @@ -0,0 +1,10 @@
@@ -2623,23 +2630,29 @@ index 0000000..6e5b8a8
 +Libs: -L${libdir} -lethercat_master -lpthread
 +Cflags: -I${includedir} -fno-strict-aliasing -DEC_MASTER_IN_USERSPACE
 diff --git a/master/master.c b/master/master.c
-index 7a67722..e07c4a6 100644
+index a3a13b35..d73eda13 100644
 --- a/master/master.c
 +++ b/master/master.c
-@@ -44,7 +44,9 @@
- #include <linux/device.h>
+@@ -37,7 +37,9 @@
  #include <linux/version.h>
  #include <linux/hrtimer.h>
+ #include <linux/kthread.h>
+-
 +#ifndef EC_MASTER_IN_USERSPACE
- #include <uapi/linux/sched/types.h>
++#include <uapi/linux/sched/types.h>
 +#endif
  #include "globals.h"
  #include "slave.h"
  #include "slave_config.h"
-@@ -102,6 +104,15 @@ void ec_master_find_dc_ref_clock(ec_master_t *);
+@@ -127,8 +129,19 @@ void ec_master_find_dc_ref_clock(ec_master_t *);
  void ec_master_clear_device_stats(ec_master_t *);
  void ec_master_update_device_stats(ec_master_t *);
- 
+ void ec_master_nanosleep(const unsigned long);
++#ifndef EC_MASTER_IN_USERSPACE
+ static void sc_reset_task_kicker(struct irq_work *work);
+ static void sc_reset_task(struct work_struct *work);
++#endif
++
 +#ifdef EC_MASTER_IN_USERSPACE
 +void ec_master_nanosleep(const unsigned long nsecs)
 +{
@@ -2648,11 +2661,20 @@ index 7a67722..e07c4a6 100644
 +        t = r;
 +}
 +#endif
-+
- /*****************************************************************************/
  
- /** Static variables initializer.
-@@ -312,6 +323,11 @@ int ec_master_init(ec_master_t *master, /**< EtherCAT master */
+ /****************************************************************************/
+ 
+@@ -338,14 +351,21 @@ int ec_master_init(ec_master_t *master, /**< EtherCAT master */
+     master->dc_ref_config = NULL;
+     master->dc_ref_clock = NULL;
+ 
++#ifndef EC_MASTER_IN_USERSPACE
+     INIT_WORK(&master->sc_reset_work, sc_reset_task);
+     init_irq_work(&master->sc_reset_work_kicker, sc_reset_task_kicker);
++#endif
+ 
+     // init character device
+     ret = ec_cdev_init(&master->cdev, master, device_number);
      if (ret)
          goto out_clear_sync_mon;
  
@@ -2661,10 +2683,10 @@ index 7a67722..e07c4a6 100644
 +    if (ret)
 +        goto out_clear_cdev;
 +#else
- #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)
      master->class_device = device_create(class, NULL,
              MKDEV(MAJOR(device_number), master->index), NULL,
-@@ -342,6 +358,7 @@ int ec_master_init(ec_master_t *master, /**< EtherCAT master */
+             "EtherCAT%u", master->index);
+@@ -362,6 +382,7 @@ int ec_master_init(ec_master_t *master, /**< EtherCAT master */
          goto out_unregister_class_device;
      }
  #endif
@@ -2672,7 +2694,7 @@ index 7a67722..e07c4a6 100644
  
      return 0;
  
-@@ -384,6 +401,9 @@ void ec_master_clear(
+@@ -400,16 +421,20 @@ void ec_master_clear(
  {
      unsigned int dev_idx, i;
  
@@ -2682,15 +2704,35 @@ index 7a67722..e07c4a6 100644
  #ifdef EC_RTDM
      ec_rtdm_dev_clear(&master->rtdm_dev);
  #endif
-@@ -393,6 +413,7 @@ void ec_master_clear(
- #else
-     class_device_unregister(master->class_device);
- #endif
+ 
+     device_unregister(master->class_device);
+ 
+-    ec_cdev_clear(&master->cdev);
+-
+     irq_work_sync(&master->sc_reset_work_kicker);
+     cancel_work_sync(&master->sc_reset_work);
 +#endif  /* EC_MASTER_IN_USERSPACE */
++
++    ec_cdev_clear(&master->cdev);
  
-     ec_cdev_clear(&master->cdev);
+ #ifdef EC_EOE
+     ec_master_clear_eoe_handlers(master);
+@@ -595,12 +620,14 @@ int ec_master_thread_start(
+         master->thread = NULL;
+         return err;
+     }
++#ifndef EC_MASTER_IN_USERSPACE
+     if (0xffffffff != master->run_on_cpu) {
+         EC_MASTER_INFO(master, " binding thread to cpu %u\n",master->run_on_cpu);
+         kthread_bind(master->thread,master->run_on_cpu);
+     }
+     /* Ignoring return value of wake_up_process */
+     (void) wake_up_process(master->thread);
++#endif
  
-@@ -590,7 +611,9 @@ void ec_master_thread_stop(
+     return 0;
+ }
+@@ -613,7 +640,9 @@ void ec_master_thread_stop(
          ec_master_t *master /**< EtherCAT master */
          )
  {
@@ -2700,7 +2742,7 @@ index 7a67722..e07c4a6 100644
  
      if (!master->thread) {
          EC_MASTER_WARN(master, "%s(): Already finished!\n", __func__);
-@@ -607,9 +630,13 @@ void ec_master_thread_stop(
+@@ -630,9 +659,13 @@ void ec_master_thread_stop(
          return;
      }
  
@@ -2713,8 +2755,17 @@ index 7a67722..e07c4a6 100644
 +#endif
  }
  
- /*****************************************************************************/
-@@ -1301,7 +1328,7 @@ void ec_master_update_device_stats(
+ /****************************************************************************/
+@@ -1319,7 +1352,7 @@ void ec_master_clear_device_stats(
+         master->device_stats.loss_rates[i] = 0;
+     }
+ 
+-    master->device_stats.jiffies = 0;
++    master->device_stats.clk_jiffies = 0;
+ }
+ 
+ /****************************************************************************/
+@@ -1336,7 +1369,7 @@ void ec_master_update_device_stats(
      unsigned int i, dev_idx;
  
      // frame statistics
@@ -2723,7 +2774,7 @@ index 7a67722..e07c4a6 100644
          return;
      }
  
-@@ -1336,11 +1363,12 @@ void ec_master_update_device_stats(
+@@ -1371,11 +1404,12 @@ void ec_master_update_device_stats(
          ec_device_update_stats(&master->devices[dev_idx]);
      }
  
@@ -2731,37 +2782,37 @@ index 7a67722..e07c4a6 100644
 +    s->clk_jiffies = jiffies;
  }
  
- /*****************************************************************************/
+ /****************************************************************************/
  
 +#ifndef EC_MASTER_IN_USERSPACE
  #ifdef EC_USE_HRTIMER
  
  /*
-@@ -1413,6 +1441,7 @@ void ec_master_nanosleep(const unsigned long nsecs)
+@@ -1420,6 +1454,7 @@ void ec_master_nanosleep(const unsigned long nsecs)
  }
  
  #endif // EC_USE_HRTIMER
 +#endif /* EC_MASTER_IN_USERSPACE */
  
- /*****************************************************************************/
+ /****************************************************************************/
  
-@@ -1659,6 +1688,7 @@ void ec_master_eoe_start(ec_master_t *master /**< EtherCAT master */)
-         master->eoe_thread = NULL;
-         return;
-     }
+@@ -1644,6 +1679,7 @@ static int ec_master_operation_thread(void *priv_data)
+ /* compatibility for priority changes */
+ static inline void set_normal_priority(struct task_struct *p, int nice)
+ {
 +#ifndef EC_MASTER_IN_USERSPACE
  #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
-     sched_set_normal(master->eoe_thread, 19);
+     sched_set_normal(p, nice);
  #else
-@@ -1666,6 +1696,7 @@ void ec_master_eoe_start(ec_master_t *master /**< EtherCAT master */)
-     sched_setscheduler(master->eoe_thread, SCHED_NORMAL, &param);
+@@ -1651,6 +1687,7 @@ static inline void set_normal_priority(struct task_struct *p, int nice)
+     sched_setscheduler(p, SCHED_NORMAL, &param);
+     set_user_nice(p, nice);
  #endif
-     set_user_nice(master->eoe_thread, 0);
 +#endif  /* EC_MASTER_IN_USERSPACE */
  }
  
- /*****************************************************************************/
-@@ -1699,6 +1730,11 @@ static int ec_master_eoe_thread(void *priv_data)
+ /****************************************************************************/
+@@ -1718,6 +1755,11 @@ static int ec_master_eoe_thread(void *priv_data)
          none_open = 1;
          all_idle = 1;
  
@@ -2773,7 +2824,7 @@ index 7a67722..e07c4a6 100644
          list_for_each_entry(eoe, &master->eoe_handlers, list) {
              if (ec_eoe_is_open(eoe)) {
                  none_open = 0;
-@@ -1734,12 +1770,19 @@ static int ec_master_eoe_thread(void *priv_data)
+@@ -1751,12 +1793,19 @@ static int ec_master_eoe_thread(void *priv_data)
          }
  
  schedule:
@@ -2793,11 +2844,40 @@ index 7a67722..e07c4a6 100644
      }
  
      EC_MASTER_DBG(master, 1, "EoE thread exiting...\n");
+@@ -3289,6 +3338,7 @@ int ecrt_master_reset(ec_master_t *master)
+ 
+ /****************************************************************************/
+ 
++#ifndef EC_MASTER_IN_USERSPACE
+ static void sc_reset_task_kicker(struct irq_work *work)
+ {
+     struct ec_master *master =
+@@ -3307,6 +3357,7 @@ static void sc_reset_task(struct work_struct *work)
+     ecrt_master_reset(master);
+     up(&master->master_sem);
+ }
++#endif
+ 
+ /****************************************************************************/
+ 
 diff --git a/master/master.h b/master/master.h
-index d3ea23b..ad76106 100644
+index a1125e85..e9fcb794 100644
 --- a/master/master.h
 +++ b/master/master.h
-@@ -176,7 +176,7 @@ typedef struct {
+@@ -48,6 +48,12 @@
+ #include "rtdm.h"
+ #endif
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)
++#include <linux/semaphore.h>
++#else
++#include <asm/semaphore.h>
++#endif
++
+ /****************************************************************************/
+ 
+ /** Convenience macro for printing master-specific information to syslog.
+@@ -169,7 +175,7 @@ typedef struct {
                                          different statistics cycle periods. */
      s32 loss_rates[EC_RATE_COUNT]; /**< Frame loss rates for different
                                       statistics cycle periods. */
@@ -2805,12 +2885,24 @@ index d3ea23b..ad76106 100644
 +    unsigned long clk_jiffies; /**< Jiffies of last statistic cycle. */
  } ec_device_stats_t;
  
- /*****************************************************************************/
+ /****************************************************************************/
+@@ -300,9 +306,11 @@ struct ec_master {
+ 
+     wait_queue_head_t request_queue; /**< Wait queue for external requests
+                                        from user space. */
++#ifndef EC_MASTER_IN_USERSPACE
+     struct work_struct sc_reset_work; /**< Task to reset slave configuration. */
+     struct irq_work sc_reset_work_kicker; /**< NMI-Safe kicker to trigger
+                                             reset task above. */
++#endif
+ };
+ 
+ /****************************************************************************/
 diff --git a/master/module.c b/master/module.c
-index 4f8170b..ee39789 100644
+index b8156a1d..239ba3fe 100644
 --- a/master/module.c
 +++ b/master/module.c
-@@ -103,6 +103,7 @@ int __init ec_init_module(void)
+@@ -102,6 +102,7 @@ int __init ec_init_module(void)
  
      sema_init(&master_sem, 1);
  
@@ -2818,15 +2910,15 @@ index 4f8170b..ee39789 100644
      if (master_count) {
          if (alloc_chrdev_region(&device_number,
                      0, master_count, "EtherCAT")) {
-@@ -118,6 +119,7 @@ int __init ec_init_module(void)
+@@ -121,6 +122,7 @@ int __init ec_init_module(void)
          ret = PTR_ERR(class);
          goto out_cdev;
      }
 +#endif
  
      // zero MAC addresses
-     memset(macs, 0x00, sizeof(uint8_t) * MAX_MASTERS * 2 * ETH_ALEN);
-@@ -164,11 +166,13 @@ out_free_masters:
+     memset(macs, 0x00, sizeof(uint8_t) * EC_MAX_MASTERS * 2 * ETH_ALEN);
+@@ -167,11 +169,13 @@ out_free_masters:
          ec_master_clear(&masters[i]);
      kfree(masters);
  out_class:
@@ -2840,7 +2932,7 @@ index 4f8170b..ee39789 100644
      return ret;
  }
  
-@@ -189,10 +193,12 @@ void __exit ec_cleanup_module(void)
+@@ -192,10 +196,12 @@ void __exit ec_cleanup_module(void)
      if (master_count)
          kfree(masters);
  
@@ -2853,10 +2945,10 @@ index 4f8170b..ee39789 100644
  
      EC_INFO("Master module cleaned up.\n");
  }
-@@ -672,3 +678,71 @@ EXPORT_SYMBOL(ecrt_version_magic);
+@@ -679,3 +685,71 @@ EXPORT_SYMBOL(ecrt_version_magic);
  /** \endcond */
  
- /*****************************************************************************/
+ /****************************************************************************/
 +
 +#ifdef EC_MASTER_IN_USERSPACE
 +ec_master_t *ecrt_open_master(
@@ -2891,8 +2983,8 @@ index 4f8170b..ee39789 100644
 +        EC_ERR("No masters defined.\n");
 +        return -EINVAL;
 +    }
-+    if (master_count_ > MAX_MASTERS) {
-+        EC_ERR("Too many masters (max. %i).\n", MAX_MASTERS);
++    if (master_count_ > EC_MAX_MASTERS) {
++        EC_ERR("Too many masters (max. %i).\n", EC_MAX_MASTERS);
 +        return -EINVAL;
 +    }
 +    if (backup_count_ > master_count_) {
@@ -2926,10 +3018,10 @@ index 4f8170b..ee39789 100644
 +}
 +#endif
 diff --git a/master/sdo_request.h b/master/sdo_request.h
-index 80b1c10..16a0f2c 100644
+index aa2d1849..188dfb54 100644
 --- a/master/sdo_request.h
 +++ b/master/sdo_request.h
-@@ -41,6 +41,12 @@
+@@ -33,6 +33,12 @@
  
  #include "globals.h"
  
@@ -2939,9 +3031,9 @@ index 80b1c10..16a0f2c 100644
 +#endif
 +#endif
 +
- /*****************************************************************************/
+ /****************************************************************************/
  
  /** CANopen SDO request.
 -- 
-2.25.1
+2.43.0
 

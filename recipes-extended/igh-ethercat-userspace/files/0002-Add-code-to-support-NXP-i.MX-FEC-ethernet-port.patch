@@ -1,7 +1,7 @@
-From 97e5425f876cee2bd3099b1f996e279f6a71a744 Mon Sep 17 00:00:00 2001
+From 7bade153986772a34e6a83ce0f3dfb491d695839 Mon Sep 17 00:00:00 2001
 From: Hongbo Wang <hongbo.wang@nxp.com>
-Date: Thu, 23 Nov 2023 22:05:20 +0800
-Subject: [PATCH 6/7] Add code to support NXP i.MX FEC ethernet port
+Date: Wed, 19 Mar 2025 18:52:52 +0800
+Subject: [PATCH 2/2] Add code to support NXP i.MX FEC ethernet port
 
 the verified platform: i.MX8MP, i.MX8MM and i.MX93
 
@@ -9,81 +9,56 @@ Readme_For_User_Space_IGH_EtherCAT.txt is document for this feature
 
 compilation steps:
 ./bootstrap
-./configure --prefix=$PWD/ecat_build/ --enable-usecat=yes --enable-8139too=no --enable-tool=yes --enable-eoe=no --build=arm
+
+local compile:
+./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-8139too=no --enable-tool=yes --enable-eoe=no --build=arm
+
+cross compile:
+./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-8139too=no --enable-tool=yes --enable-eoe=no --host=aarch64-none-linux-gnu
+
 make
 make install
 
-** Note-1:
-if user's board has larger memory than 4G bytes,
-using this patch, don't need limit memory in 4GB.
-
-user should allocate enough hugepages firstly, make sure that there are
-hugepages within 4G bytes, like following:
-  echo 2048 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
-
-then allocate hugepage for user space IgH, after that user can free surplus
-hugepage to Linux kernel, like this:
-  echo 64 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
-
-** Note-2:
-add simple example for user space motor control
-
-Usage:
-  ./ec_motor_example [encode_rate] [axle_num]
-
-For example:
-  1 motors:
-    ./ec_motor_example or ./ec_motor_example 131072 1
-
-  6 motors:
-    ./ec_motor_example 131072 6
-
-** Note-3:
-add support for i.MXRT1180 EtherCAT slave
-
-Usage for i.MXRT1180 motors:
-    ./ec_motor_example or ./ec_motor_example 131072 1
-
-Signed-off-by: Yuhang Wang <yuhang.wang@nxp.com>
 Signed-off-by: Lyrix Liu <lyrix.liu@nxp.com>
 Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
 Upstream-Status: Pending
 ---
- Readme_For_User_Space_IGH_EtherCAT.txt | 216 +++++++++
- compile.sh                             |  21 +
- configure.ac                           |  10 +-
- devices/nxp_userspace/usm_main.c       | 308 +++++++++++++
+ .gitignore                             |   1 +
+ Readme_For_User_Space_IGH_EtherCAT.txt | 264 +++++++++++
+ compile.sh                             |  31 ++
+ configure.ac                           |   3 +-
+ devices/nxp_userspace/usm_main.c       | 309 +++++++++++++
  devices/nxp_userspace/usm_main.h       |  41 ++
  emulation/linux/jiffies.h              |  15 +-
  emulation/linux/kthread.h              |  39 +-
+ emulation/linux/netdevice.h            |   5 +
  emulation/linux/skbuff.h               |   5 +-
  emulation/linux/wait.h                 |   2 +-
  examples/Makefile.am                   |   5 +
  examples/motor_control/Makefile.am     |  42 ++
- examples/motor_control/main.c          | 589 +++++++++++++++++++++++++
+ examples/motor_control/main.c          | 614 +++++++++++++++++++++++++
  globals.h                              |   5 +-
  include/ecrt.h                         |  15 +-
- lib/common.c                           |   1 +
  libecat.mri                            |   5 +
  master/Makefile.am                     |   7 +-
- master/cdev.c                          | 127 ++++--
- master/cdev.h                          |   9 +-
+ master/cdev.c                          | 128 ++++--
+ master/cdev.h                          |  10 +-
  master/datagram.h                      |   5 +-
- master/device.c                        |  38 +-
+ master/device.c                        |  46 +-
  master/device.h                        |  11 +-
  master/ethercat_master.c               |  38 +-
  master/globals.h                       |   4 +
  master/ioctl.c                         |  42 +-
  master/ioctl.h                         |   3 +-
- master/master.c                        | 147 +++++-
- master/master.h                        |  23 +-
+ master/master.c                        | 149 +++++-
+ master/master.h                        |  24 +-
  master/module.c                        |  54 ++-
  master/slave.h                         |  10 +
- master/slave_config.c                  |  24 +
+ master/slave_config.c                  |  26 ++
  tool/CommandAlias.cpp                  |   8 +-
  tool/CommandData.cpp                   |   6 +-
  tool/CommandDomains.cpp                |   8 +-
- tool/CommandDownload.cpp               |  22 +-
+ tool/CommandDownload.cpp               |  18 +-
  tool/CommandFoeRead.cpp                |   6 +-
  tool/CommandFoeWrite.cpp               |  10 +-
  tool/CommandRegRead.cpp                |   8 +-
@@ -96,7 +71,7 @@ Upstream-Status: Pending
  tool/Makefile.am                       |   9 +-
  tool/MasterDevice.cpp                  | 147 +++++-
  tool/MasterDevice.h                    |  22 +
- 47 files changed, 2042 insertions(+), 133 deletions(-)
+ 48 files changed, 2133 insertions(+), 135 deletions(-)
  create mode 100644 Readme_For_User_Space_IGH_EtherCAT.txt
  create mode 100755 compile.sh
  create mode 100644 devices/nxp_userspace/usm_main.c
@@ -105,12 +80,21 @@ Upstream-Status: Pending
  create mode 100644 examples/motor_control/main.c
  create mode 100644 libecat.mri
 
+diff --git a/.gitignore b/.gitignore
+index ce70a823..460f1deb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -48,3 +48,4 @@ tool/ethercat
+ device_drivers.md
+ generated_table.md
+ doxygen-output/
++devices/nxp_userspace/libus_drv.a binary
 diff --git a/Readme_For_User_Space_IGH_EtherCAT.txt b/Readme_For_User_Space_IGH_EtherCAT.txt
 new file mode 100644
-index 0000000..7e465b3
+index 00000000..bbfb0c25
 --- /dev/null
 +++ b/Readme_For_User_Space_IGH_EtherCAT.txt
-@@ -0,0 +1,216 @@
+@@ -0,0 +1,264 @@
 +
 +		Readme for user space IGH EtherCAT stack
 +
@@ -327,15 +311,63 @@ index 0000000..7e465b3
 +1. If want to run user's application, should exit and close ethercat_master program.
 +2. For i.MX platforms, should limit DDR memory in 4G bytes via 'mem' variable in U-Boot bootargs.
 +	Example: 'mem=4096M'
++
++7. How to use user space EtherCAT stack on i.MX95 and i.MX943 platform?
++7.1 i.MX95
++* eth0:
++    insmod ./kpage_ncache.ko
++    echo -n 0002:00:00.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
++    echo -n enetc_pci_uio > /sys/bus/pci/devices/0002:00:00.0/driver_override
++    echo -n 0002:00:00.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
++    export ECAT_MAIN_DEV="enetc4@0002:00:00.0"
++
++* eth1:
++    insmod ./kpage_ncache.ko
++    echo -n 0002:00:10.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
++    echo -n enetc_pci_uio > /sys/bus/pci/devices/0002:00:10.0/driver_override
++    echo -n 0002:00:10.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
++    export ECAT_MAIN_DEV="enetc4@0002:00:10.0"
++
++7.2 i.MX943
++* eth1:
++    insmod ./kpage_ncache.ko
++    echo -n 0001:01:08.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
++    echo -n enetc_pci_uio > /sys/bus/pci/devices/0001:01:08.0/driver_override
++    echo -n 0001:01:08.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
++    export ECAT_MAIN_DEV="enetc4@0001:01:08.0"
++
++* eth2:
++    insmod ./kpage_ncache.ko
++    echo -n 0001:01:10.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
++    echo -n enetc_pci_uio > /sys/bus/pci/devices/0001:01:10.0/driver_override
++    echo -n 0001:01:10.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
++    export ECAT_MAIN_DEV="enetc4@0001:01:10.0"
++
++7.3 Compile kpage_ncache.ko:
++$ git clone https://github.com/nxp-qoriq/dpdk-extras
++
++Refer to README in linux/kpage_ncache directory.
++
++8. motor control example
++The example code for motor control is in "examples/motor_control/",
++after compilation, the name of executable file is ec_motor_example.
++
++you can use the following command to control motor rotation:
++# ./ec_motor_example 131072 1
++
++Note:
++  1. 131072 is encoding rate of motors, 1 is motor number. The number can be 1, 2 ... 64.
++  2. For working at the same rotate speed, all motors should have same encoding rate.
++  3. Before starting ec_motor_example, should exit ethercat_master program.
 diff --git a/compile.sh b/compile.sh
 new file mode 100755
-index 0000000..617abcb
+index 00000000..22d0e1ac
 --- /dev/null
 +++ b/compile.sh
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,31 @@
 +#!/bin/bash
 +
-+echo $PWD
++#export CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
 +
 +if [ "$1" == "rebuild" ]; then
 +rm -fr $PWD/ecat_build
@@ -345,20 +377,30 @@ index 0000000..617abcb
 +
 +rm -fr autoconf/ autom4te.cache/ master/.libs/
 +find . -name ".deps" | xargs rm -fr
++find . -name "*.lo" | xargs rm -fr
++find . -name "*.o" | xargs rm -fr
 +
 +./bootstrap
-+./configure --prefix=$PWD/ecat_build/ --enable-usecat=yes --enable-8139too=no --enable-tool=yes --enable-eoe=no --build=arm
++
++if [ -n "$CROSS_COMPILE" ]; then
++CCHOSTB=$(basename "$CROSS_COMPILE")
++CCHOST=${CCHOSTB:0:-1}
++./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-tool=yes --enable-eoe=no --host=${CCHOST}
++else
++./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-tool=yes --enable-eoe=no --build=arm
++fi
++
 +fi
 +
 +make
 +make install
 +
-+ar -M < ./libecat.mri
++${CROSS_COMPILE}ar -M < ./libecat.mri
 diff --git a/configure.ac b/configure.ac
-index 953af99..3fcb5b6 100644
+index 37a8bf6d..6c197944 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -80,7 +80,7 @@ AC_ARG_ENABLE([usecat],
+@@ -76,7 +76,7 @@ AC_ARG_ENABLE([usecat],
  )
  
  if test "x${enable_usecat}" = "x1"; then
@@ -367,34 +409,20 @@ index 953af99..3fcb5b6 100644
      AC_MSG_RESULT([yes])
  else
      AC_MSG_RESULT([no])
-@@ -93,7 +93,12 @@ AC_SUBST(ENABLE_USERSPACE_MASTER,[$enable_usecat])
- # Linux sources
- #------------------------------------------------------------------------------
- 
--if test "x${enable_usecat}" = "x0"; then
-+if test "x${enable_usecat}" = "x1"; then
-+	version=[`uname -r`]
-+	modulesdir=/lib/modules/${version}
-+	sourcedir=`cd ${modulesdir}/build && pwd -P`
-+	AC_SUBST(LINUX_SOURCE_DIR,[$sourcedir])
-+else
- AC_ARG_WITH([linux-dir],
-     AC_HELP_STRING(
-         [--with-linux-dir=<DIR>],
-@@ -1068,6 +1073,7 @@ AC_CONFIG_FILES([
+@@ -1439,6 +1439,7 @@ AC_CONFIG_FILES([
          examples/tty/Kbuild
          examples/tty/Makefile
          examples/user/Makefile
 +        examples/motor_control/Makefile
          examples/xenomai/Makefile
          examples/xenomai_posix/Makefile
-         include/Makefile
+         fake_lib/Makefile
 diff --git a/devices/nxp_userspace/usm_main.c b/devices/nxp_userspace/usm_main.c
 new file mode 100644
-index 0000000..28972ec
+index 00000000..563eee70
 --- /dev/null
 +++ b/devices/nxp_userspace/usm_main.c
-@@ -0,0 +1,308 @@
+@@ -0,0 +1,309 @@
 +/* SPDX-License-Identifier: BSD-3-Clause
 + * Copyright 2023 NXP
 + */
@@ -663,6 +691,7 @@ index 0000000..28972ec
 +        goto err_tag;
 +
 +    printf("%s(): cycle_ns:%d core_mask:0x%02X\n", __func__, cycle_ns, ecus_get_core_mask());
++    printf("RX ring size:%d, TX ring size:%d\n", MAX_RX_BD_RING_SIZE, MAX_TX_BD_RING_SIZE);
 +
 +err_tag:
 +    if (ret)
@@ -705,7 +734,7 @@ index 0000000..28972ec
 +module_exit(ec_usm_cleanup_module);
 diff --git a/devices/nxp_userspace/usm_main.h b/devices/nxp_userspace/usm_main.h
 new file mode 100644
-index 0000000..e43a5b7
+index 00000000..022daf64
 --- /dev/null
 +++ b/devices/nxp_userspace/usm_main.h
 @@ -0,0 +1,41 @@
@@ -747,11 +776,11 @@ index 0000000..e43a5b7
 +uint8_t* us_drv_get_tx_buf(int idx);
 +
 +int us_drv_recv(void *buf, uint16_t *plen, uint32_t *pindex);
-+int us_drv_send(void *buf, uint16_t len, uint32_t addr);
++int us_drv_send(void *buf, uint16_t len, uint64_t addr);
 +
 +#endif
 diff --git a/emulation/linux/jiffies.h b/emulation/linux/jiffies.h
-index eb736b7..c977b6d 100644
+index eb736b7a..c977b6dc 100644
 --- a/emulation/linux/jiffies.h
 +++ b/emulation/linux/jiffies.h
 @@ -37,16 +37,29 @@ typedef u64 cycles_t;
@@ -786,7 +815,7 @@ index eb736b7..c977b6d 100644
  
  #endif
 diff --git a/emulation/linux/kthread.h b/emulation/linux/kthread.h
-index 82adf54..1d18513 100644
+index 4b046c35..b34b2c01 100644
 --- a/emulation/linux/kthread.h
 +++ b/emulation/linux/kthread.h
 @@ -1,6 +1,7 @@
@@ -863,7 +892,7 @@ index 82adf54..1d18513 100644
      if (ret == 0)
          return task;
      free(task);
-@@ -59,7 +94,9 @@ static inline struct task_struct *kthread_run(int (*thread_func)(void *), void *
+@@ -60,7 +95,9 @@ static inline struct task_struct *kthread_run(int (*thread_func)(void *), void *
  
  static inline void kthread_stop(struct task_struct *task)
  {
@@ -873,8 +902,24 @@ index 82adf54..1d18513 100644
      task->should_stop = 1;
      pthread_join(task->thread, NULL);
      free(task);
+diff --git a/emulation/linux/netdevice.h b/emulation/linux/netdevice.h
+index 721de0e1..19e17bb1 100644
+--- a/emulation/linux/netdevice.h
++++ b/emulation/linux/netdevice.h
+@@ -78,6 +78,11 @@ static inline void ether_setup(struct net_device *netdev)
+ {
+ }
+ 
++static inline void eth_hw_addr_set(struct net_device *dev, const u8 *addr)
++{
++    memcpy(dev->dev_addr, addr, ETH_ALEN);
++}
++
+ static inline struct net_device *make_netdev(struct ifaddrs *a)
+ {
+     if (!a->ifa_addr || a->ifa_addr->sa_family != PF_PACKET)
 diff --git a/emulation/linux/skbuff.h b/emulation/linux/skbuff.h
-index 569d576..4b433a4 100644
+index 569d5768..4b433a41 100644
 --- a/emulation/linux/skbuff.h
 +++ b/emulation/linux/skbuff.h
 @@ -12,6 +12,7 @@ struct sk_buff
@@ -904,7 +949,7 @@ index 569d576..4b433a4 100644
  }
  
 diff --git a/emulation/linux/wait.h b/emulation/linux/wait.h
-index 66df6f2..61e7597 100644
+index 66df6f22..61e75973 100644
 --- a/emulation/linux/wait.h
 +++ b/emulation/linux/wait.h
 @@ -1,6 +1,6 @@
@@ -916,10 +961,10 @@ index 66df6f2..61e7597 100644
  
  struct __wait_queue_head
 diff --git a/examples/Makefile.am b/examples/Makefile.am
-index 9dcbef2..0a39ef1 100644
+index d73d0977..7a2da9be 100644
 --- a/examples/Makefile.am
 +++ b/examples/Makefile.am
-@@ -54,6 +54,10 @@ SUBDIRS += \
+@@ -53,6 +53,10 @@ SUBDIRS += \
  endif
  endif
  
@@ -927,10 +972,10 @@ index 9dcbef2..0a39ef1 100644
 +SUBDIRS += motor_control
 +endif
 +
+ # Here DIST_SUBDIRS needs to be explicitely defined because
+ # dc_rtai, mini and rtai are never added to `SUBDIRS`
  DIST_SUBDIRS = \
- 	dc_rtai \
- 	dc_user \
-@@ -63,6 +67,7 @@ DIST_SUBDIRS = \
+@@ -64,6 +68,7 @@ DIST_SUBDIRS = \
  	rtai_rtdm_dc \
  	tty \
  	user \
@@ -940,7 +985,7 @@ index 9dcbef2..0a39ef1 100644
  
 diff --git a/examples/motor_control/Makefile.am b/examples/motor_control/Makefile.am
 new file mode 100644
-index 0000000..12b3f23
+index 00000000..12b3f230
 --- /dev/null
 +++ b/examples/motor_control/Makefile.am
 @@ -0,0 +1,42 @@
@@ -988,10 +1033,10 @@ index 0000000..12b3f23
 +#------------------------------------------------------------------------------
 diff --git a/examples/motor_control/main.c b/examples/motor_control/main.c
 new file mode 100644
-index 0000000..6c2b922
+index 00000000..bffda62d
 --- /dev/null
 +++ b/examples/motor_control/main.c
-@@ -0,0 +1,589 @@
+@@ -0,0 +1,614 @@
 +/*****************************************************************************
 + *
 + *  $Id$
@@ -1030,12 +1075,14 @@ index 0000000..6c2b922
 +#include <time.h>
 +#include <sys/types.h>
 +#include <unistd.h>
++#include <sched.h>
 +
 +#include "ecrt.h"
 +
 +#define ECAT_RT1180
 +#define RT1180_VID (0x0CC2)
 +#define RT1180_PID (0x0002)
++#define CLOCK_TYPE CLOCK_MONOTONIC  /* CLOCK_REALTIME */
 +
 +static int srt1180_flag = 0;
 +
@@ -1106,7 +1153,7 @@ index 0000000..6c2b922
 +static uint8_t *sec_domain_pd = NULL;
 +static uint8_t *sp_axle_data = NULL;
 +static int sall_op_flag = 0;
-+static int sloop_flag = 1;
++static int sloop_flag = 0;
 +static int sexit_flag = 0;
 +
 +static inline struct timespec timespec_add(struct timespec t1, struct timespec t2)
@@ -1222,7 +1269,7 @@ index 0000000..6c2b922
 +			psync->n_pdos--;
 +
 +			for (j = 0; j < psync->n_pdos; j++) {
-+				pdo = psync->pdos + j;
++				pdo = (ec_pdo_info_t *)(psync->pdos + j);
 +				pdo->n_entries--;
 +			}
 +		}
@@ -1333,6 +1380,21 @@ index 0000000..6c2b922
 +	return 0;
 +}
 +
++int set_rt_task_priority(void)
++{
++	struct sched_param param;
++	int ret = 0;
++
++	param.sched_priority = sched_get_priority_max(SCHED_FIFO);
++	printf("%s(): current sched_priority:%d\n", __func__, param.sched_priority);
++
++	ret = sched_setscheduler(getpid(), SCHED_FIFO, &param);
++	if (ret == -1)
++		printf("%s(): sched_setscheduler failed! ret:%d\n", __func__, ret);
++
++	return ret;
++}
++
 +void run_main_cycle_task(void)
 +{
 +	struct timespec cycletime = {0, CYCLE_TIME_NS};
@@ -1341,15 +1403,18 @@ index 0000000..6c2b922
 +	struct timespec start_time;
 +	int axle = 0;
 +
++	set_rt_task_priority();
++
 +#ifdef EC_MASTER_IN_USERSPACE
 +	ecus_bind_cpu_core(EC_BIND_CORE_MASK);
 +#endif
 +
-+	clock_gettime(CLOCK_REALTIME, &wakeupTime);
++	sloop_flag = 1;
++	clock_gettime(CLOCK_TYPE, &wakeupTime);
 +	while (sloop_flag) {
 +		wakeupTime = timespec_add(wakeupTime, cycletime);
-+		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &wakeupTime, NULL);
-+		clock_gettime(CLOCK_REALTIME, &start_time);
++		clock_nanosleep(CLOCK_TYPE, TIMER_ABSTIME, &wakeupTime, NULL);
++		clock_gettime(CLOCK_TYPE, &start_time);
 +
 +		/* receive process data */
 +		ecrt_master_receive(sec_master);
@@ -1391,8 +1456,13 @@ index 0000000..6c2b922
 +		sexit_flag = 1;
 +		printf("\nSystem will exit after several seconds...\n");
 +	} else {
-+		sloop_flag = 0;
++#ifdef EC_MASTER_IN_USERSPACE
++		if (!sloop_flag)
++			ecus_done();
++#endif
 +		printf("\nSystem will exit...\n");
++		sloop_flag = 0;
++		exit(0);
 +	}
 +}
 +
@@ -1582,10 +1652,10 @@ index 0000000..6c2b922
 +	return 0;
 +}
 diff --git a/globals.h b/globals.h
-index 3460e34..b161cab 100644
+index c484cda3..0a40fefa 100644
 --- a/globals.h
 +++ b/globals.h
-@@ -57,10 +57,11 @@
+@@ -48,10 +48,11 @@
  
  /** Master version string
   */
@@ -1598,7 +1668,7 @@ index 3460e34..b161cab 100644
  // Always 0-terminate dest; avoid newer GCC's warnings about strncpy when possibly truncating.
  static inline void ec_strncpy(char *dest, const char *src, unsigned long int n)
  {
-@@ -70,6 +71,8 @@ static inline void ec_strncpy(char *dest, const char *src, unsigned long int n)
+@@ -61,6 +62,8 @@ static inline void ec_strncpy(char *dest, const char *src, unsigned long int n)
    while (dest < end)
      *dest++ = 0;
  }
@@ -1608,10 +1678,10 @@ index 3460e34..b161cab 100644
  
  #endif
 diff --git a/include/ecrt.h b/include/ecrt.h
-index 696ca3b..c01ab7a 100644
+index 3eef9022..ad21be9b 100644
 --- a/include/ecrt.h
 +++ b/include/ecrt.h
-@@ -541,10 +541,17 @@ extern "C" {
+@@ -632,10 +632,17 @@ extern "C" {
  #endif
  
  #ifdef EC_MASTER_IN_USERSPACE
@@ -1633,21 +1703,9 @@ index 696ca3b..c01ab7a 100644
  #endif
  
  /** Returns the version magic of the realtime interface.
-diff --git a/lib/common.c b/lib/common.c
-index 1d37863..783bcfb 100644
---- a/lib/common.c
-+++ b/lib/common.c
-@@ -96,6 +96,7 @@ ec_master_t *ecrt_open_master(unsigned int master_index)
-     master->fd = ioctl_usecat_open(master_index, NULL);
-     return master;
- #else
-+
-     snprintf(path, MAX_PATH_LEN - 1,
- #ifdef USE_RTDM
-             "EtherCAT%u",
 diff --git a/libecat.mri b/libecat.mri
 new file mode 100644
-index 0000000..7f2129e
+index 00000000..7f2129e6
 --- /dev/null
 +++ b/libecat.mri
 @@ -0,0 +1,5 @@
@@ -1657,12 +1715,12 @@ index 0000000..7f2129e
 +save
 +end
 diff --git a/master/Makefile.am b/master/Makefile.am
-index e9cb23f..90bd440 100644
+index 709f496b..8ade0c1c 100644
 --- a/master/Makefile.am
 +++ b/master/Makefile.am
-@@ -101,12 +101,14 @@ pkgconfigdir = $(libdir)/pkgconfig
+@@ -83,12 +83,14 @@ lib_LTLIBRARIES = libethercat_master.la
  pkgconfig_DATA = libethercat_master.pc
- EXTRA_DIST += libethercat_master.pc.in
+ EXTRA_DIST = libethercat_master.pc.in
  
 -libethercat_master_la_LDFLAGS = -version-info 1:0:0
 +libethercat_master_la_LDFLAGS = -version-info 1:0:0 \
@@ -1677,7 +1735,7 @@ index e9cb23f..90bd440 100644
  	-DEC_USE_HRTIMER \
  	-DEC_MASTER_IN_USERSPACE \
  	-Wall -Werror \
-@@ -150,6 +152,7 @@ libethercat_master_la_SOURCES = \
+@@ -135,6 +137,7 @@ libethercat_master_la_SOURCES = \
  	sync.c \
  	sync_config.c \
  	voe_handler.c \
@@ -1686,10 +1744,10 @@ index e9cb23f..90bd440 100644
  if ENABLE_EOE
  libethercat_master_la_SOURCES += ethernet.c
 diff --git a/master/cdev.c b/master/cdev.c
-index 467321f..d5cab64 100644
+index 404e0fcf..9d50ad5b 100644
 --- a/master/cdev.c
 +++ b/master/cdev.c
-@@ -38,6 +38,11 @@
+@@ -30,6 +30,11 @@
  #include <linux/vmalloc.h>
  #include <linux/mm.h>
  
@@ -1701,7 +1759,7 @@ index 467321f..d5cab64 100644
  #include "cdev.h"
  #include "master.h"
  #include "slave_config.h"
-@@ -56,26 +61,62 @@
+@@ -48,26 +53,62 @@
  typedef struct {
      ec_cdev_t *cdev; /**< Character device. */
      ec_ioctl_context_t ctx; /**< Context. */
@@ -1770,7 +1828,7 @@ index 467321f..d5cab64 100644
  
      priv->cdev = &master->cdev;
      priv->ctx.writable = 1;
-@@ -83,14 +124,66 @@ int ec_cdev_usecat_start(ec_master_t *master)
+@@ -75,14 +116,66 @@ int ec_cdev_usecat_start(ec_master_t *master)
      priv->ctx.process_data = NULL;
      priv->ctx.process_data_size = 0;
  
@@ -1837,8 +1895,8 @@ index 467321f..d5cab64 100644
 +
  #else /* EC_MASTER_IN_USERSPACE */
  
- /*****************************************************************************/
-@@ -171,25 +264,7 @@ void ec_cdev_clear(ec_cdev_t *cdev /**< EtherCAT XML device */)
+ /****************************************************************************/
+@@ -167,27 +260,8 @@ void ec_cdev_clear(ec_cdev_t *cdev /**< EtherCAT XML device */)
      cdev_del(&cdev->cdev);
  }
  
@@ -1863,17 +1921,20 @@ index 467321f..d5cab64 100644
 -#else /* EC_MASTER_IN_USERSPACE */
 +#ifndef EC_MASTER_IN_USERSPACE
  
- /******************************************************************************
+-/*****************************************************************************
   * File operations
+  ****************************************************************************/
+ 
 diff --git a/master/cdev.h b/master/cdev.h
-index 1a7bd18..dcf4f86 100644
+index 429180ad..e9deb1f0 100644
 --- a/master/cdev.h
 +++ b/master/cdev.h
-@@ -51,8 +51,15 @@ typedef struct {
+@@ -43,9 +43,15 @@ typedef struct {
      struct cdev cdev; /**< Character device. */
  } ec_cdev_t;
  
--/*****************************************************************************/
+-/****************************************************************************/
+-
  #ifdef EC_MASTER_IN_USERSPACE
 +struct ecat_shm_info {
 +    uint32_t flag;
@@ -1882,15 +1943,15 @@ index 1a7bd18..dcf4f86 100644
 +    uint32_t len;
 +} __attribute__((packed));
 +
-+/*****************************************************************************/
++/****************************************************************************/
  int ec_cdev_usecat_start(ec_master_t *master);
  int ec_cdev_usecat_stop(ec_master_t *master);
  #endif
 diff --git a/master/datagram.h b/master/datagram.h
-index e902fbd..e1b94f9 100644
+index 13184928..91eb4627 100644
 --- a/master/datagram.h
 +++ b/master/datagram.h
-@@ -39,10 +39,13 @@
+@@ -31,10 +31,13 @@
  
  #include <linux/list.h>
  #include <linux/time.h>
@@ -1902,14 +1963,14 @@ index e902fbd..e1b94f9 100644
 +#include <linux/timex.h>
 +#endif
 +
- /*****************************************************************************/
+ /****************************************************************************/
  
  /** EtherCAT datagram type.
 diff --git a/master/device.c b/master/device.c
-index e25c830..2d5c237 100644
+index 598d163a..e8521f70 100644
 --- a/master/device.c
 +++ b/master/device.c
-@@ -60,6 +60,30 @@
+@@ -57,6 +57,30 @@ enum {
   *
   * \return 0 in case of success, else < 0
   */
@@ -1940,7 +2001,7 @@ index e25c830..2d5c237 100644
  int ec_device_init(
          ec_device_t *device, /**< EtherCAT device */
          ec_master_t *master /**< master owning the device */
-@@ -82,7 +106,12 @@ int ec_device_init(
+@@ -79,7 +103,12 @@ int ec_device_init(
      for (i = 0; i < EC_TX_RING_SIZE; i++) {
          device->tx_skb[i] = NULL;
      }
@@ -1953,19 +2014,33 @@ index e25c830..2d5c237 100644
  #ifdef EC_HAVE_CYCLES
      device->cycles_poll = 0;
  #endif
-@@ -127,7 +156,11 @@ int ec_device_init(
+@@ -124,15 +153,23 @@ int ec_device_init(
  #endif
  
      for (i = 0; i < EC_TX_RING_SIZE; i++) {
 +#ifdef EC_USERSPACE_MASTER_NEW
 +        if (!(device->tx_skb[i] = dev_alloc_ecat_skb(i))) {
 +#else
-         if (!(device->tx_skb[i] = dev_alloc_skb(ETH_FRAME_LEN))) {
+         if (!(device->tx_skb[i] = dev_alloc_skb(ETH_FRAME_LEN + EXTRA_HEADROOM))) {
 +#endif
              EC_MASTER_ERR(master, "Error allocating device socket buffer!\n");
              ret = -ENOMEM;
              goto out_tx_ring;
-@@ -144,10 +177,10 @@ int ec_device_init(
+         }
+ 
+         // add Ethernet-II-header
+-        skb_reserve(device->tx_skb[i], ETH_HLEN + EXTRA_HEADROOM);
+-        eth = (struct ethhdr *) skb_push(device->tx_skb[i], ETH_HLEN);
++#ifdef EC_USERSPACE_MASTER_NEW
++	skb_reserve(device->tx_skb[i], ETH_HLEN);
++#else
++	skb_reserve(device->tx_skb[i], ETH_HLEN + EXTRA_HEADROOM);
++#endif
++	eth = (struct ethhdr *) skb_push(device->tx_skb[i], ETH_HLEN);
+         eth->h_proto = htons(0x88A4);
+         memset(eth->h_dest, 0xFF, ETH_ALEN);
+     }
+@@ -141,10 +178,10 @@ int ec_device_init(
  
  out_tx_ring:
      for (i = 0; i < EC_TX_RING_SIZE; i++) {
@@ -1978,7 +2053,7 @@ index e25c830..2d5c237 100644
  #ifdef EC_DEBUG_IF
      ec_debug_clear(&device->dbg);
  out_return:
-@@ -170,6 +203,7 @@ void ec_device_clear(
+@@ -167,6 +204,7 @@ void ec_device_clear(
      }
      for (i = 0; i < EC_TX_RING_SIZE; i++)
          dev_kfree_skb(device->tx_skb[i]);
@@ -1987,10 +2062,10 @@ index e25c830..2d5c237 100644
      ec_debug_clear(&device->dbg);
  #endif
 diff --git a/master/device.h b/master/device.h
-index 2a1b596..5a9141e 100644
+index 82425e34..bc04ec0c 100644
 --- a/master/device.h
 +++ b/master/device.h
-@@ -49,8 +49,12 @@
+@@ -41,8 +41,12 @@
   * send the same data twice, if it is called twice.
   */
  #ifdef EC_MASTER_IN_USERSPACE
@@ -2004,7 +2079,7 @@ index 2a1b596..5a9141e 100644
  #define EC_TX_RING_SIZE 2
  #endif
  
-@@ -74,6 +78,11 @@ typedef struct {
+@@ -66,6 +70,11 @@ typedef struct {
  
  #endif
  
@@ -2013,11 +2088,11 @@ index 2a1b596..5a9141e 100644
 +#define MAX_RX_BD_RING_SIZE (16)
 +#endif
 +
- /*****************************************************************************/
+ /****************************************************************************/
  
  /**
 diff --git a/master/ethercat_master.c b/master/ethercat_master.c
-index c2d6fde..b762918 100644
+index c2d6fde9..b762918c 100644
 --- a/master/ethercat_master.c
 +++ b/master/ethercat_master.c
 @@ -24,6 +24,25 @@
@@ -2098,10 +2173,10 @@ index c2d6fde..b762918 100644
      return EXIT_SUCCESS;
  }
 diff --git a/master/globals.h b/master/globals.h
-index 840a160..8b2b016 100644
+index da738e8b..4244b56a 100644
 --- a/master/globals.h
 +++ b/master/globals.h
-@@ -244,8 +244,12 @@ extern const char *ec_device_names[2]; // only main and backup!
+@@ -241,8 +241,12 @@ extern const char *ec_device_names[2]; // only main and backup!
   * \param fmt format string (like in printf())
   * \param args arguments (optional)
   */
@@ -2112,13 +2187,13 @@ index 840a160..8b2b016 100644
      printk(KERN_DEBUG "EtherCAT DEBUG: " fmt, ##args)
 +#endif
  
- /*****************************************************************************/
+ /****************************************************************************/
  
 diff --git a/master/ioctl.c b/master/ioctl.c
-index 0cd6b3f..0235b4c 100644
+index a3d4ddd5..56c85dd0 100644
 --- a/master/ioctl.c
 +++ b/master/ioctl.c
-@@ -67,7 +67,7 @@ static void ec_ioctl_strcpy(
+@@ -84,7 +84,7 @@ static void ec_ioctl_strcpy(
          )
  {
      if (source) {
@@ -2127,7 +2202,7 @@ index 0cd6b3f..0235b4c 100644
          target[EC_IOCTL_STRING_SIZE - 1] = 0;
      } else {
          target[0] = 0;
-@@ -812,6 +812,10 @@ static ATTRIBUTES int ec_ioctl_slave_sdo_upload(
+@@ -836,6 +836,10 @@ static ATTRIBUTES int ec_ioctl_slave_sdo_upload(
          return -EFAULT;
      }
  
@@ -2138,7 +2213,7 @@ index 0cd6b3f..0235b4c 100644
      if (!(target = kmalloc(data.target_size, GFP_KERNEL))) {
          EC_MASTER_ERR(master, "Failed to allocate %zu bytes"
                  " for SDO upload.\n", data.target_size);
-@@ -858,6 +862,10 @@ static ATTRIBUTES int ec_ioctl_slave_sdo_download(
+@@ -882,6 +886,10 @@ static ATTRIBUTES int ec_ioctl_slave_sdo_download(
          return -EFAULT;
      }
  
@@ -2149,7 +2224,7 @@ index 0cd6b3f..0235b4c 100644
      if (!(sdo_data = kmalloc(data.data_size, GFP_KERNEL))) {
          EC_MASTER_ERR(master, "Failed to allocate %zu bytes"
                  " for SDO download.\n", data.data_size);
-@@ -906,6 +914,10 @@ static ATTRIBUTES int ec_ioctl_slave_sii_read(
+@@ -930,6 +938,10 @@ static ATTRIBUTES int ec_ioctl_slave_sii_read(
          return -EFAULT;
      }
  
@@ -2160,7 +2235,7 @@ index 0cd6b3f..0235b4c 100644
      if (down_interruptible(&master->master_sem))
          return -EINTR;
  
-@@ -960,6 +972,10 @@ static ATTRIBUTES int ec_ioctl_slave_sii_write(
+@@ -984,6 +996,10 @@ static ATTRIBUTES int ec_ioctl_slave_sii_write(
          return 0;
      }
  
@@ -2171,7 +2246,7 @@ index 0cd6b3f..0235b4c 100644
      byte_size = sizeof(uint16_t) * data.nwords;
      if (!(words = kmalloc(byte_size, GFP_KERNEL))) {
          EC_MASTER_ERR(master, "Failed to allocate %u bytes"
-@@ -1047,6 +1063,10 @@ static ATTRIBUTES int ec_ioctl_slave_reg_read(
+@@ -1071,6 +1087,10 @@ static ATTRIBUTES int ec_ioctl_slave_reg_read(
          return 0;
      }
  
@@ -2182,7 +2257,7 @@ index 0cd6b3f..0235b4c 100644
      // init register request
      ret = ec_reg_request_init(&request, io.size);
      if (ret) {
-@@ -1126,6 +1146,10 @@ static ATTRIBUTES int ec_ioctl_slave_reg_write(
+@@ -1153,6 +1173,10 @@ static ATTRIBUTES int ec_ioctl_slave_reg_write(
          return 0;
      }
  
@@ -2193,7 +2268,7 @@ index 0cd6b3f..0235b4c 100644
      // init register request
      ret = ec_reg_request_init(&request, io.size);
      if (ret) {
-@@ -3814,6 +3838,10 @@ static ATTRIBUTES int ec_ioctl_slave_foe_read(
+@@ -4608,6 +4632,10 @@ static ATTRIBUTES int ec_ioctl_slave_foe_read(
          return -EFAULT;
      }
  
@@ -2204,7 +2279,7 @@ index 0cd6b3f..0235b4c 100644
      ec_foe_request_init(&request, io.file_name);
      ret = ec_foe_request_alloc(&request, 10000); // FIXME
      if (ret) {
-@@ -3910,6 +3938,10 @@ static ATTRIBUTES int ec_ioctl_slave_foe_write(
+@@ -4704,6 +4732,10 @@ static ATTRIBUTES int ec_ioctl_slave_foe_write(
          return -EFAULT;
      }
  
@@ -2215,7 +2290,7 @@ index 0cd6b3f..0235b4c 100644
      ec_foe_request_init(&request, io.file_name);
  
      ret = ec_foe_request_alloc(&request, io.buffer_size);
-@@ -3997,6 +4029,10 @@ static ATTRIBUTES int ec_ioctl_slave_soe_read(
+@@ -4791,6 +4823,10 @@ static ATTRIBUTES int ec_ioctl_slave_soe_read(
          return -EFAULT;
      }
  
@@ -2226,7 +2301,7 @@ index 0cd6b3f..0235b4c 100644
      data = kmalloc(ioctl.mem_size, GFP_KERNEL);
      if (!data) {
          EC_MASTER_ERR(master, "Failed to allocate %zu bytes of IDN data.\n",
-@@ -4046,6 +4082,10 @@ static ATTRIBUTES int ec_ioctl_slave_soe_write(
+@@ -4840,6 +4876,10 @@ static ATTRIBUTES int ec_ioctl_slave_soe_write(
          return -EFAULT;
      }
  
@@ -2238,10 +2313,10 @@ index 0cd6b3f..0235b4c 100644
      if (!data) {
          EC_MASTER_ERR(master, "Failed to allocate %zu bytes of IDN data.\n",
 diff --git a/master/ioctl.h b/master/ioctl.h
-index 185f04c..a42e431 100644
+index 33bd8b9d..02abfc6a 100644
 --- a/master/ioctl.h
 +++ b/master/ioctl.h
-@@ -759,10 +759,9 @@ typedef struct {
+@@ -847,10 +847,9 @@ typedef struct {
  #define copy_from_user(DST, SRC, SIZE) (memcpy((DST), (SRC), (SIZE)), 0)
  #define copy_to_user(DST, SRC, SIZE) (memcpy((DST), (SRC), (SIZE)), 0)
  #define __copy_to_user copy_to_user
@@ -2254,11 +2329,11 @@ index 185f04c..a42e431 100644
  /* Emulated ioctl via TCP connection for userspace master */
  static inline int ioctl_usecat_open(int master_index, const char *host)
 diff --git a/master/master.c b/master/master.c
-index e07c4a6..c37a087 100644
+index d73eda13..3a9fd8f0 100644
 --- a/master/master.c
 +++ b/master/master.c
-@@ -105,6 +105,9 @@ void ec_master_clear_device_stats(ec_master_t *);
- void ec_master_update_device_stats(ec_master_t *);
+@@ -135,6 +135,9 @@ static void sc_reset_task(struct work_struct *work);
+ #endif
  
  #ifdef EC_MASTER_IN_USERSPACE
 +static int ec_master_start_ioctl_thread(ec_master_t *master);
@@ -2267,7 +2342,7 @@ index e07c4a6..c37a087 100644
  void ec_master_nanosleep(const unsigned long nsecs)
  {
      struct timespec t = { 0, nsecs }, r;
-@@ -402,6 +405,7 @@ void ec_master_clear(
+@@ -422,6 +425,7 @@ void ec_master_clear(
      unsigned int dev_idx, i;
  
  #ifdef EC_MASTER_IN_USERSPACE
@@ -2275,9 +2350,9 @@ index e07c4a6..c37a087 100644
      ec_cdev_usecat_stop(master);
  #else
  #ifdef EC_RTDM
-@@ -1368,7 +1372,19 @@ void ec_master_update_device_stats(
+@@ -1409,7 +1413,19 @@ void ec_master_update_device_stats(
  
- /*****************************************************************************/
+ /****************************************************************************/
  
 -#ifndef EC_MASTER_IN_USERSPACE
 +#ifdef EC_MASTER_IN_USERSPACE
@@ -2296,9 +2371,9 @@ index e07c4a6..c37a087 100644
  #ifdef EC_USE_HRTIMER
  
  /*
-@@ -1535,6 +1551,59 @@ void ec_master_exec_slave_fsms(
+@@ -1548,6 +1564,59 @@ void ec_master_exec_slave_fsms(
  
- /*****************************************************************************/
+ /****************************************************************************/
  
 +#ifdef EC_MASTER_IN_USERSPACE
 +static void* ec_master_ioctl_thread(void *priv_data)
@@ -2351,12 +2426,12 @@ index e07c4a6..c37a087 100644
 +}
 +#endif
 +
-+/*****************************************************************************/
++/****************************************************************************/
 +
  /** Master kernel thread function for IDLE phase.
   */
  static int ec_master_idle_thread(void *priv_data)
-@@ -1545,6 +1614,10 @@ static int ec_master_idle_thread(void *priv_data)
+@@ -1558,6 +1627,10 @@ static int ec_master_idle_thread(void *priv_data)
      size_t sent_bytes;
  #endif
  
@@ -2367,7 +2442,7 @@ index e07c4a6..c37a087 100644
      // send interval in IDLE phase
      ec_master_set_send_interval(master, 1000000 / HZ);
  
-@@ -1585,7 +1658,11 @@ static int ec_master_idle_thread(void *priv_data)
+@@ -1600,7 +1673,11 @@ static int ec_master_idle_thread(void *priv_data)
  
          if (ec_fsm_master_idle(&master->fsm)) {
  #ifdef EC_USE_HRTIMER
@@ -2379,9 +2454,9 @@ index e07c4a6..c37a087 100644
  #else
              set_current_state(TASK_INTERRUPTIBLE);
              schedule_timeout(1);
-@@ -1604,6 +1681,55 @@ static int ec_master_idle_thread(void *priv_data)
-     return 0;
- }
+@@ -1621,6 +1698,57 @@ static int ec_master_idle_thread(void *priv_data)
+ 
+ /****************************************************************************/
  
 +#ifdef EC_USERSPACE_MASTER_NEW
 +static uint64_t sop_cycle_us_sum;
@@ -2432,10 +2507,12 @@ index e07c4a6..c37a087 100644
 +}
 +#endif
 +
- /*****************************************************************************/
- 
++/****************************************************************************/
++
  /** Master kernel thread function for OPERATION phase.
-@@ -1641,7 +1767,11 @@ static int ec_master_operation_thread(void *priv_data)
+  */
+ static int ec_master_operation_thread(void *priv_data)
+@@ -1656,7 +1784,11 @@ static int ec_master_operation_thread(void *priv_data)
  
  #ifdef EC_USE_HRTIMER
          // the op thread should not work faster than the sending RT thread
@@ -2447,7 +2524,7 @@ index e07c4a6..c37a087 100644
  #else
          if (ec_fsm_master_idle(&master->fsm)) {
              set_current_state(TASK_INTERRUPTIBLE);
-@@ -2361,6 +2491,16 @@ int ecrt_master_activate(ec_master_t *master)
+@@ -2385,6 +2517,16 @@ int ecrt_master_activate(ec_master_t *master)
          ec_master_eoe_start(master);
      }
  #endif
@@ -2464,7 +2541,7 @@ index e07c4a6..c37a087 100644
      ret = ec_master_thread_start(master, ec_master_operation_thread,
                  "EtherCAT-OP");
      if (ret < 0) {
-@@ -2368,6 +2508,9 @@ int ecrt_master_activate(ec_master_t *master)
+@@ -2392,6 +2534,9 @@ int ecrt_master_activate(ec_master_t *master)
          return ret;
      }
  
@@ -2474,7 +2551,7 @@ index e07c4a6..c37a087 100644
      /* Allow scanning after a topology change. */
      master->allow_scan = 1;
  
-@@ -2708,7 +2851,7 @@ int ecrt_master_get_slave(ec_master_t *master, uint16_t slave_position,
+@@ -2760,7 +2905,7 @@ int ecrt_master_get_slave(ec_master_t *master, uint16_t slave_position,
      slave_info->sync_count = slave->sii.sync_count;
      slave_info->sdo_count = ec_slave_sdo_count(slave);
      if (slave->sii.name) {
@@ -2484,10 +2561,10 @@ index e07c4a6..c37a087 100644
          slave_info->name[0] = 0;
      }
 diff --git a/master/master.h b/master/master.h
-index ad76106..411ea57 100644
+index e9fcb794..fffbc239 100644
 --- a/master/master.h
 +++ b/master/master.h
-@@ -108,6 +108,15 @@
+@@ -103,6 +103,15 @@
   * \param fmt format string (like in printf())
   * \param args arguments (optional)
   */
@@ -2503,7 +2580,7 @@ index ad76106..411ea57 100644
  #define EC_MASTER_DBG(master, level, fmt, args...) \
      do { \
          if (master->debug_level >= level) { \
-@@ -115,7 +124,7 @@
+@@ -110,7 +119,7 @@
                      master->index, ##args); \
          } \
      } while (0)
@@ -2512,21 +2589,22 @@ index ad76106..411ea57 100644
  
  /** Size of the external datagram ring.
   *
-@@ -308,6 +317,13 @@ struct ec_master {
+@@ -306,7 +315,13 @@ struct ec_master {
  
      wait_queue_head_t request_queue; /**< Wait queue for external requests
                                         from user space. */
+-#ifndef EC_MASTER_IN_USERSPACE
 +#ifdef EC_MASTER_IN_USERSPACE
 +    pthread_t		ioctl_thread_id;
 +    pthread_t		*ioctl_thread; /**< Master IOCTL thread. */
 +    uint8_t		*ioctl_mem;
 +    uint8_t		ioctl_thread_run;
 +    void *priv;
-+#endif
- };
- 
- /*****************************************************************************/
-@@ -383,6 +399,11 @@ void ec_master_request_op(ec_master_t *);
++#else
+     struct work_struct sc_reset_work; /**< Task to reset slave configuration. */
+     struct irq_work sc_reset_work_kicker; /**< NMI-Safe kicker to trigger
+                                             reset task above. */
+@@ -387,6 +402,11 @@ void ec_master_request_op(ec_master_t *);
  void ec_master_internal_send_cb(void *);
  void ec_master_internal_receive_cb(void *);
  
@@ -2537,12 +2615,12 @@ index ad76106..411ea57 100644
 +
  extern const unsigned int rate_intervals[EC_RATE_COUNT]; // see master.c
  
- /*****************************************************************************/
+ /****************************************************************************/
 diff --git a/master/module.c b/master/module.c
-index ee39789..4311054 100644
+index 239ba3fe..22d1ae21 100644
 --- a/master/module.c
 +++ b/master/module.c
-@@ -699,10 +699,16 @@ ec_master_t *ecrt_open_master(
+@@ -706,10 +706,16 @@ ec_master_t *ecrt_open_master(
      return master;
  }
  
@@ -2560,7 +2638,7 @@ index ee39789..4311054 100644
                unsigned int backup_count_, const char *const *backup_macs,
                unsigned int debug_level_)
  {
-@@ -734,15 +740,59 @@ int ecrt_init(unsigned int master_count_, const char *const *master_macs,
+@@ -741,15 +747,59 @@ int ecrt_init(unsigned int master_count_, const char *const *master_macs,
      r = ec_init_module();
      if (r)
          return r;
@@ -2622,10 +2700,10 @@ index ee39789..4311054 100644
 +
 +#endif  /* EC_MASTER_IN_USERSPACE */
 diff --git a/master/slave.h b/master/slave.h
-index b71d57e..5ffb128 100644
+index 4e113e28..8b7be567 100644
 --- a/master/slave.h
 +++ b/master/slave.h
-@@ -103,6 +103,15 @@
+@@ -95,6 +95,15 @@
   * \param fmt format string (like in printf())
   * \param args arguments (optional)
   */
@@ -2641,21 +2719,21 @@ index b71d57e..5ffb128 100644
  #define EC_SLAVE_DBG(slave, level, fmt, args...) \
      do { \
          if (slave->master->debug_level >= level) { \
-@@ -110,6 +119,7 @@
+@@ -102,6 +111,7 @@
                      slave->master->index, slave->ring_position, ##args); \
          } \
      } while (0)
 +#endif
  
- /*****************************************************************************/
+ /****************************************************************************/
  
 diff --git a/master/slave_config.c b/master/slave_config.c
-index 3834787..192aa6c 100644
+index 87e81a6c..7438823b 100644
 --- a/master/slave_config.c
 +++ b/master/slave_config.c
-@@ -198,6 +198,30 @@ int ec_slave_config_prepare_fmmu(
-     return fmmu->logical_start_address;
- }
+@@ -246,6 +246,32 @@ int ec_slave_config_prepare_fmmu(
+ 
+ /****************************************************************************/
  
 +#ifdef EC_MASTER_IN_USERSPACE
 +#define PREOP (0x02)
@@ -2681,14 +2759,16 @@ index 3834787..192aa6c 100644
 +}
 +#endif
 +
- /*****************************************************************************/
- 
++/****************************************************************************/
++
  /** Attaches the configuration to the addressed slave object.
+  *
+  * \retval  0 Success.
 diff --git a/tool/CommandAlias.cpp b/tool/CommandAlias.cpp
-index 87f6435..9aebfa5 100644
+index d3282e91..806c6142 100644
 --- a/tool/CommandAlias.cpp
 +++ b/tool/CommandAlias.cpp
-@@ -143,12 +143,12 @@ void CommandAlias::writeSlaveAlias(
+@@ -135,12 +135,12 @@ void CommandAlias::writeSlaveAlias(
      data.slave_position = slave.position;
      data.offset = 0;
      data.nwords = 8;
@@ -2703,7 +2783,7 @@ index 87f6435..9aebfa5 100644
          err << "Failed to read SII: " << e.what();
          throwCommandException(err);
      }
-@@ -166,12 +166,12 @@ void CommandAlias::writeSlaveAlias(
+@@ -158,12 +158,12 @@ void CommandAlias::writeSlaveAlias(
      try {
          m.writeSii(&data);
      } catch (MasterDeviceException &e) {
@@ -2717,12 +2797,12 @@ index 87f6435..9aebfa5 100644
 +    ioctl_del_buf(data.words);
  }
  
- /*****************************************************************************/
+ /****************************************************************************/
 diff --git a/tool/CommandData.cpp b/tool/CommandData.cpp
-index 89a31ee..8a6d55a 100644
+index 6fc58912..7805eb3f 100644
 --- a/tool/CommandData.cpp
 +++ b/tool/CommandData.cpp
-@@ -109,12 +109,12 @@ void CommandData::outputDomainData(
+@@ -101,12 +101,12 @@ void CommandData::outputDomainData(
      if (!domain.data_size)
          return;
  
@@ -2737,7 +2817,7 @@ index 89a31ee..8a6d55a 100644
          throw e;
      }
  
-@@ -122,7 +122,7 @@ void CommandData::outputDomainData(
+@@ -114,7 +114,7 @@ void CommandData::outputDomainData(
          cout << processData[i];
      cout.flush();
  
@@ -2747,10 +2827,10 @@ index 89a31ee..8a6d55a 100644
  
  /****************************************************************************/
 diff --git a/tool/CommandDomains.cpp b/tool/CommandDomains.cpp
-index 13fc6cb..fdc9d0a 100644
+index 83abf1fd..a69abb81 100644
 --- a/tool/CommandDomains.cpp
 +++ b/tool/CommandDomains.cpp
-@@ -170,12 +170,12 @@ void CommandDomains::showDomain(
+@@ -162,12 +162,12 @@ void CommandDomains::showDomain(
      if (!domain.data_size || getVerbosity() != Verbose)
          return;
  
@@ -2765,7 +2845,7 @@ index 13fc6cb..fdc9d0a 100644
          throw e;
      }
  
-@@ -196,7 +196,7 @@ void CommandDomains::showDomain(
+@@ -188,7 +188,7 @@ void CommandDomains::showDomain(
          dataOffset = fmmu.logical_address - domain.logical_base_address;
          if (dataOffset + fmmu.data_size > domain.data_size) {
              stringstream err;
@@ -2774,7 +2854,7 @@ index 13fc6cb..fdc9d0a 100644
              err << "Fmmu information corrupted!";
              throwCommandException(err);
          }
-@@ -211,7 +211,7 @@ void CommandDomains::showDomain(
+@@ -203,7 +203,7 @@ void CommandDomains::showDomain(
          cout << endl;
      }
  
@@ -2782,12 +2862,12 @@ index 13fc6cb..fdc9d0a 100644
 +    ioctl_del_buf(processData);
  }
  
- /*****************************************************************************/
+ /****************************************************************************/
 diff --git a/tool/CommandDownload.cpp b/tool/CommandDownload.cpp
-index 0ee59d3..b010c0a 100644
+index 4daeb7dd..a059d842 100644
 --- a/tool/CommandDownload.cpp
 +++ b/tool/CommandDownload.cpp
-@@ -173,16 +173,16 @@ void CommandDownload::execute(const StringVector &args)
+@@ -165,16 +165,16 @@ void CommandDownload::execute(const StringVector &args)
              throwCommandException(err);
          }
          data.data_size = contents.size();
@@ -2804,10 +2884,10 @@ index 0ee59d3..b010c0a 100644
          } catch (ios::failure &e) {
 -            delete [] data.data;
 +            ioctl_del_buf(data.data);
-             err << "Invalid value argument '" << args[2]
-                 << "' for type '" << dataType->name << "'!";
+             err << "Invalid value for type '" << dataType->name << "'!";
              throwInvalidUsageException(err);
-@@ -195,16 +195,16 @@ void CommandDownload::execute(const StringVector &args)
+         }
+@@ -186,16 +186,16 @@ void CommandDownload::execute(const StringVector &args)
              data.data_size = DefaultBufferSize;
          }
  
@@ -2824,23 +2904,10 @@ index 0ee59d3..b010c0a 100644
          } catch (ios::failure &e) {
 -            delete [] data.data;
 +            ioctl_del_buf(data.data);
-             err << "Invalid value argument '" << args[2]
+             err << "Invalid value argument '" << args[valueIndex]
                  << "' for type '" << dataType->name << "'!";
              throwInvalidUsageException(err);
-@@ -215,10 +215,10 @@ void CommandDownload::execute(const StringVector &args)
-         data.data_size = interpretAsType(
-                 dataType, args[valueIndex], data.data, data.data_size);
-     } catch (SizeException &e) {
--        delete [] data.data;
-+        ioctl_del_buf(data.data);
-         throwCommandException(e.what());
-     } catch (ios::failure &e) {
--        delete [] data.data;
-+        ioctl_del_buf(data.data);
-         err << "Invalid value argument '" << args[2]
-             << "' for type '" << dataType->name << "'!";
-         throwInvalidUsageException(err);
-@@ -227,17 +227,17 @@ void CommandDownload::execute(const StringVector &args)
+@@ -205,17 +205,17 @@ void CommandDownload::execute(const StringVector &args)
      try {
          m.sdoDownload(&data);
      } catch (MasterDeviceSdoAbortException &e) {
@@ -2860,19 +2927,19 @@ index 0ee59d3..b010c0a 100644
 +    ioctl_del_buf(data.data);
  }
  
- /*****************************************************************************/
+ /****************************************************************************/
 diff --git a/tool/CommandFoeRead.cpp b/tool/CommandFoeRead.cpp
-index 7221f40..1a643e0 100644
+index bb329561..7806dfa3 100644
 --- a/tool/CommandFoeRead.cpp
 +++ b/tool/CommandFoeRead.cpp
-@@ -103,14 +103,14 @@ void CommandFoeRead::execute(const StringVector &args)
+@@ -95,14 +95,14 @@ void CommandFoeRead::execute(const StringVector &args)
       */
      data.offset = 0;
      data.buffer_size = 0x8800;
 -    data.buffer = new uint8_t[data.buffer_size];
 +    data.buffer = ioctl_new_buf(uint8_t, data.buffer_size);
  
-     strncpy(data.file_name, args[0].c_str(), sizeof(data.file_name));
+     strncpy(data.file_name, args[0].c_str(), sizeof(data.file_name) - 1);
  
      try {
          m.readFoe(&data);
@@ -2882,7 +2949,7 @@ index 7221f40..1a643e0 100644
          if (data.result) {
              if (data.result == FOE_OPCODE_ERROR) {
                  err << "FoE read aborted with error code 0x"
-@@ -132,7 +132,7 @@ void CommandFoeRead::execute(const StringVector &args)
+@@ -124,7 +124,7 @@ void CommandFoeRead::execute(const StringVector &args)
          cout << *(uint8_t *) w ;
      }
  
@@ -2890,12 +2957,12 @@ index 7221f40..1a643e0 100644
 +    ioctl_del_buf(data.buffer);
  }
  
- /*****************************************************************************/
+ /****************************************************************************/
 diff --git a/tool/CommandFoeWrite.cpp b/tool/CommandFoeWrite.cpp
-index abd6a3f..a57e1fb 100644
+index 6574f3f7..8dc5f14f 100644
 --- a/tool/CommandFoeWrite.cpp
 +++ b/tool/CommandFoeWrite.cpp
-@@ -126,14 +126,14 @@ void CommandFoeWrite::execute(const StringVector &args)
+@@ -118,14 +118,14 @@ void CommandFoeWrite::execute(const StringVector &args)
          m.open(MasterDevice::ReadWrite);
      } catch (MasterDeviceException &e) {
          if (data.buffer_size)
@@ -2912,7 +2979,7 @@ index abd6a3f..a57e1fb 100644
          throwSingleSlaveRequired(slaves.size());
      }
      data.slave_position = slaves.front().position;
-@@ -146,7 +146,7 @@ void CommandFoeWrite::execute(const StringVector &args)
+@@ -139,7 +139,7 @@ void CommandFoeWrite::execute(const StringVector &args)
          m.writeFoe(&data);
      } catch (MasterDeviceException &e) {
          if (data.buffer_size)
@@ -2921,7 +2988,7 @@ index abd6a3f..a57e1fb 100644
          if (data.result) {
              if (data.result == FOE_OPCODE_ERROR) {
                  err << "FoE write aborted with error code 0x"
-@@ -167,7 +167,7 @@ void CommandFoeWrite::execute(const StringVector &args)
+@@ -160,7 +160,7 @@ void CommandFoeWrite::execute(const StringVector &args)
      }
  
      if (data.buffer_size)
@@ -2929,8 +2996,8 @@ index abd6a3f..a57e1fb 100644
 +        ioctl_del_buf(data.buffer);
  }
  
- /*****************************************************************************/
-@@ -191,7 +191,7 @@ void CommandFoeWrite::loadFoeData(
+ /****************************************************************************/
+@@ -184,7 +184,7 @@ void CommandFoeWrite::loadFoeData(
  
      if (data->buffer_size) {
          // allocate buffer and read file into buffer
@@ -2940,12 +3007,12 @@ index abd6a3f..a57e1fb 100644
      }
  }
 diff --git a/tool/CommandRegRead.cpp b/tool/CommandRegRead.cpp
-index d1d8314..27a2dbf 100644
+index c3595389..2daebc97 100644
 --- a/tool/CommandRegRead.cpp
 +++ b/tool/CommandRegRead.cpp
-@@ -150,23 +150,23 @@ void CommandRegRead::execute(const StringVector &args)
-     }
+@@ -143,23 +143,23 @@ void CommandRegRead::execute(const StringVector &args)
      io.slave_position = slaves.front().position;
+     io.emergency = false;
  
 -    io.data = new uint8_t[io.size];
 +    io.data = ioctl_new_buf(uint8_t, io.size);
@@ -2970,12 +3037,12 @@ index d1d8314..27a2dbf 100644
 +    ioctl_del_buf(io.data);
  }
  
- /*****************************************************************************/
+ /****************************************************************************/
 diff --git a/tool/CommandRegWrite.cpp b/tool/CommandRegWrite.cpp
-index 9a8a57e..1e4f72a 100644
+index 5a1e9d5c..c0de019f 100644
 --- a/tool/CommandRegWrite.cpp
 +++ b/tool/CommandRegWrite.cpp
-@@ -128,16 +128,16 @@ void CommandRegWrite::execute(const StringVector &args)
+@@ -121,16 +121,16 @@ void CommandRegWrite::execute(const StringVector &args)
              io.size = 1024; // FIXME
          }
  
@@ -2995,7 +3062,7 @@ index 9a8a57e..1e4f72a 100644
              err << "Invalid value argument '" << args[1]
                  << "' for type '" << dataType->name << "'!";
              throwInvalidUsageException(err);
-@@ -146,7 +146,7 @@ void CommandRegWrite::execute(const StringVector &args)
+@@ -139,7 +139,7 @@ void CommandRegWrite::execute(const StringVector &args)
  
      if ((uint32_t) io.address + io.size > 0xffff) {
          err << "Address and size exceeding 64k!";
@@ -3004,7 +3071,7 @@ index 9a8a57e..1e4f72a 100644
          throwInvalidUsageException(err);
      }
  
-@@ -154,13 +154,13 @@ void CommandRegWrite::execute(const StringVector &args)
+@@ -147,7 +147,7 @@ void CommandRegWrite::execute(const StringVector &args)
      try {
          m.open(MasterDevice::ReadWrite);
      } catch (MasterDeviceException &e) {
@@ -3013,13 +3080,15 @@ index 9a8a57e..1e4f72a 100644
          throw e;
      }
  
-     slaves = selectedSlaves(m);
-     if (slaves.size() != 1) {
--        delete [] io.data;
-+        ioctl_del_buf(io.data);
-         throwSingleSlaveRequired(slaves.size());
-     }
-     io.slave_position = slaves.front().position;
+@@ -158,7 +158,7 @@ void CommandRegWrite::execute(const StringVector &args)
+     else {
+         SlaveList slaves = selectedSlaves(m);
+         if (slaves.size() != 1) {
+-            delete [] io.data;
++            ioctl_del_buf(io.data);
+             throwSingleSlaveRequired(slaves.size());
+         }
+         io.slave_position = slaves.front().position;
 @@ -169,7 +169,7 @@ void CommandRegWrite::execute(const StringVector &args)
      try {
          m.writeReg(&io);
@@ -3037,7 +3106,7 @@ index 9a8a57e..1e4f72a 100644
 +    ioctl_del_buf(io.data);
  }
  
- /*****************************************************************************/
+ /****************************************************************************/
 @@ -204,7 +204,7 @@ void CommandRegWrite::loadRegData(
      io->size = contents.size();
  
@@ -3048,10 +3117,10 @@ index 9a8a57e..1e4f72a 100644
  }
  
 diff --git a/tool/CommandSiiRead.cpp b/tool/CommandSiiRead.cpp
-index 1c606e3..8aa7e26 100644
+index f7b474e5..4d1bd0b7 100644
 --- a/tool/CommandSiiRead.cpp
 +++ b/tool/CommandSiiRead.cpp
-@@ -104,12 +104,12 @@ void CommandSiiRead::execute(const StringVector &args)
+@@ -96,12 +96,12 @@ void CommandSiiRead::execute(const StringVector &args)
  
      data.offset = 0;
      data.nwords = slave->sii_nwords;
@@ -3066,7 +3135,7 @@ index 1c606e3..8aa7e26 100644
          throw e;
      }
  
-@@ -175,7 +175,7 @@ void CommandSiiRead::execute(const StringVector &args)
+@@ -167,7 +167,7 @@ void CommandSiiRead::execute(const StringVector &args)
          }
      }
  
@@ -3076,10 +3145,10 @@ index 1c606e3..8aa7e26 100644
  
  /****************************************************************************/
 diff --git a/tool/CommandSiiWrite.cpp b/tool/CommandSiiWrite.cpp
-index ad02b4f..e449dc1 100644
+index 0c7adb08..771851af 100644
 --- a/tool/CommandSiiWrite.cpp
 +++ b/tool/CommandSiiWrite.cpp
-@@ -105,7 +105,7 @@ void CommandSiiWrite::execute(const StringVector &args)
+@@ -97,7 +97,7 @@ void CommandSiiWrite::execute(const StringVector &args)
          try {
              checkSiiData(&data);
          } catch (CommandException &e) {
@@ -3088,7 +3157,7 @@ index ad02b4f..e449dc1 100644
              throw e;
          }
      }
-@@ -114,13 +114,13 @@ void CommandSiiWrite::execute(const StringVector &args)
+@@ -106,13 +106,13 @@ void CommandSiiWrite::execute(const StringVector &args)
      try {
          m.open(MasterDevice::ReadWrite);
      } catch (MasterDeviceException &e) {
@@ -3104,7 +3173,7 @@ index ad02b4f..e449dc1 100644
          throwSingleSlaveRequired(slaves.size());
      }
      data.slave_position = slaves.front().position;
-@@ -130,7 +130,7 @@ void CommandSiiWrite::execute(const StringVector &args)
+@@ -122,7 +122,7 @@ void CommandSiiWrite::execute(const StringVector &args)
      try {
          m.writeSii(&data);
      } catch (MasterDeviceException &e) {
@@ -3113,7 +3182,7 @@ index ad02b4f..e449dc1 100644
          throw e;
      }
  
-@@ -138,7 +138,7 @@ void CommandSiiWrite::execute(const StringVector &args)
+@@ -130,7 +130,7 @@ void CommandSiiWrite::execute(const StringVector &args)
          cerr << "SII writing finished." << endl;
      }
  
@@ -3121,8 +3190,8 @@ index ad02b4f..e449dc1 100644
 +    ioctl_del_buf(data.words);
  }
  
- /*****************************************************************************/
-@@ -166,7 +166,7 @@ void CommandSiiWrite::loadSiiData(
+ /****************************************************************************/
+@@ -158,7 +158,7 @@ void CommandSiiWrite::loadSiiData(
      data->nwords = contents.size() / 2;
  
      // allocate buffer and read file into buffer
@@ -3132,10 +3201,10 @@ index ad02b4f..e449dc1 100644
  }
  
 diff --git a/tool/CommandSoeRead.cpp b/tool/CommandSoeRead.cpp
-index 2ad4c0f..eb2c037 100644
+index de30e83e..1ea274d2 100644
 --- a/tool/CommandSoeRead.cpp
 +++ b/tool/CommandSoeRead.cpp
-@@ -148,16 +148,16 @@ void CommandSoeRead::execute(const StringVector &args)
+@@ -140,16 +140,16 @@ void CommandSoeRead::execute(const StringVector &args)
          ioctl.mem_size = 1024;
      }
  
@@ -3155,7 +3224,7 @@ index 2ad4c0f..eb2c037 100644
          throw e;
      }
  
-@@ -166,11 +166,11 @@ void CommandSoeRead::execute(const StringVector &args)
+@@ -158,11 +158,11 @@ void CommandSoeRead::execute(const StringVector &args)
      try {
          outputData(cout, dataType, ioctl.data, ioctl.data_size);
      } catch (SizeException &e) {
@@ -3168,12 +3237,12 @@ index 2ad4c0f..eb2c037 100644
 +    ioctl_del_buf(ioctl.data);
  }
  
- /*****************************************************************************/
+ /****************************************************************************/
 diff --git a/tool/CommandSoeWrite.cpp b/tool/CommandSoeWrite.cpp
-index 382ba8d..3ec75ab 100644
+index a227d470..68117836 100644
 --- a/tool/CommandSoeWrite.cpp
 +++ b/tool/CommandSoeWrite.cpp
-@@ -158,16 +158,16 @@ void CommandSoeWrite::execute(const StringVector &args)
+@@ -150,16 +150,16 @@ void CommandSoeWrite::execute(const StringVector &args)
          }
      }
  
@@ -3193,7 +3262,7 @@ index 382ba8d..3ec75ab 100644
          err << "Invalid value argument '" << args[valueArgIndex]
              << "' for type '" << dataType->name << "'!";
          throwInvalidUsageException(err);
-@@ -176,15 +176,15 @@ void CommandSoeWrite::execute(const StringVector &args)
+@@ -168,15 +168,15 @@ void CommandSoeWrite::execute(const StringVector &args)
      try {
          m.writeSoe(&ioctl);
      } catch (MasterDeviceSoeException &e) {
@@ -3211,12 +3280,12 @@ index 382ba8d..3ec75ab 100644
 +    ioctl_del_buf(ioctl.data);
  }
  
- /*****************************************************************************/
+ /****************************************************************************/
 diff --git a/tool/CommandUpload.cpp b/tool/CommandUpload.cpp
-index 439eeab..b5f639f 100644
+index fbae3924..b2b1f8b5 100644
 --- a/tool/CommandUpload.cpp
 +++ b/tool/CommandUpload.cpp
-@@ -151,18 +151,18 @@ void CommandUpload::execute(const StringVector &args)
+@@ -143,18 +143,18 @@ void CommandUpload::execute(const StringVector &args)
          data.target_size = DefaultBufferSize;
      }
  
@@ -3238,7 +3307,7 @@ index 439eeab..b5f639f 100644
          throw e;
      }
  
-@@ -171,11 +171,11 @@ void CommandUpload::execute(const StringVector &args)
+@@ -163,11 +163,11 @@ void CommandUpload::execute(const StringVector &args)
      try {
          outputData(cout, dataType, data.target, data.data_size);
      } catch (SizeException &e) {
@@ -3251,12 +3320,12 @@ index 439eeab..b5f639f 100644
 +    ioctl_del_buf(data.target);
  }
  
- /*****************************************************************************/
+ /****************************************************************************/
 diff --git a/tool/Makefile.am b/tool/Makefile.am
-index 9d551c7..f865be9 100644
+index a4656a87..a89e0b5c 100644
 --- a/tool/Makefile.am
 +++ b/tool/Makefile.am
-@@ -33,9 +33,9 @@
+@@ -25,9 +25,9 @@
  
  EXTRA_DIST =
  
@@ -3265,20 +3334,20 @@ index 9d551c7..f865be9 100644
  
 -ethercat_SOURCES = \
 +ethercat_userspace_SOURCES = \
- 	soe_errors.c \
  	Command.cpp \
  	CommandAlias.cpp \
-@@ -73,7 +73,7 @@ ethercat_SOURCES = \
+ 	CommandCrc.cpp \
+@@ -65,7 +65,7 @@ ethercat_SOURCES = \
  	sii_crc.cpp
  
  if ENABLE_EOE
--ethercat_SOURCES += CommandEoe.cpp
-+ethercat_userspace_SOURCES += CommandEoe.cpp
+-ethercat_SOURCES += CommandEoe.cpp CommandIp.cpp
++ethercat_userspace_SOURCES += CommandEoe.cpp CommandIp.cpp
  else
- EXTRA_DIST += CommandEoe.cpp
+ EXTRA_DIST += CommandEoe.cpp CommandIp.cpp
  endif
-@@ -125,9 +125,10 @@ REV = `if test -s $(top_srcdir)/revision; then \
- 		hg id -i $(top_srcdir) 2>/dev/null || echo "unknown"; \
+@@ -118,9 +118,10 @@ REV = `if test -s $(top_srcdir)/revision; then \
+ 		git -C $(top_srcdir) describe 2>/dev/null || echo "unknown"; \
  	fi`
  
 -ethercat_CXXFLAGS = \
@@ -3290,10 +3359,10 @@ index 9d551c7..f865be9 100644
  	-fno-strict-aliasing
  
 diff --git a/tool/MasterDevice.cpp b/tool/MasterDevice.cpp
-index ca02324..5c487fb 100644
+index ac256d88..1ae17002 100644
 --- a/tool/MasterDevice.cpp
 +++ b/tool/MasterDevice.cpp
-@@ -40,6 +40,122 @@ using namespace std;
+@@ -32,6 +32,122 @@ using namespace std;
  
  #include "MasterDevice.h"
  
@@ -3416,7 +3485,7 @@ index ca02324..5c487fb 100644
  /****************************************************************************/
  
  MasterDevice::MasterDevice(unsigned int index):
-@@ -67,14 +183,26 @@ void MasterDevice::setIndex(unsigned int i)
+@@ -59,14 +175,26 @@ void MasterDevice::setIndex(unsigned int i)
  
  void MasterDevice::open(Permissions perm)
  {
@@ -3447,7 +3516,7 @@ index ca02324..5c487fb 100644
              stringstream err;
              err << "Failed to open master device " << deviceName.str() << ": "
                  << strerror(errno);
-@@ -97,10 +225,17 @@ void MasterDevice::open(Permissions perm)
+@@ -95,10 +223,17 @@ void MasterDevice::open(Permissions perm)
  
  void MasterDevice::close()
  {
@@ -3465,7 +3534,7 @@ index ca02324..5c487fb 100644
  }
  
  /****************************************************************************/
-@@ -464,7 +599,7 @@ void MasterDevice::writeFoe(
+@@ -480,7 +615,7 @@ void MasterDevice::writeFoe(
  
  void MasterDevice::setDebug(unsigned int debugLevel)
  {
@@ -3474,7 +3543,7 @@ index ca02324..5c487fb 100644
          stringstream err;
          err << "Failed to set debug level: " << strerror(errno);
          throw MasterDeviceException(err);
-@@ -475,7 +610,7 @@ void MasterDevice::setDebug(unsigned int debugLevel)
+@@ -491,7 +626,7 @@ void MasterDevice::setDebug(unsigned int debugLevel)
  
  void MasterDevice::rescan()
  {
@@ -3484,10 +3553,10 @@ index ca02324..5c487fb 100644
          err << "Failed to command rescan: " << strerror(errno);
          throw MasterDeviceException(err);
 diff --git a/tool/MasterDevice.h b/tool/MasterDevice.h
-index 7398f97..a5d7f36 100644
+index bb6c8a8e..c3da363c 100644
 --- a/tool/MasterDevice.h
 +++ b/tool/MasterDevice.h
-@@ -38,6 +38,28 @@ using namespace std;
+@@ -30,6 +30,28 @@ using namespace std;
  #include "ioctl.h"
  
  /****************************************************************************/
@@ -3517,5 +3586,5 @@ index 7398f97..a5d7f36 100644
  class MasterDeviceException:
      public runtime_error
 -- 
-2.25.1
+2.43.0
 
