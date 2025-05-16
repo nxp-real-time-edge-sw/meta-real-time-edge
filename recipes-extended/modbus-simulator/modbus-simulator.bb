@@ -11,7 +11,7 @@ SRC_URI = "file://LICENSE.md \
            file://common.h \
            file://readme.md"
 
-S = "${WORKDIR}/src"
+S = "${UNPACKDIR}"
 
 DEPENDS = "libmodbus"
 
