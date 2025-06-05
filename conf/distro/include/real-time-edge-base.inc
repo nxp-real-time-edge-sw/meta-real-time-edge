@@ -128,6 +128,7 @@ KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-ecat-userspace.d
 
 # dtb for lpuart
 KERNEL_DEVICETREE:append:imx6ull14x14evk = " nxp/imx/imx6ull-14x14-evk-lpuart.dtb"
+KERNEL_DEVICETREE:append:imx95-15x15-lpddr4x-evk = " freescale/imx95-15x15-evk-lpuart.dtb"
 
 # dtb for imxai2eth-ath
 KERNEL_DEVICETREE:append:imx93-14x14-lpddr4x-evk = " freescale/imx93-14x14-evk-imxai2eth-ath.dtb"
