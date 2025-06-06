@@ -1,0 +1,88 @@
+From 08a20a40b9c5ddb3eae92e8ddb59d8d01c807428 Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Thu, 5 Jun 2025 16:13:12 +0800
+Subject: [PATCH 2/2] plat: imx8m, imx93/5: enable workaround for CPU off SIP
+
+When ROTS is panic, TF-A will handle NS pending SError and reflects
+it back to lower EL, so CPU off SIP interrupt will not be handled
+in TF-A and CPU off SIP will not work, enable the workaround
+of HANDLE_NS_EA_EL3_IRQ_WA to fix this issue.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
+---
+ plat/imx/imx8m/imx8mm/platform.mk | 2 ++
+ plat/imx/imx8m/imx8mn/platform.mk | 2 ++
+ plat/imx/imx8m/imx8mp/platform.mk | 2 ++
+ plat/imx/imx9/imx95/platform.mk   | 2 ++
+ plat/imx/imx93/platform.mk        | 2 ++
+ 5 files changed, 10 insertions(+)
+
+diff --git a/plat/imx/imx8m/imx8mm/platform.mk b/plat/imx/imx8m/imx8mm/platform.mk
+index 5d0de37f1..5782c4486 100644
+--- a/plat/imx/imx8m/imx8mm/platform.mk
++++ b/plat/imx/imx8m/imx8mm/platform.mk
+@@ -181,6 +181,8 @@ ifneq (${PRELOADED_BL33_BASE},)
+ $(eval $(call add_define_val,PLAT_NS_IMAGE_OFFSET,${PRELOADED_BL33_BASE}))
+ endif
+ 
++HANDLE_NS_EA_EL3_IRQ_WA	:=	1
++
+ BL32_BASE		?=	0xbe000000
+ $(eval $(call add_define,BL32_BASE))
+ 
+diff --git a/plat/imx/imx8m/imx8mn/platform.mk b/plat/imx/imx8m/imx8mn/platform.mk
+index f6eefc97c..25fec176a 100644
+--- a/plat/imx/imx8m/imx8mn/platform.mk
++++ b/plat/imx/imx8m/imx8mn/platform.mk
+@@ -87,6 +87,8 @@ ifneq (${PRELOADED_BL33_BASE},)
+ $(eval $(call add_define_val,PLAT_NS_IMAGE_OFFSET,${PRELOADED_BL33_BASE}))
+ endif
+ 
++HANDLE_NS_EA_EL3_IRQ_WA	:=	1
++
+ BL32_BASE		?=	0x56000000
+ $(eval $(call add_define,BL32_BASE))
+ 
+diff --git a/plat/imx/imx8m/imx8mp/platform.mk b/plat/imx/imx8m/imx8mp/platform.mk
+index 5e222c485..df635a19c 100644
+--- a/plat/imx/imx8m/imx8mp/platform.mk
++++ b/plat/imx/imx8m/imx8mp/platform.mk
+@@ -177,6 +177,8 @@ ifneq (${PRELOADED_BL33_BASE},)
+ $(eval $(call add_define_val,PLAT_NS_IMAGE_OFFSET,${PRELOADED_BL33_BASE}))
+ endif
+ 
++HANDLE_NS_EA_EL3_IRQ_WA	:=	1
++
+ BL32_BASE		?=	0x56000000
+ $(eval $(call add_define,BL32_BASE))
+ 
+diff --git a/plat/imx/imx9/imx95/platform.mk b/plat/imx/imx9/imx95/platform.mk
+index 23be0651d..3a0fb95f0 100644
+--- a/plat/imx/imx9/imx95/platform.mk
++++ b/plat/imx/imx9/imx95/platform.mk
+@@ -63,6 +63,8 @@ PROGRAMMABLE_RESET_ADDRESS := 1
+ COLD_BOOT_SINGLE_CPU := 1
+ ERRATA_A55_1530923 := 1
+ 
++HANDLE_NS_EA_EL3_IRQ_WA	:=	1
++
+ BL32_BASE               ?=      0x8C000000
+ BL32_SIZE               ?=      0x02000000
+ $(eval $(call add_define,BL32_BASE))
+diff --git a/plat/imx/imx93/platform.mk b/plat/imx/imx93/platform.mk
+index 297b4df3b..7fb06ecd1 100644
+--- a/plat/imx/imx93/platform.mk
++++ b/plat/imx/imx93/platform.mk
+@@ -61,6 +61,8 @@ USE_COHERENT_MEM	:=	0
+ PROGRAMMABLE_RESET_ADDRESS :=	1
+ COLD_BOOT_SINGLE_CPU	:=	1
+ 
++HANDLE_NS_EA_EL3_IRQ_WA	:=	1
++
+ BL32_BASE               ?=      0x96000000
+ BL32_SIZE               ?=      0x02000000
+ $(eval $(call add_define,BL32_BASE))
+-- 
+2.34.1
+
