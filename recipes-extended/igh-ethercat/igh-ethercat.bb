@@ -16,6 +16,7 @@ SRC_URI += "\
     file://0004-Fixed-compilation-errors-because-of-linux-kernel-upg.patch \
     file://0001-enetc4-port-enetc4.patch \
     file://0002-fec-fix-compile-error-because-of-kernel-upgrade-to-6.patch \
+	file://0001-enetc4-ec_enetc4-and-ec_master-modules-worked.patch \
 "
 S = "${WORKDIR}/git"
 
