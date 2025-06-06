@@ -51,8 +51,8 @@ heterogeneous-multicore-examples:append:imx93evk = " soem-digital-io-ca soem-ser
 heterogeneous-multicore-examples:append:imx93-14x14-lpddr4x-evk = " hello-world-ca-zephyr hello-world-ca hello-world-cm lwip-ping-ca rpmsg-uart-sharing-cm virtio-net-backend-ca virtio-net-backend-cm hmc-tools "
 heterogeneous-multicore-examples:append:imx93-14x14-lpddr4x-evk = " rt-latency-ca rt-latency-ca-zephyr rpmsg-str-echo-ca "
 heterogeneous-multicore-examples:append:imx93evk-14x14-lpddr4x-evk = " rpmsg-pingpong-master-ca rpmsg-pingpong-remote-ca "
-heterogeneous-multicore-examples:append:imx95-15x15-lpddr4x-evk = " hello-world-ca-zephyr hello-world-ca rt-latency-ca rt-latency-ca-zephyr hmc-tools "
-heterogeneous-multicore-examples:append:imx95-19x19-lpddr5-evk = " hello-world-ca-zephyr hello-world-ca rt-latency-ca rt-latency-ca-zephyr hmc-tools "
+heterogeneous-multicore-examples:append:imx95-15x15-lpddr4x-evk = " hello-world-ca-zephyr hello-world-ca rt-latency-ca rt-latency-ca-zephyr rpmsg-str-echo-ca hmc-tools "
+heterogeneous-multicore-examples:append:imx95-19x19-lpddr5-evk = " hello-world-ca-zephyr hello-world-ca rt-latency-ca rt-latency-ca-zephyr rpmsg-str-echo-ca hmc-tools "
 heterogeneous-multicore-examples:append:imx91-9x9-lpddr4-qsb = " hello-world-ca-zephyr hello-world-ca rt-latency-ca rt-latency-ca-zephyr "
 heterogeneous-multicore-examples:append:imx91-11x11-lpddr4-evk = " hello-world-ca-zephyr hello-world-ca rt-latency-ca rt-latency-ca-zephyr "
 
