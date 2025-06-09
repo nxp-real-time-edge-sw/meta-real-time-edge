@@ -17,7 +17,7 @@ DEPENDS = "libyang libnetconf2 sysrepo netopeer2-server cjson libnl tsntool"
 
 RDEPENDS:${PN} += "bash curl libyang libnetconf2 sysrepo netopeer2-server cjson libnl tsntool"
 
-FILES:${PN} += "${datadir}/yang/*"
+FILES:${PN} += "${datadir}/yang/* ${libdir}/sysrepo-plugind/*"
 
 # can modify conf/distro/include/real-time-edge-base.inc for PACKAGECONFIG
 PACKAGECONFIG ??= ""
