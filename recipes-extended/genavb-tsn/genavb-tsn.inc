@@ -5,13 +5,14 @@ LIC_FILES_CHKSUM = "file://licenses/COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263
 
 GENAVB_TSN_SRC ?= "git://github.com/NXP/GenAVB_TSN.git;protocol=https"
 GENAVB_TSN_BRANCH ?= "7_1"
+GENAVB_TSN_VERSION ?= "7.1"
 GENAVB_TSN_SRCREV ?= "609be86df6fd472c8b32e9eef201ffa2a0b46f78"
 
 SRC_URI = "${GENAVB_TSN_SRC};branch=${GENAVB_TSN_BRANCH}"
 
 SRCREV = "${GENAVB_TSN_SRCREV}"
 
-PV = "7.1+git${SRCPV}"
+PV = "${GENAVB_TSN_VERSION}+git${SRCPV}"
 
 S = "${WORKDIR}/git"
 
