@@ -1,7 +1,7 @@
-From ddeecdc4c91c88ab6dcde074497e99905b78a101 Mon Sep 17 00:00:00 2001
+From 84c27cae2028142b4b06fe6901ffcda47729c521 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 5 Sep 2024 18:28:59 +0800
-Subject: [PATCH 1/9] plat: imx93: refine the EL3 interrupt handle
+Subject: [PATCH 01/12] plat: imx93: refine the EL3 interrupt handle
 
 Added a common interrupt handler for all EL3 interrupt, so can handle
 more EL3 interrupt.
@@ -194,7 +194,7 @@ index 99220bb53..ade2e1810 100644
  	/* Make sure all the cpu in WFE */
  	while (1) {
 diff --git a/plat/imx/imx93/imx93_bl31_setup.c b/plat/imx/imx93/imx93_bl31_setup.c
-index fc4ad9a8e..03384f8e9 100644
+index c134512f2..954d7b608 100644
 --- a/plat/imx/imx93/imx93_bl31_setup.c
 +++ b/plat/imx/imx93/imx93_bl31_setup.c
 @@ -1,5 +1,5 @@
@@ -234,5 +234,5 @@ index 5384fb4da..bf09ca906 100644
  				lib/cpus/aarch64/cortex_a55.S			\
  				drivers/delay_timer/delay_timer.c		\
 -- 
-2.34.1
+2.43.0
 

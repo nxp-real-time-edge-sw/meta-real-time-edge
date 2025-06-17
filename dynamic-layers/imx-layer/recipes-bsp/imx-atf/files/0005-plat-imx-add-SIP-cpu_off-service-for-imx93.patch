@@ -1,7 +1,7 @@
-From 4465ecbe556f67484de6dfd8ab2e11d0ad72f360 Mon Sep 17 00:00:00 2001
+From 1f145ac9a2fae77eeac66f1dc453896edf958c7e Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Sat, 21 Sep 2024 16:51:22 +0800
-Subject: [PATCH 5/9] plat: imx: add SIP cpu_off service for imx93
+Subject: [PATCH 05/12] plat: imx: add SIP cpu_off service for imx93
 
 SIP cpu_off service is used to turn off specified CPU Core by any
 other management CPU Core, SGI interrupt is trigged by managment
@@ -317,7 +317,7 @@ index 7399a924a..d0ee0640e 100644
 +#endif
  #endif /* __IMX_SIP_SVC_H__ */
 diff --git a/plat/imx/imx93/imx93_bl31_setup.c b/plat/imx/imx93/imx93_bl31_setup.c
-index 0a55cec37..b01ab8a8b 100644
+index 2342b113d..ef7e00cbb 100644
 --- a/plat/imx/imx93/imx93_bl31_setup.c
 +++ b/plat/imx/imx93/imx93_bl31_setup.c
 @@ -21,6 +21,7 @@
@@ -349,5 +349,5 @@ index 8f828d901..297b4df3b 100644
  				lib/cpus/aarch64/cortex_a55.S			\
  				drivers/delay_timer/delay_timer.c		\
 -- 
-2.34.1
+2.43.0
 

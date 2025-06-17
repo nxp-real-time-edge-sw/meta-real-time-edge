@@ -1,7 +1,7 @@
-From 2a57b0005c2785bd9db1dbdc9a5db66286c042e5 Mon Sep 17 00:00:00 2001
+From 9337ce2983f7be9e6afafbb1d9fb419cc9880843 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Wed, 25 Sep 2024 17:34:55 +0800
-Subject: [PATCH 7/9] plat: imx8m: add SIP cpu_off service
+Subject: [PATCH 07/12] plat: imx8m: add SIP cpu_off service
 
 Added SIP cpu_off service for imx8mm/n/p.
 
@@ -63,7 +63,7 @@ index d0ee0640e..32083c425 100644
      u_register_t x2, u_register_t x3, u_register_t x4);
  #endif
 diff --git a/plat/imx/imx8m/imx8mm/imx8mm_bl31_setup.c b/plat/imx/imx8m/imx8mm/imx8mm_bl31_setup.c
-index d90ea51a1..2cee53a4a 100644
+index 72fdbf216..215f0a584 100644
 --- a/plat/imx/imx8m/imx8mm/imx8mm_bl31_setup.c
 +++ b/plat/imx/imx8m/imx8mm/imx8mm_bl31_setup.c
 @@ -1,5 +1,6 @@
@@ -134,7 +134,7 @@ index f5e892916..5d0de37f1 100644
  				plat/imx/common/imx_sip_svc.c			\
  				plat/imx/common/imx_common.c			\
 diff --git a/plat/imx/imx8m/imx8mn/imx8mn_bl31_setup.c b/plat/imx/imx8m/imx8mn/imx8mn_bl31_setup.c
-index cc2d63c88..ffa7b3f85 100644
+index 4c60a4dc6..546cf8cdf 100644
 --- a/plat/imx/imx8m/imx8mn/imx8mn_bl31_setup.c
 +++ b/plat/imx/imx8m/imx8mn/imx8mn_bl31_setup.c
 @@ -1,5 +1,5 @@
@@ -192,7 +192,7 @@ index de5b0e43f..f6eefc97c 100644
  				plat/imx/common/imx_sip_svc.c			\
  				plat/imx/common/imx_common.c			\
 diff --git a/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c b/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c
-index 559d0e9a1..970774aa5 100644
+index 38809adce..b29e714af 100644
 --- a/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c
 +++ b/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c
 @@ -1,5 +1,5 @@
@@ -250,5 +250,5 @@ index f3b93d443..5e222c485 100644
  				plat/imx/common/imx_sip_svc.c			\
  				plat/imx/common/imx_common.c			\
 -- 
-2.34.1
+2.43.0
 

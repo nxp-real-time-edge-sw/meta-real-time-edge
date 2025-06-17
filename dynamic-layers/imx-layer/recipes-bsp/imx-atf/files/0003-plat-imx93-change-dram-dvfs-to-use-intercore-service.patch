@@ -1,7 +1,7 @@
-From 393ba0ddfbf426072c3810edb333caaad8c279da Mon Sep 17 00:00:00 2001
+From 5016100769f06335fc7fea956e4335f5a593381a Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Wed, 25 Sep 2024 18:06:38 +0800
-Subject: [PATCH 3/9] plat: imx93: change dram dvfs to use intercore service
+Subject: [PATCH 03/12] plat: imx93: change dram dvfs to use intercore service
 
 So that SGI irq can be shared with SIP cpu_off service.
 
@@ -81,7 +81,7 @@ index ade2e1810..dcdffb872 100644
  	/* Make sure all the cpu in WFE */
  	while (1) {
 diff --git a/plat/imx/imx93/imx93_bl31_setup.c b/plat/imx/imx93/imx93_bl31_setup.c
-index 03384f8e9..0a55cec37 100644
+index 954d7b608..2342b113d 100644
 --- a/plat/imx/imx93/imx93_bl31_setup.c
 +++ b/plat/imx/imx93/imx93_bl31_setup.c
 @@ -22,6 +22,7 @@
@@ -101,10 +101,10 @@ index 03384f8e9..0a55cec37 100644
  	/* Init the dram info */
  	dram_info_init(SAVED_DRAM_TIMING_BASE);
 diff --git a/plat/imx/imx93/include/platform_def.h b/plat/imx/imx93/include/platform_def.h
-index 1c5a517fe..6b04bb2d7 100644
+index ff99195b8..d200cfd16 100644
 --- a/plat/imx/imx93/include/platform_def.h
 +++ b/plat/imx/imx93/include/platform_def.h
-@@ -127,4 +127,7 @@
+@@ -129,4 +129,7 @@
  #define IMX_TRUSTY_STACK_SIZE 0x200
  #define TRUSTY_SHARED_MEMORY_OBJ_SIZE (12 * 1024)
  
@@ -125,5 +125,5 @@ index bf09ca906..8f828d901 100644
  				lib/cpus/aarch64/cortex_a55.S			\
  				drivers/delay_timer/delay_timer.c		\
 -- 
-2.34.1
+2.43.0
 

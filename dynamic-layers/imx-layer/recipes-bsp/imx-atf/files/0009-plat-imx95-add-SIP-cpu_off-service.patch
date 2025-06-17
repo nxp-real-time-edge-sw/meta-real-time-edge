@@ -1,7 +1,7 @@
-From 218319620e4b7eb4e5f62c0926a7fdcf285071f9 Mon Sep 17 00:00:00 2001
+From 18c90b1409f84a9d58ed0fe022a80fea80fcacff Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 2 Jan 2025 15:43:30 +0800
-Subject: [PATCH 9/9] plat: imx95: add SIP cpu_off service
+Subject: [PATCH 09/12] plat: imx95: add SIP cpu_off service
 
 Added SIP cpu_off service for imx95.
 
@@ -107,5 +107,5 @@ index 08340fa75..23be0651d 100644
  				plat/imx/common/imx_sip_svc.c			\
  				plat/imx/common/ele_api.c			\
 -- 
-2.34.1
+2.43.0
 

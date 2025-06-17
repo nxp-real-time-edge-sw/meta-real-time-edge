@@ -1,8 +1,8 @@
-From eb660a9eeac5fd24862a9354425c1c3336daa517 Mon Sep 17 00:00:00 2001
+From 1ba76186a9614f588c4f4f4f97f874c4e75b191e Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 5 Jun 2025 15:57:02 +0800
-Subject: [PATCH 1/2] bl31: add workaround for irq losing in case of pending NS
- EA
+Subject: [PATCH 10/12] bl31: add workaround for irq losing in case of pending
+ NS EA
 
 Currently it will handle pending NS SError in irq or fiq exception handler,
 if FFH_SUPPORT (which is enabled by HANDLE_EA_EL3_FIRST_NS) is enabled, it
@@ -140,5 +140,5 @@ index d6c09de66..beb414558 100644
  TRANSFER_LIST			:= 0
  
 -- 
-2.34.1
+2.43.0
 

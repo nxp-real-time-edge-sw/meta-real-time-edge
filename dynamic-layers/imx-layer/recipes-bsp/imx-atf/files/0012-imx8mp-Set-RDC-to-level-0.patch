@@ -1,0 +1,31 @@
+From c3770a8a09c5ed20a529be1a7903d21a63919169 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Tue, 17 Jun 2025 22:28:54 +0800
+Subject: [PATCH 12/12] imx8mp: Set RDC to level 0
+
+Heterogeneous-multicore examples need flexible configuration of
+the RDC for peripherals access permision. So enable the NS access
+permision to RDC.
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Inappropriate [configuration specific]
+---
+ plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c b/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c
+index b29e714af..8af5ee12b 100644
+--- a/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c
++++ b/plat/imx/imx8m/imx8mp/imx8mp_bl31_setup.c
+@@ -155,7 +155,7 @@ static const struct imx_csu_cfg csu_cfg[] = {
+ 	/* peripherals csl setting */
+ 	CSU_CSLx(CSU_CSL_OCRAM, CSU_SEC_LEVEL_2, LOCKED),
+ 	CSU_CSLx(CSU_CSL_OCRAM_S, CSU_SEC_LEVEL_2, LOCKED),
+-	CSU_CSLx(CSU_CSL_RDC, CSU_SEC_LEVEL_3, LOCKED),
++	CSU_CSLx(CSU_CSL_RDC, CSU_SEC_LEVEL_0, LOCKED),
+ 	CSU_CSLx(CSU_CSL_TZASC, CSU_SEC_LEVEL_5, LOCKED),
+ 	CSU_CSLx(CSU_CSL_CSU, CSU_SEC_LEVEL_5, LOCKED),
+ 
+-- 
+2.43.0
+

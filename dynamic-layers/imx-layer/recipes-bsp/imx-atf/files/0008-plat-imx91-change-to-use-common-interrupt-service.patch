@@ -1,7 +1,7 @@
-From 0867102ac1caa72ebca58efb9185aadf6a20f9b7 Mon Sep 17 00:00:00 2001
+From 9eb865acf3d595ac9a39b0f66c1c3d7667cafc15 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Tue, 22 Oct 2024 14:51:23 +0800
-Subject: [PATCH 8/9] plat: imx91: change to use common interrupt service
+Subject: [PATCH 08/12] plat: imx91: change to use common interrupt service
 
 As imx91 and imx93 shares the same dram driver which has beend changed
 to use common interrupt service driver, initialize common interrupt
@@ -64,5 +64,5 @@ index 520304019..3de115682 100644
  				lib/cpus/aarch64/cortex_a55.S			\
  				drivers/delay_timer/delay_timer.c		\
 -- 
-2.34.1
+2.43.0
 

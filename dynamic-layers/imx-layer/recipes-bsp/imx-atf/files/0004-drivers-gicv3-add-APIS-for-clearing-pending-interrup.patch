@@ -1,7 +1,8 @@
-From 7c5a14ed39f2518958f06983d0e0b3f0d1945c67 Mon Sep 17 00:00:00 2001
+From 819cf589ec588614cf5307a252a1cb2ba93be4d7 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Sat, 12 Oct 2024 16:33:29 +0800
-Subject: [PATCH 4/9] drivers: gicv3: add APIS for clearing pending interrupts
+Subject: [PATCH 04/12] drivers: gicv3: add APIS for clearing pending
+ interrupts
 
 Add two new APIs:
 1. Clean interrupts from distributor for a CPU Core, it will clear pending
@@ -135,5 +136,5 @@ index c4448e090..c4ec9be26 100644
  void gicv3_rdistif_on(unsigned int proc_num);
  void gicv3_rdistif_off(unsigned int proc_num);
 -- 
-2.34.1
+2.43.0
 
