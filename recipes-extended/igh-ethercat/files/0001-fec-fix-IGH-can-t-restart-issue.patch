@@ -1,0 +1,132 @@
+From 1f802ddf7465cdaeb8c3e65ef3e48a33528842ea Mon Sep 17 00:00:00 2001
+From: qizhang <jony.zhang@nxp.com>
+Date: Wed, 25 Jun 2025 01:02:07 +0800
+Subject: [PATCH] fec: fix IGH can't restart issue
+
+Signed-off-by: qizhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
+---
+ devices/fec/fec_main.c | 58 +++++++++++++++++-------------------------
+ 1 file changed, 23 insertions(+), 35 deletions(-)
+
+diff --git a/devices/fec/fec_main.c b/devices/fec/fec_main.c
+index 9219a4c6..57832475 100644
+--- a/devices/fec/fec_main.c
++++ b/devices/fec/fec_main.c
+@@ -771,16 +771,12 @@ fec_restart(struct net_device *ndev)
+ 	u32 rcntl = OPT_FRAME_SIZE | 0x04;
+ 	u32 ecntl = FEC_ENET_ETHEREN; /* ETHEREN */
+ 
+-	/* Whack a reset.  We should wait for this.
+-	 * For i.MX6SX SOC, enet use AXI bus, we use disable MAC
+-	 * instead of reset MAC itself.
++	/* Always use disable MAC instead of MAC reset to:
++	 *    - Keep the ENET counter running
++	 *    - Avoid dead system bus for SoCs using the ENET-AXI bus
++	 *      and not the AHB bus, like the i.MX6SX
+ 	 */
+-	if (fep->quirks & FEC_QUIRK_HAS_AVB) {
+-		writel(0, fep->hwp + FEC_ECNTRL);
+-	} else {
+-		writel(1, fep->hwp + FEC_ECNTRL);
+-		udelay(10);
+-	}
++	writel(0, fep->hwp + FEC_ECNTRL);
+ 
+ 	/*
+ 	 * enet-mac reset will reset mac address registers too,
+@@ -990,20 +986,19 @@ fec_stop(struct net_device *ndev)
+ 	 * instead of reset MAC itself.
+ 	 */
+ 	if (!(fep->wol_flag & FEC_WOL_FLAG_SLEEP_ON)) {
+-		if (fep->quirks & FEC_QUIRK_HAS_AVB) {
+-			writel(0, fep->hwp + FEC_ECNTRL);
+-		} else {
+-			writel(1, fep->hwp + FEC_ECNTRL);
+-			udelay(10);
+-		}
+-		writel(FEC_DEFAULT_IMASK, fep->hwp + FEC_IMASK);
++		/* Always use disable MAC instead of MAC reset to:
++		 *    - Keep the ENET counter running
++		 *    - Avoid dead system bus for SoCs using the ENET-AXI bus
++		 *      and not the AHB bus, like the i.MX6SX
++		 */
++		writel(0, fep->hwp + FEC_ECNTRL);
+ 	} else {
+-		writel(FEC_DEFAULT_IMASK | FEC_ENET_WAKEUP, fep->hwp + FEC_IMASK);
+ 		val = readl(fep->hwp + FEC_ECNTRL);
+ 		val |= (FEC_ECR_MAGICEN | FEC_ECR_SLEEP);
+ 		writel(val, fep->hwp + FEC_ECNTRL);
+ 	}
+ 	writel(fep->phy_speed, fep->hwp + FEC_MII_SPEED);
++	writel(FEC_DEFAULT_IMASK, fep->hwp + FEC_IMASK);
+ 
+ 	/* We have to keep ENET enabled to have MII interrupt stay working */
+ 	if (fep->quirks & FEC_QUIRK_ENET_MAC &&
+@@ -2826,7 +2821,7 @@ static const struct net_device_ops fec_netdev_ops = {
+ 	.ndo_set_rx_mode	= set_multicast_list,
+ 	.ndo_validate_addr	= eth_validate_addr,
+ 	.ndo_set_mac_address	= fec_set_mac_address,
+-	.ndo_do_ioctl		= fec_enet_ioctl,
++	.ndo_eth_ioctl		= phy_do_ioctl_running,
+ 	.ndo_set_features	= fec_set_features,
+ };
+ 
+@@ -2970,10 +2965,10 @@ free_queue_mem:
+ #ifdef CONFIG_OF
+ static int fec_reset_phy(struct platform_device *pdev)
+ {
+-	int err, phy_reset;
+-	bool active_high = false;
++	struct gpio_desc *phy_reset;	
+ 	int msec = 1, phy_post_delay = 0;
+ 	struct device_node *np = pdev->dev.of_node;
++	int err;
+ 
+ 	if (!np)
+ 		return 0;
+@@ -2983,33 +2978,26 @@ static int fec_reset_phy(struct platform_device *pdev)
+ 	if (!err && msec > 1000)
+ 		msec = 1;
+ 
+-	phy_reset = of_get_named_gpio(np, "phy-reset-gpios", 0);
+-	if (phy_reset == -EPROBE_DEFER)
+-		return phy_reset;
+-	else if (!gpio_is_valid(phy_reset))
+-		return 0;
+-
+ 	err = of_property_read_u32(np, "phy-reset-post-delay", &phy_post_delay);
+ 	/* valid reset duration should be less than 1s */
+ 	if (!err && phy_post_delay > 1000)
+ 		return -EINVAL;
+ 
+-	active_high = of_property_read_bool(np, "phy-reset-active-high");
++	phy_reset = devm_gpiod_get_optional(&pdev->dev, "phy-reset",
++					    GPIOD_OUT_HIGH);
++	if (IS_ERR(phy_reset))
++		return dev_err_probe(&pdev->dev, PTR_ERR(phy_reset),
++				     "failed to get phy-reset-gpios\n");
+ 
+-	err = devm_gpio_request_one(&pdev->dev, phy_reset,
+-			active_high ? GPIOF_OUT_INIT_HIGH : GPIOF_OUT_INIT_LOW,
+-			"phy-reset");
+-	if (err) {
+-		dev_err(&pdev->dev, "failed to get phy-reset-gpios: %d\n", err);
+-		return err;
+-	}
++	if (!phy_reset)
++		return 0;
+ 
+ 	if (msec > 20)
+ 		msleep(msec);
+ 	else
+ 		usleep_range(msec * 1000, msec * 1000 + 1000);
+ 
+-	gpio_set_value_cansleep(phy_reset, !active_high);
++	gpiod_set_value_cansleep(phy_reset, 0);
+ 
+ 	if (!phy_post_delay)
+ 		return 0;
+-- 
+2.43.0
+
