@@ -1,15 +1,15 @@
 NXP Software Content Register
 
-Release - Real-time Edge Software 3.1
- March 2025
+Release - Real-time Edge Software 3.2
+ July 2025
 
-Outgoing License: LA_OPT_NXP_Software_License v58 November 2024 - Additional distribution license granted - Section 2.3 applies
+Outgoing License: LA_OPT_NXP_Software_License v62 May 2025 - Additional distribution license granted - Section 2.3 applies
 License File:     LICENSE.txt
 
 Yocto Project recipe manifest:
-repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-scarthgap -m real-time-edge-3.1.0.xml
+repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-walnascar -m real-time-edge-3.2.0.xml
 
-Release tag: Real-Time-Edge-v3.1-202503
+Release tag: Real-Time-Edge-v3.2-202507
 Release Location: https://www.nxp.com/design/software/development-software/real-time-edge-software:REALTIME-EDGE-SOFTWARE
 
 --------------------------------------------
@@ -17,26 +17,26 @@ BSP Packages
 --------------------------------------------
 
 Package:                     qoriq-atf.git
-Version:                     2.10
+Version:                     2.12
 Outgoing License:            BSD-3-Clause
 License File:                docs/license.rst
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://github.com/nxp-qoriq/atf -b lf-6.6.36-2.1.0
+Release Location:            https://github.com/nxp-qoriq/atf -b lf-6.12.20-2.0.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
 --------------------------------------------
 
 Package:                     imx-atf.git
-Version:                     2.10
+Version:                     2.12
 Outgoing License:            BSD-3-Clause
 License File:                docs/license.rst
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://github.com/nxp-imx/imx-atf -b lf-6.6.36-2.1.0
+Release Location:            https://github.com/nxp-imx/imx-atf -b lf-6.12.20-2.0.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
@@ -49,32 +49,32 @@ License File:                LICENSE
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Reset Configuration Word
-Release Location:            https://github.com/nxp-qoriq/rcw -b lf-6.6.36-2.1.0
+Release Location:            https://github.com/nxp-qoriq/rcw -b lf-6.12.20-2.0.0
 Origin:                      NXP (BSD-3-Clause)
 
 --------------------------------------------
 
 Package:                     real-time-edge-linux.git
-Version:                     6.6.36
-Outgoing License:            GPL-2.0
+Version:                     6.12.20
+Outgoing License:            GPL-2.0 WITH Linux-syscall-note
 License File:                COPYING
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    The Linux kernel with PREEMPT-RT enabled
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-linux -b linux_6.6.36
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-linux -b linux_6.12.20
 Origin:                      NXP (GPL-2.0)
                              kernel.org (GPL-2.0) - https://www.kernel.org/
 
 --------------------------------------------
 
 Package:                     real-time-edge-uboot.git
-Version:                     2024.04
+Version:                     2025.04
 Outgoing License:            GPL-2.0
 License File:                Licenses/gpl-2.0.txt
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Bootloader with Real-time Edge specific capabilities
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b uboot_v2024.04-3.1.0
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b uboot_v2025.04-3.2.0
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -89,20 +89,20 @@ License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A partitioning Hypervisor based on Linux
-Release Location:            https://github.com/nxp-imx/imx-jailhouse -b lf-6.6.36-2.1.0
+Release Location:            https://github.com/nxp-imx/imx-jailhouse -b lf-6.12.20_2.0.0
 Origin:                      NXP (GPL-2.0)
                              Siemens AG (GPL-2.0) - https://github.com/siemens/jailhouse
 
 --------------------------------------------
 
 Package:                     real-time-edge-baremetal
-Version:                     2024.04
+Version:                     2025.04
 Outgoing License:            GPL-2.0
 License File:                Licenses/gpl-2.0.txt
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A baremetal framework
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2024.04-3.1.0
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2025.04-3.2.0
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -135,19 +135,19 @@ Origin:                      Lathiat (LGPLv-2.1)
 --------------------------------------------
 
 Package:                     ethtool
-Version:                     6.7
+Version:                     6.11
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    Display or change ethernet card settings
-Release Location:            https://mirrors.edge.kernel.org/pub/software/network/ethtool/ethtool-6.7.tar.gz
+Release Location:            https://mirrors.edge.kernel.org/pub/software/network/ethtool/ethtool-6.11.tar.gz
 Origin:                      Michal Kubecek (GPL-2.0)
 
 --------------------------------------------
 
 Package:                     genavb-tsn
-Version:                     7.1
+Version:                     7.3
 Outgoing License:            GPL-2.0-or-later, BSD-3-Clause
 License Files:               licenses/COPYING, licenses/BSD-3-Clause
 Package Category:            Real-time Networking
@@ -159,13 +159,13 @@ Origin:                      NXP (GPL-2.0-or-later, BSD-3-Clause)
 --------------------------------------------
 
 Package:                     iproute2
-Version:                     6.7.0
+Version:                     6.13.0
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    A collection of utilities for controlling networking and traffic
-Release Location:            https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/snapshot/iproute2-6.7.0.tar.gz
+Release Location:            https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/snapshot/iproute2-6.13.0.tar.gz
 Origin:                      Stephen Hemminger (GPL-2.0)
 
 --------------------------------------------
@@ -207,25 +207,25 @@ Origin:                      CESNET (BSD-3-Clause)
 --------------------------------------------
 
 Package:                     linuxptp
-Version:                     4.1
+Version:                     4.4
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    PTP IEEE 1588 stack for Linux
-Release Location:            http://sourceforge.net/projects/linuxptp/files/v4.1/linuxptp-4.1.tgz
+Release Location:            http://sourceforge.net/projects/linuxptp/files/v4.1/linuxptp-4.4.tgz
 Origin:                      Rcochran (GPL-2.0)
 
 --------------------------------------------
 
 Package:                     lldpd
-Version:                     1.0.18
+Version:                     1.0.19
 Outgoing License:            ISC
 License Files:               LICENCE
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    Link Layer Discovery Protocol
-Release Location:            http://media.luffy.cx/files/lldpd/lldpd-1.0.18.tar.gz
+Release Location:            http://media.luffy.cx/files/lldpd/lldpd-1.0.19.tar.gz
 Origin:                      lldpd (ISC) - https://github.com/lldpd/lldpd.git
 
 --------------------------------------------
