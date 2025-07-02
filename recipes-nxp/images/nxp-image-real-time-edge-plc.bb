@@ -19,5 +19,10 @@ IMAGE_FEATURES += "ssh-server-dropbear"
 
 IMAGE_INSTALL:append = " \
     net-tools \
+	kernel-modules \
+"
+
+MACHINE_FEATURES:remove = " \
+    optee \
 "
 
