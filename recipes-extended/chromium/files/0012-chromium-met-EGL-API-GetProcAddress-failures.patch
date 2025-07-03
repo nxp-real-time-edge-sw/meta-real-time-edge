@@ -1,13 +1,14 @@
+Upstream-Status: Pending
 diff --git a/ui/gl/BUILD.gn b/ui/gl/BUILD.gn
-index 7998d2d..c035337 100644
+index 62cb1b6..2eef23d 100644
 --- a/ui/gl/BUILD.gn
 +++ b/ui/gl/BUILD.gn
-@@ -239,7 +239,7 @@ component("gl") {
- 
+@@ -187,7 +187,7 @@ component("gl") {
+   }
+
    if (use_ozone) {
-     deps += [ "//ui/ozone:buildflags" ]
--    if (use_egl && !is_fuchsia) {
-+    if (use_egl && !is_fuchsia && !ozone_platform_wayland) {
+-    if (!is_fuchsia) {
++    if (!is_fuchsia && !ozone_platform_wayland) {
        data_deps += [
          "//third_party/angle:libEGL",
          "//third_party/angle:libGLESv2",
