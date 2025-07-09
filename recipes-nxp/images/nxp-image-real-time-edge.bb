@@ -29,6 +29,15 @@ IMAGE_INSTALL:append:ls1028ardb = " \
 IMAGE_INSTALL:append:imx-nxp-bsp = " \
     packagegroup-real-time-edge-rtos \
     packagegroup-harpoon \
+    imx-test \
+    packagegroup-imx-core-tools \
+    curl \
+    ${CLINFO} \
 "
+
+CLINFO              ?= ""
+CLINFO:imxgpu        = "clinfo"
+CLINFO:mx8mm-nxp-bsp = ""
+CLINFO:mx7-nxp-bsp   = ""
 
 # do_image[mcdepends] = "mc:imx8mp-lpddr4-evk:evkmimx8mp:demo-hello-world:do_install"
