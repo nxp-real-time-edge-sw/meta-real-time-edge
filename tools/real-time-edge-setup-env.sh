@@ -2,7 +2,7 @@
 #
 # Real-time Edge Yocto Project Build Environment Setup Script
 #
-# Copyright 2021-2023 NXP
+# Copyright 2021-2023, 2025 NXP
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 ROOTDIR=`pwd`
 PROGNAME="setup-environment"
-PLATFORM="qoriq"
+PLATFORM="imx"
 
 exit_message ()
 {
@@ -74,6 +74,7 @@ imx_add_layers()
 
     META_FSL_BSP_RELEASE="${ROOTDIR}/sources/meta-imx/meta-imx-bsp"
 
+    echo "# i.MX Yocto Project Release layers" >> $BUILD_DIR/conf/bblayers.conf
     hook_in_layer meta-imx/meta-imx-bsp
     hook_in_layer meta-imx/meta-imx-sdk
     hook_in_layer meta-imx/meta-imx-ml
@@ -108,14 +109,6 @@ imx_add_layers()
     echo "" >> $BUILD_DIR/conf/bblayers.conf
     echo "# AVB layer" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-avb\"" >> $BUILD_DIR/conf/bblayers.conf
-
-    # Support integrating community meta-freescale instead of meta-fsl-arm
-    if [ -d ../sources/meta-freescale ]; then
-        echo meta-freescale directory found
-        # Change settings according to environment
-        sed -e "s,meta-fsl-arm\s,meta-freescale ,g" -i conf/bblayers.conf
-        sed -e "s,\$.BSPDIR./sources/meta-fsl-arm-extra\s,,g" -i conf/bblayers.conf
-    fi
 }
 
 qoriq_add_layers()
@@ -136,13 +129,10 @@ echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm-toolchain\"" >> $BUILD_
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cloud-services\"" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security\"" >> $BUILD_DIR/conf/bblayers.conf
 
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qoriq\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qoriq/meta-qoriq-bsp\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qoriq/meta-qoriq-sdk\"" >> $BUILD_DIR/conf/bblayers.conf
 
     # echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
-
-    echo "" >> $BUILD_DIR/conf/bblayers.conf
-    echo "# RTOS layer" >> $BUILD_DIR/conf/bblayers.conf
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-rtos-industrial\"" >> $BUILD_DIR/conf/bblayers.conf
 }
 
 add_layers()
@@ -170,11 +160,13 @@ add_layers()
 # get command line options
 OLD_OPTIND=$OPTIND
 unset FSLDISTRO
+unset BUILD_DIR
 
 while getopts "k:r:t:b:e:gh" fsl_setup_flag
 do
     case $fsl_setup_flag in
     b) BUILD_DIR="$OPTARG";
+        echo -e "\n Build directory is " $BUILD_DIR
         ;;
     h) fsl_setup_help='true';
         ;;
@@ -189,6 +181,28 @@ if [ $# -ne 0 ]; then
     echo -e "Invalid command line ending: '$@'"
 fi
 OPTIND=$OLD_OPTIND
+if test $fsl_setup_help; then
+    usage && clean_up && return 1
+elif test $fsl_setup_error; then
+    clean_up && return 1
+fi
+
+if [ -z "$DISTRO" ]; then
+    if [ -z "$FSLDISTRO" ]; then
+        FSLDISTRO='nxp-real-time-edge'
+        fi
+else
+    FSLDISTRO="$DISTRO"
+fi
+
+if [ -z "$BUILD_DIR" ]; then
+    BUILD_DIR='build'
+fi
+
+if [ -z "$MACHINE" ]; then
+    echo setting to default machine
+    MACHINE='imx943evk'
+fi
 
 case $MACHINE in
 imx*)
@@ -199,29 +213,12 @@ imx*)
 ;;
 esac
 
-if [ -z "$DISTRO" ]; then
-    if [ -z "$FSLDISTRO" ]; then
-        FSLDISTRO='nxp-real-time-edge'
-        fi
-else
-    FSLDISTRO="$DISTRO"
-fi
-
 FSL_EULA_FILE=$ROOTDIR/sources/meta-real-time-edge/LICENSE.txt
 
-if test $fsl_setup_help; then
-    usage && clean_up && return 1
-elif test $fsl_setup_error; then
-    clean_up && return 1
-fi
-
 # Set up the basic yocto environment
-if [ -z "$DISTRO" ]; then
-   DISTRO=$FSLDISTRO MACHINE=$MACHINE . ./$PROGNAME $BUILD_DIR
-else
-   MACHINE=$MACHINE . ./$PROGNAME $BUILD_DIR
-fi
+DISTRO=$FSLDISTRO MACHINE=$MACHINE . ./$PROGNAME $BUILD_DIR
 
+# Point to the current directory since the last command changed the directory to $BUILD_DIR
 BUILD_DIR=.
 
 if [ ! -e $BUILD_DIR/conf/local.conf ]; then
