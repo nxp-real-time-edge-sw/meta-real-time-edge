@@ -1,4 +1,4 @@
-# Real-time Edge Software Project v3.1 Release
+# Real-time Edge Software Project v3.2 Release
 
 ======================================================
 
@@ -37,7 +37,7 @@ To download the Real-time Edge 3.1 release
 ```
 $ mkdir yocto-real-time-edge
 $ cd yocto-real-time-edge
-$ repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-scarthgap -m real-time-edge-3.1.0.xml
+$ repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-walnascar -m real-time-edge-3.2.0.xml
 $ repo sync
 ```
 
@@ -76,10 +76,6 @@ Name:
 - identical string for the build project
 
 #### Examples
-
-```
-$ DISTRO=nxp-real-time-edge-baremetal MACHINE=imx8mp-lpddr4-evk source real-time-edge-setup-env.sh -b build-imx8mpevk-baremetal
-```
 
 ```
 $ DISTRO=nxp-real-time-edge MACHINE=imx8mp-lpddr4-evk source real-time-edge-setup-env.sh -b build-imx8mpevk-real-time-edge
