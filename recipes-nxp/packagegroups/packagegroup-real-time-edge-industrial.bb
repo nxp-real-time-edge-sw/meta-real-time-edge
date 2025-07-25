@@ -15,6 +15,8 @@ userscapce-servo ?= ""
 userscapce-servo:imx8mp-lpddr4-evk = "igh-ethercat-userspace"
 userscapce-servo:imx8mm-lpddr4-evk = "igh-ethercat-userspace"
 userscapce-servo:imx93evk = "igh-ethercat-userspace"
+userscapce-servo:mx943-nxp-bsp = "igh-ethercat-userspace"
+userscapce-servo:mx95-nxp-bsp = "igh-ethercat-userspace"
 
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-libbee', 'real-time-edge-libbee', '', d)} \
