@@ -27,24 +27,6 @@ DISTRO_FEATURES:remove:mx8dxl-nxp-bsp = " jailhouse"
 # For i.MX943
 DISTRO_FEATURES:append:mx943-nxp-bsp = " real-time-edge-sysrepo"
 
-# For ls1028ardb
-DISTRO_FEATURES:remove:ls1028ardb = " x11"
-
-PREFERRED_VERSION_weston:ls1028ardb = "14.0.2.imx"
-PREFERRED_VERSION_wayland-protocols:ls1028ardb = "1.41.imx"
-PREFERRED_VERSION_libdrm:ls1028ardb = "2.4.123.imx"
-
-PREFERRED_PROVIDER_virtual/mesa:ls1028a   = "mesa-gl"
-PREFERRED_PROVIDER_virtual/libgl:ls1028a  = "mesa-gl"
-PREFERRED_PROVIDER_virtual/libgles1:ls1028ardb  = "imx-gpu-viv"
-PREFERRED_PROVIDER_virtual/libgles2:ls1028ardb  = "imx-gpu-viv"
-PREFERRED_PROVIDER_virtual/libgles3:ls1028ardb  = "imx-gpu-viv"
-PREFERRED_PROVIDER_virtual/egl:ls1028ardb  = "imx-gpu-viv"
-PREFERRED_PROVIDER_virtual/opencl-icd:ls1028ardb = "imx-gpu-viv"
-
-LICENSE_FLAGS_ACCEPTED:append:ls1028ardb = " commercial"
-MACHINEOVERRIDES:append:ls1028ardb = ":imxdrm"
-
 DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = "${@bb.utils.contains('DISTRO_FEATURES', 'rpmsg_8m_buf', \
 		' linux-rpmsg-8m-buf.config', ' ', d)}"
 DELTA_KERNEL_DEFCONFIG:append:ls1043ardb = " linux-dpaa-ethercat.config"
