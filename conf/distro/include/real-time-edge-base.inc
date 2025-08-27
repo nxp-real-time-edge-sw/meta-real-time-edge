@@ -121,3 +121,5 @@ KERNEL_DEVICETREE:append:mx943 = " freescale/imx943-evk-hms-dsa.dtb"
 
 # opcua override default log level
 LIBOPEN62541_LOGLEVE = "300"
+
+PREFERRED_PROVIDER_virtual/libgles3:ls1028ardb  = "imx-gpu-viv"
