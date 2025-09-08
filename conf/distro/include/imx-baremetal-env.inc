@@ -16,5 +16,5 @@ UBOOT_BOOT_BAREMETAL_DEFCONFIG:imx8mm-lpddr4-evk ?= "imx8mm_evk_baremetal_master
 UBOOT_BOOT_BAREMETAL_DEFCONFIG:imx93evk ?= "imx93_11x11_evk_baremetal_master_defconfig"
 UBOOT_BOOT_BAREMETAL_DEFCONFIG:imx93-9x9-lpddr4-qsb ?= "imx93_9x9_qsb_baremetal_master_defconfig"
 
-UBOOT_CONFIG = "tfa"
-UBOOT_CONFIG[tfa] = "${UBOOT_BOOT_BAREMETAL_DEFCONFIG}"
+UBOOT_CONFIG = "sd"
+UBOOT_CONFIG[sd] = "${UBOOT_BOOT_BAREMETAL_DEFCONFIG},sdcard"
