@@ -37,7 +37,7 @@ UBOOT_BAREMETAL_RENAME ?= "bm-${UBOOT_BAREMETAL_BINARY}"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
 DEPENDS = "kern-tools-native swig-native"
-DEPENDS += "dtc-native bison-native bc-native"
+DEPENDS += "dtc-native bison-native bc-native gnutls-native"
 
 EXTRA_OEMAKE = 'CROSS_COMPILE=${TARGET_PREFIX} CC="${TARGET_PREFIX}gcc ${TOOLCHAIN_OPTIONS}" V=1'
 EXTRA_OEMAKE += 'HOSTCC="${BUILD_CC} ${BUILD_CFLAGS} ${BUILD_LDFLAGS}"'
