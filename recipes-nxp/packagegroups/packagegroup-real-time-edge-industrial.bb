@@ -18,6 +18,10 @@ userscapce-servo:imx93evk = "igh-ethercat-userspace"
 userscapce-servo:mx943-nxp-bsp = "igh-ethercat-userspace"
 userscapce-servo:mx95-nxp-bsp = "igh-ethercat-userspace"
 
+userscapce-canopenlinux ?= ""
+userscapce-canopenlinux:imx943-19x19-lpddr5-evk = "canopenlinux"
+userscapce-canopenlinux:imx943-19x19-lpddr4-evk = "canopenlinux"
+
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-libbee', 'real-time-edge-libbee', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-libblep', 'real-time-edge-libblep', '', d)} \
@@ -29,4 +33,5 @@ RDEPENDS:${PN} = " \
     ${userscapce-servo} \
     libopen62541 \
     libmodbus \
+    ${userscapce-canopenlinux} \
 "

@@ -1,0 +1,28 @@
+From 386d2d226df51935c509827810bfc0e4def08b75 Mon Sep 17 00:00:00 2001
+From: JianchaoWang <Jianchao.wang_1@nxp.com>
+Date: Wed, 24 Sep 2025 19:35:59 +0800
+Subject: [PATCH] Disable the Storage option
+
+Upstream-Status: Pending
+Signed-off-by: JianchaoWang <Jianchao.wang_1@nxp.com>
+---
+ CO_driver_target.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/CO_driver_target.h b/CO_driver_target.h
+index 7f00e16..cb422df 100644
+--- a/CO_driver_target.h
++++ b/CO_driver_target.h
+@@ -47,6 +47,9 @@
+ extern "C" {
+ #endif
+ 
++/* We don't need Storage option, implement based on your use case and remove this line from here */
++#undef CO_CONFIG_STORAGE_ENABLE
++
+ /* Stack configuration override default values. For more information see file CO_config.h. */
+ #ifdef CO_SINGLE_THREAD
+ #define CO_CONFIG_GLOBAL_FLAG_CALLBACK_PRE 0
+-- 
+2.25.1
+

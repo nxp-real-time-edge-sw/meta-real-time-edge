@@ -1,0 +1,20 @@
+[Unit]
+Description=CANopenSlave - CANopen stack for the slave node
+Documentation=https://github.com/CANopenNode/CANopenLinux
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/canopenlinux.conf
+ExecStartPre=/bin/sh -c 'ip link set up $CAN_INTERFACE_M type can bitrate $CAN_BITRATE || true'
+ExecStartPre=/bin/sh -c 'ip link set up $CAN_INTERFACE_S type can bitrate $CAN_BITRATE || true'
+ExecStart=/usr/bin/canopend $CAN_INTERFACE_S -i $NODE_ID_S
+ExecStop=/bin/sh -c 'ip link set down $CAN_INTERFACE_S || true'
+Restart=always
+RestartSec=5
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
