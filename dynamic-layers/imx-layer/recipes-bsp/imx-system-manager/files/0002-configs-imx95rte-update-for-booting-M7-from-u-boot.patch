@@ -1,0 +1,113 @@
+From 0da6a717fe222a8cfdb50b7174f143903d1a5af1 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Wed, 3 Sep 2025 15:48:04 +0800
+Subject: [PATCH 2/4] configs: imx95rte: update for booting M7 from u-boot
+
+And align some configs with the mx95evk.cfg.
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/other/mx95rte.cfg | 29 ++++++++++++++++-------------
+ 1 file changed, 16 insertions(+), 13 deletions(-)
+
+diff --git a/configs/other/mx95rte.cfg b/configs/other/mx95rte.cfg
+index c416ab57..c15a7f34 100755
+--- a/configs/other/mx95rte.cfg
++++ b/configs/other/mx95rte.cfg
+@@ -1,6 +1,6 @@
+ ## ###################################################################
+ ##
+-## Copyright 2023-2024 NXP
++## Copyright 2023-2025 NXP
+ ##
+ ## Redistribution and use in source and binary forms, with or without modification,
+ ## are permitted provided that the following conditions are met:
+@@ -309,10 +309,10 @@ FAULT_SW4           OWNER, reaction=sys_reset
+ # M7 EENV                                                                  #
+ #==========================================================================#
+ 
+-LM1                 name="M7", rpc=scmi, boot=2, skip=1, did=4, safe=seenv
++LM1                 name="M7", rpc=scmi, boot=2, skip=1, did=4
+ 
+-DFMT0:              sa=secure
+-DFMT1:              sa=secure, pa=privileged
++DFMT0:              sa=nonsecure
++DFMT1:              sa=nonsecure, pa=privileged
+ OWNER:              perm=rw, api=all
+ 
+ EXEC:               perm=full
+@@ -320,20 +320,20 @@ DATA:               perm=rw
+ 
+ # Start/Stop (mSel=0)
+ 
+-PD_M7               stop=2
+-CPU_M7P             start=1, stop=1
++PD_M7               start=1, stop=2
++CPU_M7P             start=2, stop=1
+ 
+ # Start/Stop (mSel=1)
+ 
+ MODE                msel=1, boot=2
+ 
+-PD_M7               msel=1, stop=2
+-CPU_M7P             msel=1, start=1, stop=1
++PD_M7               msel=1, start=1, stop=2
++CPU_M7P             msel=1, start=2, stop=1
+ 
+ # Start/Stop (mSel=2)
+ 
+-PD_M7               msel=2, stop=2
+-CPU_M7P             msel=2, start=1, stop=1
++PD_M7               msel=2, start=1, stop=2
++CPU_M7P             msel=2, start=2, stop=1
+ 
+ # RPC Interface
+ 
+@@ -357,8 +357,6 @@ BRD_SM_SENSOR_TEMP_PF5301 SET
+ BRD_SM_SENSOR_TEMP_PF5302 SET
+ BUTTON                    NOTIFY
+ FUSA                      ALL
+-LMM_2                     ALL
+-PERLPI_LPUART3            ALL
+ RTC                       PRIV
+ SENSOR_TEMP_ANA           ALL, test
+ SYS                       ALL
+@@ -469,6 +467,7 @@ CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
+ 
+ # API
+ 
++PD_M7               ALL
+ PERF_A55            ALL
+ PERF_DRAM           ALL
+ PERLPI_CAN2         ALL
+@@ -488,6 +487,8 @@ PERLPI_LPUART8      ALL
+ PERLPI_WDOG3        ALL
+ PERLPI_WDOG4        ALL
+ SYS                 ALL
++CPU_M7P             ALL
++LMM_1               ALL
+ 
+ # Resources
+ 
+@@ -565,7 +566,8 @@ CLOCK_USBPHYBURUNIN       ALL
+ CLOCK_VPUDSP              ALL
+ HSIO_PLL                  ALL
+ LDB_PLL                   ALL
+-LMM_1                     NOTIFY
++LMM_1                     ALL
++PD_M7                     ALL
+ PERF_A55                  ALL
+ PERF_DRAM                 ALL
+ RTC                       ALL, test
+@@ -1001,6 +1003,7 @@ OCRAM               EXEC, begin=0x0204C0000, size=96K
+ GPU                 DATA, begin=0x04D900000, end=0x04DD7FFFF
+ DDR                 EXEC, begin=0x088000000, end=0x089FFFFFF
+ DDR                 EXEC, begin=0x08E000000, end=0x87FFFFFFF
++M7MIX               DATA, begin=0x020380000, end=0x02047FFFF
+ 
+ # RPC Interface of A55 NS agent1 (duplicated AP-NS-agent0)
+ 
+-- 
+2.43.0
+
