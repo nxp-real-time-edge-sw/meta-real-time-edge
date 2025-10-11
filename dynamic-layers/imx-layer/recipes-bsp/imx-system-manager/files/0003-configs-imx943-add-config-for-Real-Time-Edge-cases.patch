@@ -1,0 +1,1388 @@
+From 78fc4bce02b8d62da0a38e3c9f93829b43b20e97 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Thu, 25 Sep 2025 22:25:06 +0800
+Subject: [PATCH 3/4] configs: imx943: add config for Real-Time-Edge cases
+
+Assigned the LPUART8 and related pins and all 6 LPTPM to A
+core NS SCMI agent, then added 2 more A core NS SCMI agents
+with the duplicated API permissions of the updated A core
+NS SCMI agent.
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/other/mx94rte.cfg | 1362 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 1362 insertions(+)
+ create mode 100755 configs/other/mx94rte.cfg
+
+diff --git a/configs/other/mx94rte.cfg b/configs/other/mx94rte.cfg
+new file mode 100755
+index 00000000..f5499b33
+--- /dev/null
++++ b/configs/other/mx94rte.cfg
+@@ -0,0 +1,1362 @@
++## ###################################################################
++##
++## Copyright 2025 NXP
++##
++## Redistribution and use in source and binary forms, with or without modification,
++## are permitted provided that the following conditions are met:
++##
++## o Redistributions of source code must retain the above copyright notice, this list
++##   of conditions and the following disclaimer.
++##
++## o Redistributions in binary form must reproduce the above copyright notice, this
++##   list of conditions and the following disclaimer in the documentation and/or
++##   other materials provided with the distribution.
++##
++## o Neither the name of the copyright holder nor the names of its
++##   contributors may be used to endorse or promote products derived from this
++##   software without specific prior written permission.
++##
++## THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
++## ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++## WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++## DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
++## ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++## (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++## LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
++## ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++## SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++##
++##
++## ###################################################################
++
++# SM configuration file for the Real-time-edge cases on MX94 EVK
++
++MAKE    soc=MIMX94, board=mcimx94evk, build=gcc_cross
++DOX     name=MX94RTE, desc="i.MX94 EVK Real-time-edge Configuration Data"
++
++include ../../devices/MIMX94/configtool/device.cfg
++
++#==========================================================================#
++# Board                                                                    #
++#==========================================================================#
++
++BOARD               DEBUG_UART_INSTANCE=2
++BOARD               DEBUG_UART_BAUDRATE=115200
++
++BOARD               I2C_INSTANCE=1
++BOARD               I2C_BAUDRATE=400000
++
++#==========================================================================#
++# Common Defines                                                           #
++#==========================================================================#
++
++NOTIFY:             api=notify
++GET:                api=get
++SET:                api=set
++PRIV:               api=priv
++ALL:                api=all
++READONLY:           perm=ro
++
++#==========================================================================#
++# ELE Domain                                                               #
++#==========================================================================#
++
++DOM0                did=0
++
++DATA:               perm=rw
++
++# Resources
++
++# Memory
++
++M33_TCM_SYS         DATA, begin=0x020200000, size=256K
++OCRAM               DATA, begin=0x020480000, size=352K
++DDR                 DATA, begin=0x080000000, end=0x87FFFFFFF, nodbg
++
++#==========================================================================#
++# V2X Domain                                                               #
++#==========================================================================#
++
++DOM12               did=12
++
++DFMT1:              sa=bypass, pa=bypass
++OWNER:
++
++# Resources
++
++V2X_FH              OWNER
++
++# Memory
++
++DDR                 DATA, begin=0x08B000000, end=0x08BFFFFFF, nodbg
++
++#==========================================================================#
++# SM M33 EENV                                                              #
++#==========================================================================#
++
++LM0                 name="SM", rpc=none, boot=1, did=2, safe=feenv
++
++DFMT0:              sa=secure
++DFMT1:              sa=secure, pa=privileged
++OWNER:              perm=sec_rw, api=all
++ACCESS:             perm=sec_rw, api=none, mdid=none
++TEST_MU:            perm=sec_rw
++
++EXEC:               perm=sec_rwx
++DATA:               perm=sec_rw
++
++MODE                msel=1, boot=1
++MODE                msel=2, boot=1
++
++# API
++
++# SM CLocks
++CLK_ADC                  ALL
++CLK_FRO                  ALL
++CLK_OSC24M               ALL
++CLK_OSC32K               ALL
++CLK_SYSPLL1_PFD0         ALL
++CLK_SYSPLL1_PFD0_DIV2    ALL
++CLK_SYSPLL1_PFD0_UNGATED ALL
++CLK_SYSPLL1_PFD1         ALL
++CLK_SYSPLL1_PFD1_DIV2    ALL
++CLK_SYSPLL1_PFD1_UNGATED ALL
++CLK_SYSPLL1_PFD2         ALL
++CLK_SYSPLL1_PFD2_DIV2    ALL
++CLK_SYSPLL1_PFD2_UNGATED ALL
++CLK_SYSPLL1_VCO          ALL
++CLK_TEMPSENSE_GPR_SEL    ALL
++
++# Modified via PERF protocol
++CLK_A55                  ALL
++CLK_A55MTRBUS            ALL
++CLK_A55C0_GPR_SEL        ALL
++CLK_A55C1_GPR_SEL        ALL
++CLK_A55C2_GPR_SEL        ALL
++CLK_A55C3_GPR_SEL        ALL
++CLK_A55P_GPR_SEL         ALL
++CLK_A55PERIPH            ALL
++CLK_BUSAON               ALL
++CLK_BUSM70               ALL
++CLK_BUSM71               ALL
++CLK_BUSNETCMIX           ALL
++CLK_BUSWAKEUP            ALL
++CLK_DISPAPB              ALL
++CLK_DISPAXI              ALL
++CLK_DRAM_GPR_SEL         ALL
++CLK_DRAMALT              ALL
++CLK_DRAMALT              ALL
++CLK_DRAMAPB              ALL
++CLK_ENET                 ALL
++CLK_HSIO                 ALL
++CLK_M33                  ALL
++CLK_M33SYNC              ALL
++CLK_M70                  ALL
++CLK_M71                  ALL
++CLK_NOC                  ALL
++CLK_NOCAPB               ALL
++CLK_NPU                  ALL
++CLK_NPUAPB               ALL
++CLK_V2XPK                ALL
++CLK_WAKEUPAXI            ALL
++
++# Test CLocks
++CLK_ENETPHYTEST200M      ALL
++CLK_ENETPHYTEST500M      ALL
++CLK_ENETPHYTEST667M      ALL
++CLK_HSIOACSCAN480M       ALL
++CLK_HSIOACSCAN80M        ALL
++CLK_HSIOPCIETEST160M     ALL
++CLK_HSIOPCIETEST400M     ALL
++CLK_HSIOPCIETEST500M     ALL
++CLK_HSIOPCIETEST50M      ALL
++CLK_HSIOUSBTEST60M       ALL
++
++# Resources
++
++M33P                OWNER  # CPUs must be first
++ANATOP              OWNER
++ATU_A               OWNER
++ATU_D               OWNER
++ATU_M               OWNER
++ATU_M33S            OWNER
++ATU_V2X             OWNER
++AXBS_AON            OWNER
++AXBS_NETC           OWNER
++BBNSM               OWNER
++BLK_CTRL_BBSMMIX    OWNER
++BLK_CTRL_CORTEX     OWNER
++BLK_CTRL_DDRMIX     OWNER
++BLK_CTRL_NOCMIX     OWNER
++BLK_CTRL_NS_AONMIX  OWNER
++BLK_CTRL_S_AONMIX   OWNER
++BLK_CTRL_WAKEUPMIX  OWNER
++CCM                 OWNER
++DAP                 OWNER
++DDR_CTRL            OWNER
++DDR_PHY             OWNER
++DDR_PM              OWNER
++DRAM_PLL            OWNER
++ELE                 OWNER
++EWM                 OWNER
++FSB                 READONLY
++GIC                 ACCESS
++GPC                 OWNER
++GLITCHFILTER        OWNER
++GPIO1               OWNER
++GPR0                OWNER
++GPR1                OWNER
++GPR2                OWNER
++GPR3                OWNER
++GPV_CENTRAL         OWNER
++GPV_DISPLAY         OWNER
++GPV_HSIO            OWNER
++GPV_MAIN            OWNER
++GPV_MEGA            OWNER
++IOMUXC              OWNER
++IOMUX_GPR           OWNER
++IRQSTEER_M33        OWNER
++JTAG                OWNER
++LPI2C1              OWNER
++LPUART2             OWNER
++M33_CACHE_CTRL      OWNER
++M33_PCF             OWNER
++M33_PSF             OWNER
++M33_TCM_ECC         OWNER
++MU1_A               TEST_MU
++MU1_B               OWNER
++MU2_A               TEST_MU
++MU2_B               OWNER
++MU3_A               TEST_MU
++MU3_B               OWNER
++MU4_A               TEST_MU
++MU4_B               OWNER
++MU5_A               TEST_MU
++MU5_B               OWNER
++MU6_A               TEST_MU
++MU6_B               OWNER
++MU7_A               TEST_MU
++MU7_B               OWNER
++MU8_A               TEST_MU
++MU8_B               OWNER
++MU9_A               TEST_MU
++MU9_B               OWNER
++MU_ELE0             OWNER
++ROMCP_M33           OWNER
++SRAM_CTL_1          OWNER
++SRC                 OWNER
++SYSCTR_CTL          OWNER
++SYSCTR_RD           OWNER
++TEMP_A55            OWNER
++TRDC_A              OWNER
++TRDC_D              OWNER
++TRDC_E              OWNER
++TRDC_H              OWNER
++TRDC_M              OWNER
++TRDC_N              OWNER
++TRDC_S              OWNER
++TRDC_W              OWNER
++TRDC_X              OWNER
++TSTMR1              OWNER
++WDOG1               OWNER
++WDOG2               OWNER
++
++# SAF
++
++CMU_A1              OWNER
++CMU_A2              OWNER
++CMU_ANA             OWNER
++CMU_DDR1            OWNER
++CMU_DDR2            OWNER
++CMU_E               OWNER
++CMU_N1              OWNER
++CMU_N2              OWNER
++CMU_W1              OWNER
++CMU_W2              OWNER
++CRC_A               OWNER
++C_STCU              OWNER
++EIM_A               OWNER
++EIM_E               OWNER
++EIM_N               OWNER
++EIM_NPU             OWNER
++EIM_W               OWNER
++ERM_A               OWNER
++ERM_E               OWNER
++ERM_NPU             OWNER
++ERM_W               OWNER
++FCCU                OWNER
++FCCU_FHID           OWNER
++INTM                OWNER
++L_STCU_A            OWNER
++L_STCU_DDR          OWNER
++L_STCU_E            OWNER
++L_STCU_N            OWNER
++L_STCU_NPUMIX       OWNER
++
++# Pins
++
++PIN_DAP_TDI           OWNER
++PIN_DAP_TDO_TRACESWO  OWNER
++PIN_FCCU_ERR0         OWNER
++PIN_I2C1_SCL          OWNER
++PIN_I2C1_SDA          OWNER
++PIN_PDM_BIT_STREAM1   OWNER
++PIN_UART2_RXD         OWNER
++PIN_UART2_TXD         OWNER
++PIN_WDOG_ANY          OWNER
++
++# Memory
++
++M33_ROM             EXEC, begin=0x000000000, end=0x00003FFFF
++M33_TCM_CODE        EXEC, begin=0x0201C0000, size=256K
++M33_TCM_SYS         EXEC, begin=0x020200000, size=256K
++M7MIX1              DATA, begin=0x049C50000, end=0x049CAFFFF
++M7MIX0              DATA, begin=0x04A050000, end=0x04A0AFFFF
++
++# Faults
++
++FAULT_SWNCF03       OWNER, reaction=grp_reset
++FAULT_SWNCF04       OWNER, reaction=sys_reset
++
++#==========================================================================#
++# M33S EENV                                                                #
++#==========================================================================#
++
++LM1                 name="M33S", rpc=scmi, boot=2, skip=1, did=13, \
++                    group=1
++
++DFMT0:              sa=secure
++DFMT1:              sa=secure, pa=privileged
++OWNER:              perm=rw, api=all
++
++EXEC:               perm=full
++DATA:               perm=rw
++
++# Start/Stop (mSel=0)
++
++PD_M33S             start=1, stop=2
++CPU_M33S            start=2, stop=1
++
++# Start/Stop (mSel=1)
++
++MODE                msel=1, boot=2, skip=1
++
++PD_M33S             msel=1, start=1, stop=2
++CPU_M33S            msel=1, start=2, stop=1
++
++# Start/Stop (mSel=2)
++
++PD_M33S             msel=2, start=1, stop=2
++CPU_M33S            msel=2, start=2, stop=1
++
++# RPC Interface
++
++SCMI_AGENT0         name="M33S-S"
++MAILBOX             type=mu, mu=15, test=14
++CHANNEL             db=0, xport=smt, rpc=scmi, type=a2p, test=default
++CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify, notify=24
++
++# API
++
++BRD_SM_CTRL_BUTTON       NOTIFY
++BRD_SM_CTRL_TEST         ALL
++BRD_SM_CTRL_TEST_A       ALL
++BRD_SM_RTC_PCA2131       PRIV
++BRD_SM_SENSOR_TEMP_PF09  SET
++BRD_SM_SENSOR_TEMP_PF53  SET
++BUTTON                   NOTIFY
++LMM_2                    NOTIFY
++LMM_3                    NOTIFY
++LMM_4                    NOTIFY
++RTC                      PRIV
++SENSOR_TEMP_ANA          SET
++SYS                      PRIV
++
++# Resources
++
++M33P_S              OWNER  # CPUs must be first
++IRQSTEER_M33_S      OWNER
++LPTPM5              OWNER
++LPTPM6              OWNER
++LPUART8             OWNER, test
++M33S_CACHE_CTRL     OWNER
++M33S_TCM_MCM        OWNER
++M33_S_PCF           OWNER
++M33_S_PSF           OWNER
++MU8_A               OWNER
++MU14_A              OWNER
++MU15_A              OWNER
++MU16_A              OWNER
++MU17_A              OWNER
++MU_E1_B             OWNER
++MU_E2_B             OWNER
++MU_E3_B             OWNER
++MU_E4_B             OWNER
++MU_ELE7             OWNER
++MU_ELE8             OWNER
++OCRAM_S_MCM         OWNER
++TSTMR2              READONLY
++WDOG7               OWNER
++
++# Pins
++
++PIN_DAP_TCLK_SWCLK  OWNER
++PIN_DAP_TMS_SWDIO   OWNER
++
++# Memory
++
++OCRAM_S1            EXEC, begin=0x020800000, end=0x02087FFFF
++OCRAM_S2            EXEC, begin=0x020880000, end=0x0208FFFFF
++OCRAM_S3            EXEC, begin=0x020900000, end=0x02097FFFF
++M33S_TCM_CODE       EXEC, begin=0x0209c0000, end=0x0209FFFFF
++M33S_TCM_SYS        EXEC, begin=0x020A00000, end=0x020A3FFFF
++DDR                 EXEC, begin=0x086000000, end=0x089FFFFFF
++
++# Faults
++
++FAULT_M33_SYNC_LOCKUP  OWNER, reaction=lm_reset
++FAULT_M33_SYNC_RST     OWNER, reaction=lm_reset
++FAULT_WDOG7            OWNER, reaction=lm_reset
++
++#==========================================================================#
++# M33S-NS EENV                                                             #
++#==========================================================================#
++
++OWNER:              perm=rw, api=all
++
++SCMI_AGENT1         name="M33S-NS"
++MAILBOX             type=mu, mu=17, test=16
++CHANNEL             db=0, xport=smt, rpc=scmi, type=a2p, test=default
++CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
++
++# API
++
++SYS                 NOTIFY
++
++# Resources
++
++FSB                 READONLY
++MU9_A               OWNER
++SYSCTR_RD           READONLY
++WDOG8               OWNER
++
++# Faults
++
++FAULT_WDOG8         OWNER, reaction=lm_reset
++
++#==========================================================================#
++# M7_0 EENV                                                                #
++#==========================================================================#
++
++LM2                 name="M7", rpc=scmi, boot=3, skip=1, did=4, safe=seenv
++
++DFMT0:              sa=secure
++DFMT1:              sa=secure, pa=privileged
++OWNER:              perm=rw, api=all
++
++EXEC:               perm=full
++DATA:               perm=rw
++
++# Start/Stop (mSel=0)
++
++PD_M70              start=1, stop=2
++CPU_M7P0            start=2, stop=1
++
++# Start/Stop (mSel=1)
++
++MODE                msel=1, boot=3
++
++PD_M70              msel=1, start=1, stop=2
++CPU_M7P0            msel=1, start=2, stop=1
++
++# Start/Stop (mSel=2)
++
++PD_M70              msel=2, stop=2
++CPU_M7P0            msel=2, start=1, stop=1
++
++# RPC Interface
++
++SCMI_AGENT2         name="M7"
++MAILBOX             type=mu, mu=9, test=8, priority=high
++CHANNEL             db=0, xport=smt, check=crc32, rpc=scmi, type=a2p, \
++                    test=default
++CHANNEL             db=1, xport=smt, check=crc32, rpc=scmi, \
++                    type=p2a_notify
++CHANNEL             db=2, xport=smt, check=crc32, rpc=scmi, \
++                    type=p2a_priority
++
++# API
++
++BRD_SM_CTRL_BUTTON        NOTIFY
++BRD_SM_CTRL_PCA2131       ALL
++BRD_SM_CTRL_TEST          ALL
++BRD_SM_CTRL_TEST_A        ALL
++BRD_SM_RTC_PCA2131        ALL
++BRD_SM_SENSOR_TEMP_PF09   SET
++BRD_SM_SENSOR_TEMP_PF53   SET
++BUTTON                    NOTIFY
++FUSA                      PRIV
++LMM_1                     NOTIFY
++LMM_4                     ALL
++RTC                       PRIV
++SENSOR_TEMP_ANA           ALL
++SYS                       ALL
++
++# Resources
++
++M7P_0               OWNER  # CPUs must be first
++AOI_IPS16           OWNER
++ATU_M70             OWNER
++BISS1               OWNER
++CAN_FD1             OWNER
++DMA_CRC1            OWNER
++DMA_CRC2            OWNER
++ENC1                OWNER
++ENC2                OWNER
++ENC3                OWNER
++ENC4                OWNER
++ENC_PLL             OWNER
++ENDAT2_1            OWNER
++ENDAT2_2            OWNER
++ENDAT3_1            OWNER
++FLEXIO3             OWNER
++FLEXIO4             OWNER
++FLEXPWM1            OWNER
++FLEXPWM2            OWNER
++FLEXPWM3            OWNER
++FSB                 READONLY
++GPT3                OWNER
++GPT4                OWNER
++GPT_MUX             OWNER
++HIPERFACE_DRIVE_1   OWNER
++HIPERFACE_DRIVE_2   OWNER
++HIPERFACE_SAFE1_1   OWNER
++HIPERFACE_SAFE1_2   OWNER
++HIPERFACE_SAFE2_1   OWNER
++HIPERFACE_SAFE2_2   OWNER
++IRQSTEER_M7_0       OWNER
++LPIT1               OWNER
++LPTMR1              OWNER
++LPTMR2              OWNER
++LPTPM1              OWNER
++LPTPM4              OWNER
++LPUART11            OWNER, test
++MSGINTR1            OWNER
++MSGINTR2            OWNER
++MSGINTR3            OWNER
++MSGINTR4            OWNER
++MU5_A               OWNER
++MU10_B              OWNER
++MU11_B              OWNER
++MU18_B              OWNER
++MU_E3_A             OWNER
++MU_E4_A             OWNER
++MU_ELE5             OWNER
++PD_M70              test
++QTIMER1             OWNER
++QTIMER2             OWNER
++QTIMER3             OWNER
++QTIMER4             OWNER
++QTIMER5             OWNER
++QTIMER6             OWNER
++QTIMER7             OWNER
++QTIMER8             OWNER
++SINC1               OWNER
++SINC2               OWNER
++SINC3               OWNER
++SINC4               OWNER
++SYSCTR_RD           READONLY
++TSTMR2              OWNER
++WDOG5               OWNER
++XBAR_DSC1           OWNER
++XBAR_DSC2           OWNER
++XBAR_DSC3           OWNER
++
++# Pins
++
++PIN_GPIO_IO24       OWNER
++PIN_GPIO_IO25       OWNER
++
++# Memory
++
++M7MIX0              DATA, begin=0x020380000, end=0x02047FFFF
++M7MIX0              DATA, begin=0x04A060000, end=0x04A09FFFF
++DDR                 EXEC, begin=0x080000000, end=0x080FFFFFF
++DDR                 EXEC, begin=0x082000000, end=0x083FFFFFF
++DDR                 EXEC, begin=0x086000000, end=0x089FFFFFF
++
++# Faults
++
++FAULT_M7_LOCKUP     OWNER, reaction=lm_reset
++FAULT_M7_RST        OWNER, reaction=lm_reset
++FAULT_SWNCF00       OWNER, reaction=fusa
++FAULT_SWNCF01       OWNER, reaction=lm_reset
++FAULT_WDOG5         OWNER, reaction=lm_reset
++
++#==========================================================================#
++# M7_1 EENV                                                                #
++#==========================================================================#
++
++LM3                 name="M71", rpc=scmi, boot=4, skip=1, did=14, safe=seenv
++
++DFMT0:              sa=secure
++DFMT1:              sa=secure, pa=privileged
++OWNER:              perm=rw, api=all
++
++EXEC:               perm=full
++DATA:               perm=rw
++
++# Start/Stop (mSel=0)
++
++PD_M71              start=1, stop=2
++CPU_M7P1            start=2, stop=1
++
++# Start/Stop (mSel=1)
++
++PD_M71              msel=1, start=1, stop=2
++CPU_M7P1            msel=1, start=2, stop=1
++
++# Start/Stop (mSel=2)
++
++PD_M71              msel=2, start=1, stop=2
++CPU_M7P1            msel=2, start=2, stop=1
++
++# RPC Interface
++
++SCMI_AGENT3         name="M71"
++MAILBOX             type=mu, mu=13, test=12
++CHANNEL             db=0, xport=smt, check=crc32, rpc=scmi, type=a2p, \
++                    test=default
++CHANNEL             db=1, xport=smt, check=crc32, rpc=scmi, \
++                    type=p2a_notify
++CHANNEL             db=2, xport=smt, check=crc32, rpc=scmi, \
++                    type=p2a_priority
++
++# API
++
++BRD_SM_CTRL_BUTTON       NOTIFY
++BRD_SM_CTRL_TEST         ALL
++BRD_SM_CTRL_TEST_A       ALL
++BRD_SM_RTC_PCA2131       PRIV
++BRD_SM_SENSOR_TEMP_PF09  SET
++BRD_SM_SENSOR_TEMP_PF53  SET
++FUSA                     PRIV
++LMM_1                    NOTIFY
++LMM_4                    ALL
++RTC                      PRIV
++SENSOR_TEMP_ANA          SET
++SYS                      ALL
++
++# Resources
++
++M7P_1               OWNER  # CPUs must be first
++ATU_M71             OWNER
++BUTTON              NOTIFY
++FLEXPWM4            OWNER
++FSB                 READONLY
++GPT1                OWNER
++GPT2                OWNER
++IRQSTEER_M7_1       OWNER
++LPIT3               OWNER
++LPTPM2              OWNER
++LPTPM3              OWNER
++LPUART12            OWNER, test
++MSGINTR5            OWNER
++MSGINTR6            OWNER
++MSGINTR7            OWNER
++MSGINTR8            OWNER
++MU7_A               OWNER
++MU12_A              OWNER
++MU13_A              OWNER
++MU18_A              OWNER
++MU_E1_A             OWNER
++MU_E2_A             OWNER
++MU_ELE6             OWNER
++PD_M71              test
++SYSCTR_RD           READONLY
++TSTMR2              READONLY
++WDOG6               OWNER
++XSPI_RESPONDR       OWNER
++
++# Pins
++
++PIN_GPIO_IO26        OWNER
++PIN_GPIO_IO27        OWNER
++
++# Memory
++
++M7MIX1              DATA, begin=0x020280000, end=0x02037FFFF
++M7MIX1              DATA, begin=0x049C60000, end=0x049C9FFFF
++DDR                 EXEC, begin=0x081000000, end=0x081FFFFFF
++DDR                 EXEC, begin=0x084000000, end=0x089FFFFFF
++DDR                 EXEC, begin=0x086000000, end=0x089FFFFFF
++
++# Faults
++
++FAULT_M7_1_LOCKUP   OWNER, reaction=lm_reset
++FAULT_M7_1_RST      OWNER, reaction=lm_reset
++FAULT_SWNCF02       OWNER, reaction=fusa
++FAULT_WDOG6         OWNER, reaction=lm_reset
++
++#==========================================================================#
++# A55 secure EENV                                                          #
++#==========================================================================#
++
++LM4                 name="AP", rpc=scmi, boot=5, skip=1, did=3, default
++
++DFMT0:              sa=bypass
++DFMT1:              sa=secure, pa=privileged
++OWNER:              perm=sec_rw, api=all
++
++EXEC:               perm=sec_rwx
++DATA:               perm=sec_rw
++
++# Start/Stop (mSel=0)
++
++PD_A55P             start=1, stop=6, test
++PD_A55C0            stop=5
++PD_A55C1            stop=4
++PD_A55C2            stop=3
++PD_A55C3            stop=2
++PERF_A55            start=2|3
++CPU_A55C0           start=3
++CPU_A55P            stop=1
++
++# Start/Stop (mSel=1)
++
++PD_A55P             msel=1, start=1, stop=6
++PD_A55C0            msel=1, stop=5
++PD_A55C1            msel=1, stop=4
++PD_A55C2            msel=1, stop=3
++PD_A55C3            msel=1, stop=2
++PERF_A55            msel=1, start=2|3
++CPU_A55C0           msel=1, start=3
++CPU_A55P            msel=1, stop=1
++
++# Start/Stop (mSel=2)
++
++PD_A55P             msel=2, start=1, stop=6
++PD_A55C0            msel=2, stop=5
++PD_A55C1            msel=2, stop=4
++PD_A55C2            msel=2, stop=3
++PD_A55C3            msel=2, stop=2
++PERF_A55            msel=2, start=2|3
++CPU_A55C0           msel=2, start=3
++CPU_A55P            msel=2, stop=1
++
++# RPC Interface
++
++SCMI_AGENT4         name="AP-S", secure
++MAILBOX             type=mu, mu=1, test=0
++CHANNEL             db=0, xport=smt, rpc=scmi, type=a2p
++CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
++
++# API
++
++PERF_A55            ALL
++PERF_DRAM           ALL
++PERLPI_CAN2         ALL
++PERLPI_CAN3         ALL
++PERLPI_CAN4         ALL
++PERLPI_CAN5         ALL
++PERLPI_GPIO2        ALL
++PERLPI_GPIO3        ALL
++PERLPI_GPIO4        ALL
++PERLPI_GPIO5        ALL
++PERLPI_GPIO6        ALL
++PERLPI_GPIO7        ALL
++PERLPI_LPUART1      ALL
++PERLPI_LPUART3      ALL
++PERLPI_LPUART4      ALL
++PERLPI_LPUART5      ALL
++PERLPI_LPUART6      ALL
++PERLPI_LPUART7      ALL
++PERLPI_LPUART9      ALL
++PERLPI_LPUART10     ALL
++PERLPI_WDOG3        ALL
++PERLPI_WDOG4        ALL
++SYS                 ALL
++
++# Resources
++
++A55C0               OWNER  # CPUs must be first
++A55C1               OWNER  # CPUs must be first
++A55C2               OWNER  # CPUs must be first
++A55C3               OWNER  # CPUs must be first
++A55P                OWNER, sema=0x442313F8
++ARM_PLL             OWNER
++MU1_A               OWNER
++MU_ELE1             OWNER
++MU_ELE2             OWNER
++
++# Pins
++
++# Memory
++
++OCRAM               EXEC, begin=0x020480000, size=256K
++DDR                 EXEC, begin=0x08A000000, end=0x08DFFFFFF
++
++# Faults
++
++FAULT_WDOG3         OWNER, reaction=lm_reset
++FAULT_WDOG4         OWNER, reaction=lm_reset
++
++#==========================================================================#
++# A55 non-secure EENV                                                      #
++#==========================================================================#
++
++DFMT0:              sa=nonsecure
++DFMT1:              sa=nonsecure, pa=privileged
++
++OWNER:              perm=rw, api=all
++ACCESS:             perm=rw, api=all, mdid=none
++
++EXEC:               perm=full
++DATA:               perm=rw
++
++# RPC Interface of A55 NS agent0
++
++SCMI_AGENT5         name="AP-NS-agent0"
++MAILBOX             type=mu, mu=3, test=2
++CHANNEL             db=0, xport=smt, rpc=scmi, type=a2p
++CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
++
++# API
++
++AUDIO_PLL1                ALL
++AUDIO_PLL2                ALL
++BRD_SM_CTRL_BT_WAKE       NOTIFY
++BRD_SM_CTRL_BUTTON        NOTIFY
++BRD_SM_CTRL_FAN           NOTIFY
++BRD_SM_CTRL_PCIE1_WAKE    NOTIFY
++BRD_SM_CTRL_PCIE2_WAKE    NOTIFY
++BRD_SM_CTRL_SD3_WAKE      NOTIFY
++BRD_SM_CTRL_TEST_A        ALL
++BRD_SM_RTC_PCA2131        PRIV
++BRD_SM_SENSOR_TEMP_PF09   ALL
++BRD_SM_SENSOR_TEMP_PF53   SET
++BUTTON                    ALL, test
++CLOCK_HSIOPCIEAUX         ALL
++CLOCK_USBPHYBURUNIN       ALL
++HSIO_PLL                  ALL
++LDB_PLL                   ALL
++LMM_1                     NOTIFY
++LMM_2                     NOTIFY
++LMM_3                     NOTIFY
++PERF_A55                  ALL
++PERF_DRAM                 ALL
++RTC                       ALL, test
++SENSOR_TEMP_A55           ALL
++SENSOR_TEMP_ANA           SET
++SYS                       NOTIFY
++
++# Resources
++
++ADC                 OWNER
++BLK_CTRL_DISPLAYMIX OWNER
++BLK_CTRL_HSIOMIX    OWNER
++BLK_CTRL_NETCMIX    OWNER
++BLK_CTRL_NPUMIX     OWNER
++CAN_FD2             OWNER
++CAN_FD3             OWNER
++CAN_FD4             OWNER
++CAN_FD5             OWNER
++CLOCK_EXT           OWNER
++CLOCK_EXT1          OWNER
++CLOCK_EXT2          OWNER
++CLOCK_OUT1          OWNER
++CLOCK_OUT2          OWNER
++CLOCK_OUT3          OWNER
++CLOCK_OUT4          OWNER
++DDR_PM              ACCESS
++ECAT                OWNER
++EDMA1_MP            OWNER
++EDMA1_CH0           OWNER
++EDMA1_CH1           OWNER
++EDMA1_CH2           OWNER
++EDMA1_CH3           OWNER
++EDMA1_CH4           OWNER
++EDMA1_CH5           OWNER
++EDMA1_CH6           OWNER
++EDMA1_CH7           OWNER
++EDMA1_CH8           OWNER
++EDMA1_CH9           OWNER
++EDMA1_CH10          OWNER
++EDMA1_CH11          OWNER
++EDMA1_CH12          OWNER
++EDMA1_CH13          OWNER
++EDMA1_CH14          OWNER
++EDMA1_CH15          OWNER
++EDMA1_CH16          OWNER
++EDMA1_CH17          OWNER
++EDMA1_CH18          OWNER
++EDMA1_CH19          OWNER
++EDMA1_CH20          OWNER
++EDMA1_CH21          OWNER
++EDMA1_CH22          OWNER
++EDMA1_CH23          OWNER
++EDMA1_CH24          OWNER
++EDMA1_CH25          OWNER
++EDMA1_CH26          OWNER
++EDMA1_CH27          OWNER
++EDMA1_CH28          OWNER
++EDMA1_CH29          OWNER
++EDMA1_CH30          OWNER
++EDMA1_CH31          OWNER
++EDMA2_MP            OWNER
++EDMA2_CH0_1         OWNER
++EDMA2_CH2_3         OWNER
++EDMA2_CH4_5         OWNER
++EDMA2_CH6_7         OWNER
++EDMA2_CH8_9         OWNER
++EDMA2_CH10_11       OWNER
++EDMA2_CH12_13       OWNER
++EDMA2_CH14_15       OWNER
++EDMA2_CH16_17       OWNER
++EDMA2_CH18_19       OWNER
++EDMA2_CH20_21       OWNER
++EDMA2_CH22_23       OWNER
++EDMA2_CH24_25       OWNER
++EDMA2_CH26_27       OWNER
++EDMA2_CH28_29       OWNER
++EDMA2_CH30_31       OWNER
++EDMA2_CH32_33       OWNER
++EDMA2_CH34_35       OWNER
++EDMA2_CH36_37       OWNER
++EDMA2_CH38_39       OWNER
++EDMA2_CH40_41       OWNER
++EDMA2_CH42_43       OWNER
++EDMA2_CH44_45       OWNER
++EDMA2_CH46_47       OWNER
++EDMA2_CH48_49       OWNER
++EDMA2_CH50_51       OWNER
++EDMA2_CH52_53       OWNER
++EDMA2_CH54_55       OWNER
++EDMA2_CH56_57       OWNER
++EDMA2_CH58_59       OWNER
++EDMA2_CH60_61_A     OWNER
++EDMA2_CH60_61_B     OWNER
++EDMA2_CH62_63_A     OWNER
++EDMA2_CH62_63_B     OWNER
++EDMA3_MP            OWNER
++EDMA3_CH0_1         OWNER
++EDMA3_CH2_3         OWNER
++EDMA3_CH4_5         OWNER
++EDMA3_CH6_7         OWNER
++EDMA3_CH8_9         OWNER
++EDMA3_CH10_11       OWNER
++EDMA3_CH12_13       OWNER
++EDMA3_CH14_15       OWNER
++EDMA3_CH16_17       OWNER
++EDMA3_CH18_19       OWNER
++EDMA3_CH20_21       OWNER
++EDMA3_CH22_23       OWNER
++EDMA3_CH24_25       OWNER
++EDMA3_CH26_27       OWNER
++EDMA3_CH28_29       OWNER
++EDMA3_CH30_31       OWNER
++EDMA3_CH32_33       OWNER
++EDMA3_CH34_35       OWNER
++EDMA3_CH36_37       OWNER
++EDMA3_CH38_39       OWNER
++EDMA3_CH40_41       OWNER
++EDMA3_CH42_43       OWNER
++EDMA3_CH44_45       OWNER
++EDMA3_CH46_47       OWNER
++EDMA3_CH48_49       OWNER
++EDMA3_CH50_51       OWNER
++EDMA3_CH52_53       OWNER
++EDMA3_CH54_55       OWNER
++EDMA3_CH56_57       OWNER
++EDMA3_CH58_59       OWNER
++EDMA3_CH60_61       OWNER
++EDMA3_CH62_63       OWNER
++EDMA4_MP            OWNER
++EDMA4_CH0_1         OWNER
++EDMA4_CH2_3         OWNER
++EDMA4_CH4_5         OWNER
++EDMA4_CH6_7         OWNER
++EDMA4_CH8_9         OWNER
++EDMA4_CH10_11       OWNER
++EDMA4_CH12_13       OWNER
++EDMA4_CH14_15       OWNER
++EDMA4_CH16_17       OWNER
++EDMA4_CH18_19       OWNER
++EDMA4_CH20_21       OWNER
++EDMA4_CH22_23       OWNER
++EDMA4_CH24_25       OWNER
++EDMA4_CH26_27       OWNER
++EDMA4_CH28_29       OWNER
++EDMA4_CH30_31       OWNER
++EDMA4_CH32_33       OWNER
++EDMA4_CH34_35       OWNER
++EDMA4_CH36_37       OWNER
++EDMA4_CH38_39       OWNER
++EDMA4_CH40_41       OWNER
++EDMA4_CH42_43       OWNER
++EDMA4_CH44_45       OWNER
++EDMA4_CH46_47       OWNER
++EDMA4_CH48_49       OWNER
++EDMA4_CH50_51       OWNER
++EDMA4_CH52_53       OWNER
++EDMA4_CH54_55       OWNER
++EDMA4_CH56_57       OWNER
++EDMA4_CH58_59       OWNER
++EDMA4_CH60_61       OWNER
++EDMA4_CH62_63       OWNER
++FLEXIO1             OWNER
++FLEXIO2             OWNER
++FSB                 READONLY
++GIC                 OWNER
++GPIO2               OWNER
++GPIO3               OWNER
++GPIO4               OWNER
++GPIO5               OWNER
++GPIO6               OWNER
++GPIO7               OWNER
++GPR4                OWNER, test
++GPR5                OWNER
++GPR6                OWNER
++GPR7                OWNER
++I3C1                OWNER
++I3C2                OWNER
++IRQSTEER_A          OWNER
++LCDIF               OWNER
++LPI2C2              OWNER
++LPI2C3              OWNER
++LPI2C4              OWNER
++LPI2C5              OWNER
++LPI2C6              OWNER
++LPI2C7              OWNER
++LPI2C8              OWNER
++LPIT2               OWNER
++LPSPI1              OWNER
++LPSPI2              OWNER
++LPSPI3              OWNER
++LPSPI4              OWNER
++LPSPI5              OWNER
++LPSPI6              OWNER
++LPSPI7              OWNER
++LPSPI8              OWNER
++LPTPM1              ACCESS
++LPTPM2              ACCESS
++LPTPM3              ACCESS
++LPTPM4              ACCESS
++LPTPM5              ACCESS
++LPTPM6              ACCESS
++LPUART1             OWNER
++LPUART3             OWNER, test
++LPUART4             OWNER
++LPUART5             OWNER
++LPUART6             OWNER
++LPUART7             OWNER
++LPUART8             ACCESS
++LPUART9             OWNER
++LPUART10            OWNER
++LVDS                OWNER
++MU2_A               OWNER
++MU3_A               OWNER
++MU4_A               OWNER
++MU6_A               OWNER
++MU10_A              OWNER
++MU11_A              OWNER
++MU12_B              OWNER
++MU13_B              OWNER
++MU14_B              OWNER
++MU15_B              OWNER
++MU16_B              OWNER
++MU17_B              OWNER
++MU_ELE3             OWNER
++MU_ELE4             OWNER
++NETC                OWNER
++NETC0               OWNER
++NETC1               OWNER
++NETC2               OWNER
++NETC3               OWNER
++NETC_ECAM           OWNER
++NETC_EMDIO0         OWNER
++NETC_IERB           OWNER
++NETC_LDID0          OWNER, sid=0x20
++NETC_LDID1          OWNER, sid=0x21
++NETC_LDID2          OWNER, sid=0x22
++NETC_LDID3          OWNER, sid=0x23
++NETC_LDID4          OWNER, sid=0x24
++NETC_LDID5          OWNER, sid=0x25
++NETC_LDID6          OWNER, sid=0x26
++NETC_LDID7          OWNER, sid=0x27
++NETC_LDID8          OWNER, sid=0x28
++NETC_LDID9          OWNER, sid=0x29
++NETC_LDID10         OWNER, sid=0x2A
++NETC_LDID11         OWNER, sid=0x2B
++NETC_SWITCH0        OWNER
++NETC_TIMER0         OWNER
++NETC_TIMER1         OWNER
++NETC_TIMER2         OWNER
++NETC_VSI0           OWNER
++NETC_VSI1           OWNER
++NETC_VSI2           OWNER
++NPU                 OWNER, test
++PCI1_LUT0           OWNER
++PCI1_LUT1           OWNER
++PCI1_LUT2           OWNER
++PCI1_LUT3           OWNER
++PCI1_LUT4           OWNER
++PCI1_LUT5           OWNER
++PCI1_LUT6           OWNER
++PCI1_LUT7           OWNER
++PCI2_LUT0           OWNER
++PCI2_LUT1           OWNER
++PCI2_LUT2           OWNER
++PCI2_LUT3           OWNER
++PCI2_LUT4           OWNER
++PCI2_LUT5           OWNER
++PCI2_LUT6           OWNER
++PCI2_LUT7           OWNER
++PCIE1_OUT           OWNER
++PCIE1_ROOT          OWNER
++PCIE2_OUT           OWNER
++PCIE2_ROOT          OWNER
++PDM                 OWNER
++PXP                 OWNER
++SAI1                OWNER, test
++SAI2                OWNER
++SAI3                OWNER
++SAI4                OWNER
++SEMA41              OWNER
++SEMA42              OWNER
++SYSCTR_CMP          OWNER
++SYSCTR_RD_STOP      READONLY
++USB1                OWNER, test
++USB2                OWNER
++USB2_ATU            OWNER
++USDHC1              OWNER
++USDHC2              OWNER
++USDHC3              OWNER
++V2X_APP0            OWNER
++V2X_DEBUG           OWNER
++V2X_HSM1            OWNER
++V2X_HSM2            OWNER
++V2X_SHE0            OWNER
++V2X_SHE1            OWNER
++WDOG3               OWNER
++WDOG4               OWNER
++XSPI1               OWNER
++XSPI2               OWNER
++
++# Pins
++
++PIN_CCM_CLKO1        OWNER
++PIN_CCM_CLKO2        OWNER
++PIN_CCM_CLKO3        OWNER
++PIN_CCM_CLKO4        OWNER
++PIN_DAP_TDI          OWNER
++PIN_DAP_TDO_TRACESWO OWNER
++PIN_ETH0_COL         OWNER
++PIN_ETH0_CRS         OWNER
++PIN_ETH0_RXD0        OWNER
++PIN_ETH0_RXD1        OWNER
++PIN_ETH0_RXD2        OWNER
++PIN_ETH0_RXD3        OWNER
++PIN_ETH0_RX_CLK      OWNER
++PIN_ETH0_RX_DV       OWNER
++PIN_ETH0_RX_ER       OWNER
++PIN_ETH0_TXD0        OWNER
++PIN_ETH0_TXD1        OWNER
++PIN_ETH0_TXD2        OWNER
++PIN_ETH0_TXD3        OWNER
++PIN_ETH0_TX_CLK      OWNER
++PIN_ETH0_TX_EN       OWNER
++PIN_ETH0_TX_ER       OWNER
++PIN_ETH1_COL         OWNER
++PIN_ETH1_CRS         OWNER
++PIN_ETH1_RXD0        OWNER
++PIN_ETH1_RXD1        OWNER
++PIN_ETH1_RXD2        OWNER
++PIN_ETH1_RXD3        OWNER
++PIN_ETH1_RX_CLK      OWNER
++PIN_ETH1_RX_DV       OWNER
++PIN_ETH1_RX_ER       OWNER
++PIN_ETH1_TXD0        OWNER
++PIN_ETH1_TXD1        OWNER
++PIN_ETH1_TXD2        OWNER
++PIN_ETH1_TXD3        OWNER
++PIN_ETH1_TX_CLK      OWNER
++PIN_ETH1_TX_EN       OWNER
++PIN_ETH1_TX_ER       OWNER
++PIN_ETH2_MDC_GPIO1   OWNER
++PIN_ETH2_MDIO_GPIO2  OWNER
++PIN_ETH2_RXD0        OWNER
++PIN_ETH2_RXD1        OWNER
++PIN_ETH2_RXD2        OWNER
++PIN_ETH2_RXD3        OWNER
++PIN_ETH2_RX_CLK      OWNER
++PIN_ETH2_RX_CTL      OWNER
++PIN_ETH2_TXD0        OWNER
++PIN_ETH2_TXD1        OWNER
++PIN_ETH2_TXD2        OWNER
++PIN_ETH2_TXD3        OWNER
++PIN_ETH2_TX_CLK      OWNER
++PIN_ETH2_TX_CTL      OWNER
++PIN_ETH3_MDC_GPIO1   OWNER
++PIN_ETH3_MDIO_GPIO2  OWNER
++PIN_ETH3_RXD0        OWNER
++PIN_ETH3_RXD1        OWNER
++PIN_ETH3_RXD2        OWNER
++PIN_ETH3_RXD3        OWNER
++PIN_ETH3_RX_CLK      OWNER
++PIN_ETH3_RX_CTL      OWNER
++PIN_ETH3_TXD0        OWNER
++PIN_ETH3_TXD1        OWNER
++PIN_ETH3_TXD2        OWNER
++PIN_ETH3_TXD3        OWNER
++PIN_ETH3_TX_CLK      OWNER
++PIN_ETH3_TX_CTL      OWNER
++PIN_ETH4_MDC_GPIO1   OWNER
++PIN_ETH4_MDIO_GPIO2  OWNER
++PIN_ETH4_RXD0        OWNER
++PIN_ETH4_RXD1        OWNER
++PIN_ETH4_RXD2        OWNER
++PIN_ETH4_RXD3        OWNER
++PIN_ETH4_RX_CLK      OWNER
++PIN_ETH4_RX_CTL      OWNER
++PIN_ETH4_TXD0        OWNER
++PIN_ETH4_TXD1        OWNER
++PIN_ETH4_TXD2        OWNER
++PIN_ETH4_TXD3        OWNER
++PIN_ETH4_TX_CLK      OWNER
++PIN_ETH4_TX_CTL      OWNER
++PIN_FCCU_ERR0        OWNER
++PIN_GPIO_IO00        OWNER
++PIN_GPIO_IO01        OWNER
++PIN_GPIO_IO02        OWNER
++PIN_GPIO_IO03        OWNER
++PIN_GPIO_IO04        OWNER
++PIN_GPIO_IO05        OWNER
++PIN_GPIO_IO06        OWNER
++PIN_GPIO_IO07        OWNER
++PIN_GPIO_IO08        OWNER
++PIN_GPIO_IO09        OWNER
++PIN_GPIO_IO10        OWNER
++PIN_GPIO_IO11        OWNER
++PIN_GPIO_IO12        OWNER
++PIN_GPIO_IO13        OWNER
++PIN_GPIO_IO14        OWNER
++PIN_GPIO_IO15        OWNER
++PIN_GPIO_IO16        OWNER
++PIN_GPIO_IO17        OWNER
++PIN_GPIO_IO18        OWNER
++PIN_GPIO_IO19        OWNER
++PIN_GPIO_IO20        OWNER
++PIN_GPIO_IO21        OWNER
++PIN_GPIO_IO22        OWNER
++PIN_GPIO_IO23        OWNER
++PIN_GPIO_IO28        OWNER
++PIN_GPIO_IO29        OWNER
++PIN_GPIO_IO30        OWNER
++PIN_GPIO_IO30        OWNER
++PIN_GPIO_IO31        OWNER
++PIN_GPIO_IO31        OWNER
++PIN_GPIO_IO32        OWNER
++PIN_GPIO_IO33        OWNER
++PIN_GPIO_IO34        OWNER
++PIN_GPIO_IO35        OWNER
++PIN_GPIO_IO36        OWNER
++PIN_GPIO_IO37        OWNER
++PIN_GPIO_IO38        OWNER
++PIN_GPIO_IO39        OWNER
++PIN_GPIO_IO40        OWNER
++PIN_GPIO_IO41        OWNER
++PIN_GPIO_IO42        OWNER
++PIN_GPIO_IO43        OWNER
++PIN_GPIO_IO44        OWNER
++PIN_GPIO_IO45        OWNER
++PIN_GPIO_IO46        OWNER
++PIN_GPIO_IO47        OWNER
++PIN_GPIO_IO48        OWNER
++PIN_GPIO_IO49        OWNER
++PIN_GPIO_IO50        OWNER
++PIN_GPIO_IO51        OWNER
++PIN_GPIO_IO52        OWNER
++PIN_GPIO_IO53        OWNER
++PIN_GPIO_IO54        OWNER
++PIN_GPIO_IO55        OWNER
++PIN_GPIO_IO56        OWNER
++PIN_GPIO_IO57        OWNER
++PIN_I2C1_SCL         OWNER
++PIN_I2C1_SDA         OWNER
++PIN_I2C2_SCL         OWNER
++PIN_I2C2_SDA         OWNER
++PIN_PDM_BIT_STREAM0  OWNER
++PIN_PDM_BIT_STREAM1  OWNER
++PIN_PDM_CLK          OWNER
++PIN_SAI1_RXD0        OWNER
++PIN_SAI1_TXC         OWNER
++PIN_SAI1_TXD0        OWNER
++PIN_SAI1_TXFS        OWNER
++PIN_SD1_CLK          OWNER
++PIN_SD1_CMD          OWNER
++PIN_SD1_DATA0        OWNER
++PIN_SD1_DATA1        OWNER
++PIN_SD1_DATA2        OWNER
++PIN_SD1_DATA3        OWNER
++PIN_SD1_DATA4        OWNER
++PIN_SD1_DATA5        OWNER
++PIN_SD1_DATA6        OWNER
++PIN_SD1_DATA7        OWNER
++PIN_SD1_STROBE       OWNER
++PIN_SD2_CD_B         OWNER
++PIN_SD2_CLK          OWNER
++PIN_SD2_CMD          OWNER
++PIN_SD2_DATA0        OWNER
++PIN_SD2_DATA1        OWNER
++PIN_SD2_DATA2        OWNER
++PIN_SD2_DATA3        OWNER
++PIN_SD2_GPIO0        OWNER
++PIN_SD2_GPIO1        OWNER
++PIN_SD2_GPIO2        OWNER
++PIN_SD2_GPIO3        OWNER
++PIN_SD2_RESET_B      OWNER
++PIN_SD2_VSELECT      OWNER
++PIN_UART1_RXD        OWNER, test
++PIN_UART1_TXD        OWNER
++PIN_UART2_RXD        OWNER
++PIN_UART2_TXD        OWNER
++PIN_WDOG_ANY         OWNER
++PIN_XSPI1_DATA0      OWNER
++PIN_XSPI1_DATA1      OWNER
++PIN_XSPI1_DATA2      OWNER
++PIN_XSPI1_DATA3      OWNER
++PIN_XSPI1_DATA4      OWNER
++PIN_XSPI1_DATA5      OWNER
++PIN_XSPI1_DATA6      OWNER
++PIN_XSPI1_DATA7      OWNER
++PIN_XSPI1_DQS        OWNER
++PIN_XSPI1_SCLK       OWNER
++PIN_XSPI1_SS0_B      OWNER
++PIN_XSPI1_SS1_B      OWNER
++PIN_DAP_TCLK_SWCLK   ACCESS
++PIN_DAP_TMS_SWDIO    ACCESS
++
++# Memory
++
++XSPI1_MEM           EXEC, begin=0x000000000, end=0x0FFFFFFFF
++OCRAM_S1            EXEC, begin=0x020800000, end=0x02087FFFF
++OCRAM_S2            EXEC, begin=0x020880000, end=0x0208A1FFF
++OCRAM               EXEC, begin=0x0204C0000, size=96K
++DDR                 EXEC, begin=0x082000000, end=0x085FFFFFF
++DDR                 EXEC, begin=0x08E000000, end=0x87FFFFFFF
++
++# RPC Interface of A55 NS agent1 (duplicated AP-NS-agent0)
++
++SCMI_AGENT6         name="AP-NS-agent1", dup=5
++MAILBOX             type=mu, mu=5, test=4
++CHANNEL             db=0, xport=smt, rpc=scmi, type=a2p
++CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
++
++# RPC Interface of A55 NS agent2 (duplicated AP-NS-agent0)
++
++SCMI_AGENT7         name="AP-NS-agent2", dup=5
++MAILBOX             type=mu, mu=7, test=6
++CHANNEL             db=0, xport=smt, rpc=scmi, type=a2p
++CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
+-- 
+2.43.0
+

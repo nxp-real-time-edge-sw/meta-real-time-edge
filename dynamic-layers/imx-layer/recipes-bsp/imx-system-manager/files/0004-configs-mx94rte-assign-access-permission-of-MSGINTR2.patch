@@ -1,0 +1,27 @@
+From d34abada414f9c4ec58494ce63ef0eb264537187 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Thu, 25 Sep 2025 22:36:57 +0800
+Subject: [PATCH 4/4] configs: mx94rte: assign access permission of MSGINTR2 to
+ A55 NS agents
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/other/mx94rte.cfg | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configs/other/mx94rte.cfg b/configs/other/mx94rte.cfg
+index f5499b33..bd109bb8 100755
+--- a/configs/other/mx94rte.cfg
++++ b/configs/other/mx94rte.cfg
+@@ -1055,6 +1055,7 @@ LPUART8             ACCESS
+ LPUART9             OWNER
+ LPUART10            OWNER
+ LVDS                OWNER
++MSGINTR2            ACCESS
+ MU2_A               OWNER
+ MU3_A               OWNER
+ MU4_A               OWNER
+-- 
+2.43.0
+
