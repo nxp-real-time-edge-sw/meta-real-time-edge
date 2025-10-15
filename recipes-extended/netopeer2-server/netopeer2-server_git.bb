@@ -10,8 +10,8 @@ SRC_URI = "git://github.com/CESNET/Netopeer2.git;protocol=https;branch=master \
 	        'file://netopeer2-server.service', '', d)} \
           "
 
-PV = "2.1.59+git"
-SRCREV = "b81788d9a81770313a0eb7f88d4224726b3d6e15"
+PV = "2.4.5+git"
+SRCREV = "2549f8f73b61e94f031a84bf709cbb4e3d594a94"
 
 S = "${WORKDIR}/git"
 
@@ -27,7 +27,7 @@ inherit cmake pkgconfig update-rc.d
 inherit ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}
 
 # Specify any options you want to pass to cmake using EXTRA_OECMAKE:
-EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE:String=Release -DINSTALL_MODULES=OFF -DGENERATE_HOSTKEY=OFF -DMERGE_LISTEN_CONFIG=OFF"
+EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE:String=Release -DINSTALL_MODULES=OFF -DGENERATE_HOSTKEY=OFF -DMERGE_LISTEN_CONFIG=OFF -DSYSREPO_SETUP=OFF"
 
 SYSTEMD_PACKAGES = "${PN}"
 SYSTEMD_SERVICE:${PN} = "netopeer2-server.service"

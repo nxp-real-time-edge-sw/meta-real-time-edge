@@ -2,13 +2,13 @@ SUMMARY = "YANG data modelling language parser and toolkit"
 DESCRIPTION = "libyang is YANG data modelling language parser and toolkit written (and providing API) in C. The library is used e.g. in libnetconf2, Netopeer2 or sysrepo projects."
 SECTION = "libs"
 LICENSE = "BSD-3-Clause"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=f3916d7d8d42a6508d0ea418cfff10ad"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=b69fd3b2815bbf1cef5c97f0eee2519a"
 
 SRC_URI = "git://github.com/CESNET/libyang.git;protocol=https;branch=master \
         file://0001-validation-workaround-for-a-must-validation-issue.patch"
 
-PV = "2.1.77+git"
-SRCREV = "a804113c9bbac3e36c53221be469c1ca5af5b435"
+PV = "3.13.5+git"
+SRCREV = "efe43e3790822a3dc64d7d28db935d03fff8b81f"
 
 S = "${WORKDIR}/git"
 
