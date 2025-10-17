@@ -19,7 +19,9 @@ IMAGE_FEATURES += "ssh-server-dropbear"
 
 IMAGE_INSTALL:append = " \
     net-tools \
-	kernel-modules \
+    kernel-modules \
+    stress-ng \
+    rt-tests \
 "
 
 MACHINE_FEATURES:remove = " \
