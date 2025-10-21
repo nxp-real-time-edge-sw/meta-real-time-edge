@@ -1,7 +1,7 @@
-From fb8d56b219a359a4427c21db3b99c8813a12c2c2 Mon Sep 17 00:00:00 2001
+From bc3bac3f614217e3d795e6afc00b10769ddc8ea5 Mon Sep 17 00:00:00 2001
 From: Hongbo Wang <hongbo.wang@nxp.com>
 Date: Thu, 15 May 2025 16:19:45 +0800
-Subject: [PATCH 1/2] Add code to support userspace IGH-EtherCAT for v1.6
+Subject: [PATCH 1/6] Add code to support userspace IGH-EtherCAT for v1.6
 
 This patch refers to the patches of Frank Heckenbach,
 Frank's patches are for EtherCAT_v1.5.0-7.

@@ -17,6 +17,10 @@ SRC_URI += " \
     file://0001-Add-code-to-support-userspace-IGH-EtherCAT-for-v1.6.patch \
     file://0002-Add-code-to-support-NXP-i.MX-FEC-ethernet-port.patch \
     file://0003-yocto-change-header-name-and-not-install-libethercat.patch \
+    file://0004-Update-doc.patch \
+    file://0005-Allocate-non-cached-bd_buf-in-kernel-for-i.MX943-and.patch \
+    file://0006-Makefile.kbuild-Handle-empty-LINUX_SOURCE_DIR-in-kbu.patch \
+    file://0007-devices-nxp_userspace-Add-ifndef-guard-for-ETH_P_ETH.patch \
     file://libus_drv.a;subdir=git/devices/nxp_userspace/ \
 "
 

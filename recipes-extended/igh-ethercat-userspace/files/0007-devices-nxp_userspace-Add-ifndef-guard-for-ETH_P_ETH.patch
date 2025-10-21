@@ -1,0 +1,34 @@
+From a9e66866f5776530d6996c68c550ee15cd37b2b7 Mon Sep 17 00:00:00 2001
+From: Minghuan Lian <minghuan.lian@nxp.com>
+Date: Wed, 22 Oct 2025 13:35:14 +0800
+Subject: [PATCH] devices/nxp_userspace: Add ifndef guard for ETH_P_ETHERCAT
+ definition
+
+Prevent potential redefinition errors by adding a conditional compilation
+guard around the ETH_P_ETHERCAT macro definition. This ensures the macro
+is only defined if it hasn't been defined elsewhere in the codebase.
+
+Signed-off-by: Minghuan Lian <minghuan.lian@nxp.com>
+Upstream-Status: Pending
+---
+ devices/nxp_userspace/usm_main.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/devices/nxp_userspace/usm_main.h b/devices/nxp_userspace/usm_main.h
+index 48fbc6ad..5b3018de 100644
+--- a/devices/nxp_userspace/usm_main.h
++++ b/devices/nxp_userspace/usm_main.h
+@@ -26,7 +26,10 @@
+ 
+ #define SIZE_OF(x) (sizeof(x)/sizeof(x[0]))
+ 
++#ifndef ETH_P_ETHERCAT
+ #define ETH_P_ETHERCAT (0x88A4)
++#endif
++
+ #define LINK_100M	(100)
+ #define LINK_1000M	(1000)
+ 
+-- 
+2.43.0
+

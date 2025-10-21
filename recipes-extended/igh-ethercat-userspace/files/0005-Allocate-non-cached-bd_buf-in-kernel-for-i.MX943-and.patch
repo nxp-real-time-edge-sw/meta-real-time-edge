@@ -1,0 +1,639 @@
+From 54063062ae09e6dbffed6209a08e7b0d6ef362e9 Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Tue, 1 Jul 2025 10:52:48 +0800
+Subject: [PATCH 5/6] Allocate non-cached bd_buf in kernel for i.MX943 and
+ i.MX95
+
+this will avoid using kpage_ncache.ko
+
+Other updates:
+1. Optimize the code, allocate tx_skbuf in nxp_userspace driver
+2. Modify the send/recv code to use the latest us_drv API
+3. Change MAX_TX_BD_RING_SIZE and MAX_RX_BD_RING_SIZE to 64
+
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
+---
+ Readme_For_User_Space_IGH_EtherCAT.txt |  16 +---
+ compile.sh                             |  50 ++++++-----
+ devices/nxp_userspace/usm_main.c       | 110 +++++++++++++++++++++----
+ devices/nxp_userspace/usm_main.h       |  18 ++--
+ emulation/linux/netdevice.h            |   3 +
+ emulation/linux/skbuff.h               |   3 +
+ master/device.c                        |  49 +++--------
+ master/device.h                        |   4 +-
+ master/master.c                        |   6 +-
+ master/module.c                        |  19 +++--
+ 10 files changed, 167 insertions(+), 111 deletions(-)
+
+diff --git a/Readme_For_User_Space_IGH_EtherCAT.txt b/Readme_For_User_Space_IGH_EtherCAT.txt
+index d1d2c2f3..2a923431 100644
+--- a/Readme_For_User_Space_IGH_EtherCAT.txt
++++ b/Readme_For_User_Space_IGH_EtherCAT.txt
+@@ -58,7 +58,7 @@ code that ran in kernel space, so it's wholely independent of any kernel version
+  * core_mask:		the mask of CPU affinity, 0x01:core0, 0x02:core1, 0x0F:core0-3
+  *
+  * NOTE: user space stack only supports NXP FEC ethernet port currently
+- *	 The verified platform have i.MX8MP, i.MX8MM and i.MX93.
++ *	 The verified platform have i.MX8MP, i.MX8MM, i.MX93, i.MX95 and i.MX943.
+  *
+  *	 the MAC address is fixed to "04:13:07:02:00:13"
+  *	 For core_mask, we can isolate this core from Linux, like "isolcpus=1" for Uboot
+@@ -212,20 +212,19 @@ or
+ 
+ Note:
+ 1) If want to run user's application, should exit and close ethercat_master program.
+-2) For i.MX8MP, i.MX8MM and i.MX93 platform, should limit DDR memory in 4G bytes
+-via 'mem' variable in U-Boot bootargs, for example: 'mem=4096M'
++2) For i.MX8MP, i.MX8MM and i.MX93 platform:
++   a. should export the following environment variable, like: export ECAT_MAIN_DEV="fec"
++   b. should limit DDR memory in 4G bytes in U-Boot bootargs, for example: 'mem=4096M'
+ 
+ 7. How to use user space EtherCAT stack on i.MX95 and i.MX943 platform?
+ 7.1 i.MX95
+ * eth0:
+-    insmod ./kpage_ncache.ko
+     echo -n 0002:00:00.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
+     echo -n enetc_pci_uio > /sys/bus/pci/devices/0002:00:00.0/driver_override
+     echo -n 0002:00:00.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
+     export ECAT_MAIN_DEV="enetc4@0002:00:00.0"
+ 
+ * eth1:
+-    insmod ./kpage_ncache.ko
+     echo -n 0002:00:10.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
+     echo -n enetc_pci_uio > /sys/bus/pci/devices/0002:00:10.0/driver_override
+     echo -n 0002:00:10.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
+@@ -233,24 +232,17 @@ via 'mem' variable in U-Boot bootargs, for example: 'mem=4096M'
+ 
+ 7.2 i.MX943
+ * eth1:
+-    insmod ./kpage_ncache.ko
+     echo -n 0001:01:08.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
+     echo -n enetc_pci_uio > /sys/bus/pci/devices/0001:01:08.0/driver_override
+     echo -n 0001:01:08.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
+     export ECAT_MAIN_DEV="enetc4@0001:01:08.0"
+ 
+ * eth2:
+-    insmod ./kpage_ncache.ko
+     echo -n 0001:01:10.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
+     echo -n enetc_pci_uio > /sys/bus/pci/devices/0001:01:10.0/driver_override
+     echo -n 0001:01:10.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
+     export ECAT_MAIN_DEV="enetc4@0001:01:10.0"
+ 
+-7.3 Compile kpage_ncache.ko:
+-$ git clone https://github.com/nxp-qoriq/dpdk-extras
+-
+-Refer to README in linux/kpage_ncache directory.
+-
+ 8. motor control example
+ The example code for motor control is in "examples/motor_control/",
+ after compilation, the name of executable file is ec_motor_example.
+diff --git a/compile.sh b/compile.sh
+index 22d0e1ac..817d82ef 100755
+--- a/compile.sh
++++ b/compile.sh
+@@ -1,28 +1,36 @@
+ #!/bin/bash
+ 
+-#export CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
+-
+-if [ "$1" == "rebuild" ]; then
+-rm -fr $PWD/ecat_build
+-mkdir $PWD/ecat_build
+-rm ./configure
+-rm ./config.status
+-
+-rm -fr autoconf/ autom4te.cache/ master/.libs/
+-find . -name ".deps" | xargs rm -fr
+-find . -name "*.lo" | xargs rm -fr
+-find . -name "*.o" | xargs rm -fr
+-
+-./bootstrap
+-
+-if [ -n "$CROSS_COMPILE" ]; then
+-CCHOSTB=$(basename "$CROSS_COMPILE")
+-CCHOST=${CCHOSTB:0:-1}
+-./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-tool=yes --enable-eoe=no --host=${CCHOST}
+-else
+-./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-tool=yes --enable-eoe=no --build=arm
++if [ -z "$CROSS_COMPILE" ]; then
++  CC_PATH=~/toolchains/arm-gnu-toolchain-13.2.Rel1-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-
++  CC_NAME=${CC_PATH}gcc
++
++  if [ -f "$CC_NAME" ]; then
++    export CROSS_COMPILE=${CC_PATH}
++  else
++    export CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
++  fi
+ fi
+ 
++if [ "$1" == "rebuild" ]; then
++  rm -fr $PWD/ecat_build
++  mkdir $PWD/ecat_build
++  rm ./configure
++  rm ./config.status
++
++  rm -fr autoconf/ autom4te.cache/ master/.libs/
++  find . -name ".deps" | xargs rm -fr
++  find . -name "*.lo" | xargs rm -fr
++  find . -name "*.o" | xargs rm -fr
++
++  ./bootstrap
++
++  if [ -n "$CROSS_COMPILE" ]; then
++    CCHOSTB=$(basename "$CROSS_COMPILE")
++    CCHOST=${CCHOSTB:0:-1}
++    ./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-tool=yes --enable-eoe=no --host=${CCHOST}
++  else
++    ./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-tool=yes --enable-eoe=no --build=arm
++  fi
+ fi
+ 
+ make
+diff --git a/devices/nxp_userspace/usm_main.c b/devices/nxp_userspace/usm_main.c
+index 563eee70..fcd338d7 100644
+--- a/devices/nxp_userspace/usm_main.c
++++ b/devices/nxp_userspace/usm_main.c
+@@ -1,5 +1,5 @@
+ /* SPDX-License-Identifier: BSD-3-Clause
+- * Copyright 2023 NXP
++ * Copyright 2023-2025 NXP
+  */
+ 
+ #define _GNU_SOURCE
+@@ -24,7 +24,6 @@ MODULE_DESCRIPTION("NXP user space driver module");
+ MODULE_LICENSE("GPL");
+ MODULE_VERSION(EC_MASTER_VERSION);
+ 
+-
+ int __init ec_usm_init_module(void);
+ void __exit ec_usm_cleanup_module(void);
+ 
+@@ -35,7 +34,11 @@ typedef struct {
+     uint8_t *tx_buf[MAX_TX_BD_RING_SIZE];
+     uint32_t rx_idxs[MAX_RX_BD_RING_SIZE];
+     uint16_t rx_lens[MAX_RX_BD_RING_SIZE];
++    struct sk_buff *tx_skbuf[MAX_TX_BD_RING_SIZE];
++    void *us_dev;
+     int rx_cnt;
++    int index;
++    int main;
+ } ec_usm_device_t;
+ 
+ static ec_usm_device_t sec_usm_dev;
+@@ -90,6 +93,45 @@ set_tag:
+     return ret;
+ }
+ 
++static int ec_usm_alloc_tx_skbuf(ec_usm_device_t *dev, ec_device_t *ecdev)
++{
++    struct sk_buff *skbuf = NULL;
++    struct ethhdr *eth;
++    int i = 0;
++
++    for (i = 0; i < EC_TX_RING_SIZE; i++) {
++        skbuf = dev->tx_skbuf[i];
++        if (!skbuf) {
++            printk("%s(): dev_idx:%d tx_skbuf-%d is NULL!\n", __func__, dev->index, i);
++            break;
++        }
++
++        skbuf->data = skbuf->head = skbuf->tail = dev->tx_buf[i];
++        if (!skbuf->head)
++            break;
++
++        skb_reserve(skbuf, ETH_HLEN);
++
++        eth = (struct ethhdr *)skb_push(skbuf, ETH_HLEN);
++        eth->h_proto = htons(ETH_P_ETHERCAT);
++        memset(eth->h_dest, 0xFF, ETH_ALEN);
++
++        ecdev->tx_skb[i] = skbuf;
++    }
++
++    return 0;
++}
++
++#ifdef EC_USERSPACE_MASTER_NEW
++static int ec_usm_netdev_init(struct net_device *dev, void *priv)
++{
++    ec_usm_device_t *pdev = *(ec_usm_device_t **)netdev_priv(dev);
++    ec_device_t *ecdev = (ec_device_t *)priv;
++
++    return ec_usm_alloc_tx_skbuf(pdev, ecdev);
++}
++#endif
++
+ static int ec_usm_netdev_open(struct net_device *dev)
+ {
+     return 0;
+@@ -115,6 +157,9 @@ static void ec_usm_poll(struct net_device *dev)
+ }
+ 
+ static const struct net_device_ops ec_usm_netdev_ops = {
++#ifdef EC_USERSPACE_MASTER_NEW
++    .ndo_init       = ec_usm_netdev_init,
++#endif
+     .ndo_open       = ec_usm_netdev_open,
+     .ndo_stop       = ec_usm_netdev_stop,
+     .ndo_start_xmit = ec_usm_netdev_xmit,
+@@ -122,9 +167,16 @@ static const struct net_device_ops ec_usm_netdev_ops = {
+ 
+ static inline void ec_usm_ether_setup(struct net_device *netdev)
+ {
+-    uint8_t smac[6] = {0x04, 0x13, 0x07, 0x02, 0x00, 0x13};
++    uint8_t smac[ETH_ALEN];
++    int i;
+ 
+-    memcpy(netdev->dev_addr, smac, 6);
++    for (i = 0; i < (ETH_ALEN - 2); i++)
++        smac[i] = netdev->name[i] - 'a';
++
++    smac[4] = 1;
++    smac[5] = 0;
++
++    memcpy(netdev->dev_addr, smac, ETH_ALEN);
+     netdev->type = ARPHRD_ETHER;
+     netdev->ifindex = 0;
+ }
+@@ -133,21 +185,41 @@ static inline void ec_usm_ether_setup(struct net_device *netdev)
+  */
+ static int ec_usm_device_init(ec_usm_device_t *dev)
+ {
++    struct sk_buff *skbuf = NULL;
+     ec_usm_device_t **priv;
++    char name[IFNAMSIZ];
++    void *us_dev = NULL;
+     int i = 0;
+ 
++    snprintf(name, IFNAMSIZ, "ecat-%d-%d", dev->main, dev->index);
++
+     dev->ecdev = NULL;
+-    dev->netdev = alloc_netdev(sizeof(ec_usm_device_t *), "ecat0", NET_NAME_UNKNOWN, ec_usm_ether_setup);
++    dev->netdev = alloc_netdev(sizeof(ec_usm_device_t *), name, NET_NAME_UNKNOWN, ec_usm_ether_setup);
+     if (!dev->netdev)
+         return -ENOMEM;
+ 
+     dev->netdev->netdev_ops = &ec_usm_netdev_ops;
+ 
++    us_dev = us_drv_init_usm_dev(dev->index, dev->main, dev->netdev->dev_addr);
++    if (!us_dev) {
++        printk("%s(): failed to init usm_dev! index:%d main:%d\n", __func__, dev->index, dev->main);
++        return -ENOMEM;
++    }
++    dev->us_dev = us_dev;
++
+     for (i = 0; i < MAX_RX_BD_RING_SIZE; i++)
+-        dev->rx_buf[i] = us_drv_get_rx_buf(i);
++        dev->rx_buf[i] = us_drv_get_rx_buf(us_dev, i);
+ 
+-    for (i = 0; i < MAX_TX_BD_RING_SIZE; i++)
+-        dev->tx_buf[i] = us_drv_get_tx_buf(i);
++    for (i = 0; i < MAX_TX_BD_RING_SIZE; i++) {
++        skbuf = malloc(sizeof(struct sk_buff));
++        if (!skbuf)
++            break;
++
++        skbuf->len = 0;
++        skbuf->free_buf = 0;
++        dev->tx_skbuf[i] = skbuf;
++        dev->tx_buf[i] = us_drv_get_tx_buf(us_dev, i);
++    }
+ 
+     priv = netdev_priv(dev->netdev);
+     *priv = dev;
+@@ -196,7 +268,7 @@ static int ec_usm_device_xmit(ec_usm_device_t *dev, struct sk_buff *skb)
+     size_t len = skb->len;
+     int ret = 0;
+ 
+-    ret = us_drv_send(skb->data, skb->len, 0);
++    ret = us_drv_send(dev->us_dev, skb->data, skb->len, 0);
+     return (ret == len) ? NETDEV_TX_OK : NETDEV_TX_BUSY;
+ }
+ 
+@@ -209,7 +281,7 @@ static void ec_usm_device_poll(ec_usm_device_t *dev)
+     uint16_t rx_len = 0;
+     int i = 0;
+ 
+-    dev->rx_cnt = us_drv_recv(NULL, dev->rx_lens, dev->rx_idxs);
++    dev->rx_cnt = us_drv_recv(dev->us_dev, NULL, dev->rx_lens, dev->rx_idxs);
+     if (dev->rx_cnt <= 0)
+         return;
+ 
+@@ -253,24 +325,23 @@ static void ec_usm_clear_devices(void)
+ /** Initialize userspace-master net devices.
+  * it should be called before ecus_init
+  */
+-int ec_usm_net_init(uint32_t cycle_ns, uint32_t core_mask)
++int ec_usm_net_init(uint32_t master_num, uint32_t backup_num, uint32_t cycle_ns, uint32_t core_mask)
+ {
+     int ret = 0;
+ 
+     ec_master_set_noop_mode(cycle_ns);
+-
+     ecus_set_core_mask(core_mask);
+ 
+-    ret = us_drv_lib_init(LINK_100M);
++    ret = us_drv_lib_init(master_num, backup_num, LINK_100M);
+     if (ret)
+         goto err_tag;
+ 
+-    printf("%s(): cycle_ns:%d core_mask:0x%02X\n", __func__, cycle_ns, ecus_get_core_mask());
+-    printf("RX ring size:%d, TX ring size:%d\n", MAX_RX_BD_RING_SIZE, MAX_TX_BD_RING_SIZE);
++    printk("%s(): RX ring size:%d, TX ring size:%d\n", __func__, MAX_RX_BD_RING_SIZE, MAX_TX_BD_RING_SIZE);
++    printk("cycle_ns:%d core_mask:0x%02X\n", cycle_ns, ecus_get_core_mask());
+ 
+ err_tag:
+     if (ret)
+-        printf("%s(): run failed! ret:%d\n", __func__, ret);
++        printk("%s(): run failed! ret:%d\n", __func__, ret);
+ 
+     return ret;
+ }
+@@ -282,13 +353,16 @@ err_tag:
+  */
+ int __init ec_usm_init_module(void)
+ {
++    ec_usm_device_t *pdev = &sec_usm_dev;
+     int ret = 0;
+ 
+     printk(KERN_INFO PFX "EtherCAT master driver, ver:%s\n", EC_MASTER_VERSION);
+ 
+-    ret = ec_usm_offer_device(&sec_usm_dev);
++    pdev->main = 1;
++    pdev->index = 0;
++    ret = ec_usm_offer_device(pdev);
+     if (ret) {
+-        printk("%s(): offer userspace-master device failed!\n", __func__);
++        printk("%s(): offer device for master failed!\n", __func__);
+         ret = -1;
+     }
+ 
+diff --git a/devices/nxp_userspace/usm_main.h b/devices/nxp_userspace/usm_main.h
+index 022daf64..48fbc6ad 100644
+--- a/devices/nxp_userspace/usm_main.h
++++ b/devices/nxp_userspace/usm_main.h
+@@ -1,5 +1,5 @@
+ /* SPDX-License-Identifier: BSD-3-Clause
+- * Copyright 2024 NXP
++ * Copyright 2023-2025 NXP
+  */
+ 
+ #ifndef __US_DRV_LIB__
+@@ -17,25 +17,27 @@
+ 
+ 
+ #ifndef MAX_TX_BD_RING_SIZE
+-#define MAX_TX_BD_RING_SIZE	(16)
++#define MAX_TX_BD_RING_SIZE	(64)
+ #endif
+ 
+ #ifndef MAX_RX_BD_RING_SIZE
+-#define MAX_RX_BD_RING_SIZE	(16)
++#define MAX_RX_BD_RING_SIZE	(64)
+ #endif
+ 
+ #define SIZE_OF(x) (sizeof(x)/sizeof(x[0]))
+ 
++#define ETH_P_ETHERCAT (0x88A4)
+ #define LINK_100M	(100)
+ #define LINK_1000M	(1000)
+ 
+-int us_drv_lib_init(int link);
++int us_drv_lib_init(uint32_t master_num, uint32_t backup_num, int link);
+ int us_drv_lib_exit(int stat);
+ 
+-uint8_t* us_drv_get_rx_buf(int idx);
+-uint8_t* us_drv_get_tx_buf(int idx);
++void* us_drv_init_usm_dev(int index, int main, uint8_t *smac);
++uint8_t* us_drv_get_rx_buf(void *us_dev, int idx);
++uint8_t* us_drv_get_tx_buf(void *us_dev, int idx);
+ 
+-int us_drv_recv(void *buf, uint16_t *plen, uint32_t *pindex);
+-int us_drv_send(void *buf, uint16_t len, uint64_t addr);
++int us_drv_recv(void *us_dev, void *buf, uint16_t *plen, uint32_t *pindex);
++int us_drv_send(void *us_dev, void *buf, uint16_t len, uint64_t addr);
+ 
+ #endif
+diff --git a/emulation/linux/netdevice.h b/emulation/linux/netdevice.h
+index 19e17bb1..8335f483 100644
+--- a/emulation/linux/netdevice.h
++++ b/emulation/linux/netdevice.h
+@@ -38,6 +38,9 @@ struct net_device_stats
+ 
+ struct net_device_ops
+ {
++#ifdef EC_USERSPACE_MASTER_NEW
++    int (*ndo_init)(struct net_device *dev, void *priv);
++#endif
+     int (*ndo_open)(struct net_device *dev);
+     int (*ndo_stop)(struct net_device *dev);
+     int (*ndo_start_xmit)(struct sk_buff *skb, struct net_device *dev);
+diff --git a/emulation/linux/skbuff.h b/emulation/linux/skbuff.h
+index 4b433a41..625692c7 100644
+--- a/emulation/linux/skbuff.h
++++ b/emulation/linux/skbuff.h
+@@ -34,6 +34,9 @@ static inline struct sk_buff *dev_alloc_skb(unsigned int length)
+ 
+ static inline void dev_kfree_skb(struct sk_buff *skb)
+ {
++    if (!skb)
++        return;
++
+     if (skb->free_buf)
+         free(skb->head);
+     free(skb);
+diff --git a/master/device.c b/master/device.c
+index e8521f70..e133b952 100644
+--- a/master/device.c
++++ b/master/device.c
+@@ -57,30 +57,6 @@ enum {
+  *
+  * \return 0 in case of success, else < 0
+  */
+-#ifdef EC_USERSPACE_MASTER_NEW
+-uint8_t* us_drv_get_tx_buf(int idx);
+-static inline struct sk_buff *dev_alloc_ecat_skb(int i)
+-{
+-    struct sk_buff *buf = NULL;
+-
+-    buf = malloc(sizeof(struct sk_buff));
+-    if(!buf)
+-        return NULL;
+-
+-    buf->len = 0;
+-    buf->free_buf = 0;
+-#ifdef EC_USERSPACE_MASTER_NEW
+-    buf->data = buf->head = buf->tail = us_drv_get_tx_buf(i);
+-#endif
+-    if (!buf->head) {
+-        free(buf);
+-        return NULL;
+-    }
+-
+-    return buf;
+-}
+-#endif
+-
+ int ec_device_init(
+         ec_device_t *device, /**< EtherCAT device */
+         ec_master_t *master /**< master owning the device */
+@@ -152,24 +128,20 @@ int ec_device_init(
+     }
+ #endif
+ 
+-    for (i = 0; i < EC_TX_RING_SIZE; i++) {
+ #ifdef EC_USERSPACE_MASTER_NEW
+-        if (!(device->tx_skb[i] = dev_alloc_ecat_skb(i))) {
+-#else
+-        if (!(device->tx_skb[i] = dev_alloc_skb(ETH_FRAME_LEN + EXTRA_HEADROOM))) {
++    return 0;
+ #endif
++
++    for (i = 0; i < EC_TX_RING_SIZE; i++) {
++        if (!(device->tx_skb[i] = dev_alloc_skb(ETH_FRAME_LEN + EXTRA_HEADROOM))) {
+             EC_MASTER_ERR(master, "Error allocating device socket buffer!\n");
+             ret = -ENOMEM;
+             goto out_tx_ring;
+         }
+ 
+         // add Ethernet-II-header
+-#ifdef EC_USERSPACE_MASTER_NEW
+-	skb_reserve(device->tx_skb[i], ETH_HLEN);
+-#else
+-	skb_reserve(device->tx_skb[i], ETH_HLEN + EXTRA_HEADROOM);
+-#endif
+-	eth = (struct ethhdr *) skb_push(device->tx_skb[i], ETH_HLEN);
++        skb_reserve(device->tx_skb[i], ETH_HLEN + EXTRA_HEADROOM);
++        eth = (struct ethhdr *) skb_push(device->tx_skb[i], ETH_HLEN);
+         eth->h_proto = htons(0x88A4);
+         memset(eth->h_dest, 0xFF, ETH_ALEN);
+     }
+@@ -177,10 +149,8 @@ int ec_device_init(
+     return 0;
+ 
+ out_tx_ring:
+-    for (i = 0; i < EC_TX_RING_SIZE; i++) {
+-        if (device->tx_skb[i])
+-            dev_kfree_skb(device->tx_skb[i]);
+-    }
++    for (i = 0; i < EC_TX_RING_SIZE; i++)
++        dev_kfree_skb(device->tx_skb[i]);
+ 
+ #ifdef EC_DEBUG_IF
+     ec_debug_clear(&device->dbg);
+@@ -264,7 +234,8 @@ void ec_device_detach(
+     ec_device_clear_stats(device);
+ 
+     for (i = 0; i < EC_TX_RING_SIZE; i++) {
+-        device->tx_skb[i]->dev = NULL;
++        if (device->tx_skb[i])
++            device->tx_skb[i]->dev = NULL;
+     }
+ }
+ 
+diff --git a/master/device.h b/master/device.h
+index bc04ec0c..7f4fbfd3 100644
+--- a/master/device.h
++++ b/master/device.h
+@@ -71,8 +71,8 @@ typedef struct {
+ #endif
+ 
+ #ifdef EC_USERSPACE_MASTER_NEW
+-#define MAX_TX_BD_RING_SIZE (16)
+-#define MAX_RX_BD_RING_SIZE (16)
++#define MAX_TX_BD_RING_SIZE (64)
++#define MAX_RX_BD_RING_SIZE (64)
+ #endif
+ 
+ /****************************************************************************/
+diff --git a/master/master.c b/master/master.c
+index 3a9fd8f0..e79bd2c6 100644
+--- a/master/master.c
++++ b/master/master.c
+@@ -1592,9 +1592,9 @@ static int ec_master_start_ioctl_thread(ec_master_t *master)
+         if (ret == 0) {
+             master->ioctl_thread_run = 1;
+             master->ioctl_thread = &master->ioctl_thread_id;
+-	} else {
++        } else {
+             EC_MASTER_WARN(master, "Failed to start master IOCTL thread!\n");
+-	}
++        }
+     }
+ 
+     return 0;
+@@ -1607,7 +1607,7 @@ static int ec_master_stop_ioctl_thread(ec_master_t *master)
+     if (master->ioctl_thread) {
+         master->ioctl_thread_run = 0;
+ 
+-	ret = pthread_join(*master->ioctl_thread, NULL);
++        ret = pthread_join(*master->ioctl_thread, NULL);
+         master->ioctl_thread = NULL;
+     }
+ 
+diff --git a/master/module.c b/master/module.c
+index 22d1ae21..12667ea1 100644
+--- a/master/module.c
++++ b/master/module.c
+@@ -511,6 +511,11 @@ ec_device_t *ecdev_offer(
+                 EC_INFO("Accepting %s as %s device for master %u.\n",
+                         str, ec_device_names[dev_idx != 0], master->index);
+ 
++#ifdef EC_USERSPACE_MASTER_NEW
++                if (net_dev->netdev_ops && net_dev->netdev_ops->ndo_init)
++                    net_dev->netdev_ops->ndo_init(net_dev, &master->devices[dev_idx]);
++#endif
++
+                 ec_device_attach(&master->devices[dev_idx],
+                         net_dev, poll, module);
+                 up(&master->device_sem);
+@@ -707,7 +712,7 @@ ec_master_t *ecrt_open_master(
+ }
+ 
+ #ifdef EC_USERSPACE_MASTER_NEW
+-int ec_usm_net_init(uint32_t cycle_ns, uint32_t core_mask);
++int ec_usm_net_init(uint32_t master_num, uint32_t backup_num, uint32_t cycle_ns, uint32_t core_mask);
+ int __init ec_usm_init_module(void);
+ void __exit ec_usm_cleanup_module(void);
+ #endif
+@@ -750,11 +755,10 @@ static int ecrt_init(unsigned int master_count_, const char *const *master_macs,
+ 
+ #ifdef EC_USERSPACE_MASTER_NEW
+     r = ec_usm_init_module();
+-#endif
+-
+-#ifndef EC_USERSPACE_MASTER_NEW
++#else
+     r = ec_gen_init_module();
+ #endif
++
+     if (r)
+         ec_cleanup_module();
+     return r;
+@@ -764,11 +768,10 @@ static void ecrt_done(void)
+ {
+ #ifdef EC_USERSPACE_MASTER_NEW
+     ec_usm_cleanup_module();
+-#endif
+-
+-#ifndef EC_USERSPACE_MASTER_NEW
++#else
+     ec_gen_cleanup_module();
+ #endif
++
+     ec_cleanup_module();
+ }
+ 
+@@ -779,7 +782,7 @@ int ecus_init(uint32_t master_count, const char *const *master_macs,
+     int ret = 0;
+ 
+ #ifdef EC_USERSPACE_MASTER_NEW
+-    ret = ec_usm_net_init(cycle_ns, core_mask);
++    ret = ec_usm_net_init(master_count, backup_count, cycle_ns, core_mask);
+     if (ret) {
+         EC_ERR("Failed to init NXP userspace driver! ret:%d\n", ret);
+         goto err_tag;
+-- 
+2.43.0
+

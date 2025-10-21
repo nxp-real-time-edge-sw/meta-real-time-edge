@@ -1,7 +1,7 @@
-From a533c03a2ad6771d67e745b2ad2ea55aa7737384 Mon Sep 17 00:00:00 2001
+From 9b4c3b02430e465064741c38fa0cb607c637dc01 Mon Sep 17 00:00:00 2001
 From: Minghuan Lian <minghuan.lian@nxp.com>
 Date: Fri, 16 May 2025 11:16:22 +0800
-Subject: [PATCH] yocto: change header name and not install libethercat
+Subject: [PATCH 3/6] yocto: change header name and not install libethercat
 
 Signed-off-by: Minghuan Lian <minghuan.lian@nxp.com>
 Upstream-Status: Pending

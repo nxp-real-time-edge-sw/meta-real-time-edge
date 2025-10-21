@@ -1,0 +1,46 @@
+From f1c83ec2af014c1bf071c3dfc94db6debf8dd63f Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Thu, 19 Jun 2025 18:41:02 +0900
+Subject: [PATCH 4/6] Update doc
+
+Give warning when tx/rx_buf address is >4G for FEC port
+
+Because FEC IP can only access 32 bits address, so it can't work when buffer address is >4G.
+This issue might occur when limiting memory using dtb instead of bootargs "mem=".
+
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
+---
+ Readme_For_User_Space_IGH_EtherCAT.txt | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/Readme_For_User_Space_IGH_EtherCAT.txt b/Readme_For_User_Space_IGH_EtherCAT.txt
+index bbfb0c25..d1d2c2f3 100644
+--- a/Readme_For_User_Space_IGH_EtherCAT.txt
++++ b/Readme_For_User_Space_IGH_EtherCAT.txt
+@@ -211,9 +211,9 @@ or
+ # ./ethercat_userspace cstruct
+ 
+ Note:
+-1. If want to run user's application, should exit and close ethercat_master program.
+-2. For i.MX platforms, should limit DDR memory in 4G bytes via 'mem' variable in U-Boot bootargs.
+-	Example: 'mem=4096M'
++1) If want to run user's application, should exit and close ethercat_master program.
++2) For i.MX8MP, i.MX8MM and i.MX93 platform, should limit DDR memory in 4G bytes
++via 'mem' variable in U-Boot bootargs, for example: 'mem=4096M'
+ 
+ 7. How to use user space EtherCAT stack on i.MX95 and i.MX943 platform?
+ 7.1 i.MX95
+@@ -259,6 +259,6 @@ you can use the following command to control motor rotation:
+ # ./ec_motor_example 131072 1
+ 
+ Note:
+-  1. 131072 is encoding rate of motors, 1 is motor number. The number can be 1, 2 ... 64.
+-  2. For working at the same rotate speed, all motors should have same encoding rate.
+-  3. Before starting ec_motor_example, should exit ethercat_master program.
++  1) 131072 is encoding rate of motors, 1 is motor number. The number can be 1, 2 ... 64.
++  2) For working at the same rotate speed, all motors should have same encoding rate.
++  3) Before starting ec_motor_example, should exit ethercat_master program.
+-- 
+2.43.0
+

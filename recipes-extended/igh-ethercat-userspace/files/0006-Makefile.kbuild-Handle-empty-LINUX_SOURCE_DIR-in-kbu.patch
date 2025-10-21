@@ -1,0 +1,36 @@
+From b005a38cd9ee297f506b316a9cdc6419be526448 Mon Sep 17 00:00:00 2001
+From: Minghuan Lian <minghuan.lian@nxp.com>
+Date: Tue, 21 Oct 2025 17:52:20 +0800
+Subject: [PATCH 6/6] Makefile.kbuild: Handle empty LINUX_SOURCE_DIR in
+ kbuild-clean
+
+Fix 'make clean' failure when LINUX_SOURCE_DIR is empty in userspace-only
+builds (configured with --disable-kernel). The kbuild-clean target now
+checks if LINUX_SOURCE_DIR is set before attempting to run kbuild clean,
+preventing the error: "make: the '-C' option requires a non-empty string".
+
+Signed-off-by: Minghuan Lian <minghuan.lian@nxp.com>
+Upstream-Status: Pending
+---
+ Makefile.kbuild | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile.kbuild b/Makefile.kbuild
+index 92156104..4b5a6cea 100644
+--- a/Makefile.kbuild
++++ b/Makefile.kbuild
+@@ -23,6 +23,10 @@ clean: kbuild-clean
+ 	fi
+ 
+ kbuild-clean:
+-	$(KBUILD) clean
++	@if test -n "$(LINUX_SOURCE_DIR)"; then \
++		$(KBUILD) clean; \
++	else \
++		echo "No kernel modules to clean (userspace build)"; \
++	fi
+ 
+ .PHONY: kbuild-clean
+-- 
+2.43.0
+

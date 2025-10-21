@@ -1,7 +1,7 @@
-From 7bade153986772a34e6a83ce0f3dfb491d695839 Mon Sep 17 00:00:00 2001
+From a3319d2ee435dad456df2a8ce985a307cc992429 Mon Sep 17 00:00:00 2001
 From: Hongbo Wang <hongbo.wang@nxp.com>
 Date: Wed, 19 Mar 2025 18:52:52 +0800
-Subject: [PATCH 2/2] Add code to support NXP i.MX FEC ethernet port
+Subject: [PATCH 2/6] Add code to support NXP i.MX FEC ethernet port
 
 the verified platform: i.MX8MP, i.MX8MM and i.MX93
 
