@@ -1,7 +1,7 @@
 From 986802c9ffbe47843343995f34efbdf836f0f0a1 Mon Sep 17 00:00:00 2001
 From: Aziz Sellami <aziz.sellami@nxp.com>
 Date: Fri, 30 Aug 2024 14:58:34 +0200
-Subject: [PATCH 1/4] devices: MIMX95: Disable DDR Auto Clock Gating
+Subject: [PATCH 1/6] devices: MIMX95: Disable DDR Auto Clock Gating
 
 DDR Auto Clock Gating Feature has an impact on real-time performance.
 Let's disable this feature.

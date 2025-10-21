@@ -1,0 +1,47 @@
+From 45bb929e185cad0b1ae6435e9a1c741d35ec24af Mon Sep 17 00:00:00 2001
+From: Aziz Sellami <aziz.sellami@nxp.com>
+Date: Mon, 29 Sep 2025 15:43:10 +0200
+Subject: [PATCH 6/6] configs: mx94rte: disable auto clock gating
+
+Disable DDR Auto Clock Gating Feature, as it has an impact on real-time
+performance.
+
+Signed-off-by: Aziz Sellami <aziz.sellami@nxp.com>
+Upstream-Status: Pending
+---
+ configs/other/mx94rte.cfg           | 2 ++
+ devices/MIMX94/system_MIMX94_cm33.c | 5 +++++
+ 2 files changed, 7 insertions(+)
+
+diff --git a/configs/other/mx94rte.cfg b/configs/other/mx94rte.cfg
+index 50a43b76..e5f9c425 100755
+--- a/configs/other/mx94rte.cfg
++++ b/configs/other/mx94rte.cfg
+@@ -47,6 +47,8 @@ BOARD               DEBUG_UART_BAUDRATE=115200
+ BOARD               I2C_INSTANCE=1
+ BOARD               I2C_BAUDRATE=400000
+ 
++DISABLE_DDR_AUTO_CLK_GATING_ON_INIT    1
++
+ #==========================================================================#
+ # Common Defines                                                           #
+ #==========================================================================#
+diff --git a/devices/MIMX94/system_MIMX94_cm33.c b/devices/MIMX94/system_MIMX94_cm33.c
+index d871fa0a..a010bf55 100755
+--- a/devices/MIMX94/system_MIMX94_cm33.c
++++ b/devices/MIMX94/system_MIMX94_cm33.c
+@@ -80,6 +80,11 @@ void SystemInit(void)
+     /* Mask NOCMIX safe state handshake */
+     SRC_GEN->MISC_CTRL |= 0x2U;
+ 
++#if defined(BOARD_DISABLE_DDR_AUTO_CLK_GATING_ON_INIT) && (BOARD_DISABLE_DDR_AUTO_CLK_GATING_ON_INIT != 0)
++    /* Disable DDR Auto Clock Gating */
++    BLK_CTRL_DDRMIX->AUTO_CG_CTRL &= ~(BLK_CTRL_DDRMIX_AUTO_CG_CTRL_AUTO_CG_ENA_MASK);
++#endif
++
+     /* Mask reset sources handled by SM */
+     SRC_GEN->SRMASK = (1UL << RST_REASON_CM7_0_LOCKUP) | 
+                       (1UL << RST_REASON_CM7_0_SWREQ) | 
+-- 
+2.43.0
+

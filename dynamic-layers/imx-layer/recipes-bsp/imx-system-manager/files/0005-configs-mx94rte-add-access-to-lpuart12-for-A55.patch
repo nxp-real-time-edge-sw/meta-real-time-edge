@@ -1,0 +1,35 @@
+From c8a10bbb43070fc477483476996b71d5f479713a Mon Sep 17 00:00:00 2001
+From: Aziz Sellami <aziz.sellami@nxp.com>
+Date: Fri, 17 Oct 2025 17:06:28 +0200
+Subject: [PATCH 5/6] configs: mx94rte: add access to lpuart12 for A55
+
+Signed-off-by: Aziz Sellami <aziz.sellami@nxp.com>
+Upstream-Status: Pending
+---
+ configs/other/mx94rte.cfg | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/configs/other/mx94rte.cfg b/configs/other/mx94rte.cfg
+index bd109bb8..50a43b76 100755
+--- a/configs/other/mx94rte.cfg
++++ b/configs/other/mx94rte.cfg
+@@ -1054,6 +1054,7 @@ LPUART7             OWNER
+ LPUART8             ACCESS
+ LPUART9             OWNER
+ LPUART10            OWNER
++LPUART12            OWNER
+ LVDS                OWNER
+ MSGINTR2            ACCESS
+ MU2_A               OWNER
+@@ -1252,6 +1253,8 @@ PIN_GPIO_IO20        OWNER
+ PIN_GPIO_IO21        OWNER
+ PIN_GPIO_IO22        OWNER
+ PIN_GPIO_IO23        OWNER
++PIN_GPIO_IO26        OWNER
++PIN_GPIO_IO27        OWNER
+ PIN_GPIO_IO28        OWNER
+ PIN_GPIO_IO29        OWNER
+ PIN_GPIO_IO30        OWNER
+-- 
+2.43.0
+

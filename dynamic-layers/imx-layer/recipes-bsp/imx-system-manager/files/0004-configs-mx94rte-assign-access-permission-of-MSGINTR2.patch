@@ -1,7 +1,7 @@
 From d34abada414f9c4ec58494ce63ef0eb264537187 Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 25 Sep 2025 22:36:57 +0800
-Subject: [PATCH 4/4] configs: mx94rte: assign access permission of MSGINTR2 to
+Subject: [PATCH 4/6] configs: mx94rte: assign access permission of MSGINTR2 to
  A55 NS agents
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>

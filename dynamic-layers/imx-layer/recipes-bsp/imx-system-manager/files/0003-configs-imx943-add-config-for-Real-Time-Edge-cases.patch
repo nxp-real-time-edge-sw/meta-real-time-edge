@@ -1,7 +1,7 @@
 From 78fc4bce02b8d62da0a38e3c9f93829b43b20e97 Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 25 Sep 2025 22:25:06 +0800
-Subject: [PATCH 3/4] configs: imx943: add config for Real-Time-Edge cases
+Subject: [PATCH 3/6] configs: imx943: add config for Real-Time-Edge cases
 
 Assigned the LPUART8 and related pins and all 6 LPTPM to A
 core NS SCMI agent, then added 2 more A core NS SCMI agents

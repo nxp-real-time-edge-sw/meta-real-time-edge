@@ -1,7 +1,7 @@
 From 0da6a717fe222a8cfdb50b7174f143903d1a5af1 Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Wed, 3 Sep 2025 15:48:04 +0800
-Subject: [PATCH 2/4] configs: imx95rte: update for booting M7 from u-boot
+Subject: [PATCH 2/6] configs: imx95rte: update for booting M7 from u-boot
 
 And align some configs with the mx95evk.cfg.
 
