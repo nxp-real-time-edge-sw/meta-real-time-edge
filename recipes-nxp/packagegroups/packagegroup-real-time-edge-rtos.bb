@@ -49,7 +49,6 @@ heterogeneous_multicore_examples:append:mx8mm-nxp-bsp = " \
     hello-world \
     rpmsg-uart-sharing \
     rpmsg-str-echo \
-    rpmsg-str-echo-8m \
     virtio-perf \
     virtio-net-backend \
     lwip-ping \
