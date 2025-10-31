@@ -7,6 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=815ca599c9df247a0c7f619bab123dad"
 SRCBRANCH ?= "master"
 SRC_URI = "gitsm://github.com/open62541/open62541.git;protocol=https;branch=${SRCBRANCH} \
            file://0001-feat-examples-Add-pubsub-TSN-sample-applications.patch \
+           file://0002-feat-examples-Add-OPC-UA-PUBSUB-summation-example-ap.patch \
 "
 
 # Modify these as desired

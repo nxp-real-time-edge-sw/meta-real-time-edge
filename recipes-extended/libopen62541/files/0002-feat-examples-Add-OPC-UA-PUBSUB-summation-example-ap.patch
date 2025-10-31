@@ -1,0 +1,994 @@
+From 3bf5e7e17734678d6eaeaa24ee11069c9d4a90c3 Mon Sep 17 00:00:00 2001
+From: Chenhui Zhao <chenhui.zhao@nxp.com>
+Date: Wed, 29 Oct 2025 15:49:53 +0800
+Subject: [PATCH] feat(examples): Add OPC UA PUBSUB summation example
+ applications
+
+Upstream-Status: Inappropriate [embedded specific]
+---
+ examples/CMakeLists.txt                       |  10 +
+ examples/pubsub_realtime/netc_fm.h            |  34 +
+ .../opcua_summation_controller.c              | 652 ++++++++++++++++++
+ .../pubsub_realtime/opcua_summation_device.c  | 249 +++++++
+ 4 files changed, 945 insertions(+)
+ create mode 100644 examples/pubsub_realtime/netc_fm.h
+ create mode 100644 examples/pubsub_realtime/opcua_summation_controller.c
+ create mode 100644 examples/pubsub_realtime/opcua_summation_device.c
+
+diff --git a/examples/CMakeLists.txt b/examples/CMakeLists.txt
+index 268e24863..3b5fe552d 100644
+--- a/examples/CMakeLists.txt
++++ b/examples/CMakeLists.txt
+@@ -220,6 +220,16 @@ if(UA_ENABLE_PUBSUB)
+                 add_example(opcua_pubsub_subscriber pubsub_realtime/opcua_pubsub_subscriber.c)
+                 target_sources(opcua_pubsub_subscriber PRIVATE pubsub_realtime/timestamp.c)
+                 target_link_libraries(opcua_pubsub_subscriber rt pthread)
++
++                # include_directories(${PROJECT_SOURCE_DIR}/../src/pubsub)
++
++                set(STATIC_OBJECTS $<TARGET_OBJECTS:open62541-object>)
++                add_example(opcua_summation_controller pubsub_realtime/opcua_summation_controller.c)
++                target_link_libraries(opcua_summation_controller rt pthread)
++                add_example(opcua_summation_device pubsub_realtime/opcua_summation_device.c)
++                target_link_libraries(opcua_summation_device rt pthread)
++                unset(STATIC_OBJECTS)
++
+             endif()
+         endif()
+     else (NOT BUILD_SHARED_LIBS)
+diff --git a/examples/pubsub_realtime/netc_fm.h b/examples/pubsub_realtime/netc_fm.h
+new file mode 100644
+index 000000000..aabe9f4dc
+--- /dev/null
++++ b/examples/pubsub_realtime/netc_fm.h
+@@ -0,0 +1,34 @@
++/* This work is licensed under a Creative Commons CCZero 1.0 Universal License.  * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
++ *
++ *    Copyright 2025 NXP
++ */
++
++#ifndef __NETC_FM_H
++#define __NETC_FM_H
++
++#include <linux/ioctl.h>
++
++#define  FMT_PLD_ACT_INSERT_DATASETMSG  (5)
++
++struct fm_filter {
++	__le16 ethertype;
++	__le16 rev1;
++};
++
++/* this is the structure of the argument of the IOCTL NETC_FM_CMD_CREATE command */
++struct netc_fm_conf {
++	__le32 fm_action;       /* specify what action the Frame Modification will do */
++	__le32 flags;
++	__le16 ingress_port;    /* the frames flow into the switch from this port */
++	__le16 egress_port;     /* the frames leave the switch through this port */
++	struct fm_filter filter;    /* the filter parameters */
++	/* the offset of the Message Count field in UADP NetworkMessage */
++	__le16 message_count_offset;
++	__le16 rev1;
++};
++
++/* IOCTL command number */
++#define NETC_FM_CMD_CREATE      _IOW(0xE2, 0xC0, struct netc_fm_conf)
++#define NETC_FM_CMD_DESTROY     _IO(0xE2, 0xC1)
++
++#endif
+diff --git a/examples/pubsub_realtime/opcua_summation_controller.c b/examples/pubsub_realtime/opcua_summation_controller.c
+new file mode 100644
+index 000000000..a9284911d
+--- /dev/null
++++ b/examples/pubsub_realtime/opcua_summation_controller.c
+@@ -0,0 +1,652 @@
++/* This work is licensed under a Creative Commons CCZero 1.0 Universal License.  * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
++ *
++ *    Copyright 2025 NXP
++ */
++
++#define _GNU_SOURCE
++
++#include <signal.h>
++#include <time.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <pthread.h>
++#include <sys/sysinfo.h>
++#include <string.h>
++#include <errno.h>
++#include <sys/ioctl.h>
++#include <sys/socket.h>
++
++#include <arpa/inet.h>
++#include <net/if.h>
++#include <netinet/in.h>
++#include <netinet/if_ether.h>
++
++#include <linux/if_packet.h>
++#include <linux/net_tstamp.h>
++#include <linux/errqueue.h>
++#include <linux/sockios.h>
++
++#include <open62541/server.h>
++#include <open62541/server_config_default.h>
++#include <open62541/plugin/log_stdout.h>
++#include <open62541/plugin/pubsub.h>
++#include <open62541/plugin/pubsub_udp.h>
++
++#include "ua_pubsub_networkmessage.h"
++#include "ua_pubsub.h"
++
++#define PACKET_SIZE             2048
++#define NSEC_PER_SEC            (1000000000ULL)
++#define CLOCKID                 CLOCK_REALTIME
++
++#define CYCLE_PERIOD_NS         (100 * 1000 * 1000UL)
++#define TX_PRELOAD_TIME_NS      (400 * 1000UL)
++
++#define PUB_SCHED_PRIORITY      80
++#define CORE_TWO                2
++#define ETHERTYPE_UADP          (0xB62CU)
++
++// these two empty DataSet Writer IDs is used in the initial frames.
++#define DATASETWRITERID1_EMPTY  (0xffdcU)
++#define DATASETWRITERID2_EMPTY  (0xffddU)
++
++uint64_t tx_timestamp;
++
++struct app_config {
++    uint32_t interval_ns;
++    char tx_if[64];
++    char rx_if[64];
++} app_config;
++
++pthread_t tx_thread;
++pthread_t rx_thread;
++static volatile sig_atomic_t running = 1;
++
++uint8_t rx_buffer[PACKET_SIZE];
++
++uint8_t g_dest_mac[ETH_ALEN] = {0x01, 0x00, 0x5E, 0x00, 0x00, 0x01};
++
++// This is an initial NetworkMessage with two DataSetMessages.
++uint8_t netmsg_2dsetmsg[] = {
++    0x40, 0x02, 0xdc, 0xff, 0xdd, 0xff, 0x12, 0x00, 0x12, 0x00,
++    /*          ^WriterId1, ^WriterId2  ^size1      ^size2 */
++    0x01, 0x01, 0x00, 0x0c, 0x0a, 0x00, 0x00, 0x00, 0x61, 0x61,
++    0x61, 0x61, 0x61, 0x62, 0x62, 0x62, 0x62, 0x62,
++                                                    0x01, 0x01,
++    0x00, 0x0c, 0x0a, 0x00, 0x00, 0x00, 0x65, 0x65, 0x65, 0x65, 
++    0x65, 0x62, 0x62, 0x62, 0x62, 0x62
++};
++
++static void signal_handler(int sig)
++{
++    running = 0;
++}
++
++// Enable hardware timestamping on interface
++static int enable_hw_timestamping(int sock, const char *interface)
++{
++    struct ifreq ifr;
++    struct hwtstamp_config hwts_config;
++
++    // Get interface index
++    memset(&ifr, 0, sizeof(ifr));
++    strncpy(ifr.ifr_name, interface, IF_NAMESIZE - 1);
++
++    if(ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
++        perror("ioctl SIOCGIFINDEX");
++        return -1;
++    }
++
++    // Configure hardware timestamping
++    hwts_config.flags = 0;
++    hwts_config.tx_type = HWTSTAMP_TX_ON;         // Enable TX timestamping
++    hwts_config.rx_filter = HWTSTAMP_FILTER_ALL;  // Ebable RX timestamping
++
++    ifr.ifr_data = (char *)&hwts_config;
++
++    if(ioctl(sock, SIOCSHWTSTAMP, &ifr) < 0) {
++        perror("ioctl SIOCSHWTSTAMP");
++        printf("Hardware timestamping may not be supported\r\n");
++        return -1;
++    }
++
++    return 0;
++}
++
++// Create raw socket with timestamping enabled
++static int create_timestamping_socket(const char *interface)
++{
++    int sock;
++    struct sockaddr_ll addr;
++    int timestamp_flags;
++    int enable = 1;
++    unsigned int ifindex = if_nametoindex(interface);
++
++    // Create raw socket
++    sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
++    if(sock < 0) {
++        perror("socket");
++        return -1;
++    }
++
++    // Bind to interface
++    memset(&addr, 0, sizeof(addr));
++    addr.sll_family = AF_PACKET;
++    addr.sll_ifindex = (int)ifindex;
++    addr.sll_protocol = htons(ETH_P_ALL);
++
++    if(bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
++        perror("bind");
++        close(sock);
++        return -1;
++    }
++
++    // Enable software timestamping
++    timestamp_flags = SOF_TIMESTAMPING_TX_SOFTWARE | SOF_TIMESTAMPING_TX_HARDWARE |
++                      SOF_TIMESTAMPING_SOFTWARE | SOF_TIMESTAMPING_RAW_HARDWARE;
++
++    if(setsockopt(sock, SOL_SOCKET, SO_TIMESTAMPING, &timestamp_flags,
++                  sizeof(timestamp_flags)) < 0) {
++        perror("setsockopt SO_TIMESTAMPING");
++        close(sock);
++        return -1;
++    }
++
++    // Enable error queue for timestamp reception
++    if(setsockopt(sock, SOL_SOCKET, SO_SELECT_ERR_QUEUE, &enable, sizeof(enable)) < 0) {
++        perror("setsockopt SO_SELECT_ERR_QUEUE");
++        // Not critical, continue
++    }
++
++    // Try to enable hardware timestamping
++    enable_hw_timestamping(sock, interface);
++
++    return sock;
++}
++
++static size_t create_ethernet_packet(uint8_t *packet, const uint8_t *dest_mac,
++                           const uint8_t *src_mac)
++{
++    struct ethhdr *eth_header = (struct ethhdr *)packet;
++    uint8_t *payload = packet + sizeof(struct ethhdr);
++    size_t payload_size = sizeof(netmsg_2dsetmsg);
++
++    // Ethernet header (14 bytes)
++    memcpy(eth_header->h_dest, dest_mac, ETH_ALEN);
++    memcpy(eth_header->h_source, src_mac, ETH_ALEN);
++    eth_header->h_proto = htons(ETHERTYPE_UADP);
++
++    memcpy(payload, netmsg_2dsetmsg, payload_size);
++    return sizeof(struct ethhdr) + payload_size;
++}
++
++// Receive transmission timestamp from error queue
++static int receive_tx_timestamp(int sock)
++{
++    struct msghdr msg;
++    struct iovec iov;
++    char data[PACKET_SIZE];
++    char control[1024];
++    struct cmsghdr *cmsg;
++    ssize_t received;
++    bool get_time = false;
++    uint64_t timestamp;
++
++    memset(&msg, 0, sizeof(msg));
++    iov.iov_base = data;
++    iov.iov_len = sizeof(data);
++    msg.msg_iov = &iov;
++    msg.msg_iovlen = 1;
++    msg.msg_control = control;
++    msg.msg_controllen = sizeof(control);
++
++    while (!get_time) {
++        received = recvmsg(sock, &msg, MSG_ERRQUEUE | MSG_DONTWAIT);
++        if(received < 0) {
++            if(errno != EAGAIN && errno != EWOULDBLOCK) {
++                perror("recvmsg error queue");
++            }
++            return -1;
++        }
++
++        // Process control messages for timestamps
++        for(cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
++            if(cmsg->cmsg_level != SOL_SOCKET)
++                continue;
++
++            switch(cmsg->cmsg_type) {
++            case SCM_TIMESTAMPING:
++                // Timestamping structure contains 3 timestamps:
++                // [0] = software timestamp
++                // [1] = deprecated
++                // [2] = hardware timestamp
++                struct timespec *timestamps = (struct timespec *)CMSG_DATA(cmsg);
++
++                if(timestamps[2].tv_sec || timestamps[2].tv_nsec) {
++                    timestamp = (uint64_t)timestamps[2].tv_sec * NSEC_PER_SEC +
++                                                (uint64_t)timestamps[2].tv_nsec;
++                    printf("  TX HW Timestamp: %lu ns\r\n", timestamp);
++                    get_time = true;
++                }
++                break;
++            default:
++                break;
++            }
++        }
++    }
++    return 0;
++}
++
++// Get interface MAC address
++static int get_interface_mac(const char *interface, uint8_t *mac)
++{
++    int sock;
++    struct ifreq ifr;
++
++    sock = socket(AF_INET, SOCK_DGRAM, 0);
++    if(sock < 0) {
++        perror("socket");
++        return -1;
++    }
++
++    memset(&ifr, 0, sizeof(ifr));
++    strncpy(ifr.ifr_name, interface, IFNAMSIZ - 1);
++
++    if(ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) {
++        perror("ioctl SIOCGIFHWADDR");
++        close(sock);
++        return -1;
++    }
++
++    memcpy(mac, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
++    close(sock);
++
++    printf("Interface %s MAC: %02x:%02x:%02x:%02x:%02x:%02x\r\n",
++           interface, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
++
++    return 0;
++}
++
++static int thread_creation(UA_Int32 threadPriority, UA_Int32 coreAffinity,
++                           void *(*thread)(void *), char *applicationName,
++                           void *serverConfig, pthread_t *newthreadID)
++{
++    cpu_set_t cpuset;
++    pthread_t threadID;
++    int returnValue = 0;
++    struct sched_param schedParam;
++
++    /* Return the ID for thread */
++    threadID = pthread_self();
++
++    schedParam.sched_priority = threadPriority;
++    returnValue = pthread_setschedparam(threadID, SCHED_FIFO, &schedParam);
++    if(returnValue) {
++        perror("pthread_setschedparam: ");
++        return -1;
++    }
++
++    CPU_ZERO(&cpuset);
++    CPU_SET((size_t)coreAffinity, &cpuset);
++    returnValue = pthread_setaffinity_np(threadID, sizeof(cpu_set_t), &cpuset);
++    if(returnValue) {
++        perror("pthread_setaffinity_np: ");
++        return -1;
++    }
++
++    returnValue = pthread_create(newthreadID, NULL, thread, serverConfig);
++    if(returnValue) {
++        perror("pthread_create: ");
++        return -1;
++    }
++
++    return 0;
++}
++
++static void nanoSecondFieldConversion(struct timespec *timeSpec)
++{
++    while(timeSpec->tv_nsec > (NSEC_PER_SEC - 1)) {
++        timeSpec->tv_sec += 1;
++        timeSpec->tv_nsec -= NSEC_PER_SEC;
++    }
++}
++
++static void *tx_thread_func(void *arg)
++{
++    struct app_config *config = (struct app_config *)arg;
++    struct timespec start_time;
++    struct timespec now;
++    uint32_t interval_ns;
++    uint8_t src_mac[ETH_ALEN];
++    int sock;
++    uint32_t pkt_id = 0;
++    uint8_t packet[256];
++    struct sockaddr_ll dest_addr;
++    struct msghdr msg;
++    struct iovec iov;
++    ssize_t sent;
++    size_t packet_len;
++
++    printf("Starting TX thread on interface %s\r\n", config->tx_if);
++
++    // Get source MAC address
++    if(get_interface_mac(config->tx_if, src_mac) < 0) {
++        return NULL;
++    }
++
++    // Create timestamping socket
++    sock = create_timestamping_socket(config->tx_if);
++    if(sock < 0) {
++        return NULL;
++    }
++
++    packet_len = create_ethernet_packet(packet, g_dest_mac, src_mac);
++
++    memset(&dest_addr, 0, sizeof(dest_addr));
++    dest_addr.sll_family = AF_PACKET;
++    dest_addr.sll_protocol = htons(ETH_P_ALL);
++    dest_addr.sll_halen = ETH_ALEN;
++    dest_addr.sll_ifindex = (int)if_nametoindex(config->tx_if);
++    memcpy(dest_addr.sll_addr, g_dest_mac, ETH_ALEN);
++
++    // Setup message structure
++    memset(&msg, 0, sizeof(msg));
++    iov.iov_base = packet;
++    iov.iov_len = packet_len;
++    msg.msg_iov = &iov;
++    msg.msg_iovlen = 1;
++    msg.msg_name = &dest_addr;
++    msg.msg_namelen = sizeof(dest_addr);
++
++    clock_gettime(CLOCKID, &now);
++
++    interval_ns = config->interval_ns;
++    start_time.tv_sec = now.tv_sec + 2;
++    start_time.tv_nsec = interval_ns - TX_PRELOAD_TIME_NS;
++
++    while(running) {
++
++        clock_nanosleep(CLOCKID, TIMER_ABSTIME, &start_time, NULL);
++
++        clock_gettime(CLOCKID, &now);
++        tx_timestamp = now.tv_sec * NSEC_PER_SEC + now.tv_nsec;
++
++        sent = sendmsg(sock, &msg, 0);
++        if(sent < 0) {
++            perror("sendmsg");
++            continue;
++        }
++        printf("\r\n%u: Sent one frame of %zd bytes\r\n", pkt_id, sent);
++
++        // Try to receive a timestamp
++        receive_tx_timestamp(sock);
++
++        start_time.tv_nsec += interval_ns;
++        nanoSecondFieldConversion(&start_time);
++        pkt_id++;
++    }
++
++    close(sock);
++    return NULL;
++}
++
++static int decode_payload(uint8_t *payload, size_t payload_length)
++{
++    UA_NetworkMessage networkMessage;
++    UA_ByteString message;
++    size_t offset;
++    UA_StatusCode retval;
++
++    /* UA_NetworkMessage_init(&networkMessage); */
++    memset(&networkMessage, 0, sizeof(UA_NetworkMessage));
++
++    message.data = payload;
++    message.length = payload_length;
++    offset = 0;
++
++    retval = UA_NetworkMessage_decodeBinary(&message, &offset, &networkMessage);
++    if(retval != UA_STATUSCODE_GOOD) {
++        return -1;
++    }
++
++    // Process DataSetMessages if present
++    if(networkMessage.payloadHeaderEnabled &&
++       networkMessage.payload.dataSetPayload.dataSetMessages) {
++
++        UA_Byte ds_count = networkMessage.payloadHeader.dataSetPayloadHeader.count;
++        ds_count = ds_count > 2 ? ds_count - 2 : ds_count;  // remove 2 empty DataSet
++        printf("  DataSet message count: %u\r\n", (unsigned int)ds_count);
++
++        for(size_t i = 0; i < ds_count; i++) {
++            UA_DataSetMessage *dsm;
++            UA_UInt16 writerid;
++
++            dsm = &networkMessage.payload.dataSetPayload.dataSetMessages[i];
++            writerid = networkMessage.payloadHeader.dataSetPayloadHeader.dataSetWriterIds[i];
++
++            if (writerid == DATASETWRITERID1_EMPTY || writerid == DATASETWRITERID2_EMPTY)
++                continue;
++
++            printf("    DataSetMessage[%zu]:\r\n", i);
++            printf("      DataSetWriterId: %u\r\n", writerid);
++
++            // Process payload data
++            if(dsm->header.dataSetMessageType == UA_DATASETMESSAGE_DATAKEYFRAME) {
++                printf("      Field count: %u\r\n", dsm->data.keyFrameData.fieldCount);
++
++                // Extract field values
++                for(size_t j = 0; j < dsm->data.keyFrameData.fieldCount; j++) {
++                    UA_DataValue *field = &dsm->data.keyFrameData.dataSetFields[j];
++                    if(field->hasValue) {
++                        // Handle specific data types
++                        if(field->value.type == &UA_TYPES[UA_TYPES_STRING]) {
++                            UA_String *name = (UA_String *)field->value.data;
++                            printf("        Field[%zu]: %s\r\n", j, "string");
++
++                            if (name && name->data && name->length > 0)
++                                printf("          Name: %.*s\n", (int)name->length, name->data);
++                        } else if(field->value.type == &UA_TYPES[UA_TYPES_INT32]) {
++                            int32_t *value = (int32_t *)field->value.data;
++                            printf("        Field[%zu]: %s\r\n", j, "int32");
++                            printf("          Count: %d\r\n", *value);
++                        }
++                    }
++                }
++            }
++        }
++    }
++
++    // Clean up the decoded message
++    UA_NetworkMessage_clear(&networkMessage);
++    return 0;
++}
++
++// receive Ethernet packets and get their timestamps
++static void *rx_thread_func(void *arg)
++{
++    struct app_config *config = (struct app_config *)arg;
++    int sock;
++    struct sockaddr_ll addr;
++    socklen_t addr_len = sizeof(addr);
++    struct msghdr msg;
++    struct iovec iov;
++    char control[1024];
++    struct cmsghdr *cmsg;
++    ssize_t received;
++    uint8_t *payload;
++    uint64_t timestamp;
++
++    printf("Starting RX thread on interface %s\r\n", config->rx_if);
++
++    // Create timestamping socket for RX
++    sock = create_timestamping_socket(config->rx_if);
++    if(sock < 0) {
++        printf("Failed to create RX socket\r\n");
++        return NULL;
++    }
++
++    while(running) {
++        // Setup message structure for receiving
++        memset(&msg, 0, sizeof(msg));
++        iov.iov_base = rx_buffer;
++        iov.iov_len = sizeof(rx_buffer);
++        msg.msg_iov = &iov;
++        msg.msg_iovlen = 1;
++        msg.msg_name = &addr;
++        msg.msg_namelen = addr_len;
++        msg.msg_control = control;
++        msg.msg_controllen = sizeof(control);
++
++        // Receive packet with timestamp
++        received = recvmsg(sock, &msg, 0);
++        if(received < 0) {
++            if(errno != EAGAIN && errno != EWOULDBLOCK) {
++                perror("recvmsg");
++            }
++            continue;
++        }
++        printf("  Received %d bytes\r\n", received);
++
++        // Process control messages for RX timestamps
++        for(cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
++            if(cmsg->cmsg_level != SOL_SOCKET)
++                continue;
++
++            switch(cmsg->cmsg_type) {
++            case SCM_TIMESTAMPING:
++                struct timespec *timestamps = (struct timespec *)CMSG_DATA(cmsg);
++
++                // get Hardware timestamp
++                if(timestamps[2].tv_sec || timestamps[2].tv_nsec) {
++                    timestamp = (uint64_t)timestamps[2].tv_sec * NSEC_PER_SEC +
++                                   timestamps[2].tv_nsec;
++                }
++                break;
++            default:
++                break;
++            }
++        }
++
++        if(received >= sizeof(struct ethhdr)) {
++            struct ethhdr *eth_header = (struct ethhdr *)rx_buffer;
++            struct timespec now;
++            uint64_t delay;
++
++            // Check if this is an OPC UA PUBSUB UADP
++            if(ntohs(eth_header->h_proto) == ETHERTYPE_UADP) {
++
++                payload = rx_buffer + sizeof(struct ethhdr);
++
++                // compute the roundtrip time in application level
++                clock_gettime(CLOCKID, &now);
++                timestamp = now.tv_sec * NSEC_PER_SEC + now.tv_nsec;
++
++                delay = timestamp - tx_timestamp;
++                printf("  Application level roundtrip time: %llu ns (%.3f μs)\r\n",
++                            delay, delay / 1000.0);
++                decode_payload(payload, (size_t)received - sizeof(struct ethhdr));
++
++            } else {
++                printf("  No valid OPC UA packet! Drop %d bytes.\r\n", (int)received);
++                continue;
++            }
++        }
++    }
++
++    close(sock);
++    return NULL;
++}
++
++static int validate_interface_name(const char *ifname)
++{
++    if(!ifname || strlen(ifname) == 0 || strlen(ifname) >= IFNAMSIZ) {
++        return -1;
++    }
++
++    // Check if interface exists
++    int sock = socket(AF_INET, SOCK_DGRAM, 0);
++    if(sock < 0) return -1;
++
++    struct ifreq ifr;
++    strncpy(ifr.ifr_name, ifname, IFNAMSIZ - 1);
++    ifr.ifr_name[IFNAMSIZ - 1] = '\0';
++
++    int result = ioctl(sock, SIOCGIFINDEX, &ifr);
++    close(sock);
++
++    return result;
++}
++
++static void print_usage(const char *prog)
++{
++    printf("Usage: %s <tx interface> <rx interface>\r\n", prog);
++    printf("  tx interface: interface sending traffic (e.g., eth1)\r\n");
++    printf("  rx interface: interface receiving (e.g., eth2)\r\n");
++    printf("\r\nExample:\r\n");
++    printf("  %s eth1 eth2\r\n", prog);
++}
++
++int main(int argc, char *argv[])
++{
++    int ret;
++
++    if(argc < 3) {
++        print_usage(argv[0]);
++        return 1;
++    }
++
++    if (geteuid() != 0) {
++        printf("Insufficient privileges. Exiting.\r\n");
++        return 1;
++    }
++
++    strncpy(app_config.tx_if, argv[1], 64);
++    strncpy(app_config.rx_if, argv[2], 64);
++
++    if(validate_interface_name(app_config.tx_if) < 0) {
++        printf("Invalid TX interface: %s\r\n", app_config.tx_if);
++        return 1;
++    }
++
++    if(validate_interface_name(app_config.rx_if) < 0) {
++        printf("Invalid RX interface: %s\r\n", app_config.rx_if);
++        return 1;
++    }
++
++    ret = get_interface_mac(app_config.rx_if, g_dest_mac);
++    if (ret) {
++        printf("Failed to get MAC address for interface %s\r\n", app_config.rx_if);
++        return 1;
++    }
++
++    signal(SIGINT, signal_handler);
++    signal(SIGTERM, signal_handler);
++
++    app_config.interval_ns = CYCLE_PERIOD_NS;
++
++    ret = thread_creation(PUB_SCHED_PRIORITY, CORE_TWO, tx_thread_func, NULL, &app_config,
++                          &tx_thread);
++    if(ret) {
++        return 1;
++    }
++
++    ret = thread_creation(PUB_SCHED_PRIORITY, CORE_TWO, rx_thread_func, NULL, &app_config,
++                          &rx_thread);
++    if(ret) {
++        return 1;
++    }
++
++    pthread_join(tx_thread, NULL);
++    pthread_join(rx_thread, NULL);
++
++    return 0;
++}
++
++void UA_initialize_architecture_network(void)
++{
++}
++
++unsigned int UA_socket_set_nonblocking(UA_SOCKET sockfd)
++{
++}
+diff --git a/examples/pubsub_realtime/opcua_summation_device.c b/examples/pubsub_realtime/opcua_summation_device.c
+new file mode 100644
+index 000000000..41fe5091b
+--- /dev/null
++++ b/examples/pubsub_realtime/opcua_summation_device.c
+@@ -0,0 +1,249 @@
++/* This work is licensed under a Creative Commons CCZero 1.0 Universal License.  * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
++ *
++ *    Copyright 2025 NXP
++ */
++
++#define _GNU_SOURCE
++
++#include <signal.h>
++#include <time.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <pthread.h>
++#include <string.h>
++#include <errno.h>
++#include <sys/ioctl.h>
++#include <sys/socket.h>
++#include <linux/ioctl.h>
++
++#include <open62541/server.h>
++#include <open62541/server_config_default.h>
++#include <open62541/types_generated_encoding_binary.h>
++#include <open62541/types_generated_handling.h>
++
++#include "ua_pubsub_networkmessage.h"
++#include "netc_fm.h"
++
++#define NETC_SWITCH_FM_PATH                     "/dev/netc-switch-fm"
++
++#define ETHERTYPE_UADP                          (0xB62CU)
++#define MESSAGE_COUNT_FIELD_OFFSET              1
++#define DATA_SET_MSG_NUMBER                     1
++
++#define SAMPLE_OFFSET           0
++#define CYCLE_PERIOD_NS         (100 * 1000 * 1000UL)
++#define NSEC_PER_SEC            (1000000000ULL)
++#define BUFFER_SIZE             (1024U)
++
++#define CLOCKID                 CLOCK_REALTIME
++
++static volatile sig_atomic_t running = 1;
++static uint16_t node_id = 100;
++
++static void datasetmsg_init(UA_DataSetMessage *dsm)
++{
++    memset(dsm, 0, sizeof(UA_DataSetMessage));
++
++    dsm->header.dataSetMessageValid = true;
++    dsm->header.fieldEncoding = UA_FIELDENCODING_VARIANT;
++    dsm->header.dataSetMessageType = UA_DATASETMESSAGE_DATAKEYFRAME;
++
++    // Create 2 fields
++    UA_UInt16 count = 2;
++    dsm->data.keyFrameData.fieldCount = count;
++
++    dsm->data.keyFrameData.dataSetFields = (UA_DataValue*)UA_Array_new(count,
++                                                &UA_TYPES[UA_TYPES_DATAVALUE]);
++
++    // Field 1: String
++    char buf[128];
++    snprintf(buf, 128, "Node %d", node_id);
++    UA_String name = UA_STRING(buf);
++    UA_DataValue_init(&dsm->data.keyFrameData.dataSetFields[0]);
++    dsm->data.keyFrameData.dataSetFields[0].hasValue = true;
++    UA_Variant_setScalarCopy(&dsm->data.keyFrameData.dataSetFields[0].value,
++                             &name, &UA_TYPES[UA_TYPES_STRING]);
++
++    // Field 2: Integer
++    UA_Int32 val = 0;
++    UA_DataValue_init(&dsm->data.keyFrameData.dataSetFields[1]);
++    dsm->data.keyFrameData.dataSetFields[1].hasValue = true;
++    UA_Variant_setScalarCopy(&dsm->data.keyFrameData.dataSetFields[1].value,
++                             &val, &UA_TYPES[UA_TYPES_INT32]);
++}
++
++static void update_data(UA_DataSetMessage *dsm)
++{
++    static UA_Int32 count = 0;
++
++    count++;
++    UA_Variant_setScalarCopy(&dsm->data.keyFrameData.dataSetFields[1].value,
++                             &count, &UA_TYPES[UA_TYPES_INT32]);
++}
++
++static size_t encode_datasetmessage(UA_DataSetMessage *dsm, UA_ByteString *buf)
++{
++    UA_StatusCode rv;
++    UA_Byte *start;
++    UA_Byte *end;
++
++    start = buf->data;
++    end = start + buf->length;
++
++    // encode Message Count field
++    *start++ = DATA_SET_MSG_NUMBER;
++
++    // encode DataSet Writer ID field
++    UA_UInt16 writer_id = node_id * 10 + 1;
++    rv = UA_UInt16_encodeBinary(&writer_id, &start, end);
++    if (rv != UA_STATUSCODE_GOOD)
++        return 0;
++
++    UA_UInt16 sz = 0;
++    sz = (UA_UInt16)UA_DataSetMessage_calcSizeBinary(dsm, NULL, 0);
++    rv = UA_UInt16_encodeBinary(&sz, &start, end);
++    if(rv != UA_STATUSCODE_GOOD)
++        return 0;
++
++    rv = UA_DataSetMessage_encodeBinary(dsm, &start, end);
++    if(rv != UA_STATUSCODE_GOOD)
++        return 0;
++
++    return (size_t)(start - buf->data);
++}
++
++static int create_channel(char *path)
++{
++    struct netc_fm_conf config;
++    int ret;
++    int fd;
++
++    fd = open(path, O_WRONLY);
++    if (fd < 0) {
++        perror("open: ");
++        return -1;
++    }
++
++    memset(&config, 0, sizeof(config));
++    config.fm_action = FMT_PLD_ACT_INSERT_DATASETMSG;
++    config.ingress_port = 0;    // swp0
++    config.egress_port = 1;     // swp1
++    config.filter.ethertype = ETHERTYPE_UADP;
++    config.message_count_offset = MESSAGE_COUNT_FIELD_OFFSET;
++
++    ret = ioctl(fd, NETC_FM_CMD_CREATE, &config);
++    if (ret < 0) {
++        perror("ioctl: ");
++        close(fd);
++        return -1;
++    }
++
++    return fd;
++}
++
++static void nanoSecondFieldConversion(struct timespec *timeSpec)
++{
++    while(timeSpec->tv_nsec > (NSEC_PER_SEC - 1)) {
++        timeSpec->tv_sec += 1;
++        timeSpec->tv_nsec -= NSEC_PER_SEC;
++    }
++}
++
++static void signal_handler(int sig)
++{
++    running = 0;
++}
++
++static void print_usage(const char *prog)
++{
++    // TODO
++    printf("Usage: %s <id>\r\n", prog);
++    printf("  id: the node id\r\n");
++    printf("\r\nExample:\r\n");
++    printf("  %s 100\r\n", prog);
++}
++
++
++int main(int argc, char *argv[])
++{
++    UA_StatusCode rv = UA_STATUSCODE_UNCERTAININITIALVALUE;
++    UA_DataSetMessage dsm;
++    UA_ByteString buffer;
++    struct timespec start_time;
++    struct timespec now;
++    int fd;
++
++    if(argc < 2) {
++        print_usage(argv[0]);
++        return 1;
++    }
++
++    node_id = atoi(argv[1]);
++
++    if (geteuid() != 0) {
++        printf("Insufficient privileges. Exiting.\n");
++        return 1;
++    }
++
++    signal(SIGINT, signal_handler);
++    signal(SIGTERM, signal_handler);
++
++    fd = create_channel(NETC_SWITCH_FM_PATH);
++    if (fd < 0) {
++        printf("create_channel() error]\n");
++        return 1;
++    }
++
++    rv = UA_ByteString_allocBuffer(&buffer, BUFFER_SIZE);
++    if (rv != UA_STATUSCODE_GOOD) {
++        printf("UA_ByteString_allocBuffer(): buffer allocation failed\n");
++        return 1;
++    }
++
++    datasetmsg_init(&dsm);
++
++    clock_gettime(CLOCKID, &now);
++
++    start_time.tv_sec = now.tv_sec + 2;
++    start_time.tv_nsec = SAMPLE_OFFSET;
++
++    printf("Start to publish data...\r\n");
++
++    while(running) {
++        size_t size;
++        ssize_t send;
++
++        clock_nanosleep(CLOCKID, TIMER_ABSTIME, &start_time, NULL);
++
++        update_data(&dsm);
++
++        size = encode_datasetmessage(&dsm, &buffer);
++        if (size == 0) {
++            printf("encode_datasetmessage failed\n");
++            continue;
++        }
++
++        send = write(fd, buffer.data, size);
++        if (send != size) {
++            perror("write():");
++            continue;
++        }
++
++        start_time.tv_nsec += CYCLE_PERIOD_NS;
++        nanoSecondFieldConversion(&start_time);
++    }
++
++    UA_DataSetMessage_clear(&dsm);
++    close(fd);
++
++    return 0;
++}
++
++void UA_initialize_architecture_network(void)
++{
++}
++
++unsigned int UA_socket_set_nonblocking(UA_SOCKET sockfd)
++{
++}
+-- 
+2.34.1
+
