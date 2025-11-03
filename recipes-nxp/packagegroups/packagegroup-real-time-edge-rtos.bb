@@ -33,15 +33,45 @@ driver_examples:append:mx943-nxp-bsp = " rgpio-led-output "
 driver_examples:append:mx95-nxp-bsp = " rgpio-led-output "
 
 soem_examples ?= ""
-# soem_examples:append:mx8mm-nxp-bsp = " soem-gpio-pulse freertos-soem-gpio-pulse soem-servo-motor freertos-soem-servo-motor soem-servo-motor-rt1180 freertos-soem-servo-motor-rt1180 "
-# soem_examples:append:mx8mp-nxp-bsp = " soem-gpio-pulse freertos-soem-gpio-pulse soem-servo-motor freertos-soem-servo-motor soem-servo-motor-rt1180 freertos-soem-servo-motor-rt1180 "
-# soem_examples:append:imx93evk = " soem-servo-motor soem-servo-motor-rt1180 "
-
-rpmsg_lite_examples ?= ""
-# rpmsg_lite_examples:append:imx93-9x9-lpddr4-qsb = " rpmsg-lite-uart-sharing-rtos-mcimx93qsb "
+soem_examples:append:mx8mm-nxp-bsp = " \
+    soem-gpio-pulse-bm soem-gpio-pulse-freertos \
+    soem-servo-motor-bm soem-servo-motor-freertos \
+    soem-servo-motor-rt1180-bm soem-servo-motor-rt1180-freertos \
+"
+soem_examples:append:mx8mp-nxp-bsp = " \
+    soem-gpio-pulse-bm soem-gpio-pulse-freertos \
+    soem-servo-motor-bm soem-servo-motor-freertos \
+    soem-servo-motor-rt1180-bm soem-servo-motor-rt1180-freertos \
+"
+soem_examples:append:imx93evk = " \
+    soem-servo-motor-bm \
+    soem-servo-motor-rt1180-bm \
+"
+soem_examples:append:mx943-nxp-bsp = " \
+    soem-gpio-pulse-netc-bm \
+    soem-servo-motor-bm \
+    soem-servo-motor-rt1180-bm \
+"
 
 uart_examples ?= ""
-# uart_examples:append:mx8mm-nxp-bsp = " 9bit-iuart-interrupt-transfer 9bit-iuart-polling "
+uart_examples:append:mx8mm-nxp-bsp = " \
+    iuart-9bit-interrupt-transfer \
+    iuart-9bit-polling \
+"
+
+digital_encoder_examples ?= ""
+digital_encoder_examples:append:mx943-nxp-bsp = " \
+    biss \
+    endat2p2 \
+    endat3 \
+    hiperface \
+    a-format-interrupt-transfer \
+    a-format-polling-transfer \
+    a-format-sync-transfer \
+    t-format-interrupt-transfer \
+    t-format-polling-transfer \
+    t-format-sync-transfer \
+"
 
 heterogeneous_multicore_examples ?= ""
 
@@ -147,8 +177,8 @@ RTOS_INDUSTRIAL_INSTALL = " \
     ${freertos_examples} \
     ${driver_examples} \
     ${soem_examples} \
-    ${rpmsg_lite_examples} \
     ${uart_examples} \
+    ${digital_encoder_examples} \
     ${heterogeneous_multicore_examples} \
     ${heterogeneous_multi_soc_examples} \
 "
