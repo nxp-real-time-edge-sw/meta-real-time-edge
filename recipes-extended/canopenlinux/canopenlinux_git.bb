@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57"
 DEPENDS = "libsocketcan"
 RDEPENDS:${PN} = "can-utils iproute2"
 
-SRC_URI = "git://github.com/CANopenNode/CANopenLinux.git;protocol=https;branch=master \
+SRC_URI = "gitsm://github.com/CANopenNode/CANopenLinux.git;protocol=https;branch=master \
            file://0001-Disable-the-Storage-option.patch \
            file://canopenlinux.conf \
            file://canopen-master.service \
@@ -36,13 +36,6 @@ DEBUG_PREFIX_MAP += "-fdebug-prefix-map=${STAGING_DIR_HOST}="
 DEBUG_PREFIX_MAP += "-fdebug-prefix-map=${STAGING_DIR_NATIVE}="
 TARGET_CFLAGS += "${DEBUG_PREFIX_MAP}"
 TARGET_CXXFLAGS += "${DEBUG_PREFIX_MAP}"
-
-do_configure() {
-    # Initialize and update submodules
-    cd ${S}
-    git submodule init
-    git submodule update
-}
 
 do_compile() {
     oe_runmake
