@@ -12,33 +12,39 @@ inherit packagegroup
 PACKAGES = "${PN}"
 
 demo_apps ?= ""
-demo_apps:append:mx8mm-nxp-bsp = " demo-hello-world "
-demo_apps:append:mx8mp-nxp-bsp = " demo-hello-world "
-demo_apps:append:mx93-nxp-bsp = " demo-hello-world "
-demo_apps:append:mx943-nxp-bsp = " demo-hello-world "
-demo_apps:append:mx95-nxp-bsp = " demo-hello-world "
+demo_apps:append:imx8mm-lpddr4-evk = " demo-hello-world "
+demo_apps:append:imx8mp-lpddr4-evk = " demo-hello-world "
+demo_apps:append:imx93-11x11-lpddr4x-evk = " demo-hello-world "
+demo_apps:append:imx943-19x19-lpddr4-evk = " demo-hello-world "
+demo_apps:append:imx943-19x19-lpddr5-evk = " demo-hello-world "
+demo_apps:append:imx95-15x15-lpddr4x-evk = " demo-hello-world "
+demo_apps:append:imx95-19x19-lpddr5-evk = " demo-hello-world "
 
 freertos_examples ?= ""
-freertos_examples:append:mx8mm-nxp-bsp = " freertos-hello "
-freertos_examples:append:mx8mp-nxp-bsp = " freertos-hello "
-freertos_examples:append:mx93-nxp-bsp = " freertos-hello "
-freertos_examples:append:mx943-nxp-bsp = " freertos-hello "
-freertos_examples:append:mx95-nxp-bsp = " freertos-hello "
+freertos_examples:append:imx8mm-lpddr4-evk = " freertos-hello "
+freertos_examples:append:imx8mp-lpddr4-evk = " freertos-hello "
+freertos_examples:append:imx93-11x11-lpddr4x-evk = " freertos-hello "
+freertos_examples:append:imx943-19x19-lpddr4-evk = " freertos-hello "
+freertos_examples:append:imx943-19x19-lpddr5-evk = " freertos-hello "
+freertos_examples:append:imx95-15x15-lpddr4x-evk = " freertos-hello "
+freertos_examples:append:imx95-19x19-lpddr5-evk = " freertos-hello "
 
 driver_examples ?= ""
-driver_examples:append:mx8mm-nxp-bsp = " igpio-led-output "
-driver_examples:append:mx8mp-nxp-bsp = " igpio-led-output "
-driver_examples:append:mx93-nxp-bsp = " rgpio-led-output "
-driver_examples:append:mx943-nxp-bsp = " rgpio-led-output "
-driver_examples:append:mx95-nxp-bsp = " rgpio-led-output "
+driver_examples:append:imx8mm-lpddr4-evk = " igpio-led-output "
+driver_examples:append:imx8mp-lpddr4-evk = " igpio-led-output "
+driver_examples:append:imx93-11x11-lpddr4x-evk = " rgpio-led-output "
+driver_examples:append:imx943-19x19-lpddr4-evk = " rgpio-led-output "
+driver_examples:append:imx943-19x19-lpddr5-evk = " rgpio-led-output "
+driver_examples:append:imx95-15x15-lpddr4x-evk = " rgpio-led-output "
+driver_examples:append:imx95-19x19-lpddr5-evk = " rgpio-led-output "
 
 soem_examples ?= ""
-soem_examples:append:mx8mm-nxp-bsp = " \
+soem_examples:append:imx8mm-lpddr4-evk = " \
     soem-gpio-pulse-bm soem-gpio-pulse-freertos \
     soem-servo-motor-bm soem-servo-motor-freertos \
     soem-servo-motor-rt1180-bm soem-servo-motor-rt1180-freertos \
 "
-soem_examples:append:mx8mp-nxp-bsp = " \
+soem_examples:append:imx8mp-lpddr4-evk = " \
     soem-gpio-pulse-bm soem-gpio-pulse-freertos \
     soem-servo-motor-bm soem-servo-motor-freertos \
     soem-servo-motor-rt1180-bm soem-servo-motor-rt1180-freertos \
@@ -47,20 +53,37 @@ soem_examples:append:imx93evk = " \
     soem-servo-motor-bm \
     soem-servo-motor-rt1180-bm \
 "
-soem_examples:append:mx943-nxp-bsp = " \
+soem_examples:append:imx943-19x19-lpddr4-evk = " \
+    soem-gpio-pulse-netc-bm \
+    soem-servo-motor-bm \
+    soem-servo-motor-rt1180-bm \
+"
+soem_examples:append:imx943-19x19-lpddr5-evk = " \
     soem-gpio-pulse-netc-bm \
     soem-servo-motor-bm \
     soem-servo-motor-rt1180-bm \
 "
 
 uart_examples ?= ""
-uart_examples:append:mx8mm-nxp-bsp = " \
+uart_examples:append:imx8mm-lpddr4-evk = " \
     iuart-9bit-interrupt-transfer \
     iuart-9bit-polling \
 "
 
 digital_encoder_examples ?= ""
-digital_encoder_examples:append:mx943-nxp-bsp = " \
+digital_encoder_examples:append:imx943-19x19-lpddr4-evk = " \
+    biss \
+    endat2p2 \
+    endat3 \
+    hiperface \
+    a-format-interrupt-transfer \
+    a-format-polling-transfer \
+    a-format-sync-transfer \
+    t-format-interrupt-transfer \
+    t-format-polling-transfer \
+    t-format-sync-transfer \
+"
+digital_encoder_examples:append:imx943-19x19-lpddr5-evk = " \
     biss \
     endat2p2 \
     endat3 \
@@ -75,7 +98,7 @@ digital_encoder_examples:append:mx943-nxp-bsp = " \
 
 heterogeneous_multicore_examples ?= ""
 
-heterogeneous_multicore_examples:append:mx8mm-nxp-bsp = " \
+heterogeneous_multicore_examples:append:imx8mm-lpddr4-evk = " \
     hello-world \
     rpmsg-uart-sharing \
     rpmsg-str-echo \
@@ -89,7 +112,7 @@ heterogeneous_multicore_examples:append:mx8mm-nxp-bsp = " \
     soem-servo-rt1180 \
 "
 
-heterogeneous_multicore_examples:append:mx8mp-nxp-bsp = " \
+heterogeneous_multicore_examples:append:imx8mp-lpddr4-evk = " \
     hello-world \
     rpmsg-str-echo \
     rpmsg-pingpong \
@@ -164,9 +187,10 @@ heterogeneous_multicore_examples:append:imx91-11x11-lpddr4-evk = " \
 "
 
 heterogeneous_multi_soc_examples ?= ""
-heterogeneous_multi_soc_examples:append:mx8mp-nxp-bsp = " dsa-switch-evkmimxrt1180-cm33 "
+heterogeneous_multi_soc_examples:append:imx8mp-lpddr4-evk = " dsa-switch-evkmimxrt1180-cm33 "
 heterogeneous_multi_soc_examples:append:imx93evk = " dsa-switch-evkmimxrt1180-cm33 "
-heterogeneous_multi_soc_examples:append:mx943-nxp-bsp = " dsa-switch-evkmimxrt1180-cm33 "
+heterogeneous_multi_soc_examples:append:imx943-19x19-lpddr4-evk = " dsa-switch-evkmimxrt1180-cm33 "
+heterogeneous_multi_soc_examples:append:imx943-19x19-lpddr5-evk = " dsa-switch-evkmimxrt1180-cm33 "
 
 RDEPENDS:${PN} = " \
     ${RTOS_INDUSTRIAL_INSTALL} \
