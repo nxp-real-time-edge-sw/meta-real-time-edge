@@ -173,6 +173,7 @@ heterogeneous_multicore_examples:append:imx943-19x19-lpddr5-evk = " \
 heterogeneous_multicore_examples:append:imx95-15x15-lpddr4x-evk = " \
     hello-world \
     rpmsg-str-echo \
+    rpmsg-pingpong \
     rt-latency \
     hmc-tools \
 "
@@ -180,6 +181,7 @@ heterogeneous_multicore_examples:append:imx95-15x15-lpddr4x-evk = " \
 heterogeneous_multicore_examples:append:imx95-19x19-lpddr5-evk = " \
     hello-world \
     rpmsg-str-echo \
+    rpmsg-pingpong \
     rt-latency \
     hmc-tools \
     soem-digital-io \
