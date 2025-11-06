@@ -153,10 +153,14 @@ heterogeneous_multicore_examples:append:imx93-14x14-lpddr4x-evk = " \
 "
 
 heterogeneous_multicore_examples:append:imx943-19x19-lpddr4-evk = " \
+    hello-world \
+    rt-latency \
     hmc-tools \
 "
 
 heterogeneous_multicore_examples:append:imx943-19x19-lpddr5-evk = " \
+    hello-world \
+    rt-latency \
     hmc-tools \
 "
 
