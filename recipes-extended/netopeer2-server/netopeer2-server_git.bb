@@ -27,7 +27,7 @@ inherit cmake pkgconfig update-rc.d
 inherit ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}
 
 # Specify any options you want to pass to cmake using EXTRA_OECMAKE:
-EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE:String=Release -DINSTALL_MODULES=OFF -DGENERATE_HOSTKEY=OFF -DMERGE_LISTEN_CONFIG=OFF -DSYSREPO_SETUP=OFF"
+EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE:String=Release -DBUILD_SERVER=ON -DBUILD_CLI=ON -DENABLE_TESTS=OFF -DSYSREPO_SETUP=OFF"
 
 SYSTEMD_PACKAGES = "${PN}"
 SYSTEMD_SERVICE:${PN} = "netopeer2-server.service"
@@ -37,10 +37,6 @@ INITSCRIPT_NAME = "netopeer2-server"
 INITSCRIPT_PARAMS = "start 80 5 2 3 . stop 60 0 1 6 ."
 
 do_install:append () {
-    install -d ${D}${sysconfdir}/netopeer2/scripts
-    install -o root -g root ${S}/scripts/setup.sh ${D}${sysconfdir}/netopeer2/scripts/setup.sh
-    install -o root -g root ${S}/scripts/merge_hostkey.sh ${D}${sysconfdir}/netopeer2/scripts/merge_hostkey.sh
-    install -o root -g root ${S}/scripts/merge_config.sh ${D}${sysconfdir}/netopeer2/scripts/merge_config.sh
     install -d ${D}${sysconfdir}/netopeer2
     if ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'true', 'false', d)}; then
         install -d ${D}${sysconfdir}/init.d
