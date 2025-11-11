@@ -10,6 +10,10 @@ SRC_URI = "gitsm://github.com/open62541/open62541.git;protocol=https;branch=${SR
            file://0002-feat-examples-Add-OPC-UA-PUBSUB-summation-example-ap.patch \
 "
 
+EXTRA_OECMAKE:append = " \
+    -DUA_ENABLE_COVERAGE=OFF \
+"
+
 PARALLEL_MAKE:arm = "-j1"
 BB_NUMBER_THREADS:arm = "1"
 
@@ -30,6 +34,11 @@ DEPENDS = "openssl"
 
 ERROR_QA:remove = "buildpaths"
 WARN_QA:append = " buildpaths"
+
+# disable strip
+INHIBIT_PACKAGE_STRIP = "1"
+INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
+INHIBIT_SYSROOT_STRIP = "1"
 
 do_install:append () {
 	if [ -d ${B}/bin/examples ] && [ -z $(find ${B}/bin/examples -maxdepth 0 -empty) ]
