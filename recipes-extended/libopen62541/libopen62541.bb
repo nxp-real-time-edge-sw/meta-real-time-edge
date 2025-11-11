@@ -10,6 +10,16 @@ SRC_URI = "gitsm://github.com/open62541/open62541.git;protocol=https;branch=${SR
            file://0002-feat-examples-Add-OPC-UA-PUBSUB-summation-example-ap.patch \
 "
 
+PARALLEL_MAKE:arm = "-j1"
+BB_NUMBER_THREADS:arm = "1"
+
+EXTRA_OECMAKE:append:arm = " \
+    -DUA_ENABLE_AMALGAMATION=OFF \
+    -DCMAKE_BUILD_TYPE=MinSizeRel \
+    -DUA_NAMESPACE_ZERO=REDUCED \
+    -DUA_ENABLE_SUBSCRIPTIONS_ALARMS_CONDITIONS=OFF \
+"
+
 # Modify these as desired
 PV = "v1.2.2"
 SRCREV = "ecf5a703785877a8719a0cda863a98455f7d5d12"
