@@ -8,12 +8,21 @@ include conf/distro/include/libopen62541.inc
 SYSTEM_MANAGER_CONFIG:imx943-19x19-lpddr4-evk = "mx94rte"
 SYSTEM_MANAGER_CONFIG:imx943-19x19-lpddr5-evk = "mx94rte"
 SYSTEM_MANAGER_CONFIG:imx943-15x15-lpddr4-evk = "mx94rte"
-SYSTEM_MANAGER_CONFIG:imx95-19x19-lpddr5-evk = "mx95rte"
 SYSTEM_MANAGER_CONFIG:imx95-15x15-lpddr4x-evk = "mx95rte"
+# Multiple system manager configs by IMXBOOT_VARIANT
+SYSTEM_MANAGER_CONFIG:imx95-19x19-lpddr5-evk = \
+    "${@bb.utils.contains('IMXBOOT_VARIANT', 'netc',      'mx95netc', \
+                                                          'mx95rte', d)}"
 
 # boot image config
 IMAGE_IMXBOOT_TARGET:imx943-19x19-lpddr4-evk = "${IMXBOOT_TARGETS_BASENAME}_a55"
 IMAGE_IMXBOOT_TARGET:imx943-19x19-lpddr5-evk = "${IMXBOOT_TARGETS_BASENAME}_a55"
 IMAGE_IMXBOOT_TARGET:imx943-15x15-lpddr4-evk = "${IMXBOOT_TARGETS_BASENAME}_a55"
-IMAGE_IMXBOOT_TARGET:imx95-19x19-lpddr5-evk = "${IMXBOOT_TARGETS_BASENAME}_a55"
 IMAGE_IMXBOOT_TARGET:imx95-15x15-lpddr4x-evk = "${IMXBOOT_TARGETS_BASENAME}_a55"
+IMAGE_IMXBOOT_TARGET:imx95-19x19-lpddr5-evk = \
+    "${@bb.utils.contains('IMXBOOT_VARIANT', 'netc',      '${IMXBOOT_TARGETS_BASENAME}_netc', \
+                                                          '${IMXBOOT_TARGETS_BASENAME}_a55', d)}"
+
+M4_DEFAULT_IMAGE:imx95-19x19-lpddr5-evk = \
+    "${@bb.utils.contains('SYSTEM_MANAGER_CONFIG', 'mx95netc', 'netc_share_cm7.bin', \
+                                                               'imx95-19x19-evk_m7_TCM_power_mode_switch.bin', d)}"
