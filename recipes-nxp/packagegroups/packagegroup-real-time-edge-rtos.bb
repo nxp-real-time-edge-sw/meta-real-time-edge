@@ -170,6 +170,12 @@ heterogeneous_multicore_examples:append:imx943-19x19-lpddr5-evk = " \
     soem-servo-rt1180 \
 "
 
+heterogeneous_multicore_examples:append:imx943-15x15-lpddr4-evk = " \
+    hello-world \
+    rt-latency \
+    hmc-tools \
+"
+
 heterogeneous_multicore_examples:append:imx95-15x15-lpddr4x-evk = " \
     hello-world \
     rpmsg-str-echo \
