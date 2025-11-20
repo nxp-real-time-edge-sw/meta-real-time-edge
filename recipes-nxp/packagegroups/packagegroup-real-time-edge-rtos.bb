@@ -152,6 +152,10 @@ heterogeneous_multicore_examples:append:imx93-14x14-lpddr4x-evk = " \
     hmc-tools \
 "
 
+heterogeneous_multicore_examples:append:imx93-9x9-lpddr4-qsb = " \
+    rpmsg-uart-sharing \
+"
+
 heterogeneous_multicore_examples:append:imx943-19x19-lpddr4-evk = " \
     hello-world \
     rt-latency \
