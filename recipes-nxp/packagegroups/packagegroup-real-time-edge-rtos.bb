@@ -102,6 +102,7 @@ heterogeneous_multicore_examples:append:imx8mm-lpddr4-evk = " \
     hello-world \
     rpmsg-uart-sharing \
     rpmsg-str-echo \
+    rpmsg-str-echo-8m-buf \
     virtio-perf \
     virtio-net-backend \
     lwip-ping \
