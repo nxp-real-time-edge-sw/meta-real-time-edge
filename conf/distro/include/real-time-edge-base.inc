@@ -86,6 +86,8 @@ KERNEL_DEVICETREE:append:imx93-14x14-lpddr4x-evk = " freescale/imx93-14x14-evk-u
 						     freescale/imx93-14x14-evk-multicore-rpmsg.dtb \
 						     freescale/imx93-14x14-evk-multicore-rtos.dtb"
 
+KERNEL_DEVICETREE:append:mx943 = " freescale/imx943-evk-multicore-rtos.dtb"
+
 KERNEL_DEVICETREE:append:imx95-19x19-lpddr5-evk = " freescale/imx95-19x19-evk-multicore-rtos.dtb \
 						    freescale/imx95-19x19-evk-multicore-rpmsg.dtb"
 KERNEL_DEVICETREE:append:imx95-15x15-lpddr4x-evk = " freescale/imx95-15x15-evk-multicore-rtos.dtb \
