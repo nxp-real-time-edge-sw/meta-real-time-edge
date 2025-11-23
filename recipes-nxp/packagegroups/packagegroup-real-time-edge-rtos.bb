@@ -194,6 +194,7 @@ heterogeneous_multicore_examples:append:imx95-15x15-lpddr4x-evk = " \
 
 heterogeneous_multicore_examples:append:imx95-19x19-lpddr5-evk = " \
     hello-world \
+    netc-share \
     rpmsg-str-echo \
     rpmsg-pingpong \
     rt-latency \
