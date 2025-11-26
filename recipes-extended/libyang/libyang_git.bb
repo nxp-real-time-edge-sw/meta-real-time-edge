@@ -7,8 +7,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=b69fd3b2815bbf1cef5c97f0eee2519a"
 SRC_URI = "git://github.com/CESNET/libyang.git;protocol=https;branch=master \
         file://0001-validation-workaround-for-a-must-validation-issue.patch"
 
-PV = "3.13.5+git"
-SRCREV = "efe43e3790822a3dc64d7d28db935d03fff8b81f"
+PV = "3.13.6+git"
+SRCREV = "c2ddd01b9b810a30d6a7d6749a3bc9adeb7b01fb"
 
 S = "${WORKDIR}/git"
 
