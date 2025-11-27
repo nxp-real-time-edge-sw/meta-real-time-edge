@@ -1,0 +1,66 @@
+From 03ef3812e5ab6ed262085d180b47f4012efbcf5e Mon Sep 17 00:00:00 2001
+From: Lyrix liu <lyrix.liu@nxp.com>
+Date: Thu, 27 Nov 2025 12:38:06 +0900
+Subject: [PATCH 2/2] Change MAC address for main device
+
+Align with the code of libethercat_master.a
+
+Signed-off-by: Lyrix liu <lyrix.liu@nxp.com>
+Upstream-Status: Pending
+---
+ Readme_For_User_Space_IGH_EtherCAT.txt | 4 ++--
+ examples/motor_control/main.c          | 2 +-
+ master/ethercat_master.c               | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/Readme_For_User_Space_IGH_EtherCAT.txt b/Readme_For_User_Space_IGH_EtherCAT.txt
+index 2a923431..74678525 100644
+--- a/Readme_For_User_Space_IGH_EtherCAT.txt
++++ b/Readme_For_User_Space_IGH_EtherCAT.txt
+@@ -60,7 +60,7 @@ code that ran in kernel space, so it's wholely independent of any kernel version
+  * NOTE: user space stack only supports NXP FEC ethernet port currently
+  *	 The verified platform have i.MX8MP, i.MX8MM, i.MX93, i.MX95 and i.MX943.
+  *
+- *	 the MAC address is fixed to "04:13:07:02:00:13"
++ *	 the MAC address is fixed to "04:02:00:13:01:00"
+  *	 For core_mask, we can isolate this core from Linux, like "isolcpus=1" for Uboot
+  **/
+ int ecus_init(uint32_t master_count, const char *const *master_macs,
+@@ -116,7 +116,7 @@ user's application should link this new library by "-lethercat_master",
+ I will take the below code as example (cycle time: 1ms)
+ 
+ static char *smaster_macs[1] = {
+-	"04:13:07:02:00:13",
++	"04:02:00:13:01:00",
+ };
+ 
+ static void *user_cycle_thread(void *p)
+diff --git a/examples/motor_control/main.c b/examples/motor_control/main.c
+index bffda62d..084bb343 100644
+--- a/examples/motor_control/main.c
++++ b/examples/motor_control/main.c
+@@ -431,7 +431,7 @@ void signal_handler(int signum)
+ #define MAX_MASTER_NUM (32)
+ static int smaster_count = 1;
+ static char *smaster_macs[MAX_MASTER_NUM] = {
+-	"04:13:07:02:00:13",
++	"04:02:00:13:01:00",
+ };
+ 
+ static int sbackup_count = 0;
+diff --git a/master/ethercat_master.c b/master/ethercat_master.c
+index b762918c..f68c5e8a 100644
+--- a/master/ethercat_master.c
++++ b/master/ethercat_master.c
+@@ -35,7 +35,7 @@ int ecus_enable_ioctl_poll(void);
+ 
+ static int smaster_count = 1;
+ static char *smaster_macs[MAX_MASTER_NUM] = {
+-    "04:13:07:02:00:13",
++    "04:02:00:13:01:00",
+ };
+ 
+ static int sbackup_count = 0;
+-- 
+2.34.1
+
