@@ -4,7 +4,7 @@ SAVED_DIR := "${THISDIR}"
 
 TSNTOOL_SRC ?= "git://github.com/nxp-qoriq/tsntool;protocol=https"
 TSNTOOL_BRANCH ?= "master"
-TSNTOOL_SRCREV ?= "b19395f230838ab5db5569a11dc6fb6e95eddb50"
+TSNTOOL_SRCREV ?= "4ea15f001f0bb41f04c34a69099c610d27a20487"
 
 SRC_URI = "${TSNTOOL_SRC};branch=${TSNTOOL_BRANCH}"
 SRCREV = "${TSNTOOL_SRCREV}"
