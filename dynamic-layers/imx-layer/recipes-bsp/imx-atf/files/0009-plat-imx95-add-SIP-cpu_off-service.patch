@@ -1,7 +1,7 @@
-From 18c90b1409f84a9d58ed0fe022a80fea80fcacff Mon Sep 17 00:00:00 2001
+From 57af6a9541ca5b47b47117ba7702d6e4943519ba Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 2 Jan 2025 15:43:30 +0800
-Subject: [PATCH 09/12] plat: imx95: add SIP cpu_off service
+Subject: [PATCH 09/13] plat: imx95: add SIP cpu_off service
 
 Added SIP cpu_off service for imx95.
 
@@ -17,10 +17,10 @@ Upstream-Status: Pending
  6 files changed, 16 insertions(+), 3 deletions(-)
 
 diff --git a/plat/imx/common/imx_sip_handler.c b/plat/imx/common/imx_sip_handler.c
-index bcc270ee7..7210241b9 100644
+index 76d0c4379..5abb77b3a 100644
 --- a/plat/imx/common/imx_sip_handler.c
 +++ b/plat/imx/common/imx_sip_handler.c
-@@ -341,7 +341,7 @@ int imx_get_partition_number(void *handle) {
+@@ -359,7 +359,7 @@ int imx_get_partition_number(void *handle) {
  }
  #endif
  

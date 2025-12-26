@@ -1,7 +1,7 @@
-From 819cf589ec588614cf5307a252a1cb2ba93be4d7 Mon Sep 17 00:00:00 2001
+From ace3ddb4de9fa4846f4796cd7b89d34ade81c3a5 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Sat, 12 Oct 2024 16:33:29 +0800
-Subject: [PATCH 04/12] drivers: gicv3: add APIS for clearing pending
+Subject: [PATCH 04/13] drivers: gicv3: add APIS for clearing pending
  interrupts
 
 Add two new APIs:

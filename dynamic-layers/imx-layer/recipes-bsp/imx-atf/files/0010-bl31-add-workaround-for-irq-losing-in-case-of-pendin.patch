@@ -1,7 +1,7 @@
-From 1ba76186a9614f588c4f4f4f97f874c4e75b191e Mon Sep 17 00:00:00 2001
+From c4b4cb8ca53414c96ab29eca7d128a483db0e86e Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 5 Jun 2025 15:57:02 +0800
-Subject: [PATCH 10/12] bl31: add workaround for irq losing in case of pending
+Subject: [PATCH 10/13] bl31: add workaround for irq losing in case of pending
  NS EA
 
 Currently it will handle pending NS SError in irq or fiq exception handler,

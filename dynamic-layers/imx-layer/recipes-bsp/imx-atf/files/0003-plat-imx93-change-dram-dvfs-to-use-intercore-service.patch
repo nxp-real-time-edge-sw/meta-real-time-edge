@@ -1,7 +1,7 @@
-From 5016100769f06335fc7fea956e4335f5a593381a Mon Sep 17 00:00:00 2001
+From 5b5349af0901c451f5fb06ce74791935f9cd33aa Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Wed, 25 Sep 2024 18:06:38 +0800
-Subject: [PATCH 03/12] plat: imx93: change dram dvfs to use intercore service
+Subject: [PATCH 03/13] plat: imx93: change dram dvfs to use intercore service
 
 So that SGI irq can be shared with SIP cpu_off service.
 
@@ -15,7 +15,7 @@ Upstream-Status: Pending
  4 files changed, 9 insertions(+), 14 deletions(-)
 
 diff --git a/plat/imx/imx93/ddr/dram.c b/plat/imx/imx93/ddr/dram.c
-index ade2e1810..dcdffb872 100644
+index 050b8ba8b..dcd78d81b 100644
 --- a/plat/imx/imx93/ddr/dram.c
 +++ b/plat/imx/imx93/ddr/dram.c
 @@ -4,22 +4,17 @@
@@ -42,7 +42,7 @@ index ade2e1810..dcdffb872 100644
  /* lock used for DDR DVFS */
  spinlock_t dfs_lock;
  struct dram_timing_info *timing_info;
-@@ -225,7 +220,6 @@ int ddrc_apply_reg_config(enum reg_type type, struct dram_cfg_param *reg_config)
+@@ -308,7 +303,6 @@ int ddrc_apply_reg_config(enum reg_type type, struct dram_cfg_param *reg_config)
  	return ret;
  }
  
@@ -50,7 +50,7 @@ index ade2e1810..dcdffb872 100644
  /* For non-primary core, waiting for frequency scaling down */
  static uint64_t waiting_dvfs(uint32_t id, uint32_t flags,
  		void *handle, void *cookie)
-@@ -270,7 +264,7 @@ void dram_info_init(unsigned long dram_timing_base)
+@@ -353,7 +347,7 @@ void dram_info_init(unsigned long dram_timing_base)
  	mmio_setbits_32(REG_DDR_SDRAM_CFG_3, BIT(1));
  
  	/* Register the EL3 handler for DDR DVFS */
@@ -59,7 +59,7 @@ index ade2e1810..dcdffb872 100644
  	if (rc)
  		panic();
  }
-@@ -280,8 +274,6 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
+@@ -363,8 +357,6 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
  {
  	unsigned int fsp_index = x1;
  	uint32_t online_cpus = x2 - 1; 
@@ -68,7 +68,7 @@ index ade2e1810..dcdffb872 100644
  	int ret = 0;
  
  	/* get the fsp num, return the number of supported fsp */
-@@ -300,10 +292,7 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
+@@ -383,10 +375,7 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
  	dsb();
  
  	/* notify other core wait for scaling done */

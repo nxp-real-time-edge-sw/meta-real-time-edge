@@ -17,4 +17,5 @@ SRC_URI:append = " \
     file://0010-bl31-add-workaround-for-irq-losing-in-case-of-pendin.patch \
     file://0011-plat-imx8m-imx93-5-enable-workaround-for-CPU-off-SIP.patch \
     file://0012-imx8mp-Set-RDC-to-level-0.patch \
+    file://0013-plat-imx94-add-SIP-cpu_off-service.patch \
 "

@@ -1,7 +1,7 @@
-From 1f145ac9a2fae77eeac66f1dc453896edf958c7e Mon Sep 17 00:00:00 2001
+From 191d45a624618ba5c1df7f8f6752b11a4dc442fe Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Sat, 21 Sep 2024 16:51:22 +0800
-Subject: [PATCH 05/12] plat: imx: add SIP cpu_off service for imx93
+Subject: [PATCH 05/13] plat: imx: add SIP cpu_off service for imx93
 
 SIP cpu_off service is used to turn off specified CPU Core by any
 other management CPU Core, SGI interrupt is trigged by managment
@@ -179,7 +179,7 @@ index 2b24fe45c..df0a2dbbc 100644
  }
  
 diff --git a/plat/imx/common/imx_sip_handler.c b/plat/imx/common/imx_sip_handler.c
-index 5f006898b..5634a9da1 100644
+index 67e07e45c..0228162e7 100644
 --- a/plat/imx/common/imx_sip_handler.c
 +++ b/plat/imx/common/imx_sip_handler.c
 @@ -1,5 +1,5 @@
@@ -197,7 +197,7 @@ index 5f006898b..5634a9da1 100644
  #include <imx_sip_svc.h>
  #include <lib/el3_runtime/context_mgmt.h>
  #include <lib/mmio.h>
-@@ -340,3 +341,26 @@ int imx_get_partition_number(void *handle) {
+@@ -358,3 +359,26 @@ int imx_get_partition_number(void *handle) {
  }
  #endif
  
