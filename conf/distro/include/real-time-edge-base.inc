@@ -11,11 +11,11 @@ DISTRO_FEATURES:append:ls1043ardb = " jailhouse"
 DISTRO_FEATURES:append:ls1046ardb = " jailhouse"
 DISTRO_FEATURES:append:ls1028ardb = " jailhouse real-time-edge-libbee \
 				      real-time-edge-libblep libnfc-nci \
-				      real-time-edge-sysrepo tsn-scripts alsa"
-DISTRO_FEATURES:append:mx8dxl-nxp-bsp = " real-time-edge-sysrepo"
-DISTRO_FEATURES:append:mx8mp-nxp-bsp = " real-time-edge-sysrepo"
+				      real-time-edge-sysrepo tsn-scripts alsa genavb-tsn"
+DISTRO_FEATURES:append:mx8dxl-nxp-bsp = " real-time-edge-sysrepo genavb-tsn"
+DISTRO_FEATURES:append:mx8mp-nxp-bsp = " real-time-edge-sysrepo genavb-tsn"
 DISTRO_FEATURES:append:mx8m-nxp-bsp = " modbus-simulator"
-DISTRO_FEATURES:append:mx93-nxp-bsp = " real-time-edge-sysrepo"
+DISTRO_FEATURES:append:mx93-nxp-bsp = " real-time-edge-sysrepo genavb-tsn"
 DISTRO_FEATURES:append:mx95-nxp-bsp = " modbus-simulator"
 DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo tsn-scripts real-time-edge-prl"
 DISTRO_FEATURES:append:ls1021aiot = " canfestival"
@@ -24,7 +24,7 @@ DISTRO_FEATURES:append:ls1021aiot = " canfestival"
 DISTRO_FEATURES:remove:mx8dxl-nxp-bsp = " jailhouse"
 
 # For i.MX943
-DISTRO_FEATURES:append:mx943-nxp-bsp = " real-time-edge-sysrepo"
+DISTRO_FEATURES:append:mx943-nxp-bsp = " real-time-edge-sysrepo genavb-tsn"
 
 # DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = "${@bb.utils.contains('DISTRO_FEATURES', 'rpmsg_8m_buf', \
 # 		' linux-rpmsg-8m-buf.config', ' ', d)}"

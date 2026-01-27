@@ -12,8 +12,10 @@ SRC_URI = "${REAL_TIME_EDGE_SYSREPO_SRC};branch=${REAL_TIME_EDGE_SYSREPO_BRANCH}
 SRCREV = "${REAL_TIME_EDGE_SYSREPO_SRCREV}"
 
 DEPENDS = "libyang libnetconf2 sysrepo netopeer2-server cjson libnl tsntool"
+DEPENDS += "${@bb.utils.contains('DISTRO_FEATURES', 'genavb-tsn', 'genavb-tsn', '', d)}"
 
 RDEPENDS:${PN} += "bash curl libyang libnetconf2 sysrepo netopeer2-server cjson libnl tsntool"
+RDEPENDS:${PN} += "${@bb.utils.contains('DISTRO_FEATURES', 'genavb-tsn', 'genavb-tsn', '', d)}"
 
 FILES:${PN} += "${datadir}/yang/* ${libdir}/sysrepo-plugind/*"
 
