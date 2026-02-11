@@ -21,6 +21,7 @@ init_sysrepo() {
         sh /usr/share/netopeer2/scripts/merge_hostkey.sh
         sh /usr/share/netopeer2/scripts/merge_config.sh
     fi
+    sh /usr/bin/sysrepo-plugins-install.sh
     touch /etc/sysrepo/init
 }
 
