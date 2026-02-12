@@ -25,7 +25,7 @@ genavbtsnimage:imx95-19x19-lpddr5-evk = "genavb-tsn"
 genavbtsnimage:imx943-19x19-lpddr4-evk = "genavb-tsn"
 genavbtsnimage:imx943-19x19-lpddr5-evk = "genavb-tsn"
 
-cantools ?=""
+cantools ?= ""
 cantools:ls1021aiot = "libsocketcan can-utils"
 cantools:ls1028ardb = "libsocketcan can-utils"
 
