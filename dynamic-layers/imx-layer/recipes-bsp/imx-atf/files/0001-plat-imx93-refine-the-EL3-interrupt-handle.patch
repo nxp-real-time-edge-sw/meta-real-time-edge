@@ -1,13 +1,14 @@
-From c789d57623f11422768e01e4edd97e5c7a708f69 Mon Sep 17 00:00:00 2001
+From 3e18fa3829862bdd0c50c36573b1a2ba36cbb205 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 5 Sep 2024 18:28:59 +0800
-Subject: [PATCH 01/13] plat: imx93: refine the EL3 interrupt handle
+Subject: [PATCH 01/14] plat: imx93: refine the EL3 interrupt handle
 
 Added a common interrupt handler for all EL3 interrupt, so can handle
 more EL3 interrupt.
 Modify DRAM driver to use the common interrupt API.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Upstream-Status: Pending
 ---
  plat/imx/common/imx_interrupt_mgmt.c         | 73 ++++++++++++++++++++

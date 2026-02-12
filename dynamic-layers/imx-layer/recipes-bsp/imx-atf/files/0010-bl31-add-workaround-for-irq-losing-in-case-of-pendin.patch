@@ -1,7 +1,7 @@
-From c4b4cb8ca53414c96ab29eca7d128a483db0e86e Mon Sep 17 00:00:00 2001
+From b5643c27cc5621cad8aa68810443b0f7d9171d62 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 5 Jun 2025 15:57:02 +0800
-Subject: [PATCH 10/13] bl31: add workaround for irq losing in case of pending
+Subject: [PATCH 10/14] bl31: add workaround for irq losing in case of pending
  NS EA
 
 Currently it will handle pending NS SError in irq or fiq exception handler,
@@ -19,6 +19,7 @@ handle pending NS SError in EL3, then return back to fiq/irq handler to
 continue to handle fiq or irq interrupt.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Upstream-Status: Pending
 ---
  Makefile                          |  4 ++++

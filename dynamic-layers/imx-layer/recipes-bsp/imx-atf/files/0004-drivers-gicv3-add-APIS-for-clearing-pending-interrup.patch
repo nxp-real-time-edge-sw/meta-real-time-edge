@@ -1,7 +1,7 @@
-From ace3ddb4de9fa4846f4796cd7b89d34ade81c3a5 Mon Sep 17 00:00:00 2001
+From b696a98062662da31835f48d8f721e2c11292d90 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Sat, 12 Oct 2024 16:33:29 +0800
-Subject: [PATCH 04/13] drivers: gicv3: add APIS for clearing pending
+Subject: [PATCH 04/14] drivers: gicv3: add APIS for clearing pending
  interrupts
 
 Add two new APIs:
@@ -11,6 +11,7 @@ Add two new APIs:
    and disable all SGIs/PPIs on this redistributor interface.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Upstream-Status: Pending
 ---
  drivers/arm/gic/v3/gicv3_helpers.c | 40 ++++++++++++++++++++++++++++++

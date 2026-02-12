@@ -1,7 +1,7 @@
-From d33e344597c299f9b63ac2538f371638b93d2168 Mon Sep 17 00:00:00 2001
+From 168682fdf2f5579e3ee002ed4c0398fb9ff6f7cf Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Wed, 31 Dec 2025 11:09:55 +0800
-Subject: [PATCH 13/13] plat: imx94: add SIP cpu_off service
+Subject: [PATCH 13/14] plat: imx94: add SIP cpu_off service
 
 Added SIP cpu_off service for imx94.
 Enabled workaround HANDLE_NS_EA_EL3_IRQ_WA.
@@ -18,7 +18,7 @@ Upstream-Status: Pending
  6 files changed, 19 insertions(+), 4 deletions(-)
 
 diff --git a/plat/imx/common/imx_sip_handler.c b/plat/imx/common/imx_sip_handler.c
-index 5abb77b3a..9272e242f 100644
+index 2788b8aad..a9e9a5705 100644
 --- a/plat/imx/common/imx_sip_handler.c
 +++ b/plat/imx/common/imx_sip_handler.c
 @@ -1,5 +1,5 @@
@@ -28,7 +28,7 @@ index 5abb77b3a..9272e242f 100644
   *
   * SPDX-License-Identifier: BSD-3-Clause
   */
-@@ -359,7 +359,7 @@ int imx_get_partition_number(void *handle) {
+@@ -391,7 +391,7 @@ int imx_bbsm_handler(uint32_t smc_fid, u_register_t x1, void *handle)
  }
  #endif
  
@@ -38,10 +38,10 @@ index 5abb77b3a..9272e242f 100644
  			u_register_t x1,
  			u_register_t x2,
 diff --git a/plat/imx/common/imx_sip_svc.c b/plat/imx/common/imx_sip_svc.c
-index 8d94825bf..f547f86f8 100644
+index c9242c745..8be50a372 100644
 --- a/plat/imx/common/imx_sip_svc.c
 +++ b/plat/imx/common/imx_sip_svc.c
-@@ -123,7 +123,7 @@ static uintptr_t imx_sip_handler(unsigned int smc_fid,
+@@ -127,7 +127,7 @@ static uintptr_t imx_sip_handler(unsigned int smc_fid,
  	case IMX_SIP_GET_PARTITION_NUMBER:
  		return imx_get_partition_number(handle);
  #endif
@@ -51,10 +51,10 @@ index 8d94825bf..f547f86f8 100644
  		SMC_RET1(handle, imx_sip_cpuoff_handler(smc_fid, x1, x2, x3, x4));
  #endif
 diff --git a/plat/imx/common/include/imx_sip_svc.h b/plat/imx/common/include/imx_sip_svc.h
-index 33bb2a7e3..f8188d44d 100644
+index 6c9422066..a9d8bb129 100644
 --- a/plat/imx/common/include/imx_sip_svc.h
 +++ b/plat/imx/common/include/imx_sip_svc.h
-@@ -172,7 +172,7 @@ int imx_src_handler(uint32_t smc_fid, u_register_t x1,
+@@ -179,7 +179,7 @@ int imx_src_handler(uint32_t smc_fid, u_register_t x1,
  		    u_register_t x2, u_register_t x3,
  		    u_register_t x4, void *handle);
  #endif
