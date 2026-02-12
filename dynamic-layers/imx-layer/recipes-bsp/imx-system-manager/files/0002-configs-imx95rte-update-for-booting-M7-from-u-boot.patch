@@ -1,7 +1,7 @@
-From 0da6a717fe222a8cfdb50b7174f143903d1a5af1 Mon Sep 17 00:00:00 2001
+From 76c64e9d04edf662493b09ac131cd49b74e97001 Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Wed, 3 Sep 2025 15:48:04 +0800
-Subject: [PATCH 2/6] configs: imx95rte: update for booting M7 from u-boot
+Subject: [PATCH 2/7] configs: imx95rte: update for booting M7 from u-boot
 
 And align some configs with the mx95evk.cfg.
 
@@ -12,7 +12,7 @@ Upstream-Status: Pending
  1 file changed, 16 insertions(+), 13 deletions(-)
 
 diff --git a/configs/other/mx95rte.cfg b/configs/other/mx95rte.cfg
-index c416ab57..c15a7f34 100755
+index d9430dee..17f8647e 100755
 --- a/configs/other/mx95rte.cfg
 +++ b/configs/other/mx95rte.cfg
 @@ -1,6 +1,6 @@
@@ -23,7 +23,7 @@ index c416ab57..c15a7f34 100755
  ##
  ## Redistribution and use in source and binary forms, with or without modification,
  ## are permitted provided that the following conditions are met:
-@@ -309,10 +309,10 @@ FAULT_SW4           OWNER, reaction=sys_reset
+@@ -318,10 +318,10 @@ FAULT_SW4           OWNER, reaction=sys_reset
  # M7 EENV                                                                  #
  #==========================================================================#
  
@@ -37,7 +37,7 @@ index c416ab57..c15a7f34 100755
  OWNER:              perm=rw, api=all
  
  EXEC:               perm=full
-@@ -320,20 +320,20 @@ DATA:               perm=rw
+@@ -329,20 +329,20 @@ DATA:               perm=rw
  
  # Start/Stop (mSel=0)
  
@@ -64,7 +64,7 @@ index c416ab57..c15a7f34 100755
  
  # RPC Interface
  
-@@ -357,8 +357,6 @@ BRD_SM_SENSOR_TEMP_PF5301 SET
+@@ -366,8 +366,6 @@ BRD_SM_SENSOR_TEMP_PF5301 SET
  BRD_SM_SENSOR_TEMP_PF5302 SET
  BUTTON                    NOTIFY
  FUSA                      ALL
@@ -73,15 +73,15 @@ index c416ab57..c15a7f34 100755
  RTC                       PRIV
  SENSOR_TEMP_ANA           ALL, test
  SYS                       ALL
-@@ -469,6 +467,7 @@ CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
+@@ -478,6 +476,7 @@ CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
  
  # API
  
 +PD_M7               ALL
  PERF_A55            ALL
- PERF_DRAM           ALL
  PERLPI_CAN2         ALL
-@@ -488,6 +487,8 @@ PERLPI_LPUART8      ALL
+ PERLPI_CAN3         ALL
+@@ -496,6 +495,8 @@ PERLPI_LPUART8      ALL
  PERLPI_WDOG3        ALL
  PERLPI_WDOG4        ALL
  SYS                 ALL
@@ -90,7 +90,7 @@ index c416ab57..c15a7f34 100755
  
  # Resources
  
-@@ -565,7 +566,8 @@ CLOCK_USBPHYBURUNIN       ALL
+@@ -571,7 +572,8 @@ CLOCK_USBPHYBURUNIN       ALL
  CLOCK_VPUDSP              ALL
  HSIO_PLL                  ALL
  LDB_PLL                   ALL
@@ -98,9 +98,9 @@ index c416ab57..c15a7f34 100755
 +LMM_1                     ALL
 +PD_M7                     ALL
  PERF_A55                  ALL
- PERF_DRAM                 ALL
  RTC                       ALL, test
-@@ -1001,6 +1003,7 @@ OCRAM               EXEC, begin=0x0204C0000, size=96K
+ SENSOR_TEMP_A55           ALL
+@@ -1005,6 +1007,7 @@ OCRAM               EXEC, begin=0x0204C0000, size=96K
  GPU                 DATA, begin=0x04D900000, end=0x04DD7FFFF
  DDR                 EXEC, begin=0x088000000, end=0x089FFFFFF
  DDR                 EXEC, begin=0x08E000000, end=0x87FFFFFFF

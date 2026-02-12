@@ -1,0 +1,90 @@
+From 9dc5db288c732ecc3da180f3cf54e7dc910bfcc7 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Tue, 23 Dec 2025 15:33:30 +0800
+Subject: [PATCH 7/7] configs: mx94rte: update for booting M cores from u-boot
+
+Enable booting the CM33 core1 and CM7 core0 and core1 from u-boot
+command line, so that the M-core RTOS examples can be flexibly
+started using bootaux command.
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/other/mx94rte.cfg | 31 ++++++++++++++++---------------
+ 1 file changed, 16 insertions(+), 15 deletions(-)
+
+diff --git a/configs/other/mx94rte.cfg b/configs/other/mx94rte.cfg
+index e5f9c425..45771a68 100755
+--- a/configs/other/mx94rte.cfg
++++ b/configs/other/mx94rte.cfg
+@@ -340,18 +340,6 @@ DATA:               perm=rw
+ PD_M33S             start=1, stop=2
+ CPU_M33S            start=2, stop=1
+ 
+-# Start/Stop (mSel=1)
+-
+-MODE                msel=1, boot=2, skip=1
+-
+-PD_M33S             msel=1, start=1, stop=2
+-CPU_M33S            msel=1, start=2, stop=1
+-
+-# Start/Stop (mSel=2)
+-
+-PD_M33S             msel=2, start=1, stop=2
+-CPU_M33S            msel=2, start=2, stop=1
+-
+ # RPC Interface
+ 
+ SCMI_AGENT0         name="M33S-S"
+@@ -779,6 +767,12 @@ PERLPI_LPUART10     ALL
+ PERLPI_WDOG3        ALL
+ PERLPI_WDOG4        ALL
+ SYS                 ALL
++CPU_M33S            ALL
++CPU_M7P0            ALL
++CPU_M7P1            ALL
++LMM_1               ALL
++LMM_2               ALL
++LMM_3               ALL
+ 
+ # Resources
+ 
+@@ -843,9 +837,9 @@ CLOCK_HSIOPCIEAUX         ALL
+ CLOCK_USBPHYBURUNIN       ALL
+ HSIO_PLL                  ALL
+ LDB_PLL                   ALL
+-LMM_1                     NOTIFY
+-LMM_2                     NOTIFY
+-LMM_3                     NOTIFY
++LMM_1                     ALL
++LMM_2                     ALL
++LMM_3                     ALL
+ PERF_A55                  ALL
+ PERF_DRAM                 ALL
+ RTC                       ALL, test
+@@ -1122,6 +1116,8 @@ PCIE1_ROOT          OWNER
+ PCIE2_OUT           OWNER
+ PCIE2_ROOT          OWNER
+ PDM                 OWNER
++PD_M70              OWNER
++PD_M71              OWNER
+ PXP                 OWNER
+ SAI1                OWNER, test
+ SAI2                OWNER
+@@ -1350,8 +1346,13 @@ XSPI1_MEM           EXEC, begin=0x000000000, end=0x0FFFFFFFF
+ OCRAM_S1            EXEC, begin=0x020800000, end=0x02087FFFF
+ OCRAM_S2            EXEC, begin=0x020880000, end=0x0208A1FFF
+ OCRAM               EXEC, begin=0x0204C0000, size=96K
++DDR                 EXEC, begin=0x080000000, end=0x081FFFFFF
+ DDR                 EXEC, begin=0x082000000, end=0x085FFFFFF
+ DDR                 EXEC, begin=0x08E000000, end=0x87FFFFFFF
++M33S_TCM_CODE       DATA, begin=0x0209c0000, end=0x0209FFFFF
++M33S_TCM_SYS        DATA, begin=0x020A00000, end=0x020A3FFFF
++M7MIX0              DATA, begin=0x020380000, end=0x02047FFFF
++M7MIX1              DATA, begin=0x020280000, end=0x02037FFFF
+ 
+ # RPC Interface of A55 NS agent1 (duplicated AP-NS-agent0)
+ 
+-- 
+2.43.0
+

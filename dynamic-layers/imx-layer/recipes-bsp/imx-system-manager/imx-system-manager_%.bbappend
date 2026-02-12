@@ -6,4 +6,5 @@ SRC_URI:append:real-time-edge = " \
     file://0004-configs-mx94rte-assign-access-permission-of-MSGINTR2.patch \
     file://0005-configs-mx94rte-add-access-to-lpuart12-for-A55.patch \
     file://0006-configs-mx94rte-disable-auto-clock-gating.patch \
+    file://0007-configs-mx94rte-update-for-booting-M-cores-from-u-bo.patch \
 "
