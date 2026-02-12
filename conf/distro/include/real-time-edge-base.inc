@@ -36,11 +36,11 @@ REAL_TIME_EDGE_SYSREPO:ls1028ardb = ""
 PACKAGECONFIG:append:pn-real-time-edge-sysrepo = "${REAL_TIME_EDGE_SYSREPO}"
 
 # dtb for jailhouse
-KERNEL_DEVICETREE:append:ls1043ardb= " freescale/fsl-ls1043a-rdb-sdk-jailhouse.dtb"
-KERNEL_DEVICETREE:append:ls1043ardb= " freescale/fsl-ls1043a-rdb-sdk-jailhouse-with-dpaa.dtb"
-KERNEL_DEVICETREE:append:ls1046ardb= " freescale/fsl-ls1046a-rdb-sdk-jailhouse.dtb"
-KERNEL_DEVICETREE:append:ls1046ardb= " freescale/fsl-ls1046a-rdb-sdk-jailhouse-with-dpaa.dtb"
-KERNEL_DEVICETREE:append:ls1028ardb= " freescale/fsl-ls1028a-rdb-jailhouse.dtb \
+KERNEL_DEVICETREE:append:ls1043ardb = " freescale/fsl-ls1043a-rdb-sdk-jailhouse.dtb"
+KERNEL_DEVICETREE:append:ls1043ardb = " freescale/fsl-ls1043a-rdb-sdk-jailhouse-with-dpaa.dtb"
+KERNEL_DEVICETREE:append:ls1046ardb = " freescale/fsl-ls1046a-rdb-sdk-jailhouse.dtb"
+KERNEL_DEVICETREE:append:ls1046ardb = " freescale/fsl-ls1046a-rdb-sdk-jailhouse-with-dpaa.dtb"
+KERNEL_DEVICETREE:append:ls1028ardb = " freescale/fsl-ls1028a-rdb-jailhouse.dtb \
 				       freescale/fsl-ls1028a-rdb-jailhouse-without-enetc.dtb \
 				       freescale/fsl-ls1028a-rdb-dsa-swp5-eno3.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-rpmsg-ca53.dtb \
