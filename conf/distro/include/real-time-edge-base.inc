@@ -26,10 +26,10 @@ DISTRO_FEATURES:remove:mx8dxl-nxp-bsp = " jailhouse"
 # For i.MX943
 DISTRO_FEATURES:append:mx943-nxp-bsp = " real-time-edge-sysrepo"
 
-DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = "${@bb.utils.contains('DISTRO_FEATURES', 'rpmsg_8m_buf', \
-		' linux-rpmsg-8m-buf.config', ' ', d)}"
-DELTA_KERNEL_DEFCONFIG:append:ls1043ardb = " linux-dpaa-ethercat.config"
-DELTA_KERNEL_DEFCONFIG:append:ls1046ardb = " linux-dpaa-ethercat.config"
+# DELTA_KERNEL_DEFCONFIG:append:mx8mm-nxp-bsp = "${@bb.utils.contains('DISTRO_FEATURES', 'rpmsg_8m_buf', \
+# 		' linux-rpmsg-8m-buf.config', ' ', d)}"
+# DELTA_KERNEL_DEFCONFIG:append:ls1043ardb = " linux-dpaa-ethercat.config"
+# DELTA_KERNEL_DEFCONFIG:append:ls1046ardb = " linux-dpaa-ethercat.config"
 
 REAL_TIME_EDGE_SYSREPO ?= "real-time-edge-sysrepo-tc"
 REAL_TIME_EDGE_SYSREPO:ls1028ardb = ""
