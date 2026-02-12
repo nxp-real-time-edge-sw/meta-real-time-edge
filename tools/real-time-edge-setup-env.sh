@@ -2,7 +2,7 @@
 #
 # Real-time Edge Yocto Project Build Environment Setup Script
 #
-# Copyright 2021-2023, 2025 NXP
+# Copyright 2021-2023, 2025-2026 NXP
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,6 +96,7 @@ imx_add_layers()
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security/meta-parsec\"" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security/meta-tpm\"" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-virtualization\"" >> $BUILD_DIR/conf/bblayers.conf
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-freescale-ml\"" >> $BUILD_DIR/conf/bblayers.conf
 
     # echo "BBLAYERS += \"\${BSPDIR}/sources/meta-cpan\"" >> $BUILD_DIR/conf/bblayers.conf
 
@@ -230,6 +231,14 @@ fi
 
 change_conf
 add_layers
+
+# NXP development board images are more useful with the empty root password.
+echo -e "\n====================================== Important Note =========================================="
+echo "This setup is optimized for NXP development boards and is not appropriate for production boards."
+
+bitbake-config-build enable-fragment core/yocto/root-login-with-empty-password
+
+echo -e "================================================================================================\n"
 
 cd  $BUILD_DIR
 clean_up
