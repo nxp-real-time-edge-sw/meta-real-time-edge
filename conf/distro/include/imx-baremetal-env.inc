@@ -1,7 +1,3 @@
-# update kernel configuration
-DELTA_KERNEL_DEFCONFIG:append:mx8m-nxp-bsp = " linux-baremetal.config"
-DELTA_KERNEL_DEFCONFIG:append:mx93-nxp-bsp = " linux-baremetal-imx93.config"
-
 # update baremetal dts
 KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-baremetal.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-baremetal.dtb"

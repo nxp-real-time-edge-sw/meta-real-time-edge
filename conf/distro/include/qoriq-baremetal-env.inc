@@ -1,10 +1,3 @@
-# update kernel configuration
-DELTA_KERNEL_DEFCONFIG:append:ls1043ardb = " linux-baremetal-ls104xa.config"
-DELTA_KERNEL_DEFCONFIG:append:ls1046ardb = " linux-baremetal-ls104xa.config"
-DELTA_KERNEL_DEFCONFIG:append:ls1028ardb = " linux-baremetal-ls1028a.config"
-DELTA_KERNEL_DEFCONFIG:append:lx2160a    = " linux-baremetal-lx2160a.config"
-DELTA_KERNEL_DEFCONFIG:append:ls1021aiot = " linux-baremetal-ls1021a.config"
-
 # update baremetal dts
 KERNEL_DEVICETREE:append:ls1021aiot = " nxp/ls/ls1021a-iot-bm.dtb"
 KERNEL_DEVICETREE:append:ls1043ardb = " freescale/fsl-ls1043a-rdb-sdk-bm.dtb"

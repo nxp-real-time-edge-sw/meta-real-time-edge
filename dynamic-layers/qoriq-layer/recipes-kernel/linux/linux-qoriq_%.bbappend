@@ -9,12 +9,12 @@ SRCREV:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRCREV}"
 SRC_URI = "${KERNEL_SRC};branch=${KERNEL_BRANCH}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
-SRC_URI:append:real-time-edge = " \
-    file://linux-baremetal-ls104xa.config \
-    file://linux-baremetal-ls1021a.config \
-    file://linux-baremetal-ls1028a.config \
-    file://linux-baremetal-lx2160a.config \
-"
+
+SRC_URI:append:baremetal:ls1046a = " file://linux-baremetal-ls104xa.config"
+SRC_URI:append:baremetal:ls1043a = " file://linux-baremetal-ls104xa.config"
+SRC_URI:append:baremetal:ls1021a = " file://linux-baremetal-ls1021a.config"
+SRC_URI:append:baremetal:ls1028a = " file://linux-baremetal-ls1028a.config"
+SRC_URI:append:baremetal:lx2160a = " file://linux-baremetal-lx2160a.config"
 
 do_configure:prepend:real-time-edge() {
     mkdir -p ${WORKDIR}/source-date-epoch

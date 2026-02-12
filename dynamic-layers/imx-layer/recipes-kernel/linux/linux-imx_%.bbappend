@@ -9,10 +9,9 @@ SRCREV:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRCREV}"
 SRC_URI:real-time-edge = "${KERNEL_SRC}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
-SRC_URI:append:real-time-edge = " \
-    file://linux-baremetal.config \
-    file://linux-baremetal-imx93.config \
-"
+
+SRC_URI:append:baremetal:mx8m-nxp-bsp = " file://linux-baremetal.config"
+SRC_URI:append:baremetal:mx93-nxp-bsp = " file://linux-baremetal-imx93.config"
 
 do_configure:prepend:real-time-edge() {
     mkdir -p ${WORKDIR}/source-date-epoch
