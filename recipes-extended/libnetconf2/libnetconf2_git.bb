@@ -9,8 +9,6 @@ SRC_URI = "git://github.com/CESNET/libnetconf2.git;protocol=https;branch=master"
 PV = "3.7.10+git"
 SRCREV = "61fbe731908809f88a187f223d43718479a7e0da"
 
-S = "${WORKDIR}/git"
-
 DEPENDS = "curl libssh openssl libyang libxcrypt libpam"
 
 FILES:${PN} += "${datadir}/yang/modules/libnetconf2/*"

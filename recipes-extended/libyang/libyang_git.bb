@@ -10,8 +10,6 @@ SRC_URI = "git://github.com/CESNET/libyang.git;protocol=https;branch=master \
 PV = "3.13.6+git"
 SRCREV = "c2ddd01b9b810a30d6a7d6749a3bc9adeb7b01fb"
 
-S = "${WORKDIR}/git"
-
 DEPENDS = "libpcre2"
 
 FILES:${PN} += "${datadir}/yang/modules/libyang/*"

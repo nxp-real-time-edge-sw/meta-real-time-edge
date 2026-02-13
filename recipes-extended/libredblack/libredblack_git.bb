@@ -9,8 +9,6 @@ SRC_URI = "git://github.com/sysrepo/libredblack.git;protocol=https;branch=${SRCB
 PV = "1.0+git${SRCPV}"
 SRCREV = "a399310d99b61eec4d3c0677573ab5dddcf9395d"
 
-S = "${WORKDIR}/git"
-
 # NOTE: if this software is not capable of being built in a separate build directory
 # from the source, you should replace autotools with autotools-brokensep in the
 # inherit line

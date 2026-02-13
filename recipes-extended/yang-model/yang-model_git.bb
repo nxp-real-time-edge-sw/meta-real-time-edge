@@ -9,8 +9,6 @@ SRC_URI = "git://github.com/YangModels/yang.git;protocol=https;nobranch=1 \
 "
 SRCREV = "b1df41d72ecbfb38c13e96eff42d8f027997baed"
 
-S = "${WORKDIR}/git"
-
 DEPENDS = ""
 RDEPENDS:${PN} += "bash curl"
 

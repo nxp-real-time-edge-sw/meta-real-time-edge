@@ -13,8 +13,6 @@ SRC_URI = "git://github.com/CESNET/Netopeer2.git;protocol=https;branch=master \
 PV = "2.4.5+git"
 SRCREV = "2549f8f73b61e94f031a84bf709cbb4e3d594a94"
 
-S = "${WORKDIR}/git"
-
 DEPENDS = "libyang libnetconf2 sysrepo curl"
 DEPENDS += "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}"
 

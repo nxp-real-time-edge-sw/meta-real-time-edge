@@ -28,8 +28,6 @@ EXTRA_OECMAKE:append:arm = " \
 PV = "v1.2.2"
 SRCREV = "ecf5a703785877a8719a0cda863a98455f7d5d12"
 
-S = "${WORKDIR}/git"
-
 DEPENDS = "openssl"
 
 ERROR_QA:remove = "buildpaths"

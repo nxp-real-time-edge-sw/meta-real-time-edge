@@ -24,7 +24,6 @@ PV = "2025.04+git${SRCPV}"
 
 PROVIDES = "real-time-edge-baremetal"
 
-S = "${WORKDIR}/git"
 B = "${WORKDIR}/build"
 
 FILES:${PN} = "/boot"

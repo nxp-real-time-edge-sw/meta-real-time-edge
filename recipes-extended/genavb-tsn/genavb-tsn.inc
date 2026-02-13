@@ -14,8 +14,6 @@ SRCREV = "${GENAVB_TSN_SRCREV}"
 
 PV = "${GENAVB_TSN_VERSION}+git${SRCPV}"
 
-S = "${WORKDIR}/git"
-
 GENAVB_TSN_CONFIG ?= "endpoint_tsn"
 GENAVB_TSN_CONFIG:mx8mp-nxp-bsp = "endpoint_tsn"
 GENAVB_TSN_CONFIG:mx93-nxp-bsp = "endpoint_tsn"

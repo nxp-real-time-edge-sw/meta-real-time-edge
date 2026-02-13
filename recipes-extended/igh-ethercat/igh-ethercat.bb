@@ -19,7 +19,6 @@ SRC_URI += "\
 	file://0001-enetc4-ec_enetc4-and-ec_master-modules-worked.patch \
 	file://0001-fec-fix-IGH-can-t-restart-issue.patch \
 "
-S = "${WORKDIR}/git"
 
 ERROR_QA:remove = "buildpaths"
 WARN_QA:append = " buildpaths"

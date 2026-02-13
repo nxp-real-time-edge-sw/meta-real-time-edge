@@ -13,8 +13,6 @@ SRC_URI = "git://github.com/NXPNFCLinux/linux_libnfc-nci.git;protocol=https;bran
 SRCREV = "8476ea1a4091e6facc37e028d8489cc2ef4741ba"
 PV = "R2.4"
 
-S = "${WORKDIR}/git"
-
 inherit autotools-brokensep pkgconfig
 
 EXTRA_OECONF = "LDFLAGS=-static --host=${TARGET_SYS}"

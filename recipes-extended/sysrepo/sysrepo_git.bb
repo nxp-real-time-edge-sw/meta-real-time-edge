@@ -14,8 +14,6 @@ SRC_URI = "git://github.com/sysrepo/sysrepo.git;protocol=https;branch=master \
 PV = "3.7.11+git"
 SRCREV = "1b720b196f630f348d9e0c131d326b3fb8c6aca7"
 
-S = "${WORKDIR}/git"
-
 DEPENDS = "libyang protobuf protobuf-c protobuf-c-native libredblack libev libnetconf2"
 DEPENDS += "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}"
 

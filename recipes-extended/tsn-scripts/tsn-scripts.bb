@@ -7,8 +7,6 @@ DEPENDS = "jq"
 SRC_URI = "git://github.com/vladimiroltean/tsn-scripts.git;protocol=https;branch=isochron"
 SRCREV = "3a1187344e28c1401523d79686035bbd9e1c3e51"
 
-S = "${WORKDIR}/git"
-
 do_compile() {
      oe_runmake -C isochron
 }

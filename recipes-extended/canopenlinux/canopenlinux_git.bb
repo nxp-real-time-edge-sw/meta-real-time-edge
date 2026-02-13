@@ -18,8 +18,6 @@ SRC_URI = "gitsm://github.com/CANopenNode/CANopenLinux.git;protocol=https;branch
 SRCREV = "f1348d4072cdabea4c3435a13c721ac29ab4cc91"
 PV = "4.0+git${SRCPV}"
 
-S = "${WORKDIR}/git"
-
 inherit systemd
 
 SYSTEMD_SERVICE:${PN} = "canopen-master.service canopen-slave.service"

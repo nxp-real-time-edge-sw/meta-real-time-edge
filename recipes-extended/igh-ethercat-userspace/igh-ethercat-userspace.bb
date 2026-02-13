@@ -26,7 +26,6 @@ SRC_URI += " \
     file://libus_drv.a;subdir=git/devices/nxp_userspace/ \
 "
 
-S = "${WORKDIR}/git"
 B = "${S}"
 
 PACKAGECONFIG ?= "usecat"

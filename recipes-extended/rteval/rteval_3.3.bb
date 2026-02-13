@@ -12,8 +12,6 @@ SRC_URI = "git://git.kernel.org/pub/scm/utils/rteval/rteval.git;nobranch=1 \
 
 SRCREV = "d83a407fb55bf2a759097f95a8e8337699b9dfa2"
 
-S = "${WORKDIR}/git"
-
 inherit setuptools3
 
 do_install:append () {

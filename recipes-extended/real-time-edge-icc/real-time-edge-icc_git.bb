@@ -13,8 +13,6 @@ PV = "1.1"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-S = "${WORKDIR}/git"
-
 ICC_GIC_OFFSET_ALIGN = ""
 ICC_GIC_OFFSET_ALIGN:mx8m-nxp-bsp = "y"
 ICC_GIC_OFFSET_ALIGN:mx93-nxp-bsp = "y"

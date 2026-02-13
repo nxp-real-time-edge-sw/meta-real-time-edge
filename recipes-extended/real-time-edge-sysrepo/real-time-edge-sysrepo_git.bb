@@ -11,8 +11,6 @@ SRC_URI = "${REAL_TIME_EDGE_SYSREPO_SRC};branch=${REAL_TIME_EDGE_SYSREPO_BRANCH}
 
 SRCREV = "${REAL_TIME_EDGE_SYSREPO_SRCREV}"
 
-S = "${WORKDIR}/git"
-
 DEPENDS = "libyang libnetconf2 sysrepo netopeer2-server cjson libnl tsntool"
 
 RDEPENDS:${PN} += "bash curl libyang libnetconf2 sysrepo netopeer2-server cjson libnl tsntool"
