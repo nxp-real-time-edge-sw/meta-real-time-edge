@@ -2,8 +2,8 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI:append:qoriq = "file://0001-Revert-driver-sysfs-Update-bin_attribute-version-che.patch"
-SRCBRANCH = "lf-6.12.34_2.1.0"
-SRCREV = "f64de0b8f61b45b42f197c8212b6c0fe887e5c19"
+SRCBRANCH = "lf-6.18.2_1.0.0"
+SRCREV = "cda912777c91efb02494cc2c6900113e79f36fdf"
 
 PV = "2023.03+git${SRCPV}"
 
