@@ -17,13 +17,15 @@ SRCREV = "1b720b196f630f348d9e0c131d326b3fb8c6aca7"
 DEPENDS = "libyang protobuf protobuf-c protobuf-c-native libredblack libev libnetconf2"
 DEPENDS += "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}"
 
-FILES:${PN} += "${datadir}/yang/* ${libdir}/sysrepo-plugind/*"
+FILES:${PN} += "${datadir}/yang/* ${libdir}/sysrepo-plugind/* ${libdir}/sysrepo-plugind/staging"
 
 inherit cmake pkgconfig python3native python3-dir update-rc.d
 inherit ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}
 
 # Specify any options you want to pass to cmake using EXTRA_OECMAKE:
 EXTRA_OECMAKE = " -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE:String=Release -DBUILD_EXAMPLES:String=False -DENABLE_TESTS:String=False -DREPOSITORY_LOC:PATH=/etc/sysrepo -DCALL_TARGET_BINS_DIRECTLY=False -DGEN_LANGUAGE_BINDINGS:String=False "
+
+EXTRA_OECMAKE += " -DSRPD_PLUGINS_PATH=${libdir}/sysrepo-plugind/staging"
 
 BBCLASSEXTEND = "native nativesdk"
 
