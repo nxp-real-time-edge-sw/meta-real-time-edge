@@ -25,7 +25,6 @@ IMAGE_INSTALL:append = " \
 
 IMAGE_INSTALL:append:imx-nxp-bsp = " \
     packagegroup-real-time-edge-rtos \
-    packagegroup-harpoon \
     imx-test \
     packagegroup-imx-core-tools \
     curl \
