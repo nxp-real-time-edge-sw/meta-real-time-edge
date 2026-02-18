@@ -1,7 +1,10 @@
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRC_URI:append:qoriq = "file://0001-Revert-driver-sysfs-Update-bin_attribute-version-che.patch"
+SRC_URI:append:qoriq = " file://0001-Revert-driver-sysfs-Update-bin_attribute-version-che.patch"
+SRC_URI:remove:qoriq = "file://0001-YOCIMX-9281-1-Fix-gcc15-errors.patch \
+                        file://0002-YOCIMX-9281-2-hypervisor-arm64-fix-strh-usage.patch"
+
 SRCBRANCH = "lf-6.18.2_1.0.0"
 SRCREV = "cda912777c91efb02494cc2c6900113e79f36fdf"
 
