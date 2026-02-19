@@ -105,10 +105,6 @@ imx_add_layers()
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-rtos-industrial\"" >> $BUILD_DIR/conf/bblayers.conf
 
     echo "" >> $BUILD_DIR/conf/bblayers.conf
-    echo "# Harpoon layer" >> $BUILD_DIR/conf/bblayers.conf
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-harpoon\"" >> $BUILD_DIR/conf/bblayers.conf
-
-    echo "" >> $BUILD_DIR/conf/bblayers.conf
     echo "# AVB layer" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-avb\"" >> $BUILD_DIR/conf/bblayers.conf
 }
