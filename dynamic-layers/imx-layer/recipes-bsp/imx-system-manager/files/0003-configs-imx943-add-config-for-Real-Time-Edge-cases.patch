@@ -1,4 +1,4 @@
-From c066ef0bca740716845295249ba26627819d9351 Mon Sep 17 00:00:00 2001
+From 63f4fb2b9696de36d819c41847f6f54123c7ea63 Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 25 Sep 2025 22:25:06 +0800
 Subject: [PATCH 3/7] configs: imx943: add config for Real-Time-Edge cases
@@ -8,19 +8,23 @@ core NS SCMI agent, then added 2 more A core NS SCMI agents
 with the duplicated API permissions of the updated A core
 NS SCMI agent.
 
+RTEv3.4:
+Align the base configs with lf-6.18.2-1.0.0-rc1 mx94evk.cfg
+to fix build errors.
+
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Upstream-Status: Pending
 ---
- configs/other/mx94rte.cfg | 1362 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 1362 insertions(+)
+ configs/other/mx94rte.cfg | 1367 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 1367 insertions(+)
  create mode 100755 configs/other/mx94rte.cfg
 
 diff --git a/configs/other/mx94rte.cfg b/configs/other/mx94rte.cfg
 new file mode 100755
-index 00000000..f5499b33
+index 00000000..3e832e7a
 --- /dev/null
 +++ b/configs/other/mx94rte.cfg
-@@ -0,0 +1,1362 @@
+@@ -0,0 +1,1367 @@
 +## ###################################################################
 +##
 +## Copyright 2025 NXP
@@ -85,7 +89,7 @@ index 00000000..f5499b33
 +# ELE Domain                                                               #
 +#==========================================================================#
 +
-+DOM0                did=0
++DOM0                name="ELE", did=0
 +
 +DATA:               perm=rw
 +
@@ -101,7 +105,7 @@ index 00000000..f5499b33
 +# V2X Domain                                                               #
 +#==========================================================================#
 +
-+DOM12               did=12
++DOM12               name="V2X", did=12
 +
 +DFMT1:              sa=bypass, pa=bypass
 +OWNER:
@@ -112,7 +116,9 @@ index 00000000..f5499b33
 +
 +# Memory
 +
++DDR                 READONLY, begin=0x080000000, end=0x08AFFFFFF, nodbg
 +DDR                 DATA, begin=0x08B000000, end=0x08BFFFFFF, nodbg
++DDR                 READONLY, begin=0x08C000000, end=0x87FFFFFFF, nodbg
 +
 +#==========================================================================#
 +# SM M33 EENV                                                              #
@@ -204,7 +210,6 @@ index 00000000..f5499b33
 +ATU_D               OWNER
 +ATU_M               OWNER
 +ATU_M33S            OWNER
-+ATU_V2X             OWNER
 +AXBS_AON            OWNER
 +AXBS_NETC           OWNER
 +BBNSM               OWNER
@@ -341,6 +346,7 @@ index 00000000..f5499b33
 +
 +FAULT_SWNCF03       OWNER, reaction=grp_reset
 +FAULT_SWNCF04       OWNER, reaction=sys_reset
++FAULT_DDR_MBE       OWNER, reaction=sys_reset
 +
 +#==========================================================================#
 +# M33S EENV                                                                #
@@ -402,6 +408,7 @@ index 00000000..f5499b33
 +IRQSTEER_M33_S      OWNER
 +LPTPM5              OWNER
 +LPTPM6              OWNER
++LPUART3             OWNER, test
 +LPUART8             OWNER, test
 +M33S_CACHE_CTRL     OWNER
 +M33S_TCM_MCM        OWNER
@@ -426,6 +433,8 @@ index 00000000..f5499b33
 +
 +PIN_DAP_TCLK_SWCLK  OWNER
 +PIN_DAP_TMS_SWDIO   OWNER
++PIN_GPIO_IO30        OWNER
++PIN_GPIO_IO31        OWNER
 +
 +# Memory
 +
@@ -533,6 +542,7 @@ index 00000000..f5499b33
 +ATU_M70             OWNER
 +BISS1               OWNER
 +CAN_FD1             OWNER
++DIAG_ENC_MUX_CTRL   OWNER
 +DMA_CRC1            OWNER
 +DMA_CRC2            OWNER
 +ENC1                OWNER
@@ -540,6 +550,7 @@ index 00000000..f5499b33
 +ENC3                OWNER
 +ENC4                OWNER
 +ENC_PLL             OWNER
++ENDAT_STRCH_CTRL    OWNER
 +ENDAT2_1            OWNER
 +ENDAT2_2            OWNER
 +ENDAT3_1            OWNER
@@ -558,6 +569,9 @@ index 00000000..f5499b33
 +HIPERFACE_SAFE1_2   OWNER
 +HIPERFACE_SAFE2_1   OWNER
 +HIPERFACE_SAFE2_2   OWNER
++HIPERFACE1_CTRL     OWNER
++HIPERFACE2_CTRL     OWNER
++HPF_SYNC_OUT_CTRL   OWNER
 +IRQSTEER_M7_0       OWNER
 +LPIT1               OWNER
 +LPTMR1              OWNER
@@ -592,9 +606,11 @@ index 00000000..f5499b33
 +SYSCTR_RD           READONLY
 +TSTMR2              OWNER
 +WDOG5               OWNER
++XBAR_DIR_CTRL       OWNER
 +XBAR_DSC1           OWNER
 +XBAR_DSC2           OWNER
 +XBAR_DSC3           OWNER
++XBAR_TRIG_CTRL      OWNER
 +
 +# Pins
 +
@@ -778,7 +794,6 @@ index 00000000..f5499b33
 +# API
 +
 +PERF_A55            ALL
-+PERF_DRAM           ALL
 +PERLPI_CAN2         ALL
 +PERLPI_CAN3         ALL
 +PERLPI_CAN4         ALL
@@ -790,7 +805,6 @@ index 00000000..f5499b33
 +PERLPI_GPIO6        ALL
 +PERLPI_GPIO7        ALL
 +PERLPI_LPUART1      ALL
-+PERLPI_LPUART3      ALL
 +PERLPI_LPUART4      ALL
 +PERLPI_LPUART5      ALL
 +PERLPI_LPUART6      ALL
@@ -868,7 +882,6 @@ index 00000000..f5499b33
 +LMM_2                     NOTIFY
 +LMM_3                     NOTIFY
 +PERF_A55                  ALL
-+PERF_DRAM                 ALL
 +RTC                       ALL, test
 +SENSOR_TEMP_A55           ALL
 +SENSOR_TEMP_ANA           SET
@@ -877,6 +890,7 @@ index 00000000..f5499b33
 +# Resources
 +
 +ADC                 OWNER
++ATU_V2X             OWNER
 +BLK_CTRL_DISPLAYMIX OWNER
 +BLK_CTRL_HSIOMIX    OWNER
 +BLK_CTRL_NETCMIX    OWNER
@@ -1069,7 +1083,6 @@ index 00000000..f5499b33
 +LPTPM5              ACCESS
 +LPTPM6              ACCESS
 +LPUART1             OWNER
-+LPUART3             OWNER, test
 +LPUART4             OWNER
 +LPUART5             OWNER
 +LPUART6             OWNER
@@ -1276,10 +1289,6 @@ index 00000000..f5499b33
 +PIN_GPIO_IO23        OWNER
 +PIN_GPIO_IO28        OWNER
 +PIN_GPIO_IO29        OWNER
-+PIN_GPIO_IO30        OWNER
-+PIN_GPIO_IO30        OWNER
-+PIN_GPIO_IO31        OWNER
-+PIN_GPIO_IO31        OWNER
 +PIN_GPIO_IO32        OWNER
 +PIN_GPIO_IO33        OWNER
 +PIN_GPIO_IO34        OWNER

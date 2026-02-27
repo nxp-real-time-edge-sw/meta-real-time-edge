@@ -1,4 +1,4 @@
-From 6d1799f799af197b9cbbe522739ad7801f253168 Mon Sep 17 00:00:00 2001
+From 89cabe9ae3ebaf4b43212b18d1dad610d208cb0d Mon Sep 17 00:00:00 2001
 From: Aziz Sellami <aziz.sellami@nxp.com>
 Date: Mon, 29 Sep 2025 15:43:10 +0200
 Subject: [PATCH 6/7] configs: mx94rte: disable auto clock gating
@@ -15,7 +15,7 @@ Upstream-Status: Pending
  2 files changed, 7 insertions(+)
 
 diff --git a/configs/other/mx94rte.cfg b/configs/other/mx94rte.cfg
-index 50a43b76..e5f9c425 100755
+index 9fa330ad..410596ee 100755
 --- a/configs/other/mx94rte.cfg
 +++ b/configs/other/mx94rte.cfg
 @@ -47,6 +47,8 @@ BOARD               DEBUG_UART_BAUDRATE=115200

@@ -1,4 +1,4 @@
-From 899924b4c74694a1147b30956050edcba5c5a6fa Mon Sep 17 00:00:00 2001
+From 8fad8c22a9e57f9073ebef4ade6f2deaf26b481c Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 25 Sep 2025 22:36:57 +0800
 Subject: [PATCH 4/7] configs: mx94rte: assign access permission of MSGINTR2 to
@@ -11,10 +11,10 @@ Upstream-Status: Pending
  1 file changed, 1 insertion(+)
 
 diff --git a/configs/other/mx94rte.cfg b/configs/other/mx94rte.cfg
-index f5499b33..bd109bb8 100755
+index 3e832e7a..085c5da1 100755
 --- a/configs/other/mx94rte.cfg
 +++ b/configs/other/mx94rte.cfg
-@@ -1055,6 +1055,7 @@ LPUART8             ACCESS
+@@ -1064,6 +1064,7 @@ LPUART8             ACCESS
  LPUART9             OWNER
  LPUART10            OWNER
  LVDS                OWNER
