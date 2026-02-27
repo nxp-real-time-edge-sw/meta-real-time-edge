@@ -31,7 +31,6 @@ cantools:ls1028ardb = "libsocketcan can-utils"
 
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-sysrepo', 'real-time-edge-sysrepo', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'tsn-scripts', 'tsn-scripts', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-nodejs-lbt', 'real-time-edge-nodejs-lbt', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-prl', 'real-time-edge-prl', '', d)} \
     linuxptp \
@@ -51,4 +50,5 @@ RDEPENDS:${PN} = " \
     openssh-sftp-server \
     openssh-keygen \
     pktgen-scripts \
+    isochron \
 "

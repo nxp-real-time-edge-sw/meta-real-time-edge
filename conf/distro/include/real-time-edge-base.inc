@@ -11,13 +11,13 @@ DISTRO_FEATURES:append:ls1043ardb = " jailhouse"
 DISTRO_FEATURES:append:ls1046ardb = " jailhouse"
 DISTRO_FEATURES:append:ls1028ardb = " jailhouse real-time-edge-libbee \
 				      real-time-edge-libblep libnfc-nci \
-				      real-time-edge-sysrepo tsn-scripts alsa genavb-tsn"
+				      real-time-edge-sysrepo alsa genavb-tsn"
 DISTRO_FEATURES:append:mx8dxl-nxp-bsp = " real-time-edge-sysrepo genavb-tsn"
 DISTRO_FEATURES:append:mx8mp-nxp-bsp = " real-time-edge-sysrepo genavb-tsn"
 DISTRO_FEATURES:append:mx8m-nxp-bsp = " modbus-simulator"
 DISTRO_FEATURES:append:mx93-nxp-bsp = " real-time-edge-sysrepo genavb-tsn"
 DISTRO_FEATURES:append:mx95-nxp-bsp = " modbus-simulator"
-DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo tsn-scripts real-time-edge-prl"
+DISTRO_FEATURES:append:ls1021atsn = " real-time-edge-sysrepo real-time-edge-prl"
 DISTRO_FEATURES:append:ls1021aiot = " canfestival"
 
 # For imx8dxlevk remove jailhouse feature until the board is added into jailhouse.
