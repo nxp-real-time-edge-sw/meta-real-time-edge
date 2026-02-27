@@ -1,0 +1,60 @@
+From 8b9fba02bfc75c46b60e935982bd0c4989691ee8 Mon Sep 17 00:00:00 2001
+From: Jony Zhang <jony.zhang@nxp.com>
+Date: Fri, 27 Feb 2026 21:28:49 +0800
+Subject: [PATCH 3/3] fec: kernel 6.18.2: fix compile error because of kernel
+ upgrade to 6.18.2
+
+Signed-off-by: Jony Zhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
+---
+ devices/fec/fec_main.c |  2 +-
+ devices/fec/fec_ptp.c  | 10 ++++------
+ 2 files changed, 5 insertions(+), 7 deletions(-)
+
+diff --git a/devices/fec/fec_main.c b/devices/fec/fec_main.c
+index 57832475..0786470a 100644
+--- a/devices/fec/fec_main.c
++++ b/devices/fec/fec_main.c
+@@ -3392,7 +3392,7 @@ static struct platform_driver fec_driver = {
+ 	},
+ 	.id_table = fec_devtype,
+ 	.probe	= fec_probe,
+-	.remove_new	= fec_drv_remove,
++	.remove	= fec_drv_remove,
+ };
+ 
+ module_platform_driver(fec_driver);
+diff --git a/devices/fec/fec_ptp.c b/devices/fec/fec_ptp.c
+index 76a49104..5250ce00 100644
+--- a/devices/fec/fec_ptp.c
++++ b/devices/fec/fec_ptp.c
+@@ -211,22 +211,20 @@ static int fec_ptp_enable_pps(struct fec_enet_private *fep, uint enable)
+  * cyclecounter structure used to construct a ns counter from the
+  * arbitrary fixed point registers
+  */
+-static u64 fec_ptp_read(const struct cyclecounter *cc)
++static u64 fec_ptp_read(struct cyclecounter *cc)
+ {
+ 	struct fec_enet_private *fep =
+ 		container_of(cc, struct fec_enet_private, cc);
+-	const struct platform_device_id *id_entry =
+-		platform_get_device_id(fep->pdev);
+ 	u32 tempval;
+ 
+-	tempval = readl(fep->hwp + FEC_ATIME_CTRL);
++	tempval = readl_relaxed(fep->hwp + FEC_ATIME_CTRL);
+ 	tempval |= FEC_T_CTRL_CAPTURE;
+ 	writel(tempval, fep->hwp + FEC_ATIME_CTRL);
+ 
+-	if (id_entry->driver_data & FEC_QUIRK_BUG_CAPTURE)
++	if (fep->quirks & FEC_QUIRK_BUG_CAPTURE)
+ 		udelay(1);
+ 
+-	return readl(fep->hwp + FEC_ATIME);
++	return readl_relaxed(fep->hwp + FEC_ATIME);
+ }
+ 
+ /**
+-- 
+2.43.0
+

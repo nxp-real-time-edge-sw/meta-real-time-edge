@@ -18,6 +18,9 @@ SRC_URI += "\
     file://0002-fec-fix-compile-error-because-of-kernel-upgrade-to-6.patch \
 	file://0001-enetc4-ec_enetc4-and-ec_master-modules-worked.patch \
 	file://0001-fec-fix-IGH-can-t-restart-issue.patch \
+	file://0001-enetc-kernel-6.18.2-fix-compile-error-because-of-ker.patch \
+	file://0002-examples-mini-fix-compile-error-because-of-kernel-up.patch \
+	file://0003-fec-kernel-6.18.2-fix-compile-error-because-of-kerne.patch \
 "
 
 ERROR_QA:remove = "buildpaths"
