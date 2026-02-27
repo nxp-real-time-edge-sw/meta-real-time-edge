@@ -1,0 +1,35 @@
+From 93b290b61a70e6ec467be9db7f0886c68338bdaf Mon Sep 17 00:00:00 2001
+From: Minghuan Lian <minghuan.lian@nxp.com>
+Date: Fri, 27 Feb 2026 00:06:35 -0800
+Subject: [PATCH 3/3] remove bool definition
+
+bool is a keyword with "-std=c23". it cannot be defined via typedef.
+The patch removed bool definition and include <stdbool.h> file to
+avoid compile issue.
+
+Signed-off-by: Minghuan Lian <minghuan.lian@nxp.com>
+Upstream-Status: Pending
+---
+ emulation/linux/jiffies.h | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/emulation/linux/jiffies.h b/emulation/linux/jiffies.h
+index c977b6dc..2f02c269 100644
+--- a/emulation/linux/jiffies.h
++++ b/emulation/linux/jiffies.h
+@@ -6,9 +6,7 @@
+ #include <sys/time.h>
+ #include <linux/types.h>
+ 
+-typedef _Bool bool;
+-#define false 0
+-#define true 1
++#include <stdbool.h>
+ 
+ typedef __s8  s8;
+ typedef __s16 s16;
+-- 
+2.43.0
+
+
+

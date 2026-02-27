@@ -1,0 +1,200 @@
+From a70f1709fab86543e2c0e3feb3b3cdc8d81744ff Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Tue, 27 Jan 2026 15:41:01 +0800
+Subject: [PATCH 2/3] Support main and backup devices for multiple masters
+
+Note: need enable compile parameter "--with-devices=2"
+
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
+---
+ compile.sh                       |  4 +-
+ devices/nxp_userspace/usm_main.c | 66 ++++++++++++++++++++++++--------
+ devices/nxp_userspace/usm_main.h |  1 +
+ master/master.c                  |  2 +-
+ 4 files changed, 54 insertions(+), 19 deletions(-)
+
+diff --git a/compile.sh b/compile.sh
+index d983d42e..77365dae 100755
+--- a/compile.sh
++++ b/compile.sh
+@@ -30,9 +30,9 @@ if [ "$1" == "rebuild" ]; then
+   if [ -n "$CROSS_COMPILE" ]; then
+     CCHOSTB=$(basename "$CROSS_COMPILE")
+     CCHOST=${CCHOSTB:0:-1}
+-    ./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-tool=yes --enable-eoe=no --host=${CCHOST}
++    ./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-tool=yes --enable-eoe=no --host=${CCHOST} --with-devices=2
+   else
+-    ./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-tool=yes --enable-eoe=no --build=arm
++    ./configure --prefix=$PWD/ecat_build/ --enable-kernel=no --enable-usecat=yes --enable-tool=yes --enable-eoe=no --build=arm --with-devices=2
+   fi
+ fi
+ 
+diff --git a/devices/nxp_userspace/usm_main.c b/devices/nxp_userspace/usm_main.c
+index fcd338d7..4903c3ca 100644
+--- a/devices/nxp_userspace/usm_main.c
++++ b/devices/nxp_userspace/usm_main.c
+@@ -41,7 +41,10 @@ typedef struct {
+     int main;
+ } ec_usm_device_t;
+ 
+-static ec_usm_device_t sec_usm_dev;
++static ec_usm_device_t sec_usm_dev[MAX_USM_DEVICE];
++static uint32_t sec_device_num;
++static uint32_t sec_master_num;
++static uint32_t sec_backup_num;
+ static uint32_t score_mask = 0x02;
+ 
+ extern int ec_master_set_noop_mode(uint32_t cycle_ns);
+@@ -144,14 +147,14 @@ static int ec_usm_netdev_stop(struct net_device *dev)
+ 
+ static int ec_usm_netdev_xmit(struct sk_buff *skb, struct net_device *dev)
+ {
+-    ec_usm_device_t *usm_dev = &sec_usm_dev;
++    ec_usm_device_t *usm_dev = sec_usm_dev + dev->ifindex;
+ 
+     return ec_usm_device_xmit(usm_dev, skb);
+ }
+ 
+ static void ec_usm_poll(struct net_device *dev)
+ {
+-    ec_usm_device_t *usm_dev = &sec_usm_dev;
++    ec_usm_device_t *usm_dev = sec_usm_dev + dev->ifindex;
+ 
+     return ec_usm_device_poll(usm_dev);
+ }
+@@ -168,17 +171,26 @@ static const struct net_device_ops ec_usm_netdev_ops = {
+ static inline void ec_usm_ether_setup(struct net_device *netdev)
+ {
+     uint8_t smac[ETH_ALEN];
++    int index;
++    int main;
+     int i;
+ 
++    sscanf(netdev->name, "ecat-%d-%d", &main, &index);
++
+     for (i = 0; i < (ETH_ALEN - 2); i++)
+         smac[i] = netdev->name[i] - 'a';
+ 
+-    smac[4] = 1;
+-    smac[5] = 0;
++    smac[4] = main;
++    smac[5] = index;
+ 
+     memcpy(netdev->dev_addr, smac, ETH_ALEN);
+     netdev->type = ARPHRD_ETHER;
+-    netdev->ifindex = 0;
++    if (main)
++        netdev->ifindex = index;
++    else
++        netdev->ifindex = index + sec_master_num;
++
++    printk("\n%s() netdev name:%s main:%d index:%d ifindex:%d\n", __func__, netdev->name, main, index, netdev->ifindex);
+ }
+ 
+ /** Init userspace-master device.
+@@ -191,7 +203,7 @@ static int ec_usm_device_init(ec_usm_device_t *dev)
+     void *us_dev = NULL;
+     int i = 0;
+ 
+-    snprintf(name, IFNAMSIZ, "ecat-%d-%d", dev->main, dev->index);
++    snprintf(name, IFNAMSIZ, "ecat-%d-%d", dev->main, dev->index % MAX_USM_DEVICE);
+ 
+     dev->ecdev = NULL;
+     dev->netdev = alloc_netdev(sizeof(ec_usm_device_t *), name, NET_NAME_UNKNOWN, ec_usm_ether_setup);
+@@ -317,9 +329,10 @@ static int ec_usm_offer_device(ec_usm_device_t *usm_dev)
+  */
+ static void ec_usm_clear_devices(void)
+ {
+-    ec_usm_device_t *usm_dev = &sec_usm_dev;
++    int i = 0;
+ 
+-    ec_usm_device_clear(usm_dev);
++    for (i = 0; i < sec_device_num; i++)
++        ec_usm_device_clear(sec_usm_dev + i);
+ }
+ 
+ /** Initialize userspace-master net devices.
+@@ -327,8 +340,18 @@ static void ec_usm_clear_devices(void)
+  */
+ int ec_usm_net_init(uint32_t master_num, uint32_t backup_num, uint32_t cycle_ns, uint32_t core_mask)
+ {
++    int num = master_num + backup_num;
+     int ret = 0;
+ 
++    if (num >= MAX_USM_DEVICE) {
++        printk("%s(): invalid master_num:%d backup_num:%d\n", __func__, master_num, backup_num);
++        return -1;
++    }
++
++    sec_master_num = master_num;
++    sec_backup_num = backup_num;
++    sec_device_num = num;
++
+     ec_master_set_noop_mode(cycle_ns);
+     ecus_set_core_mask(core_mask);
+ 
+@@ -353,17 +376,28 @@ err_tag:
+  */
+ int __init ec_usm_init_module(void)
+ {
+-    ec_usm_device_t *pdev = &sec_usm_dev;
++    ec_usm_device_t *pdev = NULL;
+     int ret = 0;
++    int i = 0;
+ 
+     printk(KERN_INFO PFX "EtherCAT master driver, ver:%s\n", EC_MASTER_VERSION);
+ 
+-    pdev->main = 1;
+-    pdev->index = 0;
+-    ret = ec_usm_offer_device(pdev);
+-    if (ret) {
+-        printk("%s(): offer device for master failed!\n", __func__);
+-        ret = -1;
++    for (i = 0; i < sec_device_num; i++) {
++        pdev = sec_usm_dev + i;
++
++        if (i < sec_master_num) {
++            pdev->main = 1;
++            pdev->index = i;
++        } else {
++            pdev->main = 0;
++            pdev->index = i - sec_master_num;
++        }
++
++        ret = ec_usm_offer_device(pdev);
++        if (ret) {
++            printk("%s(): offer device-%d for master failed!\n", __func__, i);
++            break;
++        }
+     }
+ 
+     return ret;
+diff --git a/devices/nxp_userspace/usm_main.h b/devices/nxp_userspace/usm_main.h
+index 5b3018de..e2f4ec23 100644
+--- a/devices/nxp_userspace/usm_main.h
++++ b/devices/nxp_userspace/usm_main.h
+@@ -15,6 +15,7 @@
+ #include <stdint.h>
+ #include <unistd.h>
+ 
++#define MAX_USM_DEVICE (64)
+ 
+ #ifndef MAX_TX_BD_RING_SIZE
+ #define MAX_TX_BD_RING_SIZE	(64)
+diff --git a/master/master.c b/master/master.c
+index e79bd2c6..be007bf1 100644
+--- a/master/master.c
++++ b/master/master.c
+@@ -1723,7 +1723,7 @@ int ecus_master_operation_loop(ec_master_t *master, int cycle)
+     if (!ec_master_in_noop_mode())
+         return 0;
+ 
+-    if (cycle)
++    if (cycle && (master->index == 0))
+         sop_cycle_us_sum += sop_cycle_us;
+ 
+     if (master->active) {
+-- 
+2.43.0
+
