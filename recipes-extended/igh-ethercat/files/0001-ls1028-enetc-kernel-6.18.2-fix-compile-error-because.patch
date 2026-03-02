@@ -1,0 +1,76 @@
+From 304bd4ecea652664ff650bd52de09f9644a22eba Mon Sep 17 00:00:00 2001
+From: Jony Zhang <jony.zhang@nxp.com>
+Date: Mon, 2 Mar 2026 20:14:47 +0800
+Subject: [PATCH] ls1028: enetc: kernel 6.18.2: fix compile error because of
+ kernel upgrade to 6.18.2
+
+Signed-off-by: Jony Zhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
+---
+ devices/enetc/enetc.h     |  1 -
+ devices/enetc/enetc_qos.c | 30 ------------------------------
+ 2 files changed, 31 deletions(-)
+
+diff --git a/devices/enetc/enetc.h b/devices/enetc/enetc.h
+index 01868a0d..1592e31c 100644
+--- a/devices/enetc/enetc.h
++++ b/devices/enetc/enetc.h
+@@ -11,7 +11,6 @@
+ #include <linux/fsl/ntmp.h>
+ #include <linux/if_vlan.h>
+ #include <linux/phylink.h>
+-#include <linux/fsl/netc_lib.h>
+ #include <linux/dim.h>
+ #include <net/xdp.h>
+ #ifdef CONFIG_ENETC_TSN
+diff --git a/devices/enetc/enetc_qos.c b/devices/enetc/enetc_qos.c
+index 0ab45e8e..44bd5f90 100644
+--- a/devices/enetc/enetc_qos.c
++++ b/devices/enetc/enetc_qos.c
+@@ -9,16 +9,6 @@
+ #include <net/pkt_cls.h>
+ #include <net/tc_act/tc_gate.h>
+ 
+-static const struct netc_flower enetc_flower[] = {
+-	{
+-		BIT_ULL(FLOW_ACTION_GATE),
+-		BIT_ULL(FLOW_ACTION_POLICE),
+-		BIT_ULL(FLOW_DISSECTOR_KEY_ETH_ADDRS) |
+-		BIT_ULL(FLOW_DISSECTOR_KEY_VLAN),
+-		FLOWER_TYPE_PSFP
+-	},
+-};
+-
+ static u16 enetc_get_max_gcl_len(struct enetc_hw *hw)
+ {
+ 	return enetc_rd(hw, ENETC_PTGCAPR) & ENETC_PTGCAPR_MAX_GCL_LEN_MASK;
+@@ -1680,26 +1670,6 @@ static int enetc_setup_tc_cls_flower(struct enetc_ndev_priv *priv,
+ 	}
+ }
+ 
+-static const struct netc_flower *enetc4_parse_tc_flower(u64 actions, u64 keys)
+-{
+-	u64 key_acts, all_acts;
+-	int i;
+-
+-	for (i = 0; i < ARRAY_SIZE(enetc_flower); i++) {
+-		key_acts = enetc_flower[i].key_acts;
+-		all_acts = enetc_flower[i].key_acts |
+-			   enetc_flower[i].opt_acts;
+-
+-		/* key_acts must be matched */
+-		if ((actions & key_acts) == key_acts &&
+-		    (actions & all_acts) == actions &&
+-		    keys & enetc_flower[i].keys)
+-			return &enetc_flower[i];
+-	}
+-
+-	return NULL;
+-}
+-
+ static inline void clean_psfp_sfi_bitmap(void)
+ {
+ 	bitmap_free(epsfp.psfp_sfi_bitmap);
+-- 
+2.43.0
+
