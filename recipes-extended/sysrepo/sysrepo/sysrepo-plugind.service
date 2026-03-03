@@ -21,6 +21,7 @@ Description=Sysrepo plugin daemon
 After=local-fs.target
 
 [Service]
+Environment=SRPD_PLUGINS_PATH=/usr/lib/sysrepo-plugind/plugins/
 Type=notify
 ExecStartPre=/bin/bash -c 'NP2_MODULE_DIR="/usr/share/yang/modules/netopeer2" \
 			   LN2_MODULE_DIR="/usr/share/yang/modules/libnetconf2" \

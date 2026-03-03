@@ -13,6 +13,7 @@ init_sysrepo() {
     export NP2_MODULE_PERMS="600"
     export NP2_MODULE_OWNER="root"
     export NP2_MODULE_GROUP="root"
+    export SRPD_PLUGINS_PATH="/usr/lib/sysrepo-plugind/plugins/"
     if [ -x /usr/bin/sysrepoctl ]; then
         sh /usr/share/netopeer2/scripts/setup.sh
         sh /etc/sysrepo-tsn/install-tsn-yang.sh
