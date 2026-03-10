@@ -1,7 +1,7 @@
-From cf8e530ae0aa473097864551698dfc9c12a451d1 Mon Sep 17 00:00:00 2001
+From 21e14bc8c8bb378001d82760aae72e84e399de7c Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Sat, 21 Sep 2024 16:51:22 +0800
-Subject: [PATCH 05/14] plat: imx: add SIP cpu_off service for imx93
+Subject: [PATCH 05/15] plat: imx: add SIP cpu_off service for imx93
 
 SIP cpu_off service is used to turn off specified CPU Core by any
 other management CPU Core, SGI interrupt is trigged by managment
@@ -9,7 +9,6 @@ CPU Core and handled on specified CPU Core which will be into
 WFI in SGI interrupt handler.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
-Changed IMX_SIP_CPU_OFF from 0xC200000D to 0xC2000012.
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Upstream-Status: Pending
 ---
@@ -296,18 +295,18 @@ index 3e58b9485..b045bda29 100644
 -#endif		/*	IMX_INTERCORE_SVC_H	*/
 +#endif	/* IMX_INTERCORE_SVC_H	*/
 diff --git a/plat/imx/common/include/imx_sip_svc.h b/plat/imx/common/include/imx_sip_svc.h
-index f017d0449..38e6a830d 100644
+index f017d0449..1f217cc95 100644
 --- a/plat/imx/common/include/imx_sip_svc.h
 +++ b/plat/imx/common/include/imx_sip_svc.h
-@@ -96,6 +96,8 @@ int imx_configure_memory_for_vpu(void *handle, u_register_t x1);
- int imx_get_partition_number(void *handle);
- #endif
+@@ -69,6 +69,8 @@
  
-+#define IMX_SIP_CPU_OFF			0xC2000012
+ #define IMX_SIP_MISC_SET_TEMP		0xC200000C
+ 
++#define IMX_SIP_CPU_OFF			0xC200000D
 +
- #if defined(PLAT_imx8mq)
- int imx_soc_info_handler(uint32_t smc_fid, u_register_t x1,
- 			 u_register_t x2, u_register_t x3);
+ #if defined(PLAT_imx93)
+ #define IMX_SIP_BBSM			0xC200000D
+ #define IMX_SIP_BBSM_CLEAR_INTERRUPT	0x01
 @@ -177,4 +179,8 @@ int imx_src_handler(uint32_t smc_fid, u_register_t x1,
  		    u_register_t x2, u_register_t x3,
  		    u_register_t x4, void *handle);

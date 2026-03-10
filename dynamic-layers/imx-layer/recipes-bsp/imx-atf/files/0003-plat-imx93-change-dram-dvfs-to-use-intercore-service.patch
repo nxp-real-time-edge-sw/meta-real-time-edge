@@ -1,7 +1,7 @@
-From 4f5cbb9a1ba7ac97423e69101cd64436fc7dd89b Mon Sep 17 00:00:00 2001
+From 2eef0f60b89ad9b9f061489a1be7a91c596c6217 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Wed, 25 Sep 2024 18:06:38 +0800
-Subject: [PATCH 03/14] plat: imx93: change dram dvfs to use intercore service
+Subject: [PATCH 03/15] plat: imx93: change dram dvfs to use intercore service
 
 So that SGI irq can be shared with SIP cpu_off service.
 

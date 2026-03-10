@@ -1,7 +1,7 @@
-From 168682fdf2f5579e3ee002ed4c0398fb9ff6f7cf Mon Sep 17 00:00:00 2001
+From 441fac87c65a9ef4b9f4677ad9d7df0fa80dabc6 Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Wed, 31 Dec 2025 11:09:55 +0800
-Subject: [PATCH 13/14] plat: imx94: add SIP cpu_off service
+Subject: [PATCH 13/15] plat: imx94: add SIP cpu_off service
 
 Added SIP cpu_off service for imx94.
 Enabled workaround HANDLE_NS_EA_EL3_IRQ_WA.
@@ -51,7 +51,7 @@ index c9242c745..8be50a372 100644
  		SMC_RET1(handle, imx_sip_cpuoff_handler(smc_fid, x1, x2, x3, x4));
  #endif
 diff --git a/plat/imx/common/include/imx_sip_svc.h b/plat/imx/common/include/imx_sip_svc.h
-index 6c9422066..a9d8bb129 100644
+index bb49ad65f..6406154f5 100644
 --- a/plat/imx/common/include/imx_sip_svc.h
 +++ b/plat/imx/common/include/imx_sip_svc.h
 @@ -179,7 +179,7 @@ int imx_src_handler(uint32_t smc_fid, u_register_t x1,

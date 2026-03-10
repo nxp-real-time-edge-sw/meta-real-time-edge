@@ -1,7 +1,7 @@
-From fafdb7732bf2ddcb366540a456f2b931dded2e4d Mon Sep 17 00:00:00 2001
+From 8981b3d03db5a56382a82a031dd0515b47e4bddd Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 5 Jun 2025 16:13:12 +0800
-Subject: [PATCH 11/14] plat: imx8m, imx93/5: enable workaround for CPU off SIP
+Subject: [PATCH 11/15] plat: imx8m, imx93/5: enable workaround for CPU off SIP
 
 When ROTS is panic, TF-A will handle NS pending SError and reflects
 it back to lower EL, so CPU off SIP interrupt will not be handled

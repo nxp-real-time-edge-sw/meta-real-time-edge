@@ -19,4 +19,5 @@ SRC_URI:append = " \
     file://0012-imx8mp-Set-RDC-to-level-0.patch \
     file://0013-plat-imx94-add-SIP-cpu_off-service.patch \
     file://0014-plat-imx-dvfs-bring-all-running-Core-into-WFE.patch \
+    file://0015-plat-imx-fix-definition-conflict-of-IMX_SIP_CPU_OFF.patch \
 "

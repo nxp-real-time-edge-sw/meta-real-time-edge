@@ -1,7 +1,7 @@
-From ea779ef8d5c1bf6bbc10182cf63186cf49af1587 Mon Sep 17 00:00:00 2001
+From bb70c97c0b14b9f7139a6ed1092ba124e3e1de73 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Fri, 16 Jan 2026 17:27:18 +0800
-Subject: [PATCH 14/14] plat: imx: dvfs: bring all running Core into WFE
+Subject: [PATCH 14/15] plat: imx: dvfs: bring all running Core into WFE
 
 In general, the requriement for DRAM frequency changing is raised by Linux,
 the current implementation is only bring all the CPU Core used by Linux to

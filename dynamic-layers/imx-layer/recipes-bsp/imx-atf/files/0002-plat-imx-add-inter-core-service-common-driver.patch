@@ -1,7 +1,7 @@
-From c53717608867814e4e30cb15c5e2f0ad32dabf60 Mon Sep 17 00:00:00 2001
+From 4fe6c54340e315ba753bad785f3850de8a0ce153 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Wed, 25 Sep 2024 18:05:27 +0800
-Subject: [PATCH 02/14] plat: imx: add inter-core service common driver
+Subject: [PATCH 02/15] plat: imx: add inter-core service common driver
 
 Add common layer of inter-core service, so that we can use single
 SGI interrupt to more inter-core notifyication service.

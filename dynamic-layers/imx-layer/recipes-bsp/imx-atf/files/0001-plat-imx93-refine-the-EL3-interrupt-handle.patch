@@ -1,7 +1,7 @@
-From 3e18fa3829862bdd0c50c36573b1a2ba36cbb205 Mon Sep 17 00:00:00 2001
+From 600b8a53178d3cd08cad48e3a9b0029557e29577 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 5 Sep 2024 18:28:59 +0800
-Subject: [PATCH 01/14] plat: imx93: refine the EL3 interrupt handle
+Subject: [PATCH 01/15] plat: imx93: refine the EL3 interrupt handle
 
 Added a common interrupt handler for all EL3 interrupt, so can handle
 more EL3 interrupt.
