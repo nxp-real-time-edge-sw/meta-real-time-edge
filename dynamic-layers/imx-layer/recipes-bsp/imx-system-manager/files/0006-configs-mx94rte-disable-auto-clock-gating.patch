@@ -1,4 +1,4 @@
-From 89cabe9ae3ebaf4b43212b18d1dad610d208cb0d Mon Sep 17 00:00:00 2001
+From 3a651b86a70fda04dd125269c158805898f8a8d2 Mon Sep 17 00:00:00 2001
 From: Aziz Sellami <aziz.sellami@nxp.com>
 Date: Mon, 29 Sep 2025 15:43:10 +0200
 Subject: [PATCH 6/7] configs: mx94rte: disable auto clock gating

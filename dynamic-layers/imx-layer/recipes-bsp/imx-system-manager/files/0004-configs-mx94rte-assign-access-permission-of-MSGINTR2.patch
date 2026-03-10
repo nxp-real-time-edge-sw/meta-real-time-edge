@@ -1,4 +1,4 @@
-From 8fad8c22a9e57f9073ebef4ade6f2deaf26b481c Mon Sep 17 00:00:00 2001
+From 197e4a391e02763f7e37a4e9fdcda25da92991ae Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 25 Sep 2025 22:36:57 +0800
 Subject: [PATCH 4/7] configs: mx94rte: assign access permission of MSGINTR2 to

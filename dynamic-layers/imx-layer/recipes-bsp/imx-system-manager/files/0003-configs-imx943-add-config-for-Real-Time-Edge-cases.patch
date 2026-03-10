@@ -1,4 +1,4 @@
-From 63f4fb2b9696de36d819c41847f6f54123c7ea63 Mon Sep 17 00:00:00 2001
+From a7d592207c7e2b7289c0bb02c800abaa2401d4c8 Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 25 Sep 2025 22:25:06 +0800
 Subject: [PATCH 3/7] configs: imx943: add config for Real-Time-Edge cases

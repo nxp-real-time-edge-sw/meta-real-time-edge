@@ -1,4 +1,4 @@
-From 76c64e9d04edf662493b09ac131cd49b74e97001 Mon Sep 17 00:00:00 2001
+From 4ded69096f3b2cbe9524da4bf7dc6928b6b17ba8 Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Wed, 3 Sep 2025 15:48:04 +0800
 Subject: [PATCH 2/7] configs: imx95rte: update for booting M7 from u-boot
