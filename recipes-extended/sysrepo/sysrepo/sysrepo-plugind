@@ -13,7 +13,6 @@ init_sysrepo() {
     export NP2_MODULE_PERMS="600"
     export NP2_MODULE_OWNER="root"
     export NP2_MODULE_GROUP="root"
-    export SRPD_PLUGINS_PATH="/usr/lib/sysrepo-plugind/plugins/"
     if [ -x /usr/bin/sysrepoctl ]; then
         sh /usr/share/netopeer2/scripts/setup.sh
         sh /etc/sysrepo-tsn/install-tsn-yang.sh
@@ -22,15 +21,20 @@ init_sysrepo() {
         sh /usr/share/netopeer2/scripts/merge_hostkey.sh
         sh /usr/share/netopeer2/scripts/merge_config.sh
     fi
-    sh /usr/bin/sysrepo-plugins-install.sh
     touch /etc/sysrepo/init
+}
+
+install_plugins() {
+        export SRPD_PLUGINS_PATH="/usr/lib/sysrepo-plugind/plugins/"
+        sh /usr/bin/sysrepo-plugins-install.sh
 }
 
 case "$1" in
     start)
         test -r /etc/sysrepo/init || init_sysrepo
 
-        echo -n "Starting sysrepo-plugind: "
+        echo "Starting sysrepo-plugind: "
+        install_plugins
         start-stop-daemon --start --background --exec $EXEC_PATH/$SYSREPOPLUGIND_EXEC -- $SERVER_OPTS
         RETVAL=$?
         if [ $RETVAL -eq 0 ] ; then
