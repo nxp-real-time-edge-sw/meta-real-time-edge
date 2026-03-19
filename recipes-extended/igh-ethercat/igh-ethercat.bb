@@ -22,6 +22,7 @@ SRC_URI += "\
 	file://0002-examples-mini-fix-compile-error-because-of-kernel-up.patch \
 	file://0003-fec-kernel-6.18.2-fix-compile-error-because-of-kerne.patch \
 	file://0001-ls1028-enetc-kernel-6.18.2-fix-compile-error-because.patch \
+	file://0001-enetc4-fix-IGH-can-t-able-to-scan-for-devices-issue.patch \
 "
 
 ERROR_QA:remove = "buildpaths"
