@@ -1,4 +1,4 @@
-# Real-time Edge Software Project v3.3 Release
+# Real-time Edge Software Project v3.4 Release
 
 ======================================================
 
@@ -32,12 +32,12 @@ $ repo sync
 
 #### Examples
 
-To download the Real-time Edge 3.3 release
+To download the Real-time Edge 3.4 release
 
 ```
 $ mkdir yocto-real-time-edge
 $ cd yocto-real-time-edge
-$ repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-walnascar -m real-time-edge-3.3.0.xml
+$ repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-whinlatter -m real-time-edge-3.4.0.xml
 $ repo sync
 ```
 
@@ -66,6 +66,7 @@ Machine:
 - imx943-15x15-lpddr4-evk
 - imx95-19x19-lpddr5-evk
 - imx95-15x15-lpddr4x-evk
+- imx95-15x15-lpddr4x-frdm
 - ls1028ardb
 - ls1043ardb
 - ls1046ardb
