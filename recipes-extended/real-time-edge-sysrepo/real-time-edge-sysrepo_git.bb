@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
 REAL_TIME_EDGE_SYSREPO_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-sysrepo.git;protocol=https"
 REAL_TIME_EDGE_SYSREPO_BRANCH ?= "master"
-REAL_TIME_EDGE_SYSREPO_SRCREV ?= "721441283c3cf26046ebaf962356809e41916153"
+REAL_TIME_EDGE_SYSREPO_SRCREV ?= "3d0d6c338f66b248a0f8d10e6bbd3363b60a10bb"
 
 SRC_URI = "${REAL_TIME_EDGE_SYSREPO_SRC};branch=${REAL_TIME_EDGE_SYSREPO_BRANCH}"
 SRC_URI += "file://sysrepo-plugins-install.sh"
