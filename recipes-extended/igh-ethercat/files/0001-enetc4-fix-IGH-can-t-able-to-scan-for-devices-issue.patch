@@ -1,4 +1,4 @@
-From 39ce0a5eeffda12bee49f67ac7d7fc987dc92d85 Mon Sep 17 00:00:00 2001
+From 6563a64e3fef94c88ee02941e124c7c4aa38beab Mon Sep 17 00:00:00 2001
 From: Jony Zhang <jony.zhang@nxp.com>
 Date: Tue, 17 Mar 2026 02:07:02 +0800
 Subject: [PATCH] enetc4: fix IGH can't able to scan for devices issue
@@ -18,8 +18,8 @@ Upstream-Status: Pending
  devices/enetc/enetc_hw.h        |  80 +++-
  devices/enetc/enetc_pf.c        |   4 +-
  devices/enetc/enetc_pf.h        |  18 +-
- devices/enetc/enetc_pf_common.c | 161 ++++---
- 11 files changed, 1763 insertions(+), 563 deletions(-)
+ devices/enetc/enetc_pf_common.c | 163 ++++----
+ 11 files changed, 1764 insertions(+), 564 deletions(-)
 
 diff --git a/devices/enetc/enetc.c b/devices/enetc/enetc.c
 index 74fb9309..721d67c3 100644
@@ -3049,7 +3049,7 @@ index d980936e..66cdf0af 100644
  static inline void enetc_pf_register_hw_ops(struct enetc_pf *pf,
                          const struct enetc_pf_hw_ops *hw_ops)
 diff --git a/devices/enetc/enetc_pf_common.c b/devices/enetc/enetc_pf_common.c
-index 3b621d3f..a2b19d43 100755
+index 3b621d3f..ef8dc840 100755
 --- a/devices/enetc/enetc_pf_common.c
 +++ b/devices/enetc/enetc_pf_common.c
 @@ -11,81 +11,73 @@
@@ -3206,6 +3206,15 @@ index 3b621d3f..a2b19d43 100755
  
  	return 0;
  }
+@@ -378,7 +365,7 @@ void enetc_pf_netdev_setup(struct enetc_si *si, struct net_device *ndev,
+ 	} else {
+ 		ndev->max_mtu = ENETC4_MAX_MTU;
+ 		priv->max_frags_bd = ENETC4_MAX_SKB_FRAGS;
+-		priv->active_offloads |= ENETC_F_CHECKSUM;
++		priv->active_offloads |= ENETC_F_TXCSUM;
+ 		priv->shared_tx_rings = true;
+ 	}
+ 
 @@ -657,30 +644,32 @@ void enetc_phylink_destroy(struct enetc_ndev_priv *priv)
  /* Messaging */
  static u16 enetc_msg_pf_set_vf_primary_mac_addr(struct enetc_pf *pf, int vf_id)
