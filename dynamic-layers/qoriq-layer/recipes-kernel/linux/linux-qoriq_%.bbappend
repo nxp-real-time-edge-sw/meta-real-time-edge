@@ -1,7 +1,7 @@
 
 REAL_TIME_EDGE_LINUX_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-linux.git;protocol=https;"
 REAL_TIME_EDGE_LINUX_BRANCH ?= "linux_6.18.2"
-REAL_TIME_EDGE_LINUX_SRCREV ?= "cdcf7957be4437a5d9dcae2082a5163536753929"
+REAL_TIME_EDGE_LINUX_SRCREV ?= "c34e839e84c96fff2628bf4b582b2b6de467dbf9"
 
 KERNEL_SRC:real-time-edge = "${REAL_TIME_EDGE_LINUX_SRC}"
 KERNEL_BRANCH:real-time-edge = "${REAL_TIME_EDGE_LINUX_BRANCH}"
