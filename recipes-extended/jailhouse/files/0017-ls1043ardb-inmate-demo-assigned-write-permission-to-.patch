@@ -1,7 +1,7 @@
-From c74d7188344abcc9d5f31ca7960e01280f91cf21 Mon Sep 17 00:00:00 2001
+From 1bbf858cd868ed36d613e42aaa82ff6f7d8f8dc7 Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Fri, 5 Nov 2021 12:20:32 +0800
-Subject: [PATCH 17/22] ls1043ardb-inmate-demo: assigned write permission to
+Subject: [PATCH 17/23] ls1043ardb-inmate-demo: assigned write permission to
  address 0xc050e000
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>

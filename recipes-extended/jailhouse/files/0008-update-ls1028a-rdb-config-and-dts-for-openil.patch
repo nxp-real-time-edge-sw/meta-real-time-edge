@@ -1,7 +1,7 @@
-From eaa5c50a4bf11489733384524384891fcea38fa6 Mon Sep 17 00:00:00 2001
+From a5c849018f44c0f6cdc65b4f03e29f0b8d7882dc Mon Sep 17 00:00:00 2001
 From: "hongbo.wang" <hongbo.wang@nxp.com>
 Date: Mon, 29 Mar 2021 10:38:47 +0800
-Subject: [PATCH 08/22] update ls1028a-rdb config and dts for openil
+Subject: [PATCH 08/23] update ls1028a-rdb config and dts for openil
 
 Signed-off-by: hongbo.wang <hongbo.wang@nxp.com>
 Upstream-Status: Pending

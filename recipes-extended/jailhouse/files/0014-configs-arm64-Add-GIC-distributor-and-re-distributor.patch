@@ -1,7 +1,7 @@
-From 85d7bd2445a0d79d20e00e9ed65b47000aca83d7 Mon Sep 17 00:00:00 2001
+From 07c74b5f55a65ec549b4f773b10b234208f4c91a Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Thu, 21 Oct 2021 17:47:48 +0800
-Subject: [PATCH 14/22] configs/arm64: Add GIC distributor and re-distributor
+Subject: [PATCH 14/23] configs/arm64: Add GIC distributor and re-distributor
  MMIO regions
 
 Add the memory region for GIC distributor and re-distributor MMIO,

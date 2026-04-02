@@ -1,7 +1,7 @@
-From d87d1478bfff2fe1e96274247048b0df08b72594 Mon Sep 17 00:00:00 2001
+From d0dbafcc8481331ebbc6411fa6ac2708ab6dc3df Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Tue, 12 Oct 2021 11:13:24 +0800
-Subject: [PATCH 10/22] ls1028ardb: enetc support in jailhouse
+Subject: [PATCH 10/23] ls1028ardb: enetc support in jailhouse
 
 Signed-off-by: Changming Huang <jerry.huang@nxp.com>
 Upstream-Status: Pending

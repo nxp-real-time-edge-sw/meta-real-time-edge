@@ -1,0 +1,267 @@
+From ad3ed52011a7fea1d814ec6eb7fd41eb813d46d8 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Thu, 2 Apr 2026 16:07:20 +0800
+Subject: [PATCH 23/23] configs: ls1028/43/46: specify explicit PCI domain for
+ virtual PCI devices
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/arm64/ls1028a-rdb-inmate-demo.c     | 2 +-
+ configs/arm64/ls1028a-rdb-linux-demo.c      | 4 ++--
+ configs/arm64/ls1028a-rdb.c                 | 6 +++---
+ configs/arm64/ls1043a-rdb-dpaa-linux-demo.c | 4 ++--
+ configs/arm64/ls1043a-rdb-inmate-demo.c     | 2 +-
+ configs/arm64/ls1043a-rdb-linux-demo.c      | 4 ++--
+ configs/arm64/ls1043a-rdb.c                 | 6 +++---
+ configs/arm64/ls1046a-rdb-dpaa-linux-demo.c | 4 ++--
+ configs/arm64/ls1046a-rdb-inmate-demo.c     | 2 +-
+ configs/arm64/ls1046a-rdb-linux-demo.c      | 4 ++--
+ configs/arm64/ls1046a-rdb.c                 | 6 +++---
+ 11 files changed, 22 insertions(+), 22 deletions(-)
+
+diff --git a/configs/arm64/ls1028a-rdb-inmate-demo.c b/configs/arm64/ls1028a-rdb-inmate-demo.c
+index fa5d5d24..161ddbdd 100644
+--- a/configs/arm64/ls1028a-rdb-inmate-demo.c
++++ b/configs/arm64/ls1028a-rdb-inmate-demo.c
+@@ -117,7 +117,7 @@ struct {
+ 	.pci_devices = {
+ 		{ /* IVSHMEM 00:00.0 */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+diff --git a/configs/arm64/ls1028a-rdb-linux-demo.c b/configs/arm64/ls1028a-rdb-linux-demo.c
+index a9419872..e77245e9 100644
+--- a/configs/arm64/ls1028a-rdb-linux-demo.c
++++ b/configs/arm64/ls1028a-rdb-linux-demo.c
+@@ -134,7 +134,7 @@ struct {
+ 	.pci_devices = {
+ 		{ /* IVSHMEM 00:00.0 */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+@@ -144,7 +144,7 @@ struct {
+ 		},
+ 		{ /* IVSHMEM 00:01.0 */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 1 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 5,
+diff --git a/configs/arm64/ls1028a-rdb.c b/configs/arm64/ls1028a-rdb.c
+index e279a3b9..84a11bdb 100644
+--- a/configs/arm64/ls1028a-rdb.c
++++ b/configs/arm64/ls1028a-rdb.c
+@@ -40,7 +40,7 @@ struct {
+ 			.pci_mmconfig_base = 0xc0700000,
+ 			.pci_mmconfig_end_bus = 0,
+ 			.pci_is_virtual = 1,
+-			.pci_domain = -1,
++			.pci_domain = 3,
+ 
+ 			.arm = {
+ 				.gic_version = 3,
+@@ -664,7 +664,7 @@ struct {
+ 	.pci_devices = {
+ 		{ /* IVSHMEM 00:00.0 */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+@@ -674,7 +674,7 @@ struct {
+ 		},
+ 		{ /* IVSHMEM 00:01.0 */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 1 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 5,
+diff --git a/configs/arm64/ls1043a-rdb-dpaa-linux-demo.c b/configs/arm64/ls1043a-rdb-dpaa-linux-demo.c
+index fafdcd24..76db2ff9 100644
+--- a/configs/arm64/ls1043a-rdb-dpaa-linux-demo.c
++++ b/configs/arm64/ls1043a-rdb-dpaa-linux-demo.c
+@@ -198,7 +198,7 @@ struct {
+ 	.pci_devices = {
+ 		{ /* IVSHMEM 00:00.0 (demo) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+@@ -208,7 +208,7 @@ struct {
+ 		},
+ 		{ /* IVSHMEM 00:01.0 (networking) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 1 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 5,
+diff --git a/configs/arm64/ls1043a-rdb-inmate-demo.c b/configs/arm64/ls1043a-rdb-inmate-demo.c
+index 2a316c52..db6144b9 100644
+--- a/configs/arm64/ls1043a-rdb-inmate-demo.c
++++ b/configs/arm64/ls1043a-rdb-inmate-demo.c
+@@ -128,7 +128,7 @@ struct {
+ 	.pci_devices = {
+ 		{ /* IVSHMEM 00:00.0 (demo) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+diff --git a/configs/arm64/ls1043a-rdb-linux-demo.c b/configs/arm64/ls1043a-rdb-linux-demo.c
+index 30be3538..5714e179 100644
+--- a/configs/arm64/ls1043a-rdb-linux-demo.c
++++ b/configs/arm64/ls1043a-rdb-linux-demo.c
+@@ -144,7 +144,7 @@ struct {
+ 	.pci_devices = {
+ 		{ /* IVSHMEM 00:00.0 (demo) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+@@ -154,7 +154,7 @@ struct {
+ 		},
+ 		{ /* IVSHMEM 00:01.0 (networking) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 1 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 5,
+diff --git a/configs/arm64/ls1043a-rdb.c b/configs/arm64/ls1043a-rdb.c
+index ab720876..d61b8b99 100644
+--- a/configs/arm64/ls1043a-rdb.c
++++ b/configs/arm64/ls1043a-rdb.c
+@@ -40,7 +40,7 @@ struct {
+ 			.pci_mmconfig_base = 0xc0700000,
+ 			.pci_mmconfig_end_bus = 0,
+ 			.pci_is_virtual = 1,
+-			.pci_domain = -1,
++			.pci_domain = 3,
+ 
+ 			.arm = {
+ 				.gic_version = 2,
+@@ -482,7 +482,7 @@ struct {
+ 	.pci_devices = {
+ 		{ /* IVSHMEM 00:00.0 (demo) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+@@ -492,7 +492,7 @@ struct {
+ 		},
+ 		{ /* IVSHMEM 00:01.0 (networking) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 1 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 5,
+diff --git a/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c b/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c
+index 1f2f7110..3d1b6dc1 100644
+--- a/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c
++++ b/configs/arm64/ls1046a-rdb-dpaa-linux-demo.c
+@@ -199,7 +199,7 @@ struct {
+ 	.pci_devices = {
+ 		{ /* IVSHMEM 00:00.0 (demo) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+@@ -209,7 +209,7 @@ struct {
+ 		},
+ 		{ /* IVSHMEM 00:01.0 (networking) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 1 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 5,
+diff --git a/configs/arm64/ls1046a-rdb-inmate-demo.c b/configs/arm64/ls1046a-rdb-inmate-demo.c
+index 35c8d955..4bb0a1be 100644
+--- a/configs/arm64/ls1046a-rdb-inmate-demo.c
++++ b/configs/arm64/ls1046a-rdb-inmate-demo.c
+@@ -128,7 +128,7 @@ struct {
+ 	.pci_devices = {
+ 		{ /* IVSHMEM 00:00.0 (demo) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+diff --git a/configs/arm64/ls1046a-rdb-linux-demo.c b/configs/arm64/ls1046a-rdb-linux-demo.c
+index 8263038e..019b2a02 100644
+--- a/configs/arm64/ls1046a-rdb-linux-demo.c
++++ b/configs/arm64/ls1046a-rdb-linux-demo.c
+@@ -145,7 +145,7 @@ struct {
+ 	.pci_devices = {
+ 		{ /* IVSHMEM 00:00.0 (demo) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+@@ -155,7 +155,7 @@ struct {
+ 		},
+ 		{ /* IVSHMEM 00:01.0 (networking) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 1 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 5,
+diff --git a/configs/arm64/ls1046a-rdb.c b/configs/arm64/ls1046a-rdb.c
+index 84963c3b..af1f17b3 100644
+--- a/configs/arm64/ls1046a-rdb.c
++++ b/configs/arm64/ls1046a-rdb.c
+@@ -41,7 +41,7 @@ struct {
+ 			.pci_mmconfig_base = 0xc0700000,
+ 			.pci_mmconfig_end_bus = 0,
+ 			.pci_is_virtual = 1,
+-			.pci_domain = -1,
++			.pci_domain = 3,
+ 
+ 			.arm = {
+ 				.gic_version = 2,
+@@ -511,7 +511,7 @@ struct {
+ 	.pci_devices = {
+ 		{ /* IVSHMEM 00:00.0 (demo) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 0 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 0,
+@@ -521,7 +521,7 @@ struct {
+ 		},
+ 		{ /* IVSHMEM 00:01.0 (networking) */
+ 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+-			.domain = 0,
++			.domain = 3,
+ 			.bdf = 1 << 3,
+ 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+ 			.shmem_regions_start = 5,
+-- 
+2.43.0
+

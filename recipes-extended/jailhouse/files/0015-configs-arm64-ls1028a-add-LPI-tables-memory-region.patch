@@ -1,7 +1,7 @@
-From c1ca04771885df146dbf6bd25d61a0463efe4007 Mon Sep 17 00:00:00 2001
+From 0780ab9fd7beada98c9fc0b31c8c00c2c1da43fc Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Mon, 25 Oct 2021 17:05:02 +0800
-Subject: [PATCH 15/22] configs: arm64: ls1028a: add LPI tables memory region
+Subject: [PATCH 15/23] configs: arm64: ls1028a: add LPI tables memory region
 
 Add memory region for GICv3 LPI property and pending tables.
 

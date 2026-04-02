@@ -1,7 +1,7 @@
-From 8f76cc9d5f0b50e491f3c00724546050fc4eb376 Mon Sep 17 00:00:00 2001
+From 4c7aea946853b768133bcd064be2b72a8eb99f0a Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Wed, 17 Nov 2021 18:49:18 +0800
-Subject: [PATCH 18/22] ls1028ardb: remove gic distributor region from
+Subject: [PATCH 18/23] ls1028ardb: remove gic distributor region from
  linux-enetc demo
 
 when this region is enabled in inmate cell,

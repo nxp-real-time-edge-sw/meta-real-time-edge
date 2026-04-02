@@ -1,7 +1,7 @@
-From 73258fe8d319e4ed0b15c93ccba7933dafabc3db Mon Sep 17 00:00:00 2001
+From 413e19a719e78ed0437aef4a38060809fe4efa4c Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Tue, 3 Dec 2024 17:51:50 +0800
-Subject: [PATCH 22/22] configs: ls1028ardb: add SerDes MMIO region
+Subject: [PATCH 22/23] configs: ls1028ardb: add SerDes MMIO region
 
 Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Upstream-Status: Pending

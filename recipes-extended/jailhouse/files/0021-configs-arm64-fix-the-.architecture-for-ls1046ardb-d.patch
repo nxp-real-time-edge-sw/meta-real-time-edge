@@ -1,7 +1,7 @@
-From 55342781ddf8960349dbcbd7967b8a36a20cc7e8 Mon Sep 17 00:00:00 2001
+From 64348e6bd2720a1d725d596a9e5b6de85e5129ec Mon Sep 17 00:00:00 2001
 From: Tao Yang <Tao.Yang1@nxp.com>
 Date: Mon, 20 Nov 2023 20:54:26 +0800
-Subject: [PATCH 21/22] configs: arm64: fix the .architecture for ls1046ardb
+Subject: [PATCH 21/23] configs: arm64: fix the .architecture for ls1046ardb
  dpaa cell
 
 Signed-off-by: Tao Yang <Tao.Yang1@nxp.com>

@@ -1,7 +1,7 @@
-From b9f937dafccaed0a9bf9b4464d7fe85a687d8784 Mon Sep 17 00:00:00 2001
+From da353ed71ddb695adff88fab8cb92678afe7eef6 Mon Sep 17 00:00:00 2001
 From: Changming Huang <jerry.huang@nxp.com>
 Date: Wed, 3 Nov 2021 19:02:08 +0800
-Subject: [PATCH 16/22] ivshmem demo: change dev_id to 2 for qoriq platforms
+Subject: [PATCH 16/23] ivshmem demo: change dev_id to 2 for qoriq platforms
 
 According to the calculation express in file inmates/demos/ivshmem-demo.c:
 	target = d->id < 2 ? (d->id + 1) : 0
