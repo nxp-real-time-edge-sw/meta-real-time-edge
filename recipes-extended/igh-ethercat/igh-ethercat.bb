@@ -1,28 +1,22 @@
-# Copyright 2021 NXP
+# Copyright 2021-2026 NXP
 
-PV = "1.5.2"
+PV = "1.6.4"
 DESCRIPTION = "IgH EtherCAT Master for Linux"
 HOMEPAGE = "https://etherlab.org/en/ethercat/index.php"
 LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=59530bdf33659b29e73d4adb9f9f6552"
 
-SRC_URI = "git://gitlab.com/etherlab.org/ethercat.git;protocol=https;nobranch=1"
-SRCREV = "418dc4b24f4eeba78f644984894b740428da3e84"
+IGH_BRANCH ?= "stable-1.6"
+SRC_URI = "git://gitlab.com/etherlab.org/ethercat.git;protocol=https;branch=${IGH_BRANCH}"
+SRCREV = "703b6117288bbe4e6f74ecb4a6b8ef13f390b898"
 
 SRC_URI += "\
-    file://0001-Fixed-compilation-error-for-the-EtherCat-drivers.patch \
-    file://0002-fec-enect-Add-fec-and-enect-device.patch \
-    file://0003-Fixed-compilation-errors-when-upgrading-to-Linux-5.x.patch \
-    file://0004-Fixed-compilation-errors-because-of-linux-kernel-upg.patch \
-    file://0001-enetc4-port-enetc4.patch \
-    file://0002-fec-fix-compile-error-because-of-kernel-upgrade-to-6.patch \
-	file://0001-enetc4-ec_enetc4-and-ec_master-modules-worked.patch \
-	file://0001-fec-fix-IGH-can-t-restart-issue.patch \
-	file://0001-enetc-kernel-6.18.2-fix-compile-error-because-of-ker.patch \
-	file://0002-examples-mini-fix-compile-error-because-of-kernel-up.patch \
-	file://0003-fec-kernel-6.18.2-fix-compile-error-because-of-kerne.patch \
-	file://0001-ls1028-enetc-kernel-6.18.2-fix-compile-error-because.patch \
-	file://0001-enetc4-fix-IGH-can-t-able-to-scan-for-devices-issue.patch \
+	file://0001-Modify-the-example-code.patch \
+	file://0002-examples-user-simplify-the-Igh-test-case.patch \
+	file://0003-device-fec-Add-fec-device.patch \
+	file://0004-ec_enetc-Add-ec_enetc-native-driver.patch \
+	file://0005-Add-support-for-NXP-DPAA1-ethercat-port.patch \
+	file://0006-examples-mini-fix-compile-error-because-of-kernel-up.patch \
 "
 
 ERROR_QA:remove = "buildpaths"
@@ -75,6 +69,7 @@ do_install:append() {
 	fi
 }
 
+FILES:${PN} += "${datadir}/bash-completion/completions"
 FILES:${PN} += "${nonarch_base_libdir}/modules/${KERNEL_VERSION}/* ${systemd_system_unitdir}/ethercat.service ${bindir_native}/* ${sbindir_native}/* ${libdir_native}/* ${sysconfdir_native}/*"
 SYSTEMD_SERVICE:ethercat = "ethercat.service"
 SYSTEMD_AUTO_ENABLE = "disable"

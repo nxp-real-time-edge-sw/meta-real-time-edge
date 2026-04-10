@@ -1,7 +1,7 @@
-From 4e2bc9a7b7e3d5f4b1ef59e9fa244d1daf22e61b Mon Sep 17 00:00:00 2001
+From a5f4f775f08048ec4f9cb03cc7476c355197b2cf Mon Sep 17 00:00:00 2001
 From: Jony Zhang <jony.zhang@nxp.com>
-Date: Fri, 27 Feb 2026 18:24:32 +0800
-Subject: [PATCH 2/3] examples: mini: fix compile error because of kernel
+Date: Fri, 8 May 2026 19:58:59 +0800
+Subject: [PATCH 6/6] examples: mini: fix compile error because of kernel
  upgrade to 6.18.2
 
 Signed-off-by: Jony Zhang <jony.zhang@nxp.com>
@@ -11,10 +11,10 @@ Upstream-Status: Pending
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/examples/mini/mini.c b/examples/mini/mini.c
-index a66feae9..6a0c4e06 100644
+index 8c854e82..9d80d17d 100644
 --- a/examples/mini/mini.c
 +++ b/examples/mini/mini.c
-@@ -517,7 +517,7 @@ void __exit cleanup_mini_module(void)
+@@ -525,7 +525,7 @@ void __exit cleanup_mini_module(void)
  {
      printk(KERN_INFO PFX "Stopping...\n");
  

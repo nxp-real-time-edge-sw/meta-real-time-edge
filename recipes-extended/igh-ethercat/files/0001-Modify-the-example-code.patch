@@ -1,0 +1,438 @@
+From e2aa0525253fc38dc9d3cbfcf6d719c137ddb7cd Mon Sep 17 00:00:00 2001
+From: Jony Zhang <jony.zhang@nxp.com>
+Date: Mon, 30 Mar 2026 21:18:24 +0800
+Subject: [PATCH 1/6] Modify the example code.
+
+To control BECKHOFF's EL2008,
+modify the examples/user/main.c according to the EtherCat API.
+The clock_nanosleep delay function is used to
+control the datagram sending cycle.
+
+Signed-off-by: XianyuWei <xianyu.wei@nxp.com>
+Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Signed-off-by: Jony Zhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
+---
+ examples/user/main.c | 312 ++++++++++++++++++-------------------------
+ 1 file changed, 128 insertions(+), 184 deletions(-)
+
+diff --git a/examples/user/main.c b/examples/user/main.c
+index bf49339c..9963749f 100644
+--- a/examples/user/main.c
++++ b/examples/user/main.c
+@@ -44,12 +44,19 @@
+                                      guranteed safe to access without
+                                      faulting */
+ 
++#define CLOCK_TO_USE CLOCK_REALTIME
+ /****************************************************************************/
+ 
+ /* Constants */
+-#define NSEC_PER_SEC (1000000000)
++#define NSEC_PER_SEC (1000000000L)
+ #define FREQUENCY (NSEC_PER_SEC / PERIOD_NS)
+ 
++#define DIFF_NS(A, B) (((B).tv_sec - (A).tv_sec) * NSEC_PER_SEC + \
++	(B).tv_nsec - (A).tv_nsec)
++
++#define TIMESPEC2NS(T) ((uint64_t) (T).tv_sec * NSEC_PER_SEC + (T).tv_nsec)
++
++#define N 10
+ /****************************************************************************/
+ 
+ // EtherCAT
+@@ -59,7 +66,7 @@ static ec_master_state_t master_state = {};
+ static ec_domain_t *domain1 = NULL;
+ static ec_domain_state_t domain1_state = {};
+ 
+-static ec_slave_config_t *sc_ana_in = NULL;
++static ec_slave_config_t *sc;
+ static ec_slave_config_state_t sc_ana_in_state = {};
+ 
+ /****************************************************************************/
+@@ -68,96 +75,85 @@ static ec_slave_config_state_t sc_ana_in_state = {};
+ static uint8_t *domain1_pd = NULL;
+ 
+ #define BusCouplerPos  0, 0
+-#define DigOutSlavePos 0, 2
+-#define AnaInSlavePos  0, 3
+-#define AnaOutSlavePos 0, 4
++#define DigOutSlavePos 0, 3
+ 
+ #define Beckhoff_EK1100 0x00000002, 0x044c2c52
+-#define Beckhoff_EL2004 0x00000002, 0x07d43052
+-#define Beckhoff_EL2032 0x00000002, 0x07f03052
+-#define Beckhoff_EL3152 0x00000002, 0x0c503052
+-#define Beckhoff_EL3102 0x00000002, 0x0c1e3052
+-#define Beckhoff_EL4102 0x00000002, 0x10063052
++#define Beckhoff_EL2008 0x00000002, 0x07d83052
+ 
+ // offsets for PDO entries
+-static unsigned int off_ana_in_status;
+-static unsigned int off_ana_in_value;
+-static unsigned int off_ana_out;
+-static unsigned int off_dig_out;
++static unsigned int o_dig_out[8], bo_dig_out[8];
+ 
+ const static ec_pdo_entry_reg_t domain1_regs[] = {
+-    {AnaInSlavePos,  Beckhoff_EL3102, 0x3101, 1, &off_ana_in_status},
+-    {AnaInSlavePos,  Beckhoff_EL3102, 0x3101, 2, &off_ana_in_value},
+-    {AnaOutSlavePos, Beckhoff_EL4102, 0x3001, 1, &off_ana_out},
+-    {DigOutSlavePos, Beckhoff_EL2032, 0x3001, 1, &off_dig_out},
+-    {}
++	{DigOutSlavePos, Beckhoff_EL2008,
++		0x7000, 1, &o_dig_out[0], &bo_dig_out[0]},
++	{DigOutSlavePos, Beckhoff_EL2008,
++		0x7010, 1, &o_dig_out[1], &bo_dig_out[1]},
++	{DigOutSlavePos, Beckhoff_EL2008,
++		0x7020, 1, &o_dig_out[2], &bo_dig_out[2]},
++	{DigOutSlavePos, Beckhoff_EL2008,
++		0x7030, 1, &o_dig_out[3], &bo_dig_out[3]},
++	{DigOutSlavePos, Beckhoff_EL2008,
++		0x7040, 1, &o_dig_out[4], &bo_dig_out[4]},
++	{DigOutSlavePos, Beckhoff_EL2008,
++		0x7050, 1, &o_dig_out[5], &bo_dig_out[5]},
++	{DigOutSlavePos, Beckhoff_EL2008,
++		0x7060, 1, &o_dig_out[6], &bo_dig_out[6]},
++	{DigOutSlavePos, Beckhoff_EL2008,
++		0x7070, 1, &o_dig_out[7], &bo_dig_out[7]},
++	{}
+ };
+ 
+ static unsigned int counter = 0;
+-static unsigned int blink = 0;
++static unsigned int blink_out_0 = 0x01;
++static unsigned int blink_out_1 = 0x01;
++const struct timespec cycletime = {0, PERIOD_NS};
+ 
+ /****************************************************************************/
+ 
+-// Analog in --------------------------
+-
+-static const ec_pdo_entry_info_t el3102_pdo_entries[] = {
+-    {0x3101, 1,  8}, // channel 1 status
+-    {0x3101, 2, 16}, // channel 1 value
+-    {0x3102, 1,  8}, // channel 2 status
+-    {0x3102, 2, 16}, // channel 2 value
+-    {0x6401, 1, 16}, // channel 1 value (alt.)
+-    {0x6401, 2, 16}  // channel 2 value (alt.)
+-};
+-
+-static const ec_pdo_info_t el3102_pdos[] = {
+-    {0x1A00, 2, el3102_pdo_entries},
+-    {0x1A01, 2, el3102_pdo_entries + 2}
+-};
+-
+-static const ec_sync_info_t el3102_syncs[] = {
+-    {2, EC_DIR_OUTPUT},
+-    {3, EC_DIR_INPUT, 2, el3102_pdos},
+-    {0xff}
+-};
+-
+-// Analog out -------------------------
++struct timespec timespec_add(struct timespec time1, struct timespec time2)
++{
++	struct timespec result;
+ 
+-static const ec_pdo_entry_info_t el4102_pdo_entries[] = {
+-    {0x3001, 1, 16}, // channel 1 value
+-    {0x3002, 1, 16}, // channel 2 value
+-};
++	if ((time1.tv_nsec + time2.tv_nsec) >= NSEC_PER_SEC) {
++		result.tv_sec = time1.tv_sec + time2.tv_sec + 1;
++		result.tv_nsec = time1.tv_nsec + time2.tv_nsec - NSEC_PER_SEC;
++	} else {
++		result.tv_sec = time1.tv_sec + time2.tv_sec;
++		result.tv_nsec = time1.tv_nsec + time2.tv_nsec;
++	}
+ 
+-static const ec_pdo_info_t el4102_pdos[] = {
+-    {0x1600, 1, el4102_pdo_entries},
+-    {0x1601, 1, el4102_pdo_entries + 1}
+-};
++	return result;
++}
+ 
+-static const ec_sync_info_t el4102_syncs[] = {
+-    {2, EC_DIR_OUTPUT, 2, el4102_pdos},
+-    {3, EC_DIR_INPUT},
+-    {0xff}
++/*****************************************************************************/
++
++static ec_pdo_entry_info_t el2008_channels[] = {
++	{0x7000, 1, 1}, // Value 1
++	{0x7010, 1, 1}, // Value 2
++	{0x7020, 1, 1}, // Value 3
++	{0x7030, 1, 1}, // Value 4
++	{0x7040, 1, 1}, // Value 4
++	{0x7050, 1, 1}, // Value 4
++	{0x7060, 1, 1}, // Value 4
++	{0x7070, 1, 1}  // Value 4
+ };
+ 
+ // Digital out ------------------------
+ 
+-static const ec_pdo_entry_info_t el2004_channels[] = {
+-    {0x3001, 1, 1}, // Value 1
+-    {0x3001, 2, 1}, // Value 2
+-    {0x3001, 3, 1}, // Value 3
+-    {0x3001, 4, 1}  // Value 4
+-};
+-
+-static const ec_pdo_info_t el2004_pdos[] = {
+-    {0x1600, 1, &el2004_channels[0]},
+-    {0x1601, 1, &el2004_channels[1]},
+-    {0x1602, 1, &el2004_channels[2]},
+-    {0x1603, 1, &el2004_channels[3]}
++static ec_pdo_info_t el2008_pdos[] = {
++	{0x1600, 1, &el2008_channels[0]},
++	{0x1601, 1, &el2008_channels[1]},
++	{0x1602, 1, &el2008_channels[2]},
++	{0x1603, 1, &el2008_channels[3]},
++	{0x1604, 1, &el2008_channels[4]},
++	{0x1605, 1, &el2008_channels[5]},
++	{0x1606, 1, &el2008_channels[6]},
++	{0x1607, 1, &el2008_channels[7]}
+ };
+ 
+-static const ec_sync_info_t el2004_syncs[] = {
+-    {0, EC_DIR_OUTPUT, 4, el2004_pdos},
+-    {1, EC_DIR_INPUT},
+-    {0xff}
++static ec_sync_info_t el2008_syncs[] = {
++	{0, EC_DIR_OUTPUT, 8, el2008_pdos},
++	{0xff}
+ };
+ 
+ /****************************************************************************/
+@@ -205,7 +201,7 @@ void check_slave_config_states(void)
+ {
+     ec_slave_config_state_t s;
+ 
+-    ecrt_slave_config_state(sc_ana_in, &s);
++    ecrt_slave_config_state(sc, &s);
+ 
+     if (s.al_state != sc_ana_in_state.al_state) {
+         printf("AnaIn: State 0x%02X.\n", s.al_state);
+@@ -222,45 +218,63 @@ void check_slave_config_states(void)
+ 
+ /****************************************************************************/
+ 
+-void cyclic_task()
++void cyclic_task_nanosleep(void)
+ {
+-    // receive process data
+-    ecrt_master_receive(master);
+-    ecrt_domain_process(domain1);
+-
+-    // check process data state
+-    check_domain1_state();
+-
+-    if (counter) {
+-        counter--;
+-    } else { // do this at 1 Hz
+-        counter = FREQUENCY;
+-
+-        // calculate new process data
+-        blink = !blink;
+-
+-        // check for master state (optional)
+-        check_master_state();
+-
+-        // check for slave configuration state(s) (optional)
+-        check_slave_config_states();
+-    }
+-
+-#if 0
+-    // read process data
+-    printf("AnaIn: state %u value %u\n",
+-            EC_READ_U8(domain1_pd + off_ana_in_status),
+-            EC_READ_U16(domain1_pd + off_ana_in_value));
++	struct timespec wakeupTime;
++#ifdef MEASURE_TIMING
++	int i = 0;
++	struct timeval tv[N];
+ #endif
+ 
+-#if 1
+-    // write process data
+-    EC_WRITE_U8(domain1_pd + off_dig_out, blink ? 0x06 : 0x09);
++    // get current time
++	clock_gettime(CLOCK_TO_USE, &wakeupTime);
++#ifdef MEASURE_TIMING
++	while (i < N) {
++#else
++	while (1) {
++#endif
++		wakeupTime = timespec_add(wakeupTime, cycletime);
++		clock_nanosleep(CLOCK_TO_USE, TIMER_ABSTIME, &wakeupTime, NULL);
++
++		// receive process data
++		ecrt_master_receive(master);
++		ecrt_domain_process(domain1);
++
++		// check process data state (optional)
++		check_domain1_state();
++		EC_WRITE_BIT(domain1_pd + o_dig_out[2], bo_dig_out[2], 0x01);
++		EC_WRITE_BIT(domain1_pd + o_dig_out[0], bo_dig_out[0],
++				blink_out_0 ? 0x01 : 0x00);
++		blink_out_0 = !blink_out_0;
++
++		if (counter) {
++			counter--;
++		} else { // 0.1hz
++			counter = FREQUENCY * 10;
++			EC_WRITE_BIT(domain1_pd + o_dig_out[1], bo_dig_out[1],
++					blink_out_1 ? 0x01 : 0x00);
++			blink_out_1 = !blink_out_1;
++		}
++
++		// check for master state (optional)
++		check_master_state();
++		// check for islave configuration state(s) (optional)
++		check_slave_config_states();
++
++		// send process data
++		ecrt_domain_queue(domain1);
++
++#ifdef MEASURE_TIMING
++		gettimeofday(&tv[i++], NULL);
+ #endif
++		ecrt_master_send(master);
++	}
+ 
+-    // send process data
+-    ecrt_domain_queue(domain1);
+-    ecrt_master_send(master);
++#ifdef MEASURE_TIMING
++	sleep(3);
++	for (i = 0; i < N; i++)
++		printf("%d %u.%06u\n", i, tv[i].tv_sec, tv[i].tv_usec);
++#endif
+ }
+ 
+ /****************************************************************************/
+@@ -276,7 +290,6 @@ void stack_prefault(void)
+ 
+ int main(int argc, char **argv)
+ {
+-    ec_slave_config_t *sc;
+     struct timespec wakeup_time;
+     int ret = 0;
+ 
+@@ -285,54 +298,26 @@ int main(int argc, char **argv)
+         return -1;
+     }
+ 
++	// Creates a new process data domain
+     domain1 = ecrt_master_create_domain(master);
+     if (!domain1) {
+         return -1;
+     }
+ 
+-    if (!(sc_ana_in = ecrt_master_slave_config(
+-                    master, AnaInSlavePos, Beckhoff_EL3102))) {
+-        fprintf(stderr, "Failed to get slave configuration.\n");
+-        return -1;
+-    }
+-
+-    printf("Configuring PDOs...\n");
+-    if (ecrt_slave_config_pdos(sc_ana_in, EC_END, el3102_syncs)) {
+-        fprintf(stderr, "Failed to configure PDOs.\n");
+-        return -1;
+-    }
+-
+     if (!(sc = ecrt_master_slave_config(
+-                    master, AnaOutSlavePos, Beckhoff_EL4102))) {
++                    master, DigOutSlavePos, Beckhoff_EL2008))) {
+         fprintf(stderr, "Failed to get slave configuration.\n");
+         return -1;
+     }
+ 
+-    if (ecrt_slave_config_pdos(sc, EC_END, el4102_syncs)) {
++    if (ecrt_slave_config_pdos(sc, EC_END, el2008_syncs)) {
+         fprintf(stderr, "Failed to configure PDOs.\n");
+         return -1;
+     }
+ 
+-    if (!(sc = ecrt_master_slave_config(
+-                    master, DigOutSlavePos, Beckhoff_EL2032))) {
+-        fprintf(stderr, "Failed to get slave configuration.\n");
+-        return -1;
+-    }
+-
+-    if (ecrt_slave_config_pdos(sc, EC_END, el2004_syncs)) {
+-        fprintf(stderr, "Failed to configure PDOs.\n");
+-        return -1;
+-    }
+-
+-    // Create configuration for bus coupler
+-    sc = ecrt_master_slave_config(master, BusCouplerPos, Beckhoff_EK1100);
+-    if (!sc) {
+-        return -1;
+-    }
+-
+-    if (ecrt_domain_reg_pdo_entry_list(domain1, domain1_regs)) {
+-        fprintf(stderr, "PDO entry registration failed!\n");
+-        return -1;
++	if (ecrt_domain_reg_pdo_entry_list(domain1, domain1_regs)) {
++		fprintf(stderr, "OUT PDO entry registration failed!\n");
++		return -1;
+     }
+ 
+     printf("Activating master...\n");
+@@ -344,49 +329,8 @@ int main(int argc, char **argv)
+         return -1;
+     }
+ 
+-    /* Set priority */
+-
+-    struct sched_param param = {};
+-    param.sched_priority = sched_get_priority_max(SCHED_FIFO);
+-
+-    printf("Using priority %i.\n", param.sched_priority);
+-    if (sched_setscheduler(0, SCHED_FIFO, &param) == -1) {
+-        perror("sched_setscheduler failed");
+-    }
+-
+-    /* Lock memory */
+-
+-    if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
+-        fprintf(stderr, "Warning: Failed to lock memory: %s\n",
+-                strerror(errno));
+-    }
+-
+-    stack_prefault();
+-
+-    printf("Starting RT task with dt=%u ns.\n", PERIOD_NS);
+-
+-    clock_gettime(CLOCK_MONOTONIC, &wakeup_time);
+-    wakeup_time.tv_sec += 1; /* start in future */
+-    wakeup_time.tv_nsec = 0;
+-
+-    while (1) {
+-        ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
+-                &wakeup_time, NULL);
+-        if (ret) {
+-            fprintf(stderr, "clock_nanosleep(): %s\n", strerror(ret));
+-            break;
+-        }
+-
+-        cyclic_task();
+-
+-        wakeup_time.tv_nsec += PERIOD_NS;
+-        while (wakeup_time.tv_nsec >= NSEC_PER_SEC) {
+-            wakeup_time.tv_nsec -= NSEC_PER_SEC;
+-            wakeup_time.tv_sec++;
+-        }
+-    }
+-
+-    return ret;
++	cyclic_task_nanosleep();
++    return 0;
+ }
+ 
+ /****************************************************************************/
+-- 
+2.43.0
+
