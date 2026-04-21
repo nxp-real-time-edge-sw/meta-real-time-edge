@@ -1,5 +1,5 @@
 REAL_TIME_EDGE_UBOOT_SRC ?= "git://github.com/nxp-real-time-edge-sw/real-time-edge-uboot.git;protocol=https"
-REAL_TIME_EDGE_UBOOT_BRANCH ?= "uboot_v2025.04-3.4.0"
+REAL_TIME_EDGE_UBOOT_BRANCH ?= "uboot_v2026.04-3.5.0"
 REAL_TIME_EDGE_UBOOT_SRCREV ?= "fb3db400b8036143a202b70b62ad0984b934579a"
 
 UBOOT_SRC = "${REAL_TIME_EDGE_UBOOT_SRC}"
