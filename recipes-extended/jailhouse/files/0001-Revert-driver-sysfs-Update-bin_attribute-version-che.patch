@@ -16,13 +16,14 @@ index 8ea13491..3775f6fe 100644
 --- a/driver/sysfs.c
 +++ b/driver/sysfs.c
 @@ -535,7 +535,7 @@ static ssize_t remap_pool_used_show(struct device *dev,
-	return info_show(dev, buffer, JAILHOUSE_INFO_REMAP_POOL_USED);
+ 	return info_show(dev, buffer, JAILHOUSE_INFO_REMAP_POOL_USED);
  }
-
+ 
 -#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,16,0)
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,15,0)
  static ssize_t core_show(struct file *filp, struct kobject *kobj,
-			 const struct bin_attribute *attr, char *buf, loff_t off,
-			 size_t count)
---
+ 			 const struct bin_attribute *attr, char *buf, loff_t off,
+ 			 size_t count)
+-- 
 2.34.1
+
