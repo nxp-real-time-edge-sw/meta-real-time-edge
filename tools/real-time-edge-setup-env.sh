@@ -229,7 +229,10 @@ change_conf
 add_layers
 
 # NXP development board images are more useful with the empty root password.
-echo -e "\n====================================== Important Note =========================================="
+echo -e "\n========================================= Important Note ========================================"
+echo "                              RELEASE ENVIRONMENT"
+echo "                        Using GitHub public repositories"
+echo ""
 echo "This setup is optimized for NXP development boards and is not appropriate for production boards."
 
 bitbake-config-build enable-fragment core/yocto/root-login-with-empty-password
