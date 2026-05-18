@@ -103,10 +103,6 @@ imx_add_layers()
     echo "" >> $BUILD_DIR/conf/bblayers.conf
     echo "# RTOS layer" >> $BUILD_DIR/conf/bblayers.conf
     echo "BBLAYERS += \"\${BSPDIR}/sources/meta-rtos-industrial\"" >> $BUILD_DIR/conf/bblayers.conf
-
-    echo "" >> $BUILD_DIR/conf/bblayers.conf
-    echo "# AVB layer" >> $BUILD_DIR/conf/bblayers.conf
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-nxp-avb\"" >> $BUILD_DIR/conf/bblayers.conf
 }
 
 qoriq_add_layers()
