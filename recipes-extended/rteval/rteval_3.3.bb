@@ -34,7 +34,6 @@ RDEPENDS:${PN} += " \
     stress-ng \
     python3-core \
     libxml2 \
-    libxml2-python \
     python3-lxml \
     python3-xmlrpc \
 "
