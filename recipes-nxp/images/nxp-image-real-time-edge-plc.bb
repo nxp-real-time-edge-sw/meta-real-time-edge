@@ -17,7 +17,8 @@ IMAGE_ROOTFS_EXTRA_SPACE:append = "${@bb.utils.contains("DISTRO_FEATURES", "syst
 
 IMAGE_FEATURES += "ssh-server-dropbear"
 
-IMAGE_INSTALL:append = " \
+IMAGE_INSTALL:append:imx-nxp-bsp = " \
+    packagegroup-real-time-edge-rtos \
     net-tools \
     kernel-modules \
     stress-ng \
