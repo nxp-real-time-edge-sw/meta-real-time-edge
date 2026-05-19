@@ -21,6 +21,7 @@ IMAGE_INSTALL:append:imx-nxp-bsp = " \
     packagegroup-real-time-edge-rtos \
     net-tools \
     kernel-modules \
+    perf \
     stress-ng \
     rt-tests \
 "
