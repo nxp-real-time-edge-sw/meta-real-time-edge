@@ -17,8 +17,9 @@ INSANE_SKIP:${PN}:remove = "ldflags"
 ERROR_QA:remove = "ldflags"
 WARN_QA:append = " ldflags"
 
-PACKAGES += "${PN}-bash-completion"
-FILES:${PN}-bash-completion = "${datadir}/bash-completion/completions/jailhouse"
+# bash-completion package is already added by meta-imx bbappend
+# PACKAGES += "${PN}-bash-completion"
+# FILES:${PN}-bash-completion = "${datadir}/bash-completion/completions/jailhouse"
 
 RDEPENDS:${PN} += " \
     pyjailhouse \
