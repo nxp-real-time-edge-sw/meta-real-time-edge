@@ -10,6 +10,9 @@ inherit pkgconfig
 SRC_URI = "git://github.com/NXP/isochron.git;protocol=https;branch=master"
 SRCREV = "7f06efd5b40ef1cfb6210883bc4307bac338adc0"
 
+# Fix GCC 15 warning: assignment discards 'const' qualifier
+TARGET_CFLAGS:append = " -Wno-error=discarded-qualifiers"
+
 do_compile() {
     oe_runmake isochron
 }
