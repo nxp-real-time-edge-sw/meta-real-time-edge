@@ -4116,7 +4116,7 @@ index 00000000..721d67c3
 +{
 +	struct enetc_int_vector *v __free(kfree);
 +	struct enetc_bdr *bdr;
-+	char name[NAPINAMSIZ];
++	char name[IFNAMSIZ];
 +	int j, err;
 +
 +	v = kzalloc(struct_size(v, tx_ring, v_tx_rings), GFP_KERNEL);
@@ -4150,7 +4150,7 @@ index 00000000..721d67c3
 +	}
 +	INIT_WORK(&v->rx_dim.work, enetc_rx_dim_work);
 +
-+	snprintf(name, NAPINAMSIZ, "rxtx-%d", i);
++	snprintf(name, IFNAMSIZ, "rxtx-%d", i);
 +	v->count_tx_rings = v_tx_rings;
 +
 +	for (j = 0; j < v_tx_rings; j++) {
@@ -4176,7 +4176,7 @@ index 00000000..721d67c3
 +{
 +    struct enetc_int_vector *v;
 +    struct enetc_bdr *bdr;
-+    char name[NAPINAMSIZ];
++    char name[IFNAMSIZ];
 +    int j, err;
 +
 +    v = kzalloc(struct_size(v, tx_ring, v_tx_rings), GFP_KERNEL);
@@ -4213,7 +4213,7 @@ index 00000000..721d67c3
 +
 +    INIT_WORK(&v->rx_dim.work, enetc_rx_dim_work);
 +
-+    snprintf(name, NAPINAMSIZ, "rxtx-%d", i);
++    snprintf(name, IFNAMSIZ, "rxtx-%d", i);
 +    v->count_tx_rings = v_tx_rings;
 +
 +    for (j = 0; j < v_tx_rings; j++) {
