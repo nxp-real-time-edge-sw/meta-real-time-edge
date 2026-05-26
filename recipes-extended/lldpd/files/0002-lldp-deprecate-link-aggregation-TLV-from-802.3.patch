@@ -1,6 +1,6 @@
-From a06e3098949b34916e5da0fde1991a8f75261ca9 Mon Sep 17 00:00:00 2001
+From 65e09b83664957a28e08e3f659cc67bad1acba5a Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
-Date: Wed, 24 Aug 2022 16:01:46 +0800
+Date: Tue, 26 May 2026 17:46:53 +0800
 Subject: [PATCH 2/2] lldp: deprecate link aggregation TLV from 802.3
 
 Link Aggregation TLV has been deprecated from  IEEE Std 802.3 and is now
@@ -15,7 +15,7 @@ Upstream-Status: Pending
  2 files changed, 5 insertions(+), 4 deletions(-)
 
 diff --git a/src/daemon/lldp-tlv.h b/src/daemon/lldp-tlv.h
-index 9de9703..195ab24 100644
+index 07abd4f..311540a 100644
 --- a/src/daemon/lldp-tlv.h
 +++ b/src/daemon/lldp-tlv.h
 @@ -62,6 +62,7 @@
@@ -27,10 +27,10 @@ index 9de9703..195ab24 100644
  #define LLDP_TLV_DOT3_MAC 1
  #define LLDP_TLV_DOT3_POWER 2
 diff --git a/src/daemon/protocols/lldp.c b/src/daemon/protocols/lldp.c
-index 8565e61..d123331 100644
+index 5939ca7..4c918c9 100644
 --- a/src/daemon/protocols/lldp.c
 +++ b/src/daemon/protocols/lldp.c
-@@ -249,17 +249,17 @@ _lldp_send(struct lldpd *global, struct lldpd_hardware *hardware, u_int8_t c_id_
+@@ -250,17 +250,17 @@ _lldp_send(struct lldpd *global, struct lldpd_hardware *hardware, u_int8_t c_id_
  			POKE_BYTES(pi->p_pi, pi->p_pi_len) && POKE_END_LLDP_TLV))
  			goto toobig;
  	}
@@ -49,9 +49,9 @@ index 8565e61..d123331 100644
 +#endif
  
 +#ifdef ENABLE_DOT3
- 	fp_tlv = port->p_fp.support | port->p_fp.status << 1 |
- 		 port->p_fp.active << 2 | port->p_fp.frag_size << 3;
+ 	macmerge_tlv = port->p_macmerge.support | port->p_macmerge.status << 1 |
+ 		 port->p_macmerge.active << 2 | port->p_macmerge.frag_size << 3;
  	if (!(
 -- 
-2.34.1
+2.43.0
 

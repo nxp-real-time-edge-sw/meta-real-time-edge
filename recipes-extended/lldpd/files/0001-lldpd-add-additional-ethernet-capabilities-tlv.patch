@@ -1,178 +1,2017 @@
-From a125d8f0459acc1f335c4c88aa3c263067f23b57 Mon Sep 17 00:00:00 2001
+From a645cf4f602af52c1c7ab4b6021d19fa49688ae5 Mon Sep 17 00:00:00 2001
 From: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
-Date: Sat, 19 Apr 2025 09:58:28 +0800
+Date: Tue, 26 May 2026 17:31:20 +0800
 Subject: [PATCH 1/2] lldpd: add additional ethernet capabilities tlv
 
 Additional Ethernet capabilities TLV is defined in IEEE Std 802.3-2018.
 Its subtype is 7, and the first 4 bits indicate preemption capability
-and status. The preemption status is got from ethtool ioctl in Linux.
+and status. Get the preemption status from ethtool in Linux. Disable or
+enable the preemption when detected the link partner preemption status.
 
 Signed-off-by: Xiaoliang Yang <xiaoliang.yang_1@nxp.com>
 Upstream-Status: Pending
 ---
- include/linux/ethtool.h       | 14 ++++++++++++++
- src/daemon/interfaces-linux.c | 31 +++++++++++++++++++++++++++++++
- src/daemon/lldp-tlv.h         |  1 +
- src/daemon/protocols/lldp.c   | 11 +++++++++++
- src/lldpd-structs.h           |  9 +++++++++
- 5 files changed, 66 insertions(+)
+ configure.ac                              |  13 +
+ include/linux/ethtool_netlink.h           | 211 +++++
+ include/linux/ethtool_netlink_generated.h | 925 ++++++++++++++++++++++
+ src/daemon/Makefile.am                    |   6 +
+ src/daemon/ethtool-mm.c                   | 512 ++++++++++++
+ src/daemon/ethtool-mm.h                   |  65 ++
+ src/daemon/interfaces-linux.c             |  21 +
+ src/daemon/lldp-tlv.h                     |   1 +
+ src/daemon/priv.c                         |   2 +-
+ src/daemon/protocols/lldp.c               |  57 ++
+ src/lldpd-structs.h                       |   8 +
+ 11 files changed, 1820 insertions(+), 1 deletion(-)
+ create mode 100644 include/linux/ethtool_netlink.h
+ create mode 100644 include/linux/ethtool_netlink_generated.h
+ create mode 100644 src/daemon/ethtool-mm.c
+ create mode 100644 src/daemon/ethtool-mm.h
 
-diff --git a/include/linux/ethtool.h b/include/linux/ethtool.h
-index 6bfbb85..6fdf5e8 100644
---- a/include/linux/ethtool.h
-+++ b/include/linux/ethtool.h
-@@ -341,6 +341,18 @@ struct ethtool_eee {
- 	__u32	reserved[2];
- };
+diff --git a/configure.ac b/configure.ac
+index 3039071..975b5b3 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -267,6 +267,19 @@ AC_CACHE_SAVE
+ ## Unit tests wich check
+ PKG_CHECK_MODULES([check], [check >= 0.9.4], [have_check=yes], [have_check=no])
  
-+struct ethtool_fp {
-+         __u32 cmd;
-+        __u32 verify_time;
-+        __u32 min_frag_size;
-+        __u8 tx_enabled;
-+        __u8 pmac_enabled;
-+        __u8 verify_enabled;
-+        __u8 active;
-+        __u8 support;
-+        __u8 reserved[3];
++PKG_CHECK_MODULES([LIBMNL], [libmnl >= 1.0],
++[
++  AC_DEFINE([HAVE_LIBMNL], 1, [libmnl available])
++  have_libmnl=yes
++],
++[
++  have_libmnl=no
++  LIBMNL_CFLAGS=""
++  LIBMNL_LIBS=""
++])
++
++AM_CONDITIONAL([HAVE_LIBMNL], [test "x$have_libmnl" = "xyes"])
++
+ # Third-party libraries
+ lldp_CHECK_LIBEVENT
+ lldp_CHECK_LIBCAP
+diff --git a/include/linux/ethtool_netlink.h b/include/linux/ethtool_netlink.h
+new file mode 100644
+index 0000000..fa5d645
+--- /dev/null
++++ b/include/linux/ethtool_netlink.h
+@@ -0,0 +1,211 @@
++/* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
++/*
++ * include/uapi/linux/ethtool_netlink.h - netlink interface for ethtool
++ *
++ * See Documentation/networking/ethtool-netlink.rst in kernel source tree for
++ * doucumentation of the interface.
++ */
++
++#ifndef _UAPI_LINUX_ETHTOOL_NETLINK_H_
++#define _UAPI_LINUX_ETHTOOL_NETLINK_H_
++
++#include <linux/ethtool.h>
++#include <linux/ethtool_netlink_generated.h>
++
++#define ETHTOOL_FLAG_ALL (ETHTOOL_FLAG_COMPACT_BITSETS | \
++			  ETHTOOL_FLAG_OMIT_REPLY | \
++			  ETHTOOL_FLAG_STATS)
++
++/* CABLE TEST NOTIFY */
++enum {
++	ETHTOOL_A_CABLE_RESULT_CODE_UNSPEC,
++	ETHTOOL_A_CABLE_RESULT_CODE_OK,
++	ETHTOOL_A_CABLE_RESULT_CODE_OPEN,
++	ETHTOOL_A_CABLE_RESULT_CODE_SAME_SHORT,
++	ETHTOOL_A_CABLE_RESULT_CODE_CROSS_SHORT,
++	/* detected reflection caused by the impedance discontinuity between
++	 * a regular 100 Ohm cable and a part with the abnormal impedance value
++	 */
++	ETHTOOL_A_CABLE_RESULT_CODE_IMPEDANCE_MISMATCH,
++	/* TDR not possible due to high noise level */
++	ETHTOOL_A_CABLE_RESULT_CODE_NOISE,
++	/* TDR resolution not possible / out of distance */
++	ETHTOOL_A_CABLE_RESULT_CODE_RESOLUTION_NOT_POSSIBLE,
 +};
 +
- /**
-  * struct ethtool_modinfo - plugin module eeprom information
-  * @cmd: %ETHTOOL_GMODULEINFO
-@@ -1395,6 +1407,8 @@ enum ethtool_fec_config_bits {
- #define ETHTOOL_PHY_STUNABLE	0x0000004f /* Set PHY tunable configuration */
- #define ETHTOOL_GFECPARAM	0x00000050 /* Get FEC settings */
- #define ETHTOOL_SFECPARAM	0x00000051 /* Set FEC settings */
-+#define ETHTOOL_GMM             0x00000052 /* Get Frame Preemption settings */
-+#define ETHTOOL_SMM             0x00000053 /* Set Frame Preemption settings */
++enum {
++	ETHTOOL_A_CABLE_PAIR_A,
++	ETHTOOL_A_CABLE_PAIR_B,
++	ETHTOOL_A_CABLE_PAIR_C,
++	ETHTOOL_A_CABLE_PAIR_D,
++};
++
++/* Information source for specific results. */
++enum {
++	ETHTOOL_A_CABLE_INF_SRC_UNSPEC,
++	/* Results provided by the Time Domain Reflectometry (TDR) */
++	ETHTOOL_A_CABLE_INF_SRC_TDR,
++	/* Results provided by the Active Link Cable Diagnostic (ALCD) */
++	ETHTOOL_A_CABLE_INF_SRC_ALCD,
++};
++
++enum {
++	ETHTOOL_A_CABLE_TEST_NTF_STATUS_UNSPEC,
++	ETHTOOL_A_CABLE_TEST_NTF_STATUS_STARTED,
++	ETHTOOL_A_CABLE_TEST_NTF_STATUS_COMPLETED
++};
++
++/* CABLE TEST TDR NOTIFY */
++
++enum {
++	ETHTOOL_A_CABLE_AMPLITUDE_UNSPEC,
++	ETHTOOL_A_CABLE_AMPLITUDE_PAIR,         /* u8 */
++	ETHTOOL_A_CABLE_AMPLITUDE_mV,           /* s16 */
++
++	__ETHTOOL_A_CABLE_AMPLITUDE_CNT,
++	ETHTOOL_A_CABLE_AMPLITUDE_MAX = (__ETHTOOL_A_CABLE_AMPLITUDE_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CABLE_PULSE_UNSPEC,
++	ETHTOOL_A_CABLE_PULSE_mV,		/* s16 */
++
++	__ETHTOOL_A_CABLE_PULSE_CNT,
++	ETHTOOL_A_CABLE_PULSE_MAX = (__ETHTOOL_A_CABLE_PULSE_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CABLE_STEP_UNSPEC,
++	ETHTOOL_A_CABLE_STEP_FIRST_DISTANCE,	/* u32 */
++	ETHTOOL_A_CABLE_STEP_LAST_DISTANCE,	/* u32 */
++	ETHTOOL_A_CABLE_STEP_STEP_DISTANCE,	/* u32 */
++
++	__ETHTOOL_A_CABLE_STEP_CNT,
++	ETHTOOL_A_CABLE_STEP_MAX = (__ETHTOOL_A_CABLE_STEP_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CABLE_TDR_NEST_UNSPEC,
++	ETHTOOL_A_CABLE_TDR_NEST_STEP,		/* nest - ETHTTOOL_A_CABLE_STEP */
++	ETHTOOL_A_CABLE_TDR_NEST_AMPLITUDE,	/* nest - ETHTOOL_A_CABLE_AMPLITUDE */
++	ETHTOOL_A_CABLE_TDR_NEST_PULSE,		/* nest - ETHTOOL_A_CABLE_PULSE */
++
++	__ETHTOOL_A_CABLE_TDR_NEST_CNT,
++	ETHTOOL_A_CABLE_TDR_NEST_MAX = (__ETHTOOL_A_CABLE_TDR_NEST_CNT - 1)
++};
++
++enum {
++	ETHTOOL_STATS_ETH_PHY,
++	ETHTOOL_STATS_ETH_MAC,
++	ETHTOOL_STATS_ETH_CTRL,
++	ETHTOOL_STATS_RMON,
++	ETHTOOL_STATS_PHY,
++
++	/* add new constants above here */
++	__ETHTOOL_STATS_CNT
++};
++
++enum {
++	/* 30.3.2.1.5 aSymbolErrorDuringCarrier */
++	ETHTOOL_A_STATS_ETH_PHY_5_SYM_ERR,
++
++	/* add new constants above here */
++	__ETHTOOL_A_STATS_ETH_PHY_CNT,
++	ETHTOOL_A_STATS_ETH_PHY_MAX = (__ETHTOOL_A_STATS_ETH_PHY_CNT - 1)
++};
++
++enum {
++	/* 30.3.1.1.2 aFramesTransmittedOK */
++	ETHTOOL_A_STATS_ETH_MAC_2_TX_PKT,
++	/* 30.3.1.1.3 aSingleCollisionFrames */
++	ETHTOOL_A_STATS_ETH_MAC_3_SINGLE_COL,
++	/* 30.3.1.1.4 aMultipleCollisionFrames */
++	ETHTOOL_A_STATS_ETH_MAC_4_MULTI_COL,
++	/* 30.3.1.1.5 aFramesReceivedOK */
++	ETHTOOL_A_STATS_ETH_MAC_5_RX_PKT,
++	/* 30.3.1.1.6 aFrameCheckSequenceErrors */
++	ETHTOOL_A_STATS_ETH_MAC_6_FCS_ERR,
++	/* 30.3.1.1.7 aAlignmentErrors */
++	ETHTOOL_A_STATS_ETH_MAC_7_ALIGN_ERR,
++	/* 30.3.1.1.8 aOctetsTransmittedOK */
++	ETHTOOL_A_STATS_ETH_MAC_8_TX_BYTES,
++	/* 30.3.1.1.9 aFramesWithDeferredXmissions */
++	ETHTOOL_A_STATS_ETH_MAC_9_TX_DEFER,
++	/* 30.3.1.1.10 aLateCollisions */
++	ETHTOOL_A_STATS_ETH_MAC_10_LATE_COL,
++	/* 30.3.1.1.11 aFramesAbortedDueToXSColls */
++	ETHTOOL_A_STATS_ETH_MAC_11_XS_COL,
++	/* 30.3.1.1.12 aFramesLostDueToIntMACXmitError */
++	ETHTOOL_A_STATS_ETH_MAC_12_TX_INT_ERR,
++	/* 30.3.1.1.13 aCarrierSenseErrors */
++	ETHTOOL_A_STATS_ETH_MAC_13_CS_ERR,
++	/* 30.3.1.1.14 aOctetsReceivedOK */
++	ETHTOOL_A_STATS_ETH_MAC_14_RX_BYTES,
++	/* 30.3.1.1.15 aFramesLostDueToIntMACRcvError */
++	ETHTOOL_A_STATS_ETH_MAC_15_RX_INT_ERR,
++
++	/* 30.3.1.1.18 aMulticastFramesXmittedOK */
++	ETHTOOL_A_STATS_ETH_MAC_18_TX_MCAST,
++	/* 30.3.1.1.19 aBroadcastFramesXmittedOK */
++	ETHTOOL_A_STATS_ETH_MAC_19_TX_BCAST,
++	/* 30.3.1.1.20 aFramesWithExcessiveDeferral */
++	ETHTOOL_A_STATS_ETH_MAC_20_XS_DEFER,
++	/* 30.3.1.1.21 aMulticastFramesReceivedOK */
++	ETHTOOL_A_STATS_ETH_MAC_21_RX_MCAST,
++	/* 30.3.1.1.22 aBroadcastFramesReceivedOK */
++	ETHTOOL_A_STATS_ETH_MAC_22_RX_BCAST,
++	/* 30.3.1.1.23 aInRangeLengthErrors */
++	ETHTOOL_A_STATS_ETH_MAC_23_IR_LEN_ERR,
++	/* 30.3.1.1.24 aOutOfRangeLengthField */
++	ETHTOOL_A_STATS_ETH_MAC_24_OOR_LEN,
++	/* 30.3.1.1.25 aFrameTooLongErrors */
++	ETHTOOL_A_STATS_ETH_MAC_25_TOO_LONG_ERR,
++
++	/* add new constants above here */
++	__ETHTOOL_A_STATS_ETH_MAC_CNT,
++	ETHTOOL_A_STATS_ETH_MAC_MAX = (__ETHTOOL_A_STATS_ETH_MAC_CNT - 1)
++};
++
++enum {
++	/* 30.3.3.3 aMACControlFramesTransmitted */
++	ETHTOOL_A_STATS_ETH_CTRL_3_TX,
++	/* 30.3.3.4 aMACControlFramesReceived */
++	ETHTOOL_A_STATS_ETH_CTRL_4_RX,
++	/* 30.3.3.5 aUnsupportedOpcodesReceived */
++	ETHTOOL_A_STATS_ETH_CTRL_5_RX_UNSUP,
++
++	/* add new constants above here */
++	__ETHTOOL_A_STATS_ETH_CTRL_CNT,
++	ETHTOOL_A_STATS_ETH_CTRL_MAX = (__ETHTOOL_A_STATS_ETH_CTRL_CNT - 1)
++};
++
++enum {
++	/* etherStatsUndersizePkts */
++	ETHTOOL_A_STATS_RMON_UNDERSIZE,
++	/* etherStatsOversizePkts */
++	ETHTOOL_A_STATS_RMON_OVERSIZE,
++	/* etherStatsFragments */
++	ETHTOOL_A_STATS_RMON_FRAG,
++	/* etherStatsJabbers */
++	ETHTOOL_A_STATS_RMON_JABBER,
++
++	/* add new constants above here */
++	__ETHTOOL_A_STATS_RMON_CNT,
++	ETHTOOL_A_STATS_RMON_MAX = (__ETHTOOL_A_STATS_RMON_CNT - 1)
++};
++
++enum {
++	/* Basic packet counters if PHY has separate counters from the MAC */
++	ETHTOOL_A_STATS_PHY_RX_PKTS,
++	ETHTOOL_A_STATS_PHY_RX_BYTES,
++	ETHTOOL_A_STATS_PHY_RX_ERRORS,
++	ETHTOOL_A_STATS_PHY_TX_PKTS,
++	ETHTOOL_A_STATS_PHY_TX_BYTES,
++	ETHTOOL_A_STATS_PHY_TX_ERRORS,
++
++	/* add new constants above here */
++	__ETHTOOL_A_STATS_PHY_CNT,
++	ETHTOOL_A_STATS_PHY_MAX = (__ETHTOOL_A_STATS_PHY_CNT - 1)
++};
++
++#endif /* _UAPI_LINUX_ETHTOOL_NETLINK_H_ */
+diff --git a/include/linux/ethtool_netlink_generated.h b/include/linux/ethtool_netlink_generated.h
+new file mode 100644
+index 0000000..0e8ac0d
+--- /dev/null
++++ b/include/linux/ethtool_netlink_generated.h
+@@ -0,0 +1,925 @@
++/* SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause) */
++/* Do not edit directly, auto-generated from: */
++/*	Documentation/netlink/specs/ethtool.yaml */
++/* YNL-GEN uapi header */
++
++#ifndef _UAPI_LINUX_ETHTOOL_NETLINK_GENERATED_H
++#define _UAPI_LINUX_ETHTOOL_NETLINK_GENERATED_H
++
++#define ETHTOOL_GENL_NAME	"ethtool"
++#define ETHTOOL_GENL_VERSION	1
++
++enum {
++	ETHTOOL_UDP_TUNNEL_TYPE_VXLAN,
++	ETHTOOL_UDP_TUNNEL_TYPE_GENEVE,
++	ETHTOOL_UDP_TUNNEL_TYPE_VXLAN_GPE,
++
++	/* private: */
++	__ETHTOOL_UDP_TUNNEL_TYPE_CNT,
++	ETHTOOL_UDP_TUNNEL_TYPE_MAX = (__ETHTOOL_UDP_TUNNEL_TYPE_CNT - 1)
++};
++
++/**
++ * enum ethtool_header_flags - common ethtool header flags
++ * @ETHTOOL_FLAG_COMPACT_BITSETS: use compact bitsets in reply
++ * @ETHTOOL_FLAG_OMIT_REPLY: provide optional reply for SET or ACT requests
++ * @ETHTOOL_FLAG_STATS: request statistics, if supported by the driver
++ */
++enum ethtool_header_flags {
++	ETHTOOL_FLAG_COMPACT_BITSETS = 1,
++	ETHTOOL_FLAG_OMIT_REPLY = 2,
++	ETHTOOL_FLAG_STATS = 4,
++};
++
++enum ethtool_tcp_data_split {
++	ETHTOOL_TCP_DATA_SPLIT_UNKNOWN,
++	ETHTOOL_TCP_DATA_SPLIT_DISABLED,
++	ETHTOOL_TCP_DATA_SPLIT_ENABLED,
++};
++
++/**
++ * enum hwtstamp_source - Source of the hardware timestamp
++ * @HWTSTAMP_SOURCE_NETDEV: Hardware timestamp comes from a MAC or a device
++ *   which has MAC and PHY integrated
++ * @HWTSTAMP_SOURCE_PHYLIB: Hardware timestamp comes from one PHY device of the
++ *   network topology
++ */
++enum hwtstamp_source {
++	HWTSTAMP_SOURCE_NETDEV = 1,
++	HWTSTAMP_SOURCE_PHYLIB,
++};
++
++/**
++ * enum ethtool_pse_event - PSE event list for the PSE controller
++ * @ETHTOOL_PSE_EVENT_OVER_CURRENT: PSE output current is too high
++ * @ETHTOOL_PSE_EVENT_OVER_TEMP: PSE in over temperature state
++ * @ETHTOOL_C33_PSE_EVENT_DETECTION: detection process occur on the PSE. IEEE
++ *   802.3-2022 33.2.5 and 145.2.6 PSE detection of PDs. IEEE 802.3-202
++ *   30.9.1.1.5 aPSEPowerDetectionStatus
++ * @ETHTOOL_C33_PSE_EVENT_CLASSIFICATION: classification process occur on the
++ *   PSE. IEEE 802.3-2022 33.2.6 and 145.2.8 classification of PDs mutual
++ *   identification. IEEE 802.3-2022 30.9.1.1.8 aPSEPowerClassification.
++ * @ETHTOOL_C33_PSE_EVENT_DISCONNECTION: PD has been disconnected on the PSE.
++ *   IEEE 802.3-2022 33.3.8 and 145.3.9 PD Maintain Power Signature. IEEE
++ *   802.3-2022 33.5.1.2.9 MPS Absent. IEEE 802.3-2022 30.9.1.1.20
++ *   aPSEMPSAbsentCounter.
++ * @ETHTOOL_PSE_EVENT_OVER_BUDGET: PSE turned off due to over budget situation
++ * @ETHTOOL_PSE_EVENT_SW_PW_CONTROL_ERROR: PSE faced an error managing the
++ *   power control from software
++ */
++enum ethtool_pse_event {
++	ETHTOOL_PSE_EVENT_OVER_CURRENT = 1,
++	ETHTOOL_PSE_EVENT_OVER_TEMP = 2,
++	ETHTOOL_C33_PSE_EVENT_DETECTION = 4,
++	ETHTOOL_C33_PSE_EVENT_CLASSIFICATION = 8,
++	ETHTOOL_C33_PSE_EVENT_DISCONNECTION = 16,
++	ETHTOOL_PSE_EVENT_OVER_BUDGET = 32,
++	ETHTOOL_PSE_EVENT_SW_PW_CONTROL_ERROR = 64,
++};
++
++enum {
++	ETHTOOL_A_HEADER_UNSPEC,
++	ETHTOOL_A_HEADER_DEV_INDEX,
++	ETHTOOL_A_HEADER_DEV_NAME,
++	ETHTOOL_A_HEADER_FLAGS,
++	ETHTOOL_A_HEADER_PHY_INDEX,
++
++	__ETHTOOL_A_HEADER_CNT,
++	ETHTOOL_A_HEADER_MAX = (__ETHTOOL_A_HEADER_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_BITSET_BIT_UNSPEC,
++	ETHTOOL_A_BITSET_BIT_INDEX,
++	ETHTOOL_A_BITSET_BIT_NAME,
++	ETHTOOL_A_BITSET_BIT_VALUE,
++
++	__ETHTOOL_A_BITSET_BIT_CNT,
++	ETHTOOL_A_BITSET_BIT_MAX = (__ETHTOOL_A_BITSET_BIT_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_BITSET_BITS_UNSPEC,
++	ETHTOOL_A_BITSET_BITS_BIT,
++
++	__ETHTOOL_A_BITSET_BITS_CNT,
++	ETHTOOL_A_BITSET_BITS_MAX = (__ETHTOOL_A_BITSET_BITS_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_BITSET_UNSPEC,
++	ETHTOOL_A_BITSET_NOMASK,
++	ETHTOOL_A_BITSET_SIZE,
++	ETHTOOL_A_BITSET_BITS,
++	ETHTOOL_A_BITSET_VALUE,
++	ETHTOOL_A_BITSET_MASK,
++
++	__ETHTOOL_A_BITSET_CNT,
++	ETHTOOL_A_BITSET_MAX = (__ETHTOOL_A_BITSET_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_STRING_UNSPEC,
++	ETHTOOL_A_STRING_INDEX,
++	ETHTOOL_A_STRING_VALUE,
++
++	__ETHTOOL_A_STRING_CNT,
++	ETHTOOL_A_STRING_MAX = (__ETHTOOL_A_STRING_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_STRINGS_UNSPEC,
++	ETHTOOL_A_STRINGS_STRING,
++
++	__ETHTOOL_A_STRINGS_CNT,
++	ETHTOOL_A_STRINGS_MAX = (__ETHTOOL_A_STRINGS_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_STRINGSET_UNSPEC,
++	ETHTOOL_A_STRINGSET_ID,
++	ETHTOOL_A_STRINGSET_COUNT,
++	ETHTOOL_A_STRINGSET_STRINGS,
++
++	__ETHTOOL_A_STRINGSET_CNT,
++	ETHTOOL_A_STRINGSET_MAX = (__ETHTOOL_A_STRINGSET_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_STRINGSETS_UNSPEC,
++	ETHTOOL_A_STRINGSETS_STRINGSET,
++
++	__ETHTOOL_A_STRINGSETS_CNT,
++	ETHTOOL_A_STRINGSETS_MAX = (__ETHTOOL_A_STRINGSETS_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_STRSET_UNSPEC,
++	ETHTOOL_A_STRSET_HEADER,
++	ETHTOOL_A_STRSET_STRINGSETS,
++	ETHTOOL_A_STRSET_COUNTS_ONLY,
++
++	__ETHTOOL_A_STRSET_CNT,
++	ETHTOOL_A_STRSET_MAX = (__ETHTOOL_A_STRSET_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_PRIVFLAGS_UNSPEC,
++	ETHTOOL_A_PRIVFLAGS_HEADER,
++	ETHTOOL_A_PRIVFLAGS_FLAGS,
++
++	__ETHTOOL_A_PRIVFLAGS_CNT,
++	ETHTOOL_A_PRIVFLAGS_MAX = (__ETHTOOL_A_PRIVFLAGS_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_RINGS_UNSPEC,
++	ETHTOOL_A_RINGS_HEADER,
++	ETHTOOL_A_RINGS_RX_MAX,
++	ETHTOOL_A_RINGS_RX_MINI_MAX,
++	ETHTOOL_A_RINGS_RX_JUMBO_MAX,
++	ETHTOOL_A_RINGS_TX_MAX,
++	ETHTOOL_A_RINGS_RX,
++	ETHTOOL_A_RINGS_RX_MINI,
++	ETHTOOL_A_RINGS_RX_JUMBO,
++	ETHTOOL_A_RINGS_TX,
++	ETHTOOL_A_RINGS_RX_BUF_LEN,
++	ETHTOOL_A_RINGS_TCP_DATA_SPLIT,
++	ETHTOOL_A_RINGS_CQE_SIZE,
++	ETHTOOL_A_RINGS_TX_PUSH,
++	ETHTOOL_A_RINGS_RX_PUSH,
++	ETHTOOL_A_RINGS_TX_PUSH_BUF_LEN,
++	ETHTOOL_A_RINGS_TX_PUSH_BUF_LEN_MAX,
++	ETHTOOL_A_RINGS_HDS_THRESH,
++	ETHTOOL_A_RINGS_HDS_THRESH_MAX,
++
++	__ETHTOOL_A_RINGS_CNT,
++	ETHTOOL_A_RINGS_MAX = (__ETHTOOL_A_RINGS_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_MM_STAT_UNSPEC,
++	ETHTOOL_A_MM_STAT_PAD,
++	ETHTOOL_A_MM_STAT_REASSEMBLY_ERRORS,
++	ETHTOOL_A_MM_STAT_SMD_ERRORS,
++	ETHTOOL_A_MM_STAT_REASSEMBLY_OK,
++	ETHTOOL_A_MM_STAT_RX_FRAG_COUNT,
++	ETHTOOL_A_MM_STAT_TX_FRAG_COUNT,
++	ETHTOOL_A_MM_STAT_HOLD_COUNT,
++
++	__ETHTOOL_A_MM_STAT_CNT,
++	ETHTOOL_A_MM_STAT_MAX = (__ETHTOOL_A_MM_STAT_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_MM_UNSPEC,
++	ETHTOOL_A_MM_HEADER,
++	ETHTOOL_A_MM_PMAC_ENABLED,
++	ETHTOOL_A_MM_TX_ENABLED,
++	ETHTOOL_A_MM_TX_ACTIVE,
++	ETHTOOL_A_MM_TX_MIN_FRAG_SIZE,
++	ETHTOOL_A_MM_RX_MIN_FRAG_SIZE,
++	ETHTOOL_A_MM_VERIFY_ENABLED,
++	ETHTOOL_A_MM_VERIFY_STATUS,
++	ETHTOOL_A_MM_VERIFY_TIME,
++	ETHTOOL_A_MM_MAX_VERIFY_TIME,
++	ETHTOOL_A_MM_STATS,
++
++	__ETHTOOL_A_MM_CNT,
++	ETHTOOL_A_MM_MAX = (__ETHTOOL_A_MM_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_LINKINFO_UNSPEC,
++	ETHTOOL_A_LINKINFO_HEADER,
++	ETHTOOL_A_LINKINFO_PORT,
++	ETHTOOL_A_LINKINFO_PHYADDR,
++	ETHTOOL_A_LINKINFO_TP_MDIX,
++	ETHTOOL_A_LINKINFO_TP_MDIX_CTRL,
++	ETHTOOL_A_LINKINFO_TRANSCEIVER,
++
++	__ETHTOOL_A_LINKINFO_CNT,
++	ETHTOOL_A_LINKINFO_MAX = (__ETHTOOL_A_LINKINFO_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_LINKMODES_UNSPEC,
++	ETHTOOL_A_LINKMODES_HEADER,
++	ETHTOOL_A_LINKMODES_AUTONEG,
++	ETHTOOL_A_LINKMODES_OURS,
++	ETHTOOL_A_LINKMODES_PEER,
++	ETHTOOL_A_LINKMODES_SPEED,
++	ETHTOOL_A_LINKMODES_DUPLEX,
++	ETHTOOL_A_LINKMODES_MASTER_SLAVE_CFG,
++	ETHTOOL_A_LINKMODES_MASTER_SLAVE_STATE,
++	ETHTOOL_A_LINKMODES_LANES,
++	ETHTOOL_A_LINKMODES_RATE_MATCHING,
++
++	__ETHTOOL_A_LINKMODES_CNT,
++	ETHTOOL_A_LINKMODES_MAX = (__ETHTOOL_A_LINKMODES_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_LINKSTATE_UNSPEC,
++	ETHTOOL_A_LINKSTATE_HEADER,
++	ETHTOOL_A_LINKSTATE_LINK,
++	ETHTOOL_A_LINKSTATE_SQI,
++	ETHTOOL_A_LINKSTATE_SQI_MAX,
++	ETHTOOL_A_LINKSTATE_EXT_STATE,
++	ETHTOOL_A_LINKSTATE_EXT_SUBSTATE,
++	ETHTOOL_A_LINKSTATE_EXT_DOWN_CNT,
++
++	__ETHTOOL_A_LINKSTATE_CNT,
++	ETHTOOL_A_LINKSTATE_MAX = (__ETHTOOL_A_LINKSTATE_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_DEBUG_UNSPEC,
++	ETHTOOL_A_DEBUG_HEADER,
++	ETHTOOL_A_DEBUG_MSGMASK,
++
++	__ETHTOOL_A_DEBUG_CNT,
++	ETHTOOL_A_DEBUG_MAX = (__ETHTOOL_A_DEBUG_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_WOL_UNSPEC,
++	ETHTOOL_A_WOL_HEADER,
++	ETHTOOL_A_WOL_MODES,
++	ETHTOOL_A_WOL_SOPASS,
++
++	__ETHTOOL_A_WOL_CNT,
++	ETHTOOL_A_WOL_MAX = (__ETHTOOL_A_WOL_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_FEATURES_UNSPEC,
++	ETHTOOL_A_FEATURES_HEADER,
++	ETHTOOL_A_FEATURES_HW,
++	ETHTOOL_A_FEATURES_WANTED,
++	ETHTOOL_A_FEATURES_ACTIVE,
++	ETHTOOL_A_FEATURES_NOCHANGE,
++
++	__ETHTOOL_A_FEATURES_CNT,
++	ETHTOOL_A_FEATURES_MAX = (__ETHTOOL_A_FEATURES_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CHANNELS_UNSPEC,
++	ETHTOOL_A_CHANNELS_HEADER,
++	ETHTOOL_A_CHANNELS_RX_MAX,
++	ETHTOOL_A_CHANNELS_TX_MAX,
++	ETHTOOL_A_CHANNELS_OTHER_MAX,
++	ETHTOOL_A_CHANNELS_COMBINED_MAX,
++	ETHTOOL_A_CHANNELS_RX_COUNT,
++	ETHTOOL_A_CHANNELS_TX_COUNT,
++	ETHTOOL_A_CHANNELS_OTHER_COUNT,
++	ETHTOOL_A_CHANNELS_COMBINED_COUNT,
++
++	__ETHTOOL_A_CHANNELS_CNT,
++	ETHTOOL_A_CHANNELS_MAX = (__ETHTOOL_A_CHANNELS_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_IRQ_MODERATION_UNSPEC,
++	ETHTOOL_A_IRQ_MODERATION_USEC,
++	ETHTOOL_A_IRQ_MODERATION_PKTS,
++	ETHTOOL_A_IRQ_MODERATION_COMPS,
++
++	__ETHTOOL_A_IRQ_MODERATION_CNT,
++	ETHTOOL_A_IRQ_MODERATION_MAX = (__ETHTOOL_A_IRQ_MODERATION_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_PROFILE_UNSPEC,
++	ETHTOOL_A_PROFILE_IRQ_MODERATION,
++
++	__ETHTOOL_A_PROFILE_CNT,
++	ETHTOOL_A_PROFILE_MAX = (__ETHTOOL_A_PROFILE_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_COALESCE_UNSPEC,
++	ETHTOOL_A_COALESCE_HEADER,
++	ETHTOOL_A_COALESCE_RX_USECS,
++	ETHTOOL_A_COALESCE_RX_MAX_FRAMES,
++	ETHTOOL_A_COALESCE_RX_USECS_IRQ,
++	ETHTOOL_A_COALESCE_RX_MAX_FRAMES_IRQ,
++	ETHTOOL_A_COALESCE_TX_USECS,
++	ETHTOOL_A_COALESCE_TX_MAX_FRAMES,
++	ETHTOOL_A_COALESCE_TX_USECS_IRQ,
++	ETHTOOL_A_COALESCE_TX_MAX_FRAMES_IRQ,
++	ETHTOOL_A_COALESCE_STATS_BLOCK_USECS,
++	ETHTOOL_A_COALESCE_USE_ADAPTIVE_RX,
++	ETHTOOL_A_COALESCE_USE_ADAPTIVE_TX,
++	ETHTOOL_A_COALESCE_PKT_RATE_LOW,
++	ETHTOOL_A_COALESCE_RX_USECS_LOW,
++	ETHTOOL_A_COALESCE_RX_MAX_FRAMES_LOW,
++	ETHTOOL_A_COALESCE_TX_USECS_LOW,
++	ETHTOOL_A_COALESCE_TX_MAX_FRAMES_LOW,
++	ETHTOOL_A_COALESCE_PKT_RATE_HIGH,
++	ETHTOOL_A_COALESCE_RX_USECS_HIGH,
++	ETHTOOL_A_COALESCE_RX_MAX_FRAMES_HIGH,
++	ETHTOOL_A_COALESCE_TX_USECS_HIGH,
++	ETHTOOL_A_COALESCE_TX_MAX_FRAMES_HIGH,
++	ETHTOOL_A_COALESCE_RATE_SAMPLE_INTERVAL,
++	ETHTOOL_A_COALESCE_USE_CQE_MODE_TX,
++	ETHTOOL_A_COALESCE_USE_CQE_MODE_RX,
++	ETHTOOL_A_COALESCE_TX_AGGR_MAX_BYTES,
++	ETHTOOL_A_COALESCE_TX_AGGR_MAX_FRAMES,
++	ETHTOOL_A_COALESCE_TX_AGGR_TIME_USECS,
++	ETHTOOL_A_COALESCE_RX_PROFILE,
++	ETHTOOL_A_COALESCE_TX_PROFILE,
++
++	__ETHTOOL_A_COALESCE_CNT,
++	ETHTOOL_A_COALESCE_MAX = (__ETHTOOL_A_COALESCE_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_PAUSE_STAT_UNSPEC,
++	ETHTOOL_A_PAUSE_STAT_PAD,
++	ETHTOOL_A_PAUSE_STAT_TX_FRAMES,
++	ETHTOOL_A_PAUSE_STAT_RX_FRAMES,
++
++	__ETHTOOL_A_PAUSE_STAT_CNT,
++	ETHTOOL_A_PAUSE_STAT_MAX = (__ETHTOOL_A_PAUSE_STAT_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_PAUSE_UNSPEC,
++	ETHTOOL_A_PAUSE_HEADER,
++	ETHTOOL_A_PAUSE_AUTONEG,
++	ETHTOOL_A_PAUSE_RX,
++	ETHTOOL_A_PAUSE_TX,
++	ETHTOOL_A_PAUSE_STATS,
++	ETHTOOL_A_PAUSE_STATS_SRC,
++
++	__ETHTOOL_A_PAUSE_CNT,
++	ETHTOOL_A_PAUSE_MAX = (__ETHTOOL_A_PAUSE_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_EEE_UNSPEC,
++	ETHTOOL_A_EEE_HEADER,
++	ETHTOOL_A_EEE_MODES_OURS,
++	ETHTOOL_A_EEE_MODES_PEER,
++	ETHTOOL_A_EEE_ACTIVE,
++	ETHTOOL_A_EEE_ENABLED,
++	ETHTOOL_A_EEE_TX_LPI_ENABLED,
++	ETHTOOL_A_EEE_TX_LPI_TIMER,
++
++	__ETHTOOL_A_EEE_CNT,
++	ETHTOOL_A_EEE_MAX = (__ETHTOOL_A_EEE_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_TS_STAT_UNSPEC,
++	ETHTOOL_A_TS_STAT_TX_PKTS,
++	ETHTOOL_A_TS_STAT_TX_LOST,
++	ETHTOOL_A_TS_STAT_TX_ERR,
++	ETHTOOL_A_TS_STAT_TX_ONESTEP_PKTS_UNCONFIRMED,
++
++	__ETHTOOL_A_TS_STAT_CNT,
++	ETHTOOL_A_TS_STAT_MAX = (__ETHTOOL_A_TS_STAT_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_TS_HWTSTAMP_PROVIDER_UNSPEC,
++	ETHTOOL_A_TS_HWTSTAMP_PROVIDER_INDEX,
++	ETHTOOL_A_TS_HWTSTAMP_PROVIDER_QUALIFIER,
++
++	__ETHTOOL_A_TS_HWTSTAMP_PROVIDER_CNT,
++	ETHTOOL_A_TS_HWTSTAMP_PROVIDER_MAX = (__ETHTOOL_A_TS_HWTSTAMP_PROVIDER_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_TSINFO_UNSPEC,
++	ETHTOOL_A_TSINFO_HEADER,
++	ETHTOOL_A_TSINFO_TIMESTAMPING,
++	ETHTOOL_A_TSINFO_TX_TYPES,
++	ETHTOOL_A_TSINFO_RX_FILTERS,
++	ETHTOOL_A_TSINFO_PHC_INDEX,
++	ETHTOOL_A_TSINFO_STATS,
++	ETHTOOL_A_TSINFO_HWTSTAMP_PROVIDER,
++	ETHTOOL_A_TSINFO_HWTSTAMP_SOURCE,
++	ETHTOOL_A_TSINFO_HWTSTAMP_PHYINDEX,
++
++	__ETHTOOL_A_TSINFO_CNT,
++	ETHTOOL_A_TSINFO_MAX = (__ETHTOOL_A_TSINFO_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CABLE_RESULT_UNSPEC,
++	ETHTOOL_A_CABLE_RESULT_PAIR,
++	ETHTOOL_A_CABLE_RESULT_CODE,
++	ETHTOOL_A_CABLE_RESULT_SRC,
++
++	__ETHTOOL_A_CABLE_RESULT_CNT,
++	ETHTOOL_A_CABLE_RESULT_MAX = (__ETHTOOL_A_CABLE_RESULT_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CABLE_FAULT_LENGTH_UNSPEC,
++	ETHTOOL_A_CABLE_FAULT_LENGTH_PAIR,
++	ETHTOOL_A_CABLE_FAULT_LENGTH_CM,
++	ETHTOOL_A_CABLE_FAULT_LENGTH_SRC,
++
++	__ETHTOOL_A_CABLE_FAULT_LENGTH_CNT,
++	ETHTOOL_A_CABLE_FAULT_LENGTH_MAX = (__ETHTOOL_A_CABLE_FAULT_LENGTH_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CABLE_NEST_UNSPEC,
++	ETHTOOL_A_CABLE_NEST_RESULT,
++	ETHTOOL_A_CABLE_NEST_FAULT_LENGTH,
++
++	__ETHTOOL_A_CABLE_NEST_CNT,
++	ETHTOOL_A_CABLE_NEST_MAX = (__ETHTOOL_A_CABLE_NEST_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CABLE_TEST_UNSPEC,
++	ETHTOOL_A_CABLE_TEST_HEADER,
++
++	__ETHTOOL_A_CABLE_TEST_CNT,
++	ETHTOOL_A_CABLE_TEST_MAX = (__ETHTOOL_A_CABLE_TEST_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CABLE_TEST_NTF_UNSPEC,
++	ETHTOOL_A_CABLE_TEST_NTF_HEADER,
++	ETHTOOL_A_CABLE_TEST_NTF_STATUS,
++	ETHTOOL_A_CABLE_TEST_NTF_NEST,
++
++	__ETHTOOL_A_CABLE_TEST_NTF_CNT,
++	ETHTOOL_A_CABLE_TEST_NTF_MAX = (__ETHTOOL_A_CABLE_TEST_NTF_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CABLE_TEST_TDR_CFG_UNSPEC,
++	ETHTOOL_A_CABLE_TEST_TDR_CFG_FIRST,
++	ETHTOOL_A_CABLE_TEST_TDR_CFG_LAST,
++	ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP,
++	ETHTOOL_A_CABLE_TEST_TDR_CFG_PAIR,
++
++	__ETHTOOL_A_CABLE_TEST_TDR_CFG_CNT,
++	ETHTOOL_A_CABLE_TEST_TDR_CFG_MAX = (__ETHTOOL_A_CABLE_TEST_TDR_CFG_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CABLE_TEST_TDR_NTF_UNSPEC,
++	ETHTOOL_A_CABLE_TEST_TDR_NTF_HEADER,
++	ETHTOOL_A_CABLE_TEST_TDR_NTF_STATUS,
++	ETHTOOL_A_CABLE_TEST_TDR_NTF_NEST,
++
++	__ETHTOOL_A_CABLE_TEST_TDR_NTF_CNT,
++	ETHTOOL_A_CABLE_TEST_TDR_NTF_MAX = (__ETHTOOL_A_CABLE_TEST_TDR_NTF_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_CABLE_TEST_TDR_UNSPEC,
++	ETHTOOL_A_CABLE_TEST_TDR_HEADER,
++	ETHTOOL_A_CABLE_TEST_TDR_CFG,
++
++	__ETHTOOL_A_CABLE_TEST_TDR_CNT,
++	ETHTOOL_A_CABLE_TEST_TDR_MAX = (__ETHTOOL_A_CABLE_TEST_TDR_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_TUNNEL_UDP_ENTRY_UNSPEC,
++	ETHTOOL_A_TUNNEL_UDP_ENTRY_PORT,
++	ETHTOOL_A_TUNNEL_UDP_ENTRY_TYPE,
++
++	__ETHTOOL_A_TUNNEL_UDP_ENTRY_CNT,
++	ETHTOOL_A_TUNNEL_UDP_ENTRY_MAX = (__ETHTOOL_A_TUNNEL_UDP_ENTRY_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_TUNNEL_UDP_TABLE_UNSPEC,
++	ETHTOOL_A_TUNNEL_UDP_TABLE_SIZE,
++	ETHTOOL_A_TUNNEL_UDP_TABLE_TYPES,
++	ETHTOOL_A_TUNNEL_UDP_TABLE_ENTRY,
++
++	__ETHTOOL_A_TUNNEL_UDP_TABLE_CNT,
++	ETHTOOL_A_TUNNEL_UDP_TABLE_MAX = (__ETHTOOL_A_TUNNEL_UDP_TABLE_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_TUNNEL_UDP_UNSPEC,
++	ETHTOOL_A_TUNNEL_UDP_TABLE,
++
++	__ETHTOOL_A_TUNNEL_UDP_CNT,
++	ETHTOOL_A_TUNNEL_UDP_MAX = (__ETHTOOL_A_TUNNEL_UDP_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_TUNNEL_INFO_UNSPEC,
++	ETHTOOL_A_TUNNEL_INFO_HEADER,
++	ETHTOOL_A_TUNNEL_INFO_UDP_PORTS,
++
++	__ETHTOOL_A_TUNNEL_INFO_CNT,
++	ETHTOOL_A_TUNNEL_INFO_MAX = (__ETHTOOL_A_TUNNEL_INFO_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_FEC_HIST_PAD = 1,
++	ETHTOOL_A_FEC_HIST_BIN_LOW,
++	ETHTOOL_A_FEC_HIST_BIN_HIGH,
++	ETHTOOL_A_FEC_HIST_BIN_VAL,
++	ETHTOOL_A_FEC_HIST_BIN_VAL_PER_LANE,
++
++	__ETHTOOL_A_FEC_HIST_CNT,
++	ETHTOOL_A_FEC_HIST_MAX = (__ETHTOOL_A_FEC_HIST_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_FEC_STAT_UNSPEC,
++	ETHTOOL_A_FEC_STAT_PAD,
++	ETHTOOL_A_FEC_STAT_CORRECTED,
++	ETHTOOL_A_FEC_STAT_UNCORR,
++	ETHTOOL_A_FEC_STAT_CORR_BITS,
++	ETHTOOL_A_FEC_STAT_HIST,
++
++	__ETHTOOL_A_FEC_STAT_CNT,
++	ETHTOOL_A_FEC_STAT_MAX = (__ETHTOOL_A_FEC_STAT_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_FEC_UNSPEC,
++	ETHTOOL_A_FEC_HEADER,
++	ETHTOOL_A_FEC_MODES,
++	ETHTOOL_A_FEC_AUTO,
++	ETHTOOL_A_FEC_ACTIVE,
++	ETHTOOL_A_FEC_STATS,
++
++	__ETHTOOL_A_FEC_CNT,
++	ETHTOOL_A_FEC_MAX = (__ETHTOOL_A_FEC_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_MODULE_EEPROM_UNSPEC,
++	ETHTOOL_A_MODULE_EEPROM_HEADER,
++	ETHTOOL_A_MODULE_EEPROM_OFFSET,
++	ETHTOOL_A_MODULE_EEPROM_LENGTH,
++	ETHTOOL_A_MODULE_EEPROM_PAGE,
++	ETHTOOL_A_MODULE_EEPROM_BANK,
++	ETHTOOL_A_MODULE_EEPROM_I2C_ADDRESS,
++	ETHTOOL_A_MODULE_EEPROM_DATA,
++
++	__ETHTOOL_A_MODULE_EEPROM_CNT,
++	ETHTOOL_A_MODULE_EEPROM_MAX = (__ETHTOOL_A_MODULE_EEPROM_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_STATS_GRP_UNSPEC,
++	ETHTOOL_A_STATS_GRP_PAD,
++	ETHTOOL_A_STATS_GRP_ID,
++	ETHTOOL_A_STATS_GRP_SS_ID,
++	ETHTOOL_A_STATS_GRP_STAT,
++	ETHTOOL_A_STATS_GRP_HIST_RX,
++	ETHTOOL_A_STATS_GRP_HIST_TX,
++	ETHTOOL_A_STATS_GRP_HIST_BKT_LOW,
++	ETHTOOL_A_STATS_GRP_HIST_BKT_HI,
++	ETHTOOL_A_STATS_GRP_HIST_VAL,
++
++	__ETHTOOL_A_STATS_GRP_CNT,
++	ETHTOOL_A_STATS_GRP_MAX = (__ETHTOOL_A_STATS_GRP_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_STATS_UNSPEC,
++	ETHTOOL_A_STATS_PAD,
++	ETHTOOL_A_STATS_HEADER,
++	ETHTOOL_A_STATS_GROUPS,
++	ETHTOOL_A_STATS_GRP,
++	ETHTOOL_A_STATS_SRC,
++
++	__ETHTOOL_A_STATS_CNT,
++	ETHTOOL_A_STATS_MAX = (__ETHTOOL_A_STATS_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_PHC_VCLOCKS_UNSPEC,
++	ETHTOOL_A_PHC_VCLOCKS_HEADER,
++	ETHTOOL_A_PHC_VCLOCKS_NUM,
++	ETHTOOL_A_PHC_VCLOCKS_INDEX,
++
++	__ETHTOOL_A_PHC_VCLOCKS_CNT,
++	ETHTOOL_A_PHC_VCLOCKS_MAX = (__ETHTOOL_A_PHC_VCLOCKS_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_MODULE_UNSPEC,
++	ETHTOOL_A_MODULE_HEADER,
++	ETHTOOL_A_MODULE_POWER_MODE_POLICY,
++	ETHTOOL_A_MODULE_POWER_MODE,
++
++	__ETHTOOL_A_MODULE_CNT,
++	ETHTOOL_A_MODULE_MAX = (__ETHTOOL_A_MODULE_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_C33_PSE_PW_LIMIT_UNSPEC,
++	ETHTOOL_A_C33_PSE_PW_LIMIT_MIN,
++	ETHTOOL_A_C33_PSE_PW_LIMIT_MAX,
++
++	__ETHTOOL_A_C33_PSE_PW_LIMIT_CNT,
++	__ETHTOOL_A_C33_PSE_PW_LIMIT_MAX = (__ETHTOOL_A_C33_PSE_PW_LIMIT_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_PSE_UNSPEC,
++	ETHTOOL_A_PSE_HEADER,
++	ETHTOOL_A_PODL_PSE_ADMIN_STATE,
++	ETHTOOL_A_PODL_PSE_ADMIN_CONTROL,
++	ETHTOOL_A_PODL_PSE_PW_D_STATUS,
++	ETHTOOL_A_C33_PSE_ADMIN_STATE,
++	ETHTOOL_A_C33_PSE_ADMIN_CONTROL,
++	ETHTOOL_A_C33_PSE_PW_D_STATUS,
++	ETHTOOL_A_C33_PSE_PW_CLASS,
++	ETHTOOL_A_C33_PSE_ACTUAL_PW,
++	ETHTOOL_A_C33_PSE_EXT_STATE,
++	ETHTOOL_A_C33_PSE_EXT_SUBSTATE,
++	ETHTOOL_A_C33_PSE_AVAIL_PW_LIMIT,
++	ETHTOOL_A_C33_PSE_PW_LIMIT_RANGES,
++	ETHTOOL_A_PSE_PW_D_ID,
++	ETHTOOL_A_PSE_PRIO_MAX,
++	ETHTOOL_A_PSE_PRIO,
++
++	__ETHTOOL_A_PSE_CNT,
++	ETHTOOL_A_PSE_MAX = (__ETHTOOL_A_PSE_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_FLOW_ETHER = 1,
++	ETHTOOL_A_FLOW_IP4,
++	ETHTOOL_A_FLOW_IP6,
++	ETHTOOL_A_FLOW_TCP4,
++	ETHTOOL_A_FLOW_TCP6,
++	ETHTOOL_A_FLOW_UDP4,
++	ETHTOOL_A_FLOW_UDP6,
++	ETHTOOL_A_FLOW_SCTP4,
++	ETHTOOL_A_FLOW_SCTP6,
++	ETHTOOL_A_FLOW_AH4,
++	ETHTOOL_A_FLOW_AH6,
++	ETHTOOL_A_FLOW_ESP4,
++	ETHTOOL_A_FLOW_ESP6,
++	ETHTOOL_A_FLOW_AH_ESP4,
++	ETHTOOL_A_FLOW_AH_ESP6,
++	ETHTOOL_A_FLOW_GTPU4,
++	ETHTOOL_A_FLOW_GTPU6,
++	ETHTOOL_A_FLOW_GTPC4,
++	ETHTOOL_A_FLOW_GTPC6,
++	ETHTOOL_A_FLOW_GTPC_TEID4,
++	ETHTOOL_A_FLOW_GTPC_TEID6,
++	ETHTOOL_A_FLOW_GTPU_EH4,
++	ETHTOOL_A_FLOW_GTPU_EH6,
++	ETHTOOL_A_FLOW_GTPU_UL4,
++	ETHTOOL_A_FLOW_GTPU_UL6,
++	ETHTOOL_A_FLOW_GTPU_DL4,
++	ETHTOOL_A_FLOW_GTPU_DL6,
++
++	__ETHTOOL_A_FLOW_CNT,
++	ETHTOOL_A_FLOW_MAX = (__ETHTOOL_A_FLOW_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_RSS_UNSPEC,
++	ETHTOOL_A_RSS_HEADER,
++	ETHTOOL_A_RSS_CONTEXT,
++	ETHTOOL_A_RSS_HFUNC,
++	ETHTOOL_A_RSS_INDIR,
++	ETHTOOL_A_RSS_HKEY,
++	ETHTOOL_A_RSS_INPUT_XFRM,
++	ETHTOOL_A_RSS_START_CONTEXT,
++	ETHTOOL_A_RSS_FLOW_HASH,
++
++	__ETHTOOL_A_RSS_CNT,
++	ETHTOOL_A_RSS_MAX = (__ETHTOOL_A_RSS_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_PLCA_UNSPEC,
++	ETHTOOL_A_PLCA_HEADER,
++	ETHTOOL_A_PLCA_VERSION,
++	ETHTOOL_A_PLCA_ENABLED,
++	ETHTOOL_A_PLCA_STATUS,
++	ETHTOOL_A_PLCA_NODE_CNT,
++	ETHTOOL_A_PLCA_NODE_ID,
++	ETHTOOL_A_PLCA_TO_TMR,
++	ETHTOOL_A_PLCA_BURST_CNT,
++	ETHTOOL_A_PLCA_BURST_TMR,
++
++	__ETHTOOL_A_PLCA_CNT,
++	ETHTOOL_A_PLCA_MAX = (__ETHTOOL_A_PLCA_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_MODULE_FW_FLASH_UNSPEC,
++	ETHTOOL_A_MODULE_FW_FLASH_HEADER,
++	ETHTOOL_A_MODULE_FW_FLASH_FILE_NAME,
++	ETHTOOL_A_MODULE_FW_FLASH_PASSWORD,
++	ETHTOOL_A_MODULE_FW_FLASH_STATUS,
++	ETHTOOL_A_MODULE_FW_FLASH_STATUS_MSG,
++	ETHTOOL_A_MODULE_FW_FLASH_DONE,
++	ETHTOOL_A_MODULE_FW_FLASH_TOTAL,
++
++	__ETHTOOL_A_MODULE_FW_FLASH_CNT,
++	ETHTOOL_A_MODULE_FW_FLASH_MAX = (__ETHTOOL_A_MODULE_FW_FLASH_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_PHY_UNSPEC,
++	ETHTOOL_A_PHY_HEADER,
++	ETHTOOL_A_PHY_INDEX,
++	ETHTOOL_A_PHY_DRVNAME,
++	ETHTOOL_A_PHY_NAME,
++	ETHTOOL_A_PHY_UPSTREAM_TYPE,
++	ETHTOOL_A_PHY_UPSTREAM_INDEX,
++	ETHTOOL_A_PHY_UPSTREAM_SFP_NAME,
++	ETHTOOL_A_PHY_DOWNSTREAM_SFP_NAME,
++
++	__ETHTOOL_A_PHY_CNT,
++	ETHTOOL_A_PHY_MAX = (__ETHTOOL_A_PHY_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_TSCONFIG_UNSPEC,
++	ETHTOOL_A_TSCONFIG_HEADER,
++	ETHTOOL_A_TSCONFIG_HWTSTAMP_PROVIDER,
++	ETHTOOL_A_TSCONFIG_TX_TYPES,
++	ETHTOOL_A_TSCONFIG_RX_FILTERS,
++	ETHTOOL_A_TSCONFIG_HWTSTAMP_FLAGS,
++
++	__ETHTOOL_A_TSCONFIG_CNT,
++	ETHTOOL_A_TSCONFIG_MAX = (__ETHTOOL_A_TSCONFIG_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_PSE_NTF_HEADER = 1,
++	ETHTOOL_A_PSE_NTF_EVENTS,
++
++	__ETHTOOL_A_PSE_NTF_CNT,
++	ETHTOOL_A_PSE_NTF_MAX = (__ETHTOOL_A_PSE_NTF_CNT - 1)
++};
++
++enum {
++	ETHTOOL_MSG_USER_NONE = 0,
++	ETHTOOL_MSG_STRSET_GET = 1,
++	ETHTOOL_MSG_LINKINFO_GET,
++	ETHTOOL_MSG_LINKINFO_SET,
++	ETHTOOL_MSG_LINKMODES_GET,
++	ETHTOOL_MSG_LINKMODES_SET,
++	ETHTOOL_MSG_LINKSTATE_GET,
++	ETHTOOL_MSG_DEBUG_GET,
++	ETHTOOL_MSG_DEBUG_SET,
++	ETHTOOL_MSG_WOL_GET,
++	ETHTOOL_MSG_WOL_SET,
++	ETHTOOL_MSG_FEATURES_GET,
++	ETHTOOL_MSG_FEATURES_SET,
++	ETHTOOL_MSG_PRIVFLAGS_GET,
++	ETHTOOL_MSG_PRIVFLAGS_SET,
++	ETHTOOL_MSG_RINGS_GET,
++	ETHTOOL_MSG_RINGS_SET,
++	ETHTOOL_MSG_CHANNELS_GET,
++	ETHTOOL_MSG_CHANNELS_SET,
++	ETHTOOL_MSG_COALESCE_GET,
++	ETHTOOL_MSG_COALESCE_SET,
++	ETHTOOL_MSG_PAUSE_GET,
++	ETHTOOL_MSG_PAUSE_SET,
++	ETHTOOL_MSG_EEE_GET,
++	ETHTOOL_MSG_EEE_SET,
++	ETHTOOL_MSG_TSINFO_GET,
++	ETHTOOL_MSG_CABLE_TEST_ACT,
++	ETHTOOL_MSG_CABLE_TEST_TDR_ACT,
++	ETHTOOL_MSG_TUNNEL_INFO_GET,
++	ETHTOOL_MSG_FEC_GET,
++	ETHTOOL_MSG_FEC_SET,
++	ETHTOOL_MSG_MODULE_EEPROM_GET,
++	ETHTOOL_MSG_STATS_GET,
++	ETHTOOL_MSG_PHC_VCLOCKS_GET,
++	ETHTOOL_MSG_MODULE_GET,
++	ETHTOOL_MSG_MODULE_SET,
++	ETHTOOL_MSG_PSE_GET,
++	ETHTOOL_MSG_PSE_SET,
++	ETHTOOL_MSG_RSS_GET,
++	ETHTOOL_MSG_PLCA_GET_CFG,
++	ETHTOOL_MSG_PLCA_SET_CFG,
++	ETHTOOL_MSG_PLCA_GET_STATUS,
++	ETHTOOL_MSG_MM_GET,
++	ETHTOOL_MSG_MM_SET,
++	ETHTOOL_MSG_MODULE_FW_FLASH_ACT,
++	ETHTOOL_MSG_PHY_GET,
++	ETHTOOL_MSG_TSCONFIG_GET,
++	ETHTOOL_MSG_TSCONFIG_SET,
++	ETHTOOL_MSG_RSS_SET,
++	ETHTOOL_MSG_RSS_CREATE_ACT,
++	ETHTOOL_MSG_RSS_DELETE_ACT,
++
++	__ETHTOOL_MSG_USER_CNT,
++	ETHTOOL_MSG_USER_MAX = (__ETHTOOL_MSG_USER_CNT - 1)
++};
++
++enum {
++	ETHTOOL_MSG_KERNEL_NONE = 0,
++	ETHTOOL_MSG_STRSET_GET_REPLY = 1,
++	ETHTOOL_MSG_LINKINFO_GET_REPLY,
++	ETHTOOL_MSG_LINKINFO_NTF,
++	ETHTOOL_MSG_LINKMODES_GET_REPLY,
++	ETHTOOL_MSG_LINKMODES_NTF,
++	ETHTOOL_MSG_LINKSTATE_GET_REPLY,
++	ETHTOOL_MSG_DEBUG_GET_REPLY,
++	ETHTOOL_MSG_DEBUG_NTF,
++	ETHTOOL_MSG_WOL_GET_REPLY,
++	ETHTOOL_MSG_WOL_NTF,
++	ETHTOOL_MSG_FEATURES_GET_REPLY,
++	ETHTOOL_MSG_FEATURES_SET_REPLY,
++	ETHTOOL_MSG_FEATURES_NTF,
++	ETHTOOL_MSG_PRIVFLAGS_GET_REPLY,
++	ETHTOOL_MSG_PRIVFLAGS_NTF,
++	ETHTOOL_MSG_RINGS_GET_REPLY,
++	ETHTOOL_MSG_RINGS_NTF,
++	ETHTOOL_MSG_CHANNELS_GET_REPLY,
++	ETHTOOL_MSG_CHANNELS_NTF,
++	ETHTOOL_MSG_COALESCE_GET_REPLY,
++	ETHTOOL_MSG_COALESCE_NTF,
++	ETHTOOL_MSG_PAUSE_GET_REPLY,
++	ETHTOOL_MSG_PAUSE_NTF,
++	ETHTOOL_MSG_EEE_GET_REPLY,
++	ETHTOOL_MSG_EEE_NTF,
++	ETHTOOL_MSG_TSINFO_GET_REPLY,
++	ETHTOOL_MSG_CABLE_TEST_NTF,
++	ETHTOOL_MSG_CABLE_TEST_TDR_NTF,
++	ETHTOOL_MSG_TUNNEL_INFO_GET_REPLY,
++	ETHTOOL_MSG_FEC_GET_REPLY,
++	ETHTOOL_MSG_FEC_NTF,
++	ETHTOOL_MSG_MODULE_EEPROM_GET_REPLY,
++	ETHTOOL_MSG_STATS_GET_REPLY,
++	ETHTOOL_MSG_PHC_VCLOCKS_GET_REPLY,
++	ETHTOOL_MSG_MODULE_GET_REPLY,
++	ETHTOOL_MSG_MODULE_NTF,
++	ETHTOOL_MSG_PSE_GET_REPLY,
++	ETHTOOL_MSG_RSS_GET_REPLY,
++	ETHTOOL_MSG_PLCA_GET_CFG_REPLY,
++	ETHTOOL_MSG_PLCA_GET_STATUS_REPLY,
++	ETHTOOL_MSG_PLCA_NTF,
++	ETHTOOL_MSG_MM_GET_REPLY,
++	ETHTOOL_MSG_MM_NTF,
++	ETHTOOL_MSG_MODULE_FW_FLASH_NTF,
++	ETHTOOL_MSG_PHY_GET_REPLY,
++	ETHTOOL_MSG_PHY_NTF,
++	ETHTOOL_MSG_TSCONFIG_GET_REPLY,
++	ETHTOOL_MSG_TSCONFIG_SET_REPLY,
++	ETHTOOL_MSG_PSE_NTF,
++	ETHTOOL_MSG_RSS_NTF,
++	ETHTOOL_MSG_RSS_CREATE_ACT_REPLY,
++	ETHTOOL_MSG_RSS_CREATE_NTF,
++	ETHTOOL_MSG_RSS_DELETE_NTF,
++
++	__ETHTOOL_MSG_KERNEL_CNT,
++	ETHTOOL_MSG_KERNEL_MAX = (__ETHTOOL_MSG_KERNEL_CNT - 1)
++};
++
++#define ETHTOOL_MCGRP_MONITOR_NAME	"monitor"
++
++#endif /* _UAPI_LINUX_ETHTOOL_NETLINK_GENERATED_H */
+diff --git a/src/daemon/Makefile.am b/src/daemon/Makefile.am
+index 42240a4..0fe7fe1 100644
+--- a/src/daemon/Makefile.am
++++ b/src/daemon/Makefile.am
+@@ -101,6 +101,12 @@ liblldpd_la_SOURCES += \
+ 	priv-bsd.c
+ endif
  
- /* compatibility with older code */
- #define SPARC_ETH_GSET		ETHTOOL_GSET
-diff --git a/src/daemon/interfaces-linux.c b/src/daemon/interfaces-linux.c
-index d4f8634..963c8c0 100644
---- a/src/daemon/interfaces-linux.c
-+++ b/src/daemon/interfaces-linux.c
-@@ -42,6 +42,8 @@
- #define MAX_PORTS 1024
- #define MAX_BRIDGES 1024
- 
++if HAVE_LIBMNL
++liblldpd_la_SOURCES += ethtool-mm.c ethtool-mm.h
++liblldpd_la_LIBADD   += $(LIBMNL_LIBS)
++liblldpd_la_CFLAGS += $(LIBMNL_CFLAGS)
++endif
++
+ # seccomp support
+ if USE_SECCOMP
+ BUILT_SOURCES += syscall-names.h
+diff --git a/src/daemon/ethtool-mm.c b/src/daemon/ethtool-mm.c
+new file mode 100644
+index 0000000..3230983
+--- /dev/null
++++ b/src/daemon/ethtool-mm.c
+@@ -0,0 +1,512 @@
++/* -*- mode: c; c-file-style: "openbsd" -*- */
++/*
++ * Copyright (c) 2026 NXP
++ *
++ * Permission to use, copy, modify, and/or distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ */
++
++#include <stdio.h>
++#include <string.h>
++#include <errno.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <time.h>
++
++#include <linux/genetlink.h>
++//#include <linux/ethtool_netlink.h>
++#include <linux/ethtool_netlink_generated.h>
++#include <linux/netlink.h>
++
++#include <libmnl/libmnl.h>
++
++#include "ethtool-mm.h"
++#include "../log.h"
++
++#define NL_BUFSIZE 8192
 +#define DIV_ROUND_UP(n, d) (((n)+(d)-1) / (d))
 +
- static int
- iflinux_eth_init(struct lldpd *cfg, struct lldpd_hardware *hardware)
- {
-@@ -519,6 +521,32 @@ end:
- 	return rc;
- }
- 
++/* MAC Merge configuration structure */
++struct mm_config {
++	uint8_t verify_enabled;
++	uint8_t tx_enabled;
++	uint8_t pmac_enabled;
++	uint32_t verify_time;
++	uint32_t tx_min_frag_size;
++};
++
 +static int
-+iflinux_ethtool_gfp(struct lldpd *cfg, const char *ifname, struct lldpd_dot3_fp *p_fp) {
-+	int rc;
-+	struct ethtool_fp gfp;
-+	struct ifreq ifr = {};
++genl_resolve_family(struct mnl_socket *nl, const char *family)
++{
++	char buf[NL_BUFSIZE];
++	struct nlmsghdr *nlh;
++	struct genlmsghdr *genl;
++	uint32_t seq;
++	int ret;
 +
-+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
++	nlh = mnl_nlmsg_put_header(buf);
++	nlh->nlmsg_type = GENL_ID_CTRL;
++	nlh->nlmsg_flags = NLM_F_REQUEST;
++	nlh->nlmsg_seq = seq = time(NULL);
 +
-+	memset(&gfp, 0, sizeof(gfp));
-+	gfp.cmd = ETHTOOL_GMM;
-+	ifr.ifr_data = (caddr_t)&gfp;
-+	rc = ioctl(cfg->g_sock, SIOCETHTOOL, &ifr);
-+	if (rc) {
-+		log_warnx("interfaces", "get preemption error");
++	genl = mnl_nlmsg_put_extra_header(nlh, sizeof(*genl));
++	genl->cmd = CTRL_CMD_GETFAMILY;
++	genl->version = 1;
 +
-+		return rc;
++	mnl_attr_put_strz(nlh, CTRL_ATTR_FAMILY_NAME, family);
++
++	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
++		log_warn("ethtool-mm", "failed to send netlink message");
++		return -1;
 +	}
 +
-+	p_fp->support = gfp.support;
-+	p_fp->status = gfp.pmac_enabled;
-+	p_fp->active = gfp.active;
-+	p_fp->frag_size = DIV_ROUND_UP(gfp.min_frag_size, 64) - 1;
++	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
++	if (ret <= 0) {
++		log_warn("ethtool-mm", "failed to receive netlink response");
++		return -1;
++	}
++
++	nlh = (struct nlmsghdr *)buf;
++	genl = mnl_nlmsg_get_payload(nlh);
++
++	struct nlattr *attr;
++	int family_id = -1;
++
++	mnl_attr_for_each(attr, nlh, sizeof(*genl)) {
++		if (mnl_attr_get_type(attr) == CTRL_ATTR_FAMILY_ID) {
++			family_id = mnl_attr_get_u16(attr);
++			break;
++		}
++	}
++
++	if (family_id < 0) {
++		log_warnx("ethtool-mm", "failed to resolve generic netlink family");
++	}
++
++	return family_id;
++}
++
++/**
++ * ethtool_mm_get - Get MAC Merge layer status
++ * @ifname: Interface name
++ * @supported: Output - whether MAC Merge is supported
++ * @enabled: Output - whether preemption is administratively enabled
++ * @active: Output - whether preemption is operationally active
++ *
++ * Returns 0 on success, -1 on error.
++ */
++int
++ethtool_mm_get(const char *ifname, struct lldpd_dot3_mm *mm)
++{
++	struct mnl_socket *nl = NULL;
++	char buf[NL_BUFSIZE];
++	struct nlmsghdr *nlh;
++	struct genlmsghdr *genl;
++	uint32_t seq, min_frag_size = 0;
++	int family, ret = -1;
++	uint8_t pmac_enabled = 0;
++	uint8_t tx_enabled = 0;
++	uint8_t tx_active = 0;
++
++	if (!mm) {
++		log_warnx("ethtool-mm", "invalid parameters");
++		return -1;
++	}
++
++	mm->support = false;
++	mm->status = false;
++	mm->active = false;
++	mm->frag_size = 0;
++
++	nl = mnl_socket_open(NETLINK_GENERIC);
++	if (!nl) {
++		log_warn("ethtool-mm", "failed to open netlink socket");
++		return -1;
++	}
++
++	if (mnl_socket_bind(nl, 0, MNL_SOCKET_AUTOPID) < 0) {
++		log_warn("ethtool-mm", "failed to bind netlink socket");
++		goto out;
++	}
++
++	family = genl_resolve_family(nl, "ethtool");
++	if (family < 0) {
++		log_warnx("ethtool-mm", "ethtool netlink family not available");
++		goto out;
++	}
++
++	memset(buf, 0, sizeof(buf));
++	nlh = mnl_nlmsg_put_header(buf);
++	nlh->nlmsg_type = family;
++	nlh->nlmsg_flags = NLM_F_REQUEST;
++	nlh->nlmsg_seq = seq = time(NULL);
++
++	genl = mnl_nlmsg_put_extra_header(nlh, sizeof(*genl));
++	genl->cmd = ETHTOOL_MSG_MM_GET;
++	genl->version = ETHTOOL_GENL_VERSION;
++
++	/* Add header with device name */
++	struct nlattr *nest = mnl_attr_nest_start(nlh, ETHTOOL_A_MM_HEADER);
++	mnl_attr_put_strz(nlh, ETHTOOL_A_HEADER_DEV_NAME, ifname);
++	mnl_attr_nest_end(nlh, nest);
++
++	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
++		log_warn("ethtool-mm", "failed to send MM_GET request for %s", ifname);
++		goto out;
++	}
++
++	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
++	if (ret <= 0) {
++		/* Device might not support MAC Merge, which is not an error */
++		log_debug("ethtool-mm", "no response for %s (likely not supported)", ifname);
++		ret = 0; /* Not an error, just not supported */
++		goto out;
++	}
++
++	nlh = (struct nlmsghdr *)buf;
++	
++	/* Check for error response */
++	if (nlh->nlmsg_type == NLMSG_ERROR) {
++		struct nlmsgerr *err = mnl_nlmsg_get_payload(nlh);
++		if (err->error != 0) {
++			log_debug("ethtool-mm", "MM not supported on %s (error: %d)", 
++				  ifname, -err->error);
++			ret = 0; /* Not an error, just not supported */
++			goto out;
++		}
++	}
++
++	genl = mnl_nlmsg_get_payload(nlh);
++	struct nlattr *attr;
++
++	mnl_attr_for_each(attr, nlh, sizeof(*genl)) {
++		int type = mnl_attr_get_type(attr);
++		
++		switch (type) {
++		case ETHTOOL_A_MM_PMAC_ENABLED:
++			pmac_enabled = mnl_attr_get_u8(attr);
++			mm->support = true;
++			break;
++		case ETHTOOL_A_MM_TX_ENABLED:
++			tx_enabled = mnl_attr_get_u8(attr);
++			break;
++		case ETHTOOL_A_MM_TX_ACTIVE:
++			tx_active = mnl_attr_get_u8(attr);
++			break;
++		case ETHTOOL_A_MM_TX_MIN_FRAG_SIZE:
++			min_frag_size = mnl_attr_get_u32(attr);
++			break;
++		default:
++			break;
++		}
++	}
++
++	/* Device supports MAC Merge if we got valid response */
++	if (mm->support) {
++		mm->status = (pmac_enabled && tx_enabled);
++		mm->active = tx_active;
++		mm->frag_size = DIV_ROUND_UP(min_frag_size, 64) - 1;;
++		log_debug("ethtool-mm", "%s: supported=%d, enabled=%d, active=%d",
++			  ifname, mm->support, mm->status, mm->active);
++	}
++
++	ret = 0;
++
++out:
++	if (nl)
++		mnl_socket_close(nl);
++	return ret;
++}
++
++/**
++ * ethtool_mm_get_config - Get current MAC Merge configuration
++ * @ifname: Interface name
++ * @config: Output configuration structure
++ *
++ * Returns 0 on success, -1 on error.
++ */
++static int
++ethtool_mm_get_config(const char *ifname, struct mm_config *config)
++{
++	struct mnl_socket *nl = NULL;
++	char buf[NL_BUFSIZE];
++	struct nlmsghdr *nlh;
++	struct genlmsghdr *genl;
++	uint32_t seq;
++	int family, ret = -1;
++
++	if (!ifname || !config) {
++		log_warnx("ethtool-mm", "invalid parameters");
++		return -1;
++	}
++
++	memset(config, 0, sizeof(*config));
++
++	nl = mnl_socket_open(NETLINK_GENERIC);
++	if (!nl) {
++		log_warn("ethtool-mm", "failed to open netlink socket");
++		return -1;
++	}
++
++	if (mnl_socket_bind(nl, 0, MNL_SOCKET_AUTOPID) < 0) {
++		log_warn("ethtool-mm", "failed to bind netlink socket");
++		goto out;
++	}
++
++	family = genl_resolve_family(nl, "ethtool");
++	if (family < 0)
++		goto out;
++
++	memset(buf, 0, sizeof(buf));
++	nlh = mnl_nlmsg_put_header(buf);
++	nlh->nlmsg_type = family;
++	nlh->nlmsg_flags = NLM_F_REQUEST;
++	nlh->nlmsg_seq = seq = time(NULL);
++
++	genl = mnl_nlmsg_put_extra_header(nlh, sizeof(*genl));
++	genl->cmd = ETHTOOL_MSG_MM_GET;
++	genl->version = ETHTOOL_GENL_VERSION;
++
++	struct nlattr *nest = mnl_attr_nest_start(nlh, ETHTOOL_A_MM_HEADER);
++	mnl_attr_put_strz(nlh, ETHTOOL_A_HEADER_DEV_NAME, ifname);
++	mnl_attr_nest_end(nlh, nest);
++
++	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
++		log_warn("ethtool-mm", "failed to send MM_GET request");
++		goto out;
++	}
++
++	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
++	if (ret <= 0) {
++		log_warn("ethtool-mm", "failed to receive MM_GET response");
++		goto out;
++	}
++
++	nlh = (struct nlmsghdr *)buf;
++	genl = mnl_nlmsg_get_payload(nlh);
++
++	struct nlattr *attr;
++	mnl_attr_for_each(attr, nlh, sizeof(*genl)) {
++		int type = mnl_attr_get_type(attr);
++		
++		switch (type) {
++		case ETHTOOL_A_MM_VERIFY_ENABLED:
++			config->verify_enabled = mnl_attr_get_u8(attr);
++			break;
++		case ETHTOOL_A_MM_TX_ENABLED:
++			config->tx_enabled = mnl_attr_get_u8(attr);
++			break;
++		case ETHTOOL_A_MM_PMAC_ENABLED:
++			config->pmac_enabled = mnl_attr_get_u8(attr);
++			break;
++		case ETHTOOL_A_MM_VERIFY_TIME:
++			config->verify_time = mnl_attr_get_u32(attr);
++			break;
++		case ETHTOOL_A_MM_TX_MIN_FRAG_SIZE:
++			config->tx_min_frag_size = mnl_attr_get_u32(attr);
++			break;
++		default:
++			break;
++		}
++	}
++
++	ret = 0;
++
++out:
++	if (nl)
++		mnl_socket_close(nl);
++	return ret;
++}
++
++/**
++ * ethtool_mm_set_config - Set MAC Merge configuration
++ * @ifname: Interface name
++ * @config: Configuration to apply
++ *
++ * Returns 0 on success, -1 on error.
++ */
++static int
++ethtool_mm_set_config(const char *ifname, const struct mm_config *config)
++{
++	struct mnl_socket *nl = NULL;
++	char buf[NL_BUFSIZE];
++	struct nlmsghdr *nlh;
++	struct genlmsghdr *genl;
++	uint32_t seq;
++	int family, ret = -1;
++
++	if (!ifname || !config) {
++		log_warnx("ethtool-mm", "invalid parameters");
++		return -1;
++	}
++
++	nl = mnl_socket_open(NETLINK_GENERIC);
++	if (!nl) {
++		log_warn("ethtool-mm", "failed to open netlink socket");
++		return -1;
++	}
++
++	if (mnl_socket_bind(nl, 0, MNL_SOCKET_AUTOPID) < 0) {
++		log_warn("ethtool-mm", "failed to bind netlink socket");
++		goto out;
++	}
++
++	family = genl_resolve_family(nl, "ethtool");
++	if (family < 0)
++		goto out;
++
++	memset(buf, 0, sizeof(buf));
++	nlh = mnl_nlmsg_put_header(buf);
++	nlh->nlmsg_type = family;
++	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
++	nlh->nlmsg_seq = seq = time(NULL);
++
++	genl = mnl_nlmsg_put_extra_header(nlh, sizeof(*genl));
++	genl->cmd = ETHTOOL_MSG_MM_SET;
++	genl->version = ETHTOOL_GENL_VERSION;
++
++	struct nlattr *nest = mnl_attr_nest_start(nlh, ETHTOOL_A_MM_HEADER);
++	mnl_attr_put_strz(nlh, ETHTOOL_A_HEADER_DEV_NAME, ifname);
++	mnl_attr_nest_end(nlh, nest);
++
++	/* Set all configuration parameters */
++	mnl_attr_put_u8(nlh, ETHTOOL_A_MM_VERIFY_ENABLED, config->verify_enabled);
++	mnl_attr_put_u8(nlh, ETHTOOL_A_MM_TX_ENABLED, config->tx_enabled);
++	mnl_attr_put_u8(nlh, ETHTOOL_A_MM_PMAC_ENABLED, config->pmac_enabled);
++	
++	if (config->verify_time > 0)
++		mnl_attr_put_u32(nlh, ETHTOOL_A_MM_VERIFY_TIME, config->verify_time);
++	
++	if (config->tx_min_frag_size > 0)
++		mnl_attr_put_u32(nlh, ETHTOOL_A_MM_TX_MIN_FRAG_SIZE, 
++				 config->tx_min_frag_size);
++
++	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
++		log_warn("ethtool-mm", "failed to send MM_SET request");
++		goto out;
++	}
++
++	/* Wait for ACK */
++	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
++	if (ret <= 0) {
++		log_warn("ethtool-mm", "failed to receive MM_SET response");
++		goto out;
++	}
++
++	nlh = (struct nlmsghdr *)buf;
++	if (nlh->nlmsg_type == NLMSG_ERROR) {
++		struct nlmsgerr *err = mnl_nlmsg_get_payload(nlh);
++		if (err->error != 0) {
++			log_warnx("ethtool-mm", "MM_SET failed with error: %d", 
++				  -err->error);
++			goto out;
++		}
++	}
++
++	ret = 0;
++
++out:
++	if (nl)
++		mnl_socket_close(nl);
++	return ret;
++}
++
++/**
++ * ethtool_mm_reset - Enable or disable MAC Merge preemption
++ * @ifname: Interface name
++ * @enable: true to enable, false to disable
++ *
++ * When enabling, this function:
++ * 1. Gets current configuration
++ * 2. Disables preemption
++ * 3. Re-enables with saved configuration
++ *
++ * This ensures a clean state transition.
++ *
++ * Returns 0 on success, -1 on error.
++ */
++int
++ethtool_mm_reset(const char *ifname, bool enable)
++{
++	struct mm_config config;
++	struct mm_config disable_config;
++	int ret;
++
++	if (!ifname) {
++		log_warnx("ethtool-mm", "invalid interface name");
++		return -1;
++	}
++
++	if (enable) {
++		/* Step 1: Get current configuration */
++		log_debug("ethtool-mm", "getting current configuration for %s", ifname);
++		ret = ethtool_mm_get_config(ifname, &config);
++		if (ret < 0) {
++			log_warnx("ethtool-mm", "failed to get current config for %s", 
++				  ifname);
++			return -1;
++		}
++
++		/* Step 2: Disable preemption first */
++		log_debug("ethtool-mm", "disabling preemption on %s", ifname);
++		memset(&disable_config, 0, sizeof(disable_config));
++		disable_config.verify_enabled = 0;
++		disable_config.tx_enabled = 0;
++		disable_config.pmac_enabled = 0;
++		disable_config.verify_time = config.verify_time;
++		disable_config.tx_min_frag_size = config.tx_min_frag_size;
++
++		ret = ethtool_mm_set_config(ifname, &disable_config);
++		if (ret < 0) {
++			log_warnx("ethtool-mm", "failed to disable preemption on %s", 
++				  ifname);
++			return -1;
++		}
++
++		/* Small delay to ensure clean state transition */
++		usleep(100000); /* 100ms */
++
++		/* Step 3: Re-enable with saved configuration */
++		log_debug("ethtool-mm", "re-enabling preemption on %s", ifname);
++		config.verify_enabled = 1;
++		config.tx_enabled = 1;
++		config.pmac_enabled = 1;
++
++		ret = ethtool_mm_set_config(ifname, &config);
++		if (ret < 0) {
++			log_warnx("ethtool-mm", "failed to enable preemption on %s", 
++				  ifname);
++			return -1;
++		}
++
++		log_info("ethtool-mm", "preemption enabled on %s", ifname);
++	} else {
++		/* Simply disable */
++		log_debug("ethtool-mm", "disabling preemption on %s", ifname);
++		memset(&disable_config, 0, sizeof(disable_config));
++		disable_config.verify_enabled = 0;
++		disable_config.tx_enabled = 0;
++		disable_config.pmac_enabled = 0;
++
++		ret = ethtool_mm_set_config(ifname, &disable_config);
++		if (ret < 0) {
++			log_warnx("ethtool-mm", "failed to disable preemption on %s", 
++				  ifname);
++			return -1;
++		}
++
++		log_info("ethtool-mm", "preemption disabled on %s", ifname);
++	}
 +
 +	return 0;
 +}
 +
- /* Fill up MAC/PHY for a given hardware port */
- static void
- iflinux_macphy(struct lldpd *cfg, struct lldpd_hardware *hardware)
-@@ -547,6 +575,9 @@ iflinux_macphy(struct lldpd *cfg, struct lldpd_hardware *hardware)
+diff --git a/src/daemon/ethtool-mm.h b/src/daemon/ethtool-mm.h
+new file mode 100644
+index 0000000..42bcd31
+--- /dev/null
++++ b/src/daemon/ethtool-mm.h
+@@ -0,0 +1,65 @@
++/* -*- mode: c; c-file-style: "openbsd" -*- */
++/*
++ * Copyright (c) 2026 NXP
++ *
++ * Permission to use, copy, modify, and/or distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ */
++
++#ifndef _ETHTOOL_MM_H
++#define _ETHTOOL_MM_H
++
++#include <stdbool.h>
++#include "lldpd.h"
++
++/**
++ * ethtool_mm_get - Get MAC Merge layer status
++ * @ifname: Interface name
++ * @supported: Output - whether MAC Merge is supported by the device
++ * @enabled: Output - whether preemption is administratively enabled
++ * @active: Output - whether preemption is operationally active
++ *
++ * Query the MAC Merge layer status for a network interface.
++ * A device supports MAC Merge if it has both eMAC and pMAC.
++ * Preemption is enabled if both pmac_enabled and tx_enabled are true.
++ * Preemption is active if tx_active is true (verification succeeded).
++ *
++ * Returns 0 on success, -1 on error.
++ */
++int ethtool_mm_get(const char *ifname, struct lldpd_dot3_mm *mm);
++
++/**
++ * ethtool_mm_reset - Enable or disable MAC Merge preemption
++ * @ifname: Interface name
++ * @enable: true to enable preemption, false to disable
++ *
++ * When enabling preemption, this function performs a clean reset:
++ * 1. Retrieves current MAC Merge configuration
++ * 2. Disables preemption completely
++ * 3. Re-enables preemption with the saved configuration
++ *
++ * This ensures proper state transition and verification process.
++ *
++ * When disabling, simply turns off all MAC Merge features.
++ *
++ * Returns 0 on success, -1 on error.
++ */
++#ifdef HAVE_LIBMNL
++int ethtool_mm_reset(const char *ifname, bool enable);
++#else
++static inline int ethtool_mm_reset(const char *ifname, bool enable)
++{
++    return -1;
++}
++#endif /* HAVE_LIBMNL */
++#endif /* _ETHTOOL_MM_H */
++
+diff --git a/src/daemon/interfaces-linux.c b/src/daemon/interfaces-linux.c
+index 9b612ee..3794d0d 100644
+--- a/src/daemon/interfaces-linux.c
++++ b/src/daemon/interfaces-linux.c
+@@ -16,6 +16,7 @@
+  */
+ 
+ #include "lldpd.h"
++#include "ethtool-mm.h"
+ 
+ #include <stdio.h>
+ #include <unistd.h>
+@@ -42,6 +43,24 @@
+ #define MAX_PORTS 1024
+ #define MAX_BRIDGES 1024
+ 
++static int
++iflinux_get_macmerge(const char *ifname, struct lldpd_dot3_mm *p_macmerge)
++{
++#ifdef HAVE_LIBMNL
++	int rc;
++
++	rc = ethtool_mm_get(ifname, p_macmerge);
++	if (rc) {
++		log_warnx("interfaces", "Get MAC Merge Preemption error");
++		return rc;
++	}
++
++	return 0;
++#else
++	log_debug("interfaces", "MAC Merge query skipped");
++#endif /* HAVE_LIBMNL */
++}
++
+ static int
+ iflinux_eth_init(struct lldpd *cfg, struct lldpd_hardware *hardware)
+ {
+@@ -648,6 +667,8 @@ iflinux_macphy(struct lldpd *cfg, struct lldpd_hardware *hardware)
  
  	log_debug("interfaces", "ask ethtool for the appropriate MAC/PHY for %s",
  	    hardware->h_ifname);
-+
-+	iflinux_ethtool_gfp(cfg, hardware->h_ifname, &port->p_fp);
++	iflinux_get_macmerge(hardware->h_ifname, &port->p_macmerge);
 +
  	if (iflinux_ethtool_glink(cfg, hardware->h_ifname, &uset) == 0) {
  		port->p_macphy.autoneg_support =
  		    iflinux_ethtool_link_mode_test_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
 diff --git a/src/daemon/lldp-tlv.h b/src/daemon/lldp-tlv.h
-index a9bf7cf..9de9703 100644
+index a9bf7cf..07abd4f 100644
 --- a/src/daemon/lldp-tlv.h
 +++ b/src/daemon/lldp-tlv.h
 @@ -67,6 +67,7 @@
  #define LLDP_TLV_DOT3_POWER 2
  #define LLDP_TLV_DOT3_LA 3
  #define LLDP_TLV_DOT3_MFS 4
-+#define LLDP_TLV_DOT3_FP 7
++#define LLDP_TLV_DOT3_MM 7
  
  #define LLDP_TLV_MED_CAP 1
  #define LLDP_TLV_MED_POLICY 2
+diff --git a/src/daemon/priv.c b/src/daemon/priv.c
+index f84d63a..c6e5058 100644
+--- a/src/daemon/priv.c
++++ b/src/daemon/priv.c
+@@ -724,7 +724,7 @@ priv_init(const char *ctlname)
+ 			if (chroot(chrootdir) == -1)
+ 				fatal("privsep", "unable to chroot");
+ 			if (chdir("/") != 0) fatal("privsep", "unable to chdir");
+-			priv_drop(uid, gid);
++			priv_caps(uid, gid);
+ 		}
+ 		close(pair[1]);
+ 		priv_ping();
 diff --git a/src/daemon/protocols/lldp.c b/src/daemon/protocols/lldp.c
-index 6e73237..8565e61 100644
+index 6e73237..5939ca7 100644
 --- a/src/daemon/protocols/lldp.c
 +++ b/src/daemon/protocols/lldp.c
-@@ -77,6 +77,7 @@ _lldp_send(struct lldpd *global, struct lldpd_hardware *hardware, u_int8_t c_id_
+@@ -17,6 +17,7 @@
+ 
+ #include "../lldpd.h"
+ #include "../frame.h"
++#include "../ethtool-mm.h"
+ 
+ #include <unistd.h>
+ #include <errno.h>
+@@ -77,6 +78,7 @@ _lldp_send(struct lldpd *global, struct lldpd_hardware *hardware, u_int8_t c_id_
  #endif
  #ifdef ENABLE_DOT3
  	const u_int8_t dot3[] = LLDP_TLV_ORG_DOT3;
-+	u_int8_t fp_tlv;
++	u_int8_t macmerge_tlv;
  #endif
  #ifdef ENABLE_LLDPMED
  	int i;
-@@ -259,6 +260,16 @@ _lldp_send(struct lldpd *global, struct lldpd_hardware *hardware, u_int8_t c_id_
+@@ -259,6 +261,16 @@ _lldp_send(struct lldpd *global, struct lldpd_hardware *hardware, u_int8_t c_id_
  		POKE_UINT32(port->p_aggregid) && POKE_END_LLDP_TLV))
  		goto toobig;
  
-+	fp_tlv = port->p_fp.support | port->p_fp.status << 1 |
-+		 port->p_fp.active << 2 | port->p_fp.frag_size << 3;
++	macmerge_tlv = port->p_macmerge.support | port->p_macmerge.status << 1 |
++		 port->p_macmerge.active << 2 | port->p_macmerge.frag_size << 3;
 +	if (!(
 +	      POKE_START_LLDP_TLV(LLDP_TLV_ORG) &&
 +	      POKE_BYTES(dot3, sizeof(dot3)) &&
-+	      POKE_UINT8(LLDP_TLV_DOT3_FP) &&
-+	      POKE_UINT16(fp_tlv) &&
++	      POKE_UINT8(LLDP_TLV_DOT3_MM) &&
++	      POKE_UINT16(macmerge_tlv) &&
 +	      POKE_END_LLDP_TLV))
 +		goto toobig;
 +
  	/* MAC/PHY */
  	if (!(POKE_START_LLDP_TLV(LLDP_TLV_ORG) && POKE_BYTES(dot3, sizeof(dot3)) &&
  		POKE_UINT8(LLDP_TLV_DOT3_MAC) &&
+@@ -566,12 +578,39 @@ lldp_send(struct lldpd *global, struct lldpd_hardware *hardware)
+     }                                                                              \
+   } while (0)
+ 
++static int lldp_link_reset(struct lldpd *cfg, char *ifname)
++{
++    struct ifreq ifr;
++
++    memset(&ifr, 0, sizeof(ifr));
++    strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
++    if (ioctl(cfg->g_sock, SIOCGIFFLAGS, &ifr) < 0) {
++        log_warn("lldp", "failed to get interface flags for %s", ifname);
++	return -1;
++    }
++    ifr.ifr_flags &= ~IFF_UP;
++    if (ioctl(cfg->g_sock, SIOCSIFFLAGS, &ifr) < 0) {
++        log_warn("lldp", "failed to bring down interface %s", ifname);
++	return -1;
++    }
++    usleep(100000);
++    ifr.ifr_flags |= IFF_UP;
++    if (ioctl(cfg->g_sock, SIOCSIFFLAGS, &ifr) < 0) {
++        log_warn("lldp", "failed to bring up interface %s", ifname);
++	return -1;
++    }
++    log_debug("lldp", "reset the interface %s successfully", ifname);
++
++    return 0;
++}
++
+ int
+ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardware,
+     struct lldpd_chassis **newchassis, struct lldpd_port **newport)
+ {
+ 	struct lldpd_chassis *chassis;
+ 	struct lldpd_port *port;
++	struct lldpd_port *lport = &hardware->h_lport;
+ 	char lldpaddr[ETHER_ADDR_LEN];
+ 	const char dot1[] = LLDP_TLV_ORG_DOT1;
+ 	const char dot3[] = LLDP_TLV_ORG_DOT3;
+@@ -597,6 +636,7 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
+ #ifdef ENABLE_CUSTOM
+ 	struct lldpd_custom *custom = NULL;
+ #endif
++	u_int8_t macmerge_tlv;
+ 
+ 	log_debug("lldp", "receive LLDP PDU on %s", hardware->h_ifname);
+ 
+@@ -937,6 +977,23 @@ lldp_decode(struct lldpd *cfg, char *frame, int s, struct lldpd_hardware *hardwa
+ #else
+ 				/* Dot3 */
+ 				switch (tlv_subtype) {
++				case LLDP_TLV_DOT3_MM:
++					CHECK_TLV_SIZE(6, "IEEE 802.3br");
++					macmerge_tlv = PEEK_UINT16;
++					port->p_macmerge.support = macmerge_tlv & 0x1;
++					port->p_macmerge.status = (macmerge_tlv & 0x2) >> 1;
++					port->p_macmerge.active = (macmerge_tlv & 0x4) >> 2;
++					port->p_macmerge.frag_size = (macmerge_tlv & 0x18) >> 3;
++					if (lport->p_macmerge.support && port->p_macmerge.support &&
++					    lport->p_macmerge.status && port->p_macmerge.status &&
++					    !lport->p_macmerge.active) {
++						lldp_link_reset(cfg, hardware->h_ifname);
++					} else if ((!port->p_macmerge.support || !port->p_macmerge.status) &&
++						    lport->p_macmerge.active) {
++
++						ethtool_mm_reset(hardware->h_ifname, false);
++					}
++					break;
+ 				case LLDP_TLV_DOT3_MAC:
+ 					CHECK_TLV_SIZE(9, "MAC/PHY");
+ 					port->p_macphy.autoneg_support = PEEK_UINT8;
 diff --git a/src/lldpd-structs.h b/src/lldpd-structs.h
-index 8d19282..a3bcb7a 100644
+index 8576052..6d55146 100644
 --- a/src/lldpd-structs.h
 +++ b/src/lldpd-structs.h
-@@ -143,6 +143,14 @@ struct lldpd_dot3_power {
+@@ -143,6 +143,13 @@ struct lldpd_dot3_power {
  	u_int16_t pse_max;
  };
  MARSHAL(lldpd_dot3_power);
 +
-+struct lldpd_dot3_fp {
++struct lldpd_dot3_mm {
 +	u_int8_t support;
 +	u_int8_t status;
 +	u_int8_t active;
 +	u_int8_t frag_size;
 +};
-+
  #endif
  
  #if defined ENABLE_CDP || defined ENABLE_FDP
-@@ -277,6 +285,7 @@ struct lldpd_port {
+@@ -277,6 +284,7 @@ struct lldpd_port {
  	u_int32_t p_aggregid;
  	struct lldpd_dot3_macphy p_macphy;
  	struct lldpd_dot3_power p_power;
-+	struct lldpd_dot3_fp p_fp;
++	struct lldpd_dot3_mm p_macmerge;
  #endif
  
  #ifdef ENABLE_LLDPMED
 -- 
-2.34.1
+2.43.0
 
