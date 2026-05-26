@@ -11,7 +11,7 @@ SRC_URI = "git://git.kernel.org/pub/scm/utils/rteval/rteval.git;nobranch=1;proto
 
 SRCREV = "73caa5a9f85262954e277807b227b1dd7288e028"
 
-inherit setuptools3
+inherit python_setuptools_build_meta
 
 do_install:append () {
         install -d ${D}/${sysconfdir}
