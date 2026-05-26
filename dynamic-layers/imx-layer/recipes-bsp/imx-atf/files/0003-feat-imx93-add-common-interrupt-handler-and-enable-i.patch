@@ -1,39 +1,38 @@
-From 600b8a53178d3cd08cad48e3a9b0029557e29577 Mon Sep 17 00:00:00 2001
+From 48a42f10b644cb49a687db2bcad08c8170043014 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
-Date: Thu, 5 Sep 2024 18:28:59 +0800
-Subject: [PATCH 01/15] plat: imx93: refine the EL3 interrupt handle
+Date: Thu, 12 Mar 2026 17:58:59 +0800
+Subject: [PATCH 03/10] feat(imx93): add common interrupt handler and enable it
+ on imx93
 
-Added a common interrupt handler for all EL3 interrupt, so can handle
-more EL3 interrupt.
-Modify DRAM driver to use the common interrupt API.
+Added a common interrupt handler for all EL3 interrupt, so it can handle
+more EL3 interrupts.
+
+Enable it on i.MX93.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
-Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Upstream-Status: Pending
 ---
- plat/imx/common/imx_interrupt_mgmt.c         | 73 ++++++++++++++++++++
- plat/imx/common/include/imx_interrupt_mgmt.h | 23 ++++++
- plat/imx/imx93/ddr/dram.c                    | 18 ++---
+ plat/imx/common/imx_interrupt_mgmt.c         | 72 ++++++++++++++++++++
+ plat/imx/common/include/imx_interrupt_mgmt.h | 23 +++++++
  plat/imx/imx93/imx93_bl31_setup.c            |  5 +-
  plat/imx/imx93/platform.mk                   |  1 +
- 5 files changed, 108 insertions(+), 12 deletions(-)
+ 4 files changed, 100 insertions(+), 1 deletion(-)
  create mode 100644 plat/imx/common/imx_interrupt_mgmt.c
  create mode 100644 plat/imx/common/include/imx_interrupt_mgmt.h
 
 diff --git a/plat/imx/common/imx_interrupt_mgmt.c b/plat/imx/common/imx_interrupt_mgmt.c
 new file mode 100644
-index 000000000..2b24fe45c
+index 000000000..33c1a837f
 --- /dev/null
 +++ b/plat/imx/common/imx_interrupt_mgmt.c
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,72 @@
 +/*
-+ * Copyright 2024 NXP
-+ *
-+ * Inspiration from ls_interrupt_mgmt.c
++ * Copyright 2024-2026 NXP
 + *
 + * SPDX-License-Identifier: BSD-3-Clause
 + *
 + */
++#include <arch_helpers.h>
 +
 +#include <bl31/interrupt_mgmt.h>
 +#include <common/debug.h>
@@ -101,12 +100,12 @@ index 000000000..2b24fe45c
 +}
 diff --git a/plat/imx/common/include/imx_interrupt_mgmt.h b/plat/imx/common/include/imx_interrupt_mgmt.h
 new file mode 100644
-index 000000000..86b3010d2
+index 000000000..4799db5fc
 --- /dev/null
 +++ b/plat/imx/common/include/imx_interrupt_mgmt.h
 @@ -0,0 +1,23 @@
 +/*
-+ * Copyright 2024 NXP
++ * Copyright 2024-2026 NXP
 + *
 + * SPDX-License-Identifier: BSD-3-Clause
 + *
@@ -128,72 +127,6 @@ index 000000000..86b3010d2
 +void imx_el3_interrupt_config(void);
 +
 +#endif	/*	IMX_EL3_INTRPT_MGMT_H	*/
-diff --git a/plat/imx/imx93/ddr/dram.c b/plat/imx/imx93/ddr/dram.c
-index b170fa272..050b8ba8b 100644
---- a/plat/imx/imx93/ddr/dram.c
-+++ b/plat/imx/imx93/ddr/dram.c
-@@ -1,5 +1,5 @@
- /*
-- * Copyright 2022 NXP
-+ * Copyright 2022, 2024 NXP
-  *
-  * SPDX-License-Identifier: BSD-3-Clause
-  */
-@@ -12,10 +12,14 @@
- #include <drivers/delay_timer.h>
- 
- #include <dram.h>
-+#include <imx_interrupt_mgmt.h>
- 
- #define IMX_SIP_DDR_DVFS_GET_FREQ_COUNT		0x10
- #define IMX_SIP_DDR_DVFS_GET_FREQ_INFO		0x11
- 
-+/* Use SGI-8 as IPI interrupt for DDR Dynamic frequency scaling */
-+#define dvfs_irq				0x8
-+
- /* lock used for DDR DVFS */
- spinlock_t dfs_lock;
- struct dram_timing_info *timing_info;
-@@ -309,12 +313,6 @@ int ddrc_apply_reg_config(enum reg_type type, struct dram_cfg_param *reg_config)
- static uint64_t waiting_dvfs(uint32_t id, uint32_t flags,
- 		void *handle, void *cookie)
- {
--	uint32_t irq;
--
--	irq = plat_ic_acknowledge_interrupt();
--	if (irq < 1022U)
--		plat_ic_end_of_interrupt(irq);
--
- 	/* set the WFE done status */
- 	spin_lock(&dfs_lock);
- 	core_count++;
-@@ -333,7 +331,6 @@ static uint64_t waiting_dvfs(uint32_t id, uint32_t flags,
- 
- void dram_info_init(unsigned long dram_timing_base)
- {
--	uint32_t flags = 0;
- 	uint32_t rc;
- 	int i;
- 
-@@ -356,8 +353,7 @@ void dram_info_init(unsigned long dram_timing_base)
- 	mmio_setbits_32(REG_DDR_SDRAM_CFG_3, BIT(1));
- 
- 	/* Register the EL3 handler for DDR DVFS */
--	set_interrupt_rm_flag(flags, NON_SECURE);
--	rc = register_interrupt_type_handler(INTR_TYPE_EL3, waiting_dvfs, flags);
-+	rc = request_intr_type_el3(dvfs_irq, waiting_dvfs);
- 	if (rc)
- 		panic();
- }
-@@ -390,7 +386,7 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
- 	for (int i = 0; i < PLATFORM_CORE_COUNT; i++)
- 		/* Skip raise SGI for current CPU */
- 		if (i != cpu_id)
--			plat_ic_raise_el3_sgi(0x8, i << 8);
-+			plat_ic_raise_el3_sgi(dvfs_irq, i << 8);
- 	
- 	/* Make sure all the cpu in WFE */
- 	while (1) {
 diff --git a/plat/imx/imx93/imx93_bl31_setup.c b/plat/imx/imx93/imx93_bl31_setup.c
 index c134512f2..954d7b608 100644
 --- a/plat/imx/imx93/imx93_bl31_setup.c
@@ -223,17 +156,17 @@ index c134512f2..954d7b608 100644
  	dram_info_init(SAVED_DRAM_TIMING_BASE);
  
 diff --git a/plat/imx/imx93/platform.mk b/plat/imx/imx93/platform.mk
-index 5384fb4da..bf09ca906 100644
+index 9db734be4..8c9a7bbd9 100644
 --- a/plat/imx/imx93/platform.mk
 +++ b/plat/imx/imx93/platform.mk
-@@ -39,6 +39,7 @@ BL31_SOURCES		+=	common/desc_image_load.c			\
- 				plat/imx/imx93/src.c			\
- 				plat/imx/common/imx_sip_svc.c			\
- 				plat/imx/common/imx_sip_handler.c			\
+@@ -31,6 +31,7 @@ BL31_SOURCES		+=	common/desc_image_load.c			\
+ 				plat/imx/imx93/aarch64/plat_helpers.S		\
+ 				plat/imx/imx93/plat_topology.c			\
+ 				plat/imx/common/imx_common.c			\
 +				plat/imx/common/imx_interrupt_mgmt.c		\
- 				plat/imx/common/ele_api.c			\
- 				lib/cpus/aarch64/cortex_a55.S			\
- 				drivers/delay_timer/delay_timer.c		\
+ 				plat/imx/common/lpuart_console.S		\
+ 				plat/imx/imx93/trdc.c			\
+ 				plat/imx/imx93/pwr_ctrl.c			\
 -- 
 2.43.0
 

@@ -1,17 +1,16 @@
-From 6f5f41f5a0636eb6991c4fff400addef07a980f2 Mon Sep 17 00:00:00 2001
+From d86b7cc44b70299a4f4421084a380eff2566db0b Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
-Date: Sat, 12 Oct 2024 16:33:29 +0800
-Subject: [PATCH 04/15] drivers: gicv3: add APIS for clearing pending
- interrupts
+Date: Fri, 13 Mar 2026 14:14:24 +0800
+Subject: [PATCH 01/10] feat(gicv3): add APIs for clearing pending interrupts
 
 Add two new APIs:
-1. Clean interrupts from distributor for a CPU Core, it will clear pending
-   SPIs interrupts and disable all interrups routes to this CPU Core.
-2. Clean interrupts from redistributor interface, it will clean pending
-   and disable all SGIs/PPIs on this redistributor interface.
+1. Clean interrupts from distributor for a CPU Core, it will clear
+   pending SPIs interrupts and disable all interrups routes to this
+   CPU Core.
+2. Clean interrupts from redistributor interface, it will clean
+   pending and disable all SGIs/PPIs on this redistributor interface.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
-Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Upstream-Status: Pending
 ---
  drivers/arm/gic/v3/gicv3_helpers.c | 40 ++++++++++++++++++++++++++++++
@@ -21,10 +20,10 @@ Upstream-Status: Pending
  4 files changed, 72 insertions(+)
 
 diff --git a/drivers/arm/gic/v3/gicv3_helpers.c b/drivers/arm/gic/v3/gicv3_helpers.c
-index e85970dde..345270fd8 100644
+index d0a84605f..dccb99495 100644
 --- a/drivers/arm/gic/v3/gicv3_helpers.c
 +++ b/drivers/arm/gic/v3/gicv3_helpers.c
-@@ -312,6 +312,46 @@ void gicv3_clear_spi_cluster(uintptr_t gicd_base)
+@@ -323,6 +323,46 @@ void gicv3_clear_spi_cluster(uintptr_t gicd_base)
  	}
  }
  
@@ -72,7 +71,7 @@ index e85970dde..345270fd8 100644
   * Helper function to configure the default attributes of (E)PPIs/SGIs
   ******************************************************************************/
 diff --git a/drivers/arm/gic/v3/gicv3_main.c b/drivers/arm/gic/v3/gicv3_main.c
-index 228ca184a..f7b9efdfa 100644
+index 81c4f6545..a890a8d6c 100644
 --- a/drivers/arm/gic/v3/gicv3_main.c
 +++ b/drivers/arm/gic/v3/gicv3_main.c
 @@ -230,6 +230,34 @@ void gicv3_distif_clear(void)
@@ -111,31 +110,31 @@ index 228ca184a..f7b9efdfa 100644
   * This function initialises the GIC Redistributor interface of the calling CPU
   * (identified by the 'proc_num' parameter) based upon the data provided by the
 diff --git a/drivers/arm/gic/v3/gicv3_private.h b/drivers/arm/gic/v3/gicv3_private.h
-index ac7c5199f..6de9de7cb 100644
+index ac7c5199f..b96d499eb 100644
 --- a/drivers/arm/gic/v3/gicv3_private.h
 +++ b/drivers/arm/gic/v3/gicv3_private.h
-@@ -240,6 +240,8 @@ unsigned int gicv3_get_espi_limit(uintptr_t gicd_base);
- void gicv3_spis_config_defaults(uintptr_t gicd_base);
- void gicv3_ppi_sgi_config_defaults(uintptr_t gicr_base);
- void gicv3_clear_spi_cluster(uintptr_t gicd_base);
+@@ -252,6 +252,8 @@ void gicv3_rdistif_base_addrs_probe(uintptr_t *rdistif_base_addrs,
+ 					mpidr_hash_fn mpidr_to_core_pos);
+ void gicv3_rdistif_mark_core_awake(uintptr_t gicr_base);
+ void gicv3_rdistif_mark_core_asleep(uintptr_t gicr_base);
 +void gicv3_clear_spi_cpu(uintptr_t gicd_base);
 +void gicv3_clear_sgi_ppi_cpu(uintptr_t gicr_base);
- unsigned int gicv3_secure_ppi_sgi_config_props(uintptr_t gicr_base,
- 		const interrupt_prop_t *interrupt_props,
- 		unsigned int interrupt_props_num);
+ 
+ /*******************************************************************************
+  * GIC Distributor interface accessors
 diff --git a/include/drivers/arm/gicv3.h b/include/drivers/arm/gicv3.h
-index c4448e090..c4ec9be26 100644
+index ebd39999a..5d1a121e9 100644
 --- a/include/drivers/arm/gicv3.h
 +++ b/include/drivers/arm/gicv3.h
-@@ -550,6 +550,8 @@ void gicv3_driver_init(const gicv3_driver_data_t *plat_driver_data);
- int gicv3_rdistif_probe(const uintptr_t gicr_frame);
- void gicv3_distif_init(void);
- void gicv3_distif_clear(void);
+@@ -603,6 +603,8 @@ static inline void gicv3_apply_errata_wa_2384374(const uintptr_t gicr_base)
+ {
+ }
+ #endif /* GIC600_ERRATA_WA_2384374 */
 +void gicv3_distif_cpu_clear(void);
 +void gicv3_rdistif_cpu_clear(unsigned int proc_num);
- void gicv3_rdistif_init(unsigned int proc_num);
- void gicv3_rdistif_on(unsigned int proc_num);
- void gicv3_rdistif_off(unsigned int proc_num);
+ 
+ #endif /* __ASSEMBLER__ */
+ #endif /* GICV3_H */
 -- 
 2.43.0
 

@@ -1,14 +1,13 @@
-From 917189136154ed9f6d88f87980996196957173ae Mon Sep 17 00:00:00 2001
+From 04048692636b98d935d6c5e9b51dce8699fad2c4 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Tue, 22 Oct 2024 14:51:23 +0800
-Subject: [PATCH 08/15] plat: imx91: change to use common interrupt service
+Subject: [PATCH 08/10] plat: imx91: change to use common interrupt service
 
 As imx91 and imx93 shares the same dram driver which has beend changed
 to use common interrupt service driver, initialize common interrupt
 service for imx91.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
-Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Upstream-Status: Pending
 ---
  plat/imx/imx91/imx91_bl31_setup.c     | 5 +++++
@@ -40,10 +39,10 @@ index 91e80c1ef..77f5484dd 100644
  	dram_info_init(SAVED_DRAM_TIMING_BASE);
  
 diff --git a/plat/imx/imx91/include/platform_def.h b/plat/imx/imx91/include/platform_def.h
-index 0ddd699f5..1721220e2 100644
+index 9ba7dd000..e6f83c63d 100644
 --- a/plat/imx/imx91/include/platform_def.h
 +++ b/plat/imx/imx91/include/platform_def.h
-@@ -129,4 +129,7 @@
+@@ -128,4 +128,7 @@
  #define IMX_TRUSTY_STACK_SIZE 0x100
  #define TRUSTY_SHARED_MEMORY_OBJ_SIZE (12 * 1024)
  
@@ -52,18 +51,18 @@ index 0ddd699f5..1721220e2 100644
 +
  #endif /* platform_def.h */
 diff --git a/plat/imx/imx91/platform.mk b/plat/imx/imx91/platform.mk
-index 520304019..3de115682 100644
+index 586e98766..f3bd0bc47 100644
 --- a/plat/imx/imx91/platform.mk
 +++ b/plat/imx/imx91/platform.mk
-@@ -37,6 +37,8 @@ BL31_SOURCES		+=	plat/common/aarch64/crash_console_helpers.S   \
+@@ -35,6 +35,8 @@ BL31_SOURCES		+=	plat/common/aarch64/crash_console_helpers.S   \
+ 				plat/imx/imx93/pwr_ctrl.c			\
+ 				plat/imx/imx91/imx91_bl31_setup.c		\
  				plat/imx/imx91/imx91_psci.c			\
++				plat/imx/common/imx_intercore_svc.c		\
++				plat/imx/common/imx_interrupt_mgmt.c		\
  				plat/imx/common/imx_sip_svc.c			\
  				plat/imx/common/imx_sip_handler.c			\
-+				plat/imx/common/imx_interrupt_mgmt.c		\
-+				plat/imx/common/imx_intercore_svc.c			\
- 				plat/imx/common/ele_api.c			\
- 				lib/cpus/aarch64/cortex_a55.S			\
- 				drivers/delay_timer/delay_timer.c		\
+ 				plat/imx/imx9/common/ele_api.c			\
 -- 
 2.43.0
 

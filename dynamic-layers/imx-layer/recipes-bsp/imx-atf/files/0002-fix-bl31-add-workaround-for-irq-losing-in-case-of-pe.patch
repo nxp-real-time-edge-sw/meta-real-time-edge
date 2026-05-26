@@ -1,0 +1,118 @@
+From 5f24df44d1d1e7cd48097323649fe90e754cf360 Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Fri, 13 Mar 2026 15:04:35 +0800
+Subject: [PATCH 02/10] fix(bl31): add workaround for irq losing in case of
+ pending NS SError
+
+Currently it will handle pending NS SError in irq or fiq exception
+handler, if FFH_SUPPORT (which is enabled by HANDLE_EA_EL3_FIRST_NS)
+is enabled, it will handle pending NS SError in EL3 firmware, but all
+NS exception will be handled in EL3 (SCR_EL3.EA is enabled). But if
+FFH_SUPPPORT is not enabled, it will reflects SError exception back to
+lower EL, in some cases it will not return back from lower EL so the
+pending irq or fiq will not be handled.
+
+In order to fix the irq/fiq losing issue withoug enabling SCR_EL3.EA
+(that means not hanlding all exceptions in EL3), this patch implements
+a workaound to fix this issue, when this workaound is enabled by setting
+HANDLE_NS_EA_EL3_IRQ_WA to be "1", SCR_EL3.EA is not enabled but it will
+handle pending NS SError in EL3, then return back to fiq/irq handler to
+continue to handle fiq or irq interrupt.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
+---
+ Makefile                          |  4 ++++
+ bl31/aarch64/runtime_exceptions.S | 24 ++++++++++++++++++++++--
+ make_helpers/defaults.mk          |  4 ++++
+ 3 files changed, 30 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 59fa74d99..c979cae3b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -380,6 +380,8 @@ endif
+ # is required by lowe ELs. Currently only NS requires this support.
+ ifeq ($(HANDLE_EA_EL3_FIRST_NS),1)
+ 	FFH_SUPPORT := 1
++else ifeq ($(HANDLE_NS_EA_EL3_IRQ_WA),1)
++	FFH_SUPPORT := 1
+ else
+ 	FFH_SUPPORT := 0
+ endif
+@@ -581,6 +583,7 @@ $(eval $(call assert_booleans,\
+ 	GENERATE_COT \
+ 	GICV2_G0_FOR_EL3 \
+ 	HANDLE_EA_EL3_FIRST_NS \
++	HANDLE_NS_EA_EL3_IRQ_WA \
+ 	HARDEN_SLS \
+ 	HW_ASSISTED_COHERENCY \
+ 	MEASURED_BOOT \
+@@ -788,6 +791,7 @@ $(eval $(call add_defines,\
+ 	FAULT_INJECTION_SUPPORT \
+ 	GICV2_G0_FOR_EL3 \
+ 	HANDLE_EA_EL3_FIRST_NS \
++	HANDLE_NS_EA_EL3_IRQ_WA \
+ 	HW_ASSISTED_COHERENCY \
+ 	LOG_LEVEL \
+ 	MEASURED_BOOT \
+diff --git a/bl31/aarch64/runtime_exceptions.S b/bl31/aarch64/runtime_exceptions.S
+index 2b4b3f49c..2fa49c40c 100644
+--- a/bl31/aarch64/runtime_exceptions.S
++++ b/bl31/aarch64/runtime_exceptions.S
+@@ -54,8 +54,26 @@
+ 
+ 	/*
+ 	 * Macro that synchronizes errors (EA) and checks for pending SError.
+-	 * On detecting a pending SError it either reflects it back to lower
+-	 * EL (KFH) or handles it in EL3 (FFH) based on EA routing model.
++	 */
++#if HANDLE_NS_EA_EL3_IRQ_WA
++	/*
++	 * If HANDLE_NS_EA_EL3_IRQ_WA is enabled, on detecting a pending SError,
++	 * handles it in EL3.
++	 */
++	.macro	sync_and_handle_pending_serror
++	synchronize_errors
++	mrs	x30, ISR_EL1
++	tbz	x30, #ISR_A_SHIFT, 1f
++	bl	handle_pending_async_ea
++1:
++	.endm
++
++#else /* !HANDLE_NS_EA_EL3_IRQ_WA */
++
++	/*
++	 * If HANDLE_NS_EA_EL3_IRQ_WA is disabled, on detecting a pending SError,
++	 * it either reflects it back to lower EL (KFH) or handles it in EL3 (FFH)
++	 * based on EA routing model.
+ 	 */
+ 	.macro	sync_and_handle_pending_serror
+ 	synchronize_errors
+@@ -74,6 +92,8 @@
+ 2:
+ 	.endm
+ 
++#endif /* HANDLE_NS_EA_EL3_IRQ_WA */
++
+ 	/* ---------------------------------------------------------------------
+ 	 * This macro handles Synchronous exceptions.
+ 	 * Only SMC exceptions are supported.
+diff --git a/make_helpers/defaults.mk b/make_helpers/defaults.mk
+index bded098d2..2b3e5a6cb 100644
+--- a/make_helpers/defaults.mk
++++ b/make_helpers/defaults.mk
+@@ -166,6 +166,10 @@ USE_GIC_DRIVER			:= 0
+ # by lower ELs.
+ HANDLE_EA_EL3_FIRST_NS		:= 0
+ 
++# Don't route NS External Aborts to EL3. Disabled by default; External Aborts if any
++# are handled by EL3
++HANDLE_NS_EA_EL3_IRQ_WA		:= 0
++
+ # Enable Handoff protocol using transfer lists
+ TRANSFER_LIST			:= 0
+ 
+-- 
+2.43.0
+

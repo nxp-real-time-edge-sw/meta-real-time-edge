@@ -1,0 +1,255 @@
+From 59379b69fc9f9d662bbf489d19ca02d67b5ac645 Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Wed, 25 Sep 2024 18:06:38 +0800
+Subject: [PATCH 05/10] plat: imx93: change dram dvfs to use intercore service
+
+1. Use common intercore service for inter-core notification.
+
+2. bring all running Core into WFE
+   In general, the requriement for DRAM frequency changing is raised by Linux,
+   the current implementation is only bring all the CPU Core used by Linux to
+   be WFE state in order to DDR access in the bus frequency changing process.
+
+   But in a flexible AMP system, some Cortex-A Core maybe run RTOS or baremetal,
+   these CPU cores should also go into WFE state in the bus frequency changing
+   process.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
+---
+ plat/imx/common/imx_intercore_svc.c         | 41 ++++++++++++++-
+ plat/imx/common/include/imx_intercore_svc.h |  5 +-
+ plat/imx/imx93/ddr/dram.c                   | 56 ++++++++++++---------
+ 3 files changed, 77 insertions(+), 25 deletions(-)
+
+diff --git a/plat/imx/common/imx_intercore_svc.c b/plat/imx/common/imx_intercore_svc.c
+index 78b1d9738..51d2f44a8 100644
+--- a/plat/imx/common/imx_intercore_svc.c
++++ b/plat/imx/common/imx_intercore_svc.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2024 NXP
++ * Copyright 2024, 2026 NXP
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -24,6 +24,40 @@ static uint64_t logical_id_to_hwid(unsigned int cpu_id)
+ 	return hwid;
+ }
+ 
++int register_intercore_dvfs_svc(interrupt_type_handler_t handler)
++{
++	percpu_svc_inf_t *inf;
++	uint32_t i;
++
++	if (!handler) {
++		return -EINVAL;
++	}
++
++	for (i = 0; i < PLATFORM_CORE_COUNT; i++) {
++		inf = &svc_info[i];
++		inf->dvfs_svc.enabled = true;
++		inf->dvfs_svc.handler = handler;
++	}
++
++	return 0;
++}
++
++int trigger_intercore_dvfs_svc(uint32_t running_cores)
++{
++	percpu_svc_inf_t *inf;
++	uint32_t i;
++
++	for (i = 0; i < PLATFORM_CORE_COUNT; i++) {
++		inf = &svc_info[i];
++		inf->dvfs_svc.trigged = true;
++		if (running_cores & (0x1 << (i * 8))) {
++			plat_ic_raise_el3_sgi(INTERCORE_SVC_IRQ, logical_id_to_hwid(i));
++		}
++	}
++
++	return 0;
++}
++
+ int register_intercore_cpuoff_svc(interrupt_type_handler_t handler)
+ {
+ 	percpu_svc_inf_t *inf;
+@@ -68,6 +102,11 @@ static uint64_t intercore_service(uint32_t id, uint32_t flags,
+ 	unsigned int cpu_id = get_cpu_id();
+ 	percpu_svc_inf_t *inf = &svc_info[cpu_id];
+ 
++	if (inf->dvfs_svc.enabled && inf->dvfs_svc.trigged && inf->dvfs_svc.handler) {
++		inf->dvfs_svc.result = inf->dvfs_svc.handler(id, flags, handle, cookie);
++		inf->dvfs_svc.trigged = false;
++	}
++
+ 	if (inf->cpu_off_svc.enabled && inf->cpu_off_svc.trigged && inf->cpu_off_svc.handler) {
+ 		inf->cpu_off_svc.trigged = false;
+ 		inf->cpu_off_svc.result = inf->cpu_off_svc.handler(id, flags, handle, cookie);
+diff --git a/plat/imx/common/include/imx_intercore_svc.h b/plat/imx/common/include/imx_intercore_svc.h
+index 316f34da4..124d38930 100644
+--- a/plat/imx/common/include/imx_intercore_svc.h
++++ b/plat/imx/common/include/imx_intercore_svc.h
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2024 NXP
++ * Copyright 2024, 2026 NXP
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -22,6 +22,7 @@ typedef struct intercore_svc {
+ } intercore_svc_t;
+ 
+ typedef struct percpu_svc_inf {
++	intercore_svc_t dvfs_svc;
+ 	intercore_svc_t cpu_off_svc;
+ } __aligned(CACHE_WRITEBACK_GRANULE) percpu_svc_inf_t;
+ 
+@@ -35,6 +36,8 @@ static inline unsigned int get_cpu_id(void)
+ 		return MPIDR_AFFLVL0_VAL(mpidr);
+ }
+ 
++int register_intercore_dvfs_svc(interrupt_type_handler_t handler);
++int trigger_intercore_dvfs_svc(uint32_t running_cores);
+ int register_intercore_cpuoff_svc(interrupt_type_handler_t handler);
+ int trigger_intercore_cpuoff_svc(unsigned int cpu);
+ void imx_intercore_svc_init(void);
+diff --git a/plat/imx/imx93/ddr/dram.c b/plat/imx/imx93/ddr/dram.c
+index b170fa272..4d999615b 100644
+--- a/plat/imx/imx93/ddr/dram.c
++++ b/plat/imx/imx93/ddr/dram.c
+@@ -1,17 +1,17 @@
+ /*
+- * Copyright 2022 NXP
++ * Copyright 2022, 2024, 2026 NXP
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+ 
+-#include <bl31/interrupt_mgmt.h>
+ #include <common/runtime_svc.h>
++#include <lib/el3_runtime/cpu_data.h>
+ #include <lib/mmio.h>
+ #include <lib/spinlock.h>
+-#include <plat/common/platform.h>
+ #include <drivers/delay_timer.h>
+ 
+ #include <dram.h>
++#include <imx_intercore_svc.h>
+ 
+ #define IMX_SIP_DDR_DVFS_GET_FREQ_COUNT		0x10
+ #define IMX_SIP_DDR_DVFS_GET_FREQ_INFO		0x11
+@@ -19,7 +19,7 @@
+ /* lock used for DDR DVFS */
+ spinlock_t dfs_lock;
+ struct dram_timing_info *timing_info;
+-static volatile uint32_t core_count;
++static volatile uint32_t wfe_done;
+ static unsigned int num_fsp;
+ static unsigned int cur_fsp;
+ static volatile bool in_progress = false;
+@@ -304,20 +304,16 @@ int ddrc_apply_reg_config(enum reg_type type, struct dram_cfg_param *reg_config)
+ 	return ret;
+ }
+ 
+-/* EL3 SGI-8 IPI handler for DDR Dynamic frequency scaling */
+ /* For non-primary core, waiting for frequency scaling down */
+ static uint64_t waiting_dvfs(uint32_t id, uint32_t flags,
+ 		void *handle, void *cookie)
+ {
+-	uint32_t irq;
+-
+-	irq = plat_ic_acknowledge_interrupt();
+-	if (irq < 1022U)
+-		plat_ic_end_of_interrupt(irq);
++	uint64_t mpidr = read_mpidr_el1();
++	unsigned int cpu_id = MPIDR_AFFLVL1_VAL(mpidr);
+ 
+ 	/* set the WFE done status */
+ 	spin_lock(&dfs_lock);
+-	core_count++;
++	wfe_done |= (1 << cpu_id * 8);
+ 	dsb();
+ 	spin_unlock(&dfs_lock);
+ 
+@@ -333,7 +329,6 @@ static uint64_t waiting_dvfs(uint32_t id, uint32_t flags,
+ 
+ void dram_info_init(unsigned long dram_timing_base)
+ {
+-	uint32_t flags = 0;
+ 	uint32_t rc;
+ 	int i;
+ 
+@@ -356,19 +351,24 @@ void dram_info_init(unsigned long dram_timing_base)
+ 	mmio_setbits_32(REG_DDR_SDRAM_CFG_3, BIT(1));
+ 
+ 	/* Register the EL3 handler for DDR DVFS */
+-	set_interrupt_rm_flag(flags, NON_SECURE);
+-	rc = register_interrupt_type_handler(INTR_TYPE_EL3, waiting_dvfs, flags);
++	rc = register_intercore_dvfs_svc(waiting_dvfs);
+ 	if (rc)
+ 		panic();
+ }
+ 
++static inline aff_info_state_t dvfs_get_aff_info_state_by_idx(unsigned int idx)
++{
++	return get_cpu_data_by_index(idx,
++				     psci_svc_cpu_data.aff_info_state);
++}
++
+ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
+ 		u_register_t x1, u_register_t x2, u_register_t x3)
+ {
+-	unsigned int fsp_index = x1;
+-	uint32_t online_cpus = x2 - 1; 
+ 	uint64_t mpidr = read_mpidr_el1();
+ 	unsigned int cpu_id = MPIDR_AFFLVL1_VAL(mpidr);
++	unsigned int fsp_index = x1;
++	uint32_t running_cores = 0;
+ 	int ret = 0;
+ 
+ 	/* get the fsp num, return the number of supported fsp */
+@@ -386,15 +386,25 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
+ 	in_progress = true;
+ 	dsb();
+ 
++	/* Check all running CPU Cores */
++	for (unsigned int i = 0; i < PLATFORM_CORE_COUNT; i++) {
++		/* Skip current CPU Core */
++		if (i == cpu_id) {
++			continue;
++		}
++		/* Perform cache maintanence ahead of reading the target CPU state */
++		flush_cpu_data_by_index(i, psci_svc_cpu_data.aff_info_state);
++		if (dvfs_get_aff_info_state_by_idx(i) == AFF_STATE_ON) {
++			running_cores |= (0x1 << (i * 8));
++		}
++	}
++
+ 	/* notify other core wait for scaling done */
+-	for (int i = 0; i < PLATFORM_CORE_COUNT; i++)
+-		/* Skip raise SGI for current CPU */
+-		if (i != cpu_id)
+-			plat_ic_raise_el3_sgi(0x8, i << 8);
+-	
++	trigger_intercore_dvfs_svc(running_cores);
++
+ 	/* Make sure all the cpu in WFE */
+ 	while (1) {
+-		if (online_cpus == core_count)
++		if (running_cores == wfe_done)
+ 			break;
+ 	}
+ 	
+@@ -415,7 +425,7 @@ int dram_dvfs_handler(uint32_t smc_fid, void *handle,
+ 		cur_fsp = fsp_index;
+ 
+ 	in_progress = false;
+-	core_count = 0;
++	wfe_done = 0;
+ 	dsb();
+ 	sev();
+ 	isb();
+-- 
+2.43.0
+

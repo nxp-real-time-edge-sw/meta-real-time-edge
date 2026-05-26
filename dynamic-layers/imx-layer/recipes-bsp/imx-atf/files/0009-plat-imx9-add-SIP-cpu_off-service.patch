@@ -1,0 +1,199 @@
+From b6c10804fbbcca3f13cc7af8608646246cf135df Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Thu, 2 Jan 2025 15:43:30 +0800
+Subject: [PATCH 09/10] plat: imx9: add SIP cpu_off service
+
+Added SIP cpu_off service for imx95, imx94 and imx952
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ plat/imx/common/imx_sip_handler.c           | 3 ++-
+ plat/imx/common/imx_sip_svc.c               | 3 ++-
+ plat/imx/common/include/imx_sip_svc.h       | 3 ++-
+ plat/imx/imx9/common/imx9_bl31_setup.c      | 9 ++++++++-
+ plat/imx/imx9/imx94/include/platform_def.h  | 3 +++
+ plat/imx/imx9/imx94/platform.mk             | 6 ++++++
+ plat/imx/imx9/imx95/include/platform_def.h  | 3 +++
+ plat/imx/imx9/imx95/platform.mk             | 6 ++++++
+ plat/imx/imx9/imx952/include/platform_def.h | 3 +++
+ plat/imx/imx9/imx952/platform.mk            | 6 ++++++
+ 10 files changed, 41 insertions(+), 4 deletions(-)
+
+diff --git a/plat/imx/common/imx_sip_handler.c b/plat/imx/common/imx_sip_handler.c
+index 6a9bd51ce..640c7c1a0 100644
+--- a/plat/imx/common/imx_sip_handler.c
++++ b/plat/imx/common/imx_sip_handler.c
+@@ -392,7 +392,8 @@ int imx_bbsm_handler(uint32_t smc_fid, u_register_t x1, void *handle)
+ }
+ #endif
+ 
+-#if defined(PLAT_imx93) || defined(PLAT_imx8mm) || defined(PLAT_imx8mn) || defined(PLAT_imx8mp)
++#if defined(PLAT_imx93) || defined(PLAT_imx94) || defined(PLAT_imx952) ||  defined(PLAT_imx95) || \
++    defined(PLAT_imx8mm) || defined(PLAT_imx8mn) || defined(PLAT_imx8mp)
+ uint64_t imx_sip_cpuoff_handler(uint32_t smc_fid,
+ 			u_register_t x1,
+ 			u_register_t x2,
+diff --git a/plat/imx/common/imx_sip_svc.c b/plat/imx/common/imx_sip_svc.c
+index e66a5551c..12ea7cd32 100644
+--- a/plat/imx/common/imx_sip_svc.c
++++ b/plat/imx/common/imx_sip_svc.c
+@@ -99,7 +99,8 @@ static uintptr_t imx_sip_handler(unsigned int smc_fid,
+ 	case IMX_SIP_GET_SOC_INFO:
+ 		return imx9_soc_info_handler(smc_fid, handle);
+ #endif
+-#if defined(PLAT_imx93) || defined(PLAT_imx8mm) || defined(PLAT_imx8mn) || defined(PLAT_imx8mp)
++#if defined(PLAT_imx93) || defined(PLAT_imx94) || defined(PLAT_imx952) ||  defined(PLAT_imx95) || \
++    defined(PLAT_imx8mm) || defined(PLAT_imx8mn) || defined(PLAT_imx8mp)
+ 	case IMX_SIP_CPU_OFF:
+ 		SMC_RET1(handle, imx_sip_cpuoff_handler(smc_fid, x1, x2, x3, x4));
+ #endif
+diff --git a/plat/imx/common/include/imx_sip_svc.h b/plat/imx/common/include/imx_sip_svc.h
+index d4864c3c6..798da8e6c 100644
+--- a/plat/imx/common/include/imx_sip_svc.h
++++ b/plat/imx/common/include/imx_sip_svc.h
+@@ -179,7 +179,8 @@ int imx_src_handler(uint32_t smc_fid, u_register_t x1,
+ 		    u_register_t x2, u_register_t x3,
+ 		    u_register_t x4, void *handle);
+ #endif
+-#if defined(PLAT_imx93) || defined(PLAT_imx8mm) || defined(PLAT_imx8mn) || defined(PLAT_imx8mp)
++#if defined(PLAT_imx93) || defined(PLAT_imx94) || defined(PLAT_imx952) ||  defined(PLAT_imx95) || \
++    defined(PLAT_imx8mm) || defined(PLAT_imx8mn) || defined(PLAT_imx8mp)
+ uint64_t imx_sip_cpuoff_handler(uint32_t smc_fid, u_register_t x1,
+ 	u_register_t x2, u_register_t x3, u_register_t x4);
+ #endif
+diff --git a/plat/imx/imx9/common/imx9_bl31_setup.c b/plat/imx/imx9/common/imx9_bl31_setup.c
+index 5ac95d7d8..7e0a06e2b 100644
+--- a/plat/imx/imx9/common/imx9_bl31_setup.c
++++ b/plat/imx/imx9/common/imx9_bl31_setup.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2025 NXP
++ * Copyright 2025-2026 NXP
+  *
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+@@ -24,6 +24,9 @@
+ 
+ #include <ele_api.h>
+ #include <imx8_lpuart.h>
++#include <imx_cpu_off.h>
++#include <imx_intercore_svc.h>
++#include <imx_interrupt_mgmt.h>
+ #include <imx_plat_common.h>
+ #include <imx_scmi_client.h>
+ #include <plat_imx8.h>
+@@ -153,6 +156,10 @@ extern void gic_set_gicr_frames(const uintptr_t *plat_gicr_frames);
+ 	/* get soc info */
+ 	ele_get_soc_info();
+ 
++	imx_el3_interrupt_config();
++	imx_intercore_svc_init();
++	imx_cpuoff_init();
++
+ 	plat_imx9_scmi_setup();
+ }
+ 
+diff --git a/plat/imx/imx9/imx94/include/platform_def.h b/plat/imx/imx9/imx94/include/platform_def.h
+index f1d1ecb67..9ca6cec89 100644
+--- a/plat/imx/imx9/imx94/include/platform_def.h
++++ b/plat/imx/imx9/imx94/include/platform_def.h
+@@ -124,4 +124,7 @@
+ #define ELE_MU_MAP	MAP_REGION_FLAT(ELE_MU_BASE, 0x10000, MT_DEVICE | MT_RW)
+ #define AIPS4_MAP	MAP_REGION_FLAT(AIPS4_BASE, AIPSx_SIZE, MT_DEVICE | MT_RW)
+ 
++/*Use SGI-8 as Inter-Core Service IRQ */
++#define INTERCORE_SVC_IRQ		0x8
++
+ #endif /* PLATFORM_DEF_H */
+diff --git a/plat/imx/imx9/imx94/platform.mk b/plat/imx/imx9/imx94/platform.mk
+index 2ca275616..36f6c9587 100644
+--- a/plat/imx/imx9/imx94/platform.mk
++++ b/plat/imx/imx9/imx94/platform.mk
+@@ -26,6 +26,9 @@ BL31_SOURCES		+=	drivers/arm/css/scmi/scmi_common.c		\
+ 				plat/common/aarch64/crash_console_helpers.S     \
+ 				plat/common/plat_psci_common.c			\
+ 				plat/imx/common/imx_bl31_common.c		\
++				plat/imx/common/imx_cpu_off.c			\
++				plat/imx/common/imx_intercore_svc.c		\
++				plat/imx/common/imx_interrupt_mgmt.c		\
+ 				plat/imx/common/imx_sip_handler.c		\
+ 				plat/imx/common/imx_sip_svc.c			\
+ 				plat/imx/common/imx9_sm_sema.c                  \
+@@ -69,3 +72,6 @@ BL32_SIZE               ?=      0x02000000
+ $(eval $(call add_define,BL32_BASE))
+ $(eval $(call add_define,BL32_SIZE))
+ $(eval $(call add_define,IMX_CRRM))
++
++# Enable workaround for irq losing in case of pending NS SError
++HANDLE_NS_EA_EL3_IRQ_WA	:=	1
+diff --git a/plat/imx/imx9/imx95/include/platform_def.h b/plat/imx/imx9/imx95/include/platform_def.h
+index 80cae736a..2446648b3 100644
+--- a/plat/imx/imx9/imx95/include/platform_def.h
++++ b/plat/imx/imx9/imx95/include/platform_def.h
+@@ -116,4 +116,7 @@
+ #define GPIO4_MAP	MAP_REGION_FLAT(GPIO4_BASE, 0x20000, MT_DEVICE | MT_RW)
+ #define ELE_MAP		MAP_REGION_FLAT(ELE_MU_BASE, 0x10000, MT_DEVICE | MT_RW)
+ 
++/*Use SGI-8 as Inter-Core Service IRQ */
++#define INTERCORE_SVC_IRQ		0x8
++
+ #endif /* PLATFORM_DEF_H */
+diff --git a/plat/imx/imx9/imx95/platform.mk b/plat/imx/imx9/imx95/platform.mk
+index 386ffdc4b..6c86e6632 100644
+--- a/plat/imx/imx9/imx95/platform.mk
++++ b/plat/imx/imx9/imx95/platform.mk
+@@ -27,6 +27,9 @@ BL31_SOURCES		+=	drivers/arm/css/scmi/scmi_common.c		\
+ 				plat/common/plat_psci_common.c		\
+ 				plat/imx/common/plat_imx8_gic.c			\
+ 				plat/imx/common/imx_bl31_common.c		\
++				plat/imx/common/imx_cpu_off.c			\
++				plat/imx/common/imx_intercore_svc.c		\
++				plat/imx/common/imx_interrupt_mgmt.c		\
+ 				plat/imx/common/imx_sip_handler.c		\
+ 				plat/imx/common/imx_sip_svc.c			\
+ 				plat/imx/common/imx9_sm_sema.c			\
+@@ -64,3 +67,6 @@ BL32_BASE               ?=      0x8C000000
+ BL32_SIZE               ?=      0x02000000
+ $(eval $(call add_define,BL32_BASE))
+ $(eval $(call add_define,BL32_SIZE))
++
++# Enable workaround for irq losing in case of pending NS SError
++HANDLE_NS_EA_EL3_IRQ_WA	:=	1
+diff --git a/plat/imx/imx9/imx952/include/platform_def.h b/plat/imx/imx9/imx952/include/platform_def.h
+index 8262fcb1a..d2b04b766 100644
+--- a/plat/imx/imx9/imx952/include/platform_def.h
++++ b/plat/imx/imx9/imx952/include/platform_def.h
+@@ -114,4 +114,7 @@
+ #define GPIO4_MAP	MAP_REGION_FLAT(GPIO4_BASE, 0x20000, MT_DEVICE | MT_RW)
+ #define ELE_MAP		MAP_REGION_FLAT(ELE_MU_BASE, 0x10000, MT_DEVICE | MT_RW)
+ 
++/*Use SGI-8 as Inter-Core Service IRQ */
++#define INTERCORE_SVC_IRQ		0x8
++
+ #endif /* platform_def.h */
+diff --git a/plat/imx/imx9/imx952/platform.mk b/plat/imx/imx9/imx952/platform.mk
+index 0cb69957e..165cb2c11 100644
+--- a/plat/imx/imx9/imx952/platform.mk
++++ b/plat/imx/imx9/imx952/platform.mk
+@@ -27,6 +27,9 @@ BL31_SOURCES		+=	drivers/arm/css/scmi/scmi_common.c		\
+ 				plat/common/plat_psci_common.c			\
+ 				plat/imx/common/plat_imx8_gic.c			\
+ 				plat/imx/common/imx_bl31_common.c		\
++				plat/imx/common/imx_cpu_off.c			\
++				plat/imx/common/imx_intercore_svc.c		\
++				plat/imx/common/imx_interrupt_mgmt.c		\
+ 				plat/imx/common/imx_sip_handler.c		\
+ 				plat/imx/common/imx_sip_svc.c			\
+ 				plat/imx/common/imx9_sm_sema.c			\
+@@ -66,3 +69,6 @@ BL32_BASE               ?=      0x8C000000
+ BL32_SIZE               ?=      0x02000000
+ $(eval $(call add_define,BL32_BASE))
+ $(eval $(call add_define,BL32_SIZE))
++
++# Enable workaround for irq losing in case of pending NS SError
++HANDLE_NS_EA_EL3_IRQ_WA	:=	1
+-- 
+2.43.0
+
