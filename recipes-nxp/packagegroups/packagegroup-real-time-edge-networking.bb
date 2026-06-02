@@ -51,4 +51,5 @@ RDEPENDS:${PN} = " \
     openssh-keygen \
     pktgen-scripts \
     isochron \
+    mstpd \
 "
