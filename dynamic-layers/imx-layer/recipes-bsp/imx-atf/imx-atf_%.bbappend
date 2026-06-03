@@ -15,4 +15,7 @@ SRC_URI:append = " \
     file://0008-plat-imx91-change-to-use-common-interrupt-service.patch \
     file://0009-plat-imx9-add-SIP-cpu_off-service.patch \
     file://0010-imx8mp-Set-RDC-to-level-0.patch \
+    file://0011-plat-imx93-add-platform-API-plat_core_mpidr_by_idx.patch \
+    file://0012-bl31-add-multicore-fastboot-support.patch \
+    file://0013-plat-imx93-enable-fastboot-support.patch \
 "

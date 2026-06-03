@@ -1,0 +1,105 @@
+From ab81c867fcba9a5d812a78b390411ef446cc2a15 Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Tue, 14 Apr 2026 14:29:38 +0800
+Subject: [PATCH 13/13] plat: imx93: enable fastboot support
+
+Enable fastboot support on i.MX 93 platform to enable booting
+multiple non secure images on multiple CPU Cores.
+
+Add MMU mapping support for the first 4k bytes memory for  master
+core's non secure image (it is U-Boot image in general)  in order
+to read multicore entry blob at embedded offset.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
+---
+ plat/imx/imx93/imx93_bl31_setup.c     |  9 ++++++++-
+ plat/imx/imx93/include/platform_def.h | 18 ++++++++++++++++--
+ plat/imx/imx93/platform.mk            |  2 ++
+ 3 files changed, 26 insertions(+), 3 deletions(-)
+
+diff --git a/plat/imx/imx93/imx93_bl31_setup.c b/plat/imx/imx93/imx93_bl31_setup.c
+index ff9ea771f..4c6b38a00 100644
+--- a/plat/imx/imx93/imx93_bl31_setup.c
++++ b/plat/imx/imx93/imx93_bl31_setup.c
+@@ -36,9 +36,13 @@
+ 
+ #define MAP_BL32_TOTAL										   \
+ 	MAP_REGION_FLAT(BL32_BASE, BL32_SIZE, MT_MEMORY | MT_RW)
+-
+ #define TRUSTY_PARAMS_LEN_BYTES      (4096*2)
+ 
++/* Size of BL33 header to be mapped for parsing, must be page aligned */
++#define BL33_HEADER_LEN_BYTES      (4096)
++#define MAP_BL33_HEADER									   \
++	MAP_REGION_FLAT(PLAT_NS_IMAGE_OFFSET, BL33_HEADER_LEN_BYTES, MT_MEMORY | MT_RO)
++
+ static const mmap_region_t imx_mmap[] = {
+ 	AIPS1_MAP, AIPS2_MAP, AIPS4_MAP, GIC_MAP,
+ 	TRDC_A_MAP, TRDC_W_MAP, TRDC_M_MAP,
+@@ -121,6 +125,9 @@ void bl31_plat_arch_setup(void)
+ #ifdef SPD_trusty
+ 		/* Map Tee memory */
+ 		MAP_BL32_TOTAL,
++#endif
++#if ENABLE_FASTBOOT
++		MAP_BL33_HEADER,
+ #endif
+ 		{0}
+ 	};
+diff --git a/plat/imx/imx93/include/platform_def.h b/plat/imx/imx93/include/platform_def.h
+index b990b4af2..24fbf0bf2 100644
+--- a/plat/imx/imx93/include/platform_def.h
++++ b/plat/imx/imx93/include/platform_def.h
+@@ -41,6 +41,10 @@
+ /* TODO */
+ #define PLAT_NS_IMAGE_OFFSET		U(0x80200000)
+ #define BL32_FDT_OVERLAY_ADDR           (PLAT_NS_IMAGE_OFFSET + 0x3000000)
++#if ENABLE_FASTBOOT
++/* Default Fast Boot entry blob embedeed offset at PLAT_NS_IMAGE_OFFSET */
++#define NS_IMAGE_FASTBOOT_OFFSET		U(0x10)
++#endif
+ 
+ /* GICv4 base address */
+ #define PLAT_GICD_BASE			U(0x48000000)
+@@ -50,12 +54,22 @@
+ #define PLAT_PHY_ADDR_SPACE_SIZE	(ULL(1) << 32)
+ 
+ #ifdef SPD_trusty
++#if ENABLE_FASTBOOT
++#define MAX_XLAT_TABLES			15
++#define MAX_MMAP_REGIONS		20
++#else /* ENABLE_FASTBOOT */
+ #define MAX_XLAT_TABLES			15
+ #define MAX_MMAP_REGIONS		19
+-#else
++#endif /* ENABLE_FASTBOOT */
++#else /* SPD_trusty */
++#if ENABLE_FASTBOOT
++#define MAX_XLAT_TABLES			12
++#define MAX_MMAP_REGIONS		17
++#else /* ENABLE_FASTBOOT */
+ #define MAX_XLAT_TABLES			12
+ #define MAX_MMAP_REGIONS		16
+-#endif
++#endif /* ENABLE_FASTBOOT */
++#endif /* SPD_trusty */
+ 
+ #define IMX_LPUART_BASE			U(0x44380000)
+ #define IMX_BOOT_UART_CLK_IN_HZ		U(24000000) /* Select 24MHz oscillator */
+diff --git a/plat/imx/imx93/platform.mk b/plat/imx/imx93/platform.mk
+index bfa231f5a..5e50789c7 100644
+--- a/plat/imx/imx93/platform.mk
++++ b/plat/imx/imx93/platform.mk
+@@ -66,6 +66,8 @@ COLD_BOOT_SINGLE_CPU	:=	1
+ # Enable workaround for irq losing in case of pending NS SError
+ HANDLE_NS_EA_EL3_IRQ_WA	:=	1
+ 
++ENABLE_FASTBOOT		:=	1
++
+ BL32_BASE               ?=      0x96000000
+ BL32_SIZE               ?=      0x02000000
+ $(eval $(call add_define,BL32_BASE))
+-- 
+2.43.0
+

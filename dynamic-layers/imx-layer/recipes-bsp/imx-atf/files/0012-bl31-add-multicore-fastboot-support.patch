@@ -1,0 +1,763 @@
+From 14d513beb9c27de74821e68e34c6f53f6aad8218 Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Tue, 14 Apr 2026 14:11:16 +0800
+Subject: [PATCH 12/13] bl31: add multicore fastboot support
+
+Multicore Fastboot is a Heterogeneous Multicore feature for MPU platform.
+Currently BL31 could only boot non Secure image from master CPU Core, this
+feature is to enable BL31 to boot multiple nonsecure images on multiple
+secondary CPU Cores except master CPU Core.
+
+In order to use this feature, firstly need to embedded a fastboot entry
+blob in master Core's nonsecure image at offset defined by
+NS_IMAGE_FASTBOOT_OFFSET, then bl31 will check whether a valid fastboot
+entry blob is available, if yes, then parse the boot entry information
+from blob and then start it from specific CPU Core.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
+---
+ Makefile                               |   2 +
+ bl31/aarch64/bl31_entrypoint.S         |   5 +
+ bl31/bl31.mk                           |   4 +
+ bl31/bl31_main.c                       | 118 ++++++++
+ bl31/multicore_fastboot.c              | 396 +++++++++++++++++++++++++
+ bl31/multicore_fastboot.h              | 102 +++++++
+ docs/getting_started/build-options.rst |   6 +
+ make_helpers/defaults.mk               |   4 +
+ 8 files changed, 637 insertions(+)
+ create mode 100644 bl31/multicore_fastboot.c
+ create mode 100644 bl31/multicore_fastboot.h
+
+diff --git a/Makefile b/Makefile
+index c979cae3b..a5ff82fad 100644
+--- a/Makefile
++++ b/Makefile
+@@ -569,6 +569,7 @@ $(eval $(call assert_booleans,\
+ 	ENABLE_AMU_AUXILIARY_COUNTERS \
+ 	AMU_RESTRICT_COUNTERS \
+ 	ENABLE_ASSERTIONS \
++	ENABLE_FASTBOOT \
+ 	ENABLE_PIE \
+ 	ENABLE_PMF \
+ 	ENABLE_PSCI_STAT \
+@@ -763,6 +764,7 @@ $(eval $(call add_defines,\
+ 	ENABLE_AMU_AUXILIARY_COUNTERS \
+ 	AMU_RESTRICT_COUNTERS \
+ 	ENABLE_ASSERTIONS \
++	ENABLE_FASTBOOT \
+ 	ENABLE_BTI \
+ 	ENABLE_FEAT_DEBUGV8P9 \
+ 	ENABLE_FEAT_IDTE3 \
+diff --git a/bl31/aarch64/bl31_entrypoint.S b/bl31/aarch64/bl31_entrypoint.S
+index 5245f7674..ac57c0e65 100644
+--- a/bl31/aarch64/bl31_entrypoint.S
++++ b/bl31/aarch64/bl31_entrypoint.S
+@@ -169,6 +169,11 @@ bl31_entrypoint_proceed:
+ 	sub	x1, x1, x0
+ 	bl	clean_dcache_range
+ 
++
++#if ENABLE_FASTBOOT
++	bl	fastboot_cpu_cores
++#endif
++
+ #if (PLATFORM_NODE_COUNT > 1)
+ 	/*
+ 	 * dcache clean per-cpu sections defined by the platform.
+diff --git a/bl31/bl31.mk b/bl31/bl31.mk
+index 51ee76640..551e4ea12 100644
+--- a/bl31/bl31.mk
++++ b/bl31/bl31.mk
+@@ -206,6 +206,10 @@ ifeq ($(CROS_WIDEVINE_SMC),1)
+ BL31_SOURCES		+=	services/oem/chromeos/widevine_smc_handlers.c
+ endif
+ 
++ifeq ($(ENABLE_FASTBOOT),1)
++BL31_SOURCES		+=	bl31/multicore_fastboot.c
++endif
++
+ BL31_DEFAULT_LINKER_SCRIPT_SOURCE := bl31/bl31.ld.S
+ 
+ # CRYPTO_SUPPORT
+diff --git a/bl31/bl31_main.c b/bl31/bl31_main.c
+index 09c286500..2c67c1a3b 100644
+--- a/bl31/bl31_main.c
++++ b/bl31/bl31_main.c
+@@ -31,6 +31,10 @@
+ #include <plat/common/platform.h>
+ #include <services/std_svc.h>
+ 
++#if ENABLE_FASTBOOT
++#include "multicore_fastboot.h"
++#endif
++
+ #if ENABLE_RUNTIME_INSTRUMENTATION
+ 	PMF_REGISTER_SERVICE_SMC(rt_instr_svc, PMF_RT_INSTR_SVC_ID,
+ 		RT_INSTR_TOTAL_IDS, PMF_STORE_ENABLE)
+@@ -288,6 +292,120 @@ static uint32_t bl31_get_next_image_type(void)
+ 	return next_image_type;
+ }
+ 
++#if ENABLE_FASTBOOT
++/*******************************************************************************
++ * Function to boot secondary cores based on multicore fastboot entries. It is
++ *  called by bl31_main after primary core setup and before jumping to the next
++ *  image.
++ ******************************************************************************/
++void fastboot_cpu_cores(void)
++{
++	entry_point_info_t *next_image_info;
++	uint32_t image_type;
++	uint16_t entry_count;
++	int ret;
++
++	/* Determine which image to execute next */
++	image_type = bl31_get_next_image_type();
++	if (image_type != NON_SECURE) {
++		VERBOSE("BL31: Next image is not non-secure, skipping fastboot secondary core boot\n");
++		return;
++	}
++	next_image_info = bl31_plat_get_next_image_ep_info(image_type);
++	assert(next_image_info != NULL);
++
++	VERBOSE("BL31: Checking for fastboot entries at address 0x%lx\n", next_image_info->pc);
++
++	/* Initialize fastboot driver */
++	ret = multicore_fastboot_init(next_image_info->pc + NS_IMAGE_FASTBOOT_OFFSET);
++	if (ret != 0) {
++		VERBOSE("BL31: No valid fastboot blob found, using default boot\n");
++		return;
++	}
++
++	/* Get entry count */
++	entry_count = multicore_fastboot_get_entry_count();
++	INFO("BL31: Found %u fastboot entries\n", entry_count);
++
++	/* Dump entries for debugging */
++	multicore_fastboot_dump();
++
++	/* Check whether need to boot secondary cores */
++	if( multicore_fastboot_has_core_entry(0)) {
++		entry_count -= 1; // Exclude primary core entry
++	}
++	/* Boot secondary cores using fastboot entries */
++	if (entry_count != 0) {
++		cpu_context_t *ctx;
++		el3_state_t *el3_ctx;
++
++		/* Prepare to boot secondary cores */
++		dsb();
++		isb();
++		/* Get non-secure world context */
++		ctx = cm_get_context(NON_SECURE);
++		assert(ctx != NULL);
++
++		el3_ctx = get_el3state_ctx(ctx);
++
++		/*
++		 * Need to sync scr_el3 from saved context value to register. scr_el3 is
++		 * common register shared by all CPU Cores as it has some common field
++		 * will impact all the CPU Cores, for example:
++		 * - RW=1 (whole system runs at AArch64)
++		 * - HCE=1 (whole system use hypervisor)
++		 * - NS=1  (ready to switch to normal world)
++		 * But for master Core, it only save scr_el3 value in context and only
++		 * synced to register when call el3_exit() which is still not called
++		 * when booting secondary call, so we need to do scr_el3 register sync
++		 * before booting secondary call to make sure all CPU Cores use the
++		 * same value for scr_el3 register.
++		 */
++		write_scr_el3(read_ctx_reg(el3_ctx, CTX_SCR_EL3));
++
++		isb();
++
++		/* Boot secondary cores based on fastboot entries */
++		for (uint32_t core_id = 1; core_id <= PLATFORM_CORE_COUNT - 1; core_id++) {
++			uint64_t entry_addr;
++			uint64_t mpidr = plat_core_mpidr_by_idx(core_id);
++
++			/* Check if this core has a fastboot entry */
++			if (!multicore_fastboot_has_core_entry(core_id)) {
++				VERBOSE("BL31: No fastboot entry for core %u, skipping\n", core_id);
++				continue;
++			}
++
++			/* Get entry address */
++			entry_addr = multicore_fastboot_get_core_entry_addr(core_id);
++			if (entry_addr == 0) {
++				ERROR("BL31: Failed to get entry address for core %u\n", core_id);
++				continue;
++			}
++
++			INFO("BL31: Booting core %u(MPIDR: 0x%016lx) at 0x%016lx\n", core_id, mpidr, entry_addr);
++
++			isb();
++			/* Using common PSCI API to boot secondary CPU Core*/
++			psci_cpu_on(mpidr, entry_addr, 0);
++			isb();
++		}
++	}
++
++	/* Boot primary Core if boot entry is available in fastboot entry list */
++	if( multicore_fastboot_has_core_entry(0)) {
++		uint64_t entry_addr = multicore_fastboot_get_core_entry_addr(0);
++		cpu_context_t *ctx = cm_get_context(NON_SECURE);
++		el3_state_t *el3_ctx = get_el3state_ctx(ctx);
++
++		if (entry_addr != next_image_info->pc) {
++			INFO("BL31: Booting core 0 at 0x%016lx\n", entry_addr);
++			write_ctx_reg(el3_ctx, CTX_ELR_EL3, entry_addr);
++		}
++	}
++}
++#endif
++
+ /*******************************************************************************
+  * This function programs EL3 registers and performs other setup to enable entry
+  * into the next image after BL31 at the next ERET.
+diff --git a/bl31/multicore_fastboot.c b/bl31/multicore_fastboot.c
+new file mode 100644
+index 000000000..d609a4880
+--- /dev/null
++++ b/bl31/multicore_fastboot.c
+@@ -0,0 +1,396 @@
++/*
++ * Copyright 2026 NXP
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Multicore Fast Boot Entry Parser for TF-A
++ */
++
++#include <assert.h>
++#include <string.h>
++#include <common/debug.h>
++#include <lib/mmio.h>
++#include <lib/utils_def.h>
++
++#include "multicore_fastboot.h"
++
++/* #define FASTBOOT_DEBUG */ /* Uncomment to enable verbose debug logs */
++
++/* Global fastboot context */
++static multicore_fastboot_ctx_t fastboot_ctx;
++
++/* CRC32 lookup table */
++static uint32_t crc32_table[256];
++static bool crc32_table_initialized = false;
++
++/**
++ * Initialize CRC32 lookup table
++ */
++static void init_crc32_table(void)
++{
++	uint32_t polynomial = 0xEDB88320;
++
++	for (uint32_t i = 0; i < 256; i++) {
++		uint32_t crc = i;
++		for (uint32_t j = 0; j < 8; j++) {
++			if (crc & 1)
++				crc = (crc >> 1) ^ polynomial;
++			else
++				crc >>= 1;
++		}
++		crc32_table[i] = crc;
++	}
++	crc32_table_initialized = true;
++}
++
++/**
++ * Calculate CRC32 checksum
++ * @param data: Pointer to data
++ * @param length: Length of data in bytes
++ * @return: CRC32 checksum
++ */
++static uint32_t calculate_crc32(const void *data, size_t length)
++{
++	const uint8_t *bytes = (const uint8_t *)data;
++	uint32_t crc = 0xFFFFFFFF;
++
++	if (!crc32_table_initialized)
++		init_crc32_table();
++
++	for (size_t i = 0; i < length; i++) {
++		uint8_t index = (crc ^ bytes[i]) & 0xFF;
++		crc = (crc >> 8) ^ crc32_table[index];
++	}
++
++	return ~crc;
++}
++
++/**
++ * Read 32-bit value from memory (little-endian)
++ */
++static inline uint32_t read_le32(uintptr_t addr)
++{
++	return mmio_read_32(addr);
++}
++
++/**
++ * Read 16-bit value from memory (little-endian)
++ */
++static inline uint16_t read_le16(uintptr_t addr)
++{
++	uint32_t val = mmio_read_32(addr & ~0x3);
++	uint32_t shift = (addr & 0x3) * 8;
++	return (uint16_t)((val >> shift) & 0xFFFF);
++}
++
++/**
++ * Read 64-bit value from memory (little-endian)
++ */
++static inline uint64_t read_le64(uintptr_t addr)
++{
++	uint32_t low = mmio_read_32(addr);
++	uint32_t high = mmio_read_32(addr + 4);
++	return ((uint64_t)high << 32) | low;
++}
++
++/**
++ * Validate fastboot entry blob header
++ * @param blob_addr: Physical address of the blob
++ * @param header: Output pointer to store header data
++ * @return: 0 on success, negative error code on failure
++ */
++static int validate_fastboot_header(uintptr_t blob_addr, fastboot_entries_header_t *header)
++{
++	/* Read header fields */
++	memcpy(header, (const void *)blob_addr, sizeof(fastboot_entries_header_t));
++
++	/* Validate magic number */
++	if (header->magic != FASTBOOT_ENTRIES_MAGIC) {
++		VERBOSE("Fastboot: Invalid magic number 0x%08x (expected 0x%08x)\n",
++		      header->magic, FASTBOOT_ENTRIES_MAGIC);
++		return -1;
++	}
++
++	/* Validate entry count or empty entries */
++	if (header->entry_count > MAX_FASTBOOT_ENTRIES || header->entry_count == 0) {
++		VERBOSE("Fastboot: Invalid entry count %u (maximum %d)\n",
++		      header->entry_count, MAX_FASTBOOT_ENTRIES);
++		return -1;
++	}
++
++	/* Validate version */
++	if (header->version != FASTBOOT_ENTRIES_VERSION) {
++		VERBOSE("Fastboot: Version mismatch 0x%04x (expected 0x%04x)\n",
++		     header->version, FASTBOOT_ENTRIES_VERSION);
++		/* Continue anyway - might be compatible */
++	}
++
++	/* Validate header size */
++	if (header->header_size != sizeof(fastboot_entries_header_t)) {
++		ERROR("Fastboot: Invalid header size %u (expected %zu)\n",
++		      header->header_size, sizeof(fastboot_entries_header_t));
++		return -1;
++	}
++
++	/* Validate entry size */
++	if (header->entry_size != sizeof(fastboot_boot_entry_t)) {
++		ERROR("Fastboot: Invalid entry size %u (expected %zu)\n",
++		      header->entry_size, sizeof(fastboot_boot_entry_t));
++		return -1;
++	}
++
++	/* Validate total size */
++	uint32_t expected_size = header->header_size + 
++	                         (header->entry_count * header->entry_size);
++	if (header->total_size != expected_size) {
++		ERROR("Fastboot: Invalid total size %u (expected %u)\n",
++		      header->total_size, expected_size);
++		return -1;
++	}
++
++	return 0;
++}
++
++/**
++ * Read and parse boot entries from blob
++ * @param blob_addr: Physical address of the blob
++ * @param header: Validated header
++ * @return: 0 on success, negative error code on failure
++ */
++static int parse_fastboot_entries(uintptr_t blob_addr, const fastboot_entries_header_t *header)
++{
++	uintptr_t entries_addr = blob_addr + header->header_size;
++	size_t entries_data_size = header->entry_count * sizeof(fastboot_boot_entry_t);
++	uint32_t calculated_checksum;
++	uint8_t *entries_data;
++
++	/* Allocate temporary buffer for checksum calculation */
++	entries_data = (uint8_t *)entries_addr;
++
++	/* Calculate checksum */
++	calculated_checksum = calculate_crc32(entries_data, entries_data_size);
++
++	/* Verify checksum */
++	if (calculated_checksum != header->checksum) {
++		ERROR("Fastboot: Checksum mismatch (calculated: 0x%08x, expected: 0x%08x)\n",
++		      calculated_checksum, header->checksum);
++		ERROR("Fastboot: Data may be corrupted\n");
++		return -1;
++	}
++
++	/* Parse entries */
++	for (uint16_t i = 0; i < header->entry_count; i++) {
++		uintptr_t entry_addr = entries_addr + (i * sizeof(fastboot_boot_entry_t));
++
++		fastboot_ctx.entries[i].core_id =
++			read_le32(entry_addr + offsetof(fastboot_boot_entry_t, core_id));
++		fastboot_ctx.entries[i].entry_addr =
++			read_le64(entry_addr + offsetof(fastboot_boot_entry_t, entry_addr));
++		fastboot_ctx.entries[i].flags =
++			read_le32(entry_addr + offsetof(fastboot_boot_entry_t, flags));
++		fastboot_ctx.entries[i].reserved =
++			read_le32(entry_addr + offsetof(fastboot_boot_entry_t, reserved));
++
++		VERBOSE("Fastboot: Entry %u - Core %u: 0x%016lx\n",
++		        i, fastboot_ctx.entries[i].core_id,
++		        fastboot_ctx.entries[i].entry_addr);
++	}
++
++	fastboot_ctx.entry_count = header->entry_count;
++
++	return 0;
++}
++
++/**
++ * Initialize and validate fastboot entry blob
++ * @param blob_addr: Physical address of the fastboot blob
++ * @return: 0 on success, negative error code on failure
++ */
++int multicore_fastboot_init(uintptr_t blob_addr)
++{
++	fastboot_entries_header_t header;
++	int ret;
++
++	/* Initialize context */
++	memset(&fastboot_ctx, 0, sizeof(fastboot_ctx));
++	fastboot_ctx.blob_addr = blob_addr;
++	fastboot_ctx.valid = false;
++
++	VERBOSE("Fastboot: Initializing at address 0x%lx\n", blob_addr);
++
++	/* Validate header */
++	ret = validate_fastboot_header(blob_addr, &header);
++	if (ret != 0) {
++		WARN("Fastboot: Header validation failed\n");
++		return ret;
++	}
++
++	VERBOSE("Fastboot: Valid header found (version 0x%04x, %u entries)\n",
++	     header.version, header.entry_count);
++
++	/* Parse entries */
++	ret = parse_fastboot_entries(blob_addr, &header);
++	if (ret != 0) {
++		ERROR("Fastboot: Entry parsing failed\n");
++		return ret;
++	}
++
++	/* Mark as valid */
++	fastboot_ctx.valid = true;
++
++	VERBOSE("Fastboot: Successfully initialized with %u boot entries\n",
++	     fastboot_ctx.entry_count);
++
++	return 0;
++}
++
++/**
++ * Check if fastboot blob is valid and available
++ * @return: true if valid, false otherwise
++ */
++bool multicore_fastboot_is_valid(void)
++{
++	return fastboot_ctx.valid;
++}
++
++/**
++ * Get the number of boot entries
++ * @return: Number of entries, or 0 if not valid
++ */
++uint16_t multicore_fastboot_get_entry_count(void)
++{
++	if (!fastboot_ctx.valid)
++		return 0;
++
++	return fastboot_ctx.entry_count;
++}
++
++/**
++ * Get boot entry by index
++ * @param index: Entry index (0 to entry_count-1)
++ * @param entry: Output pointer to store entry data
++ * @return: 0 on success, negative error code on failure
++ */
++int multicore_fastboot_get_entry_by_index(uint16_t index, fastboot_boot_entry_t *entry)
++{
++	if (!fastboot_ctx.valid) {
++		ERROR("Fastboot: Not initialized or invalid\n");
++		return -1;
++	}
++
++	if (index >= fastboot_ctx.entry_count) {
++		ERROR("Fastboot: Invalid index %u (max %u)\n",
++		      index, fastboot_ctx.entry_count - 1);
++		return -1;
++	}
++
++	if (entry == NULL) {
++		ERROR("Fastboot: NULL entry pointer\n");
++		return -1;
++	}
++
++	memcpy(entry, &fastboot_ctx.entries[index], sizeof(fastboot_boot_entry_t));
++
++	return 0;
++}
++
++/**
++ * Get boot entry by core ID
++ * @param core_id: Cortex-A Core ID
++ * @param entry: Output pointer to store entry data
++ * @return: 0 on success, negative error code on failure
++ */
++int multicore_fastboot_get_entry_by_core_id(uint32_t core_id, fastboot_boot_entry_t *entry)
++{
++	if (!fastboot_ctx.valid) {
++		ERROR("Fastboot: Not initialized or invalid\n");
++		return -1;
++	}
++
++	if (entry == NULL) {
++		ERROR("Fastboot: NULL entry pointer\n");
++		return -1;
++	}
++
++	/* Search for core ID */
++	for (uint16_t i = 0; i < fastboot_ctx.entry_count; i++) {
++		if (fastboot_ctx.entries[i].core_id == core_id) {
++			memcpy(entry, &fastboot_ctx.entries[i], sizeof(fastboot_boot_entry_t));
++			return 0;
++		}
++	}
++
++	VERBOSE("Fastboot: Core %u not found in entries\n", core_id);
++	return -1;
++}
++
++/**
++ * Get entry address for a specific core
++ * @param core_id: Cortex-A Core ID
++ * @return: Entry address, or 0 if not found
++ */
++uint64_t multicore_fastboot_get_core_entry_addr(uint32_t core_id)
++{
++	fastboot_boot_entry_t entry;
++
++	if (multicore_fastboot_get_entry_by_core_id(core_id, &entry) == 0) {
++		return entry.entry_addr;
++	}
++
++	return 0;
++}
++
++/**
++ * Check if a core has a boot entry
++ * @param core_id: Cortex-A Core ID
++ * @return: true if entry exists, false otherwise
++ */
++bool multicore_fastboot_has_core_entry(uint32_t core_id)
++{
++	if (!fastboot_ctx.valid)
++		return false;
++
++	for (uint16_t i = 0; i < fastboot_ctx.entry_count; i++) {
++		if (fastboot_ctx.entries[i].core_id == core_id) {
++			return true;
++		}
++	}
++
++	return false;
++}
++
++#ifdef FASTBOOT_DEBUG
++/**
++ * Dump fastboot entries for debugging
++ */
++void multicore_fastboot_dump(void)
++{
++	if (!fastboot_ctx.valid) {
++		NOTICE("Fastboot: Not initialized or invalid\n");
++		return;
++	}
++
++	NOTICE("========================================\n");
++	NOTICE("Fastboot Entry Blob Information\n");
++	NOTICE("========================================\n");
++	NOTICE("Blob address:  0x%lx\n", fastboot_ctx.blob_addr);
++	NOTICE("Entry count:   %u\n", fastboot_ctx.entry_count);
++	NOTICE("----------------------------------------\n");
++	NOTICE("Boot Entries:\n");
++
++	for (uint16_t i = 0; i < fastboot_ctx.entry_count; i++) {
++		NOTICE("  [%u] Core %u: 0x%016lx (flags: 0x%08x)\n",
++		     i,
++		     fastboot_ctx.entries[i].core_id,
++		     fastboot_ctx.entries[i].entry_addr,
++		     fastboot_ctx.entries[i].flags);
++	}
++
++	NOTICE("========================================\n");
++}
++#else
++inline void multicore_fastboot_dump(void)
++{
++	/* Fastboot not enabled, do nothing */
++}
++#endif
+diff --git a/bl31/multicore_fastboot.h b/bl31/multicore_fastboot.h
+new file mode 100644
+index 000000000..a5487206c
+--- /dev/null
++++ b/bl31/multicore_fastboot.h
+@@ -0,0 +1,102 @@
++/*
++ * Copyright 2026 NXP
++ *
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * Multicore Fast Boot Entry Parser for TF-A
++ */
++
++#ifndef MULTICORE_FASTBOOT_H
++#define MULTICORE_FASTBOOT_H
++
++#include <stdint.h>
++#include <stdbool.h>
++
++/* Fastboot entry blob format definitions */
++#define FASTBOOT_ENTRIES_MAGIC      0x54425346  /* "FSBT" in ASCII (little-endian) */
++#define FASTBOOT_ENTRIES_VERSION    0x0001
++#define MAX_FASTBOOT_ENTRIES        16
++
++/* File header structure - binary format */
++typedef struct {
++	uint32_t magic;          /* Magic number to identify file type */
++	uint32_t total_size;     /* Total file size (header + entries) in bytes */
++	uint16_t version;        /* File format version */
++	uint16_t entry_count;    /* Number of boot entries */
++	uint32_t header_size;    /* Size of this header structure */
++	uint32_t entry_size;     /* Size of each entry structure */
++	uint32_t checksum;       /* CRC32 checksum of entries data */
++	uint32_t reserved[4];    /* Reserved for future use */
++} __attribute__((packed)) fastboot_entries_header_t;
++
++/* Boot entry structure - binary format */
++typedef struct {
++	uint32_t core_id;        /* Cortex-A Core ID */
++	uint64_t entry_addr;     /* Entry address for this core */
++	uint32_t flags;          /* Flags (reserved for future use) */
++	uint32_t reserved;       /* Reserved for alignment */
++} __attribute__((packed)) fastboot_boot_entry_t;
++
++/* Fastboot context structure */
++typedef struct {
++	bool valid;                              /* Is fastboot blob valid? */
++	uintptr_t blob_addr;                     /* Address of fastboot blob */
++	uint16_t entry_count;                    /* Number of entries */
++	fastboot_boot_entry_t entries[MAX_FASTBOOT_ENTRIES];  /* Parsed entries */
++} multicore_fastboot_ctx_t;
++
++/**
++ * Initialize and validate fastboot entry blob
++ * @param blob_addr: Physical address of the fastboot blob
++ * @return: 0 on success, negative error code on failure
++ */
++int multicore_fastboot_init(uintptr_t blob_addr);
++
++/**
++ * Check if fastboot blob is valid and available
++ * @return: true if valid, false otherwise
++ */
++bool multicore_fastboot_is_valid(void);
++
++/**
++ * Get the number of boot entries
++ * @return: Number of entries, or 0 if not valid
++ */
++uint16_t multicore_fastboot_get_entry_count(void);
++
++/**
++ * Get boot entry by index
++ * @param index: Entry index (0 to entry_count-1)
++ * @param entry: Output pointer to store entry data
++ * @return: 0 on success, negative error code on failure
++ */
++int multicore_fastboot_get_entry_by_index(uint16_t index, fastboot_boot_entry_t *entry);
++
++/**
++ * Get boot entry by core ID
++ * @param core_id: Cortex-A Core ID
++ * @param entry: Output pointer to store entry data
++ * @return: 0 on success, negative error code on failure
++ */
++int multicore_fastboot_get_entry_by_core_id(uint32_t core_id, fastboot_boot_entry_t *entry);
++
++/**
++ * Get entry address for a specific core
++ * @param core_id: Cortex-A Core ID
++ * @return: Entry address, or 0 if not found
++ */
++uint64_t multicore_fastboot_get_core_entry_addr(uint32_t core_id);
++
++/**
++ * Check if a core has a boot entry
++ * @param core_id: Cortex-A Core ID
++ * @return: true if entry exists, false otherwise
++ */
++bool multicore_fastboot_has_core_entry(uint32_t core_id);
++
++/**
++ * Dump fastboot entries for debugging
++ */
++void multicore_fastboot_dump(void);
++
++#endif /* MULTICORE_FASTBOOT_H */
+diff --git a/docs/getting_started/build-options.rst b/docs/getting_started/build-options.rst
+index 9700d9aa8..34e21bd5d 100644
+--- a/docs/getting_started/build-options.rst
++++ b/docs/getting_started/build-options.rst
+@@ -284,6 +284,12 @@ Common build options
+    builds, but this behaviour can be overridden in each platform's Makefile or
+    in the build command line.
+ 
++-  ``ENABLE_FASTBOOT``: This option controls whether to enable multicore fastboot.
++   Multicore Fastboot is a Heterogeneous Multicore feature for multicore MPU
++   platform. Currently BL31 could only boot non Secure image from master CPU Core,
++   this feature is to enable BL31 to boot multiple nonsecure images on multiple
++   secondary CPU Cores except master CPU Core.
++
+ -  ``ENABLE_FEAT_AMU``: Numeric value to enable Activity Monitor Unit
+    extensions. This flag can take the values 0 to 2, to align with the
+    ``ENABLE_FEAT`` mechanism. This is an optional architectural feature
+diff --git a/make_helpers/defaults.mk b/make_helpers/defaults.mk
+index 2b3e5a6cb..1a1b9d4c9 100644
+--- a/make_helpers/defaults.mk
++++ b/make_helpers/defaults.mk
+@@ -85,6 +85,10 @@ DISABLE_BIN_GENERATION		:= 0
+ # development platforms.
+ DYN_DISABLE_AUTH		:= 0
+ 
++# Enable FASTBOOT to kick secondary Cores to boot up according to
++# the boot entries in fastboot blob.
++ENABLE_FASTBOOT			:= 0
++
+ # Enable the Maximum Power Mitigation Mechanism on supporting cores.
+ ENABLE_MPMM			:= 0
+ 
+-- 
+2.43.0
+

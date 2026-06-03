@@ -1,0 +1,49 @@
+From 3f145d4aa98ef0a28401626e996ad8ed94f73bde Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Tue, 14 Apr 2026 10:11:30 +0800
+Subject: [PATCH 11/13] plat: imx93: add platform API plat_core_mpidr_by_idx
+
+Add platform specific API plat_core_mpidr_by_idx() which is used
+to get harware MPIDR value by through CPU Core's logicial ID.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
+---
+ include/plat/common/platform.h |  1 +
+ plat/imx/imx93/plat_topology.c | 10 ++++++++++
+ 2 files changed, 11 insertions(+)
+
+diff --git a/include/plat/common/platform.h b/include/plat/common/platform.h
+index 010068a86..6a4d957e5 100644
+--- a/include/plat/common/platform.h
++++ b/include/plat/common/platform.h
+@@ -104,6 +104,7 @@ int plat_get_image_source(unsigned int image_id,
+ uintptr_t plat_get_ns_image_entrypoint(void);
+ unsigned int plat_my_core_pos(void);
+ int plat_core_pos_by_mpidr(u_register_t mpidr);
++uint64_t plat_core_mpidr_by_idx(unsigned int core_idx);
+ int plat_get_mbedtls_heap(void **heap_addr, size_t *heap_size);
+ 
+ /*******************************************************************************
+diff --git a/plat/imx/imx93/plat_topology.c b/plat/imx/imx93/plat_topology.c
+index 739e2b9f3..7d118dfe9 100644
+--- a/plat/imx/imx93/plat_topology.c
++++ b/plat/imx/imx93/plat_topology.c
+@@ -37,3 +37,13 @@ int plat_core_pos_by_mpidr(u_register_t mpidr)
+ 
+ 	return cpu_id;
+ }
++
++uint64_t plat_core_mpidr_by_idx(unsigned int core_idx)
++{
++	if (core_idx >= PLATFORM_CORE_COUNT) {
++		return INVALID_MPID;
++	}
++
++	/* Only one cluster, so cluster id is always 0 */
++	return core_idx << MPIDR_AFF1_SHIFT;
++}
+\ No newline at end of file
+-- 
+2.43.0
+
