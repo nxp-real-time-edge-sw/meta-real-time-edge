@@ -12,14 +12,9 @@ Signed-off-by: Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
 
 Upstream-Status: Inappropriate [OE specific]
 ---
- lib/libxdp/Makefile | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/lib/libxdp/Makefile b/lib/libxdp/Makefile
-index 6d0f1f5..eefa457 100644
 --- a/lib/libxdp/Makefile
 +++ b/lib/libxdp/Makefile
-@@ -55,7 +55,7 @@ install: all
+@@ -61,7 +61,7 @@
  	$(Q)install -d -m 0755 $(DESTDIR)$(LIBDIR)/pkgconfig
  	$(Q)install -m 0644 $(LIB_HEADERS) $(DESTDIR)$(HDRDIR)/
  	$(Q)install -m 0644 $(PC_FILE) $(DESTDIR)$(LIBDIR)/pkgconfig/

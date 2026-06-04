@@ -9,17 +9,26 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=9ee53f8d06bbdb4c11b1557ecc4f8cd5 \
 
 DEPENDS += " libbpf clang-native"
 
-SRC_URI = "git://github.com/xdp-project/xdp-tools.git;branch=main;protocol=https \
+# Use the libbpf provided as a separate system recipe (sysroot) rather than the
+# libbpf git submodule bundled inside xdp-tools. This keeps a single libbpf in
+# the image and avoids duplicate/conflicting libbpf symbol versions. The
+# xdp-tools SRC_URI below intentionally does not fetch submodules, and
+# FORCE_SYSTEM_LIBBPF makes configure fail fast if the system libbpf cannot be
+# found instead of silently falling back to the (absent) submodule.
+SRC_URI = "git://github.com/xdp-project/xdp-tools.git;nobranch=1;protocol=https \
            file://0001-configure-properly-quote-the-toolchain-tools-variabl.patch \
            file://0002-libxdp-add-option-to-skip-building-xdp-bpf-objects-w.patch \
            file://0003-libxdp-do-not-preserve-ownership-when-copying-librar.patch \
            "
 
-SRCREV = "2236e8d286701f275881da77bf1eef43d53d370f"
+# xdp-tools v1.6.3
+SRCREV = "8fbad9f0af621a22aa87ff2520b3735915b1f0fd"
 
 inherit pkgconfig
 
 EXTRA_OEMAKE += "PREFIX=${prefix} DESTDIR=${D} SKIP_XDP_OBJS_BUILD=1"
+
+export FORCE_SYSTEM_LIBBPF = "1"
 
 do_compile () {
     oe_runmake libxdp

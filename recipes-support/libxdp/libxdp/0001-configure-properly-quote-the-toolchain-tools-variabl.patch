@@ -20,12 +20,12 @@ diff --git a/configure b/configure
 index 1c71ec9..26eeff9 100755
 --- a/configure
 +++ b/configure
-@@ -73,7 +73,7 @@ check_toolchain()
-     CLANG=$(find_tool clang "$CLANG")
-     LLC=$(find_tool llc "$LLC")
+@@ -70,7 +70,7 @@ check_toolchain()
  
--    for TOOL in $PKG_CONFIG $CC $LD $OBJCOPY $CLANG $LLC $M4 $READELF; do
-+    for TOOL in "$PKG_CONFIG" "$CC" "$LD" "$OBJCOPY" "$CLANG" "$LLC" "$M4" "$READELF"; do
+     CLANG=$(find_tool clang "$CLANG")
+ 
+-    for TOOL in $PKG_CONFIG $CC $OBJCOPY $CLANG $M4 $READELF; do
++    for TOOL in "$PKG_CONFIG" "$CC" "$OBJCOPY" "$CLANG" "$M4" "$READELF"; do
          if [ ! $(command -v ${TOOL} 2>/dev/null) ]; then
              echo "*** ERROR: Cannot find tool ${TOOL}" ;
              exit 1;
