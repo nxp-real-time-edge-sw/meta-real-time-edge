@@ -1,0 +1,2192 @@
+From 28e5b00ce53b1bba50ad43306084b2630fd70ca0 Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Wed, 8 Apr 2026 10:57:31 +0800
+Subject: [PATCH] iMX93: add fastboot support
+
+Fastboot could be used to boot multiple RTOS on Cortex-A Cores
+with less boot time.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+
+Upstream-Status: Pending
+---
+ Makefile                        |  25 +-
+ doc/README_FASTBOOT.md          | 524 ++++++++++++++++++
+ iMX93/fastboot_2_rtos.mak       |  19 +
+ iMX93/fastboot_uboot_1_rtos.mak |  15 +
+ iMX93/soc.mak                   | 117 ++++-
+ scripts/fastboot_helper.mak     |  59 +++
+ src/multicore_fastboot.c        | 905 ++++++++++++++++++++++++++++++++
+ src/multicore_fastboot.h        | 121 +++++
+ src/multicore_fastboot_tool.c   | 204 +++++++
+ 9 files changed, 1976 insertions(+), 13 deletions(-)
+ create mode 100644 doc/README_FASTBOOT.md
+ create mode 100644 iMX93/fastboot_2_rtos.mak
+ create mode 100644 iMX93/fastboot_uboot_1_rtos.mak
+ create mode 100644 scripts/fastboot_helper.mak
+ create mode 100644 src/multicore_fastboot.c
+ create mode 100644 src/multicore_fastboot.h
+ create mode 100644 src/multicore_fastboot_tool.c
+
+diff --git a/Makefile b/Makefile
+index f77d394..5f0f786 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,3 @@
+-
+ MKIMG = $(PWD)/mkimage_imx8
+ CC = gcc
+ CFLAGS ?= -g -O2 -Wall -std=c99 -static
+@@ -6,6 +5,11 @@ INCLUDE += $(CURR_DIR)/src
+ 
+ SRCS = src/imx8qxb0.c src/mkimage_imx8.c
+ 
++# Fastboot tool configuration
++FASTBOOT_TOOL = $(PWD)/multicore_fastboot_tool
++FASTBOOT_SRCS = src/multicore_fastboot.c src/multicore_fastboot_tool.c
++FASTBOOT_OBJS = src/multicore_fastboot.o src/multicore_fastboot_tool.o
++
+ ifneq ($(findstring iMX8M,$(SOC)),)
+ SOC_DIR = iMX8M
+ endif
+@@ -30,10 +34,10 @@ else
+ endif
+ 
+ #print out usage as the default target
+-all: $(MKIMG) help
++all: $(MKIMG) $(FASTBOOT_TOOL) help
+ 
+ clean:
+-	@rm -f $(MKIMG)
++	@rm -f $(MKIMG) $(FASTBOOT_TOOL) $(FASTBOOT_OBJS)
+ 	@rm -f src/build_info.h
+ ifdef O
+ 	@$(MAKE) --no-print-directory -C $(O) -f ../$(SOC_DIR)/soc.mak clean
+@@ -54,7 +58,19 @@ $(MKIMG): src/build_info.h $(SRCS)
+ 	@echo "Compiling mkimage_imx8"
+ 	$(CC) $(CFLAGS) $(SRCS) -o $(MKIMG) -I src
+ 
+-bin: $(MKIMG)
++$(FASTBOOT_TOOL): $(FASTBOOT_OBJS)
++	@echo "Linking multicore_fastboot_tool"
++	$(CC) $(CFLAGS) -o $(FASTBOOT_TOOL) $(FASTBOOT_OBJS)
++
++src/multicore_fastboot.o: src/multicore_fastboot.c src/multicore_fastboot.h src/mkimage_common.h
++	@echo "Compiling multicore_fastboot.c"
++	$(CC) $(CFLAGS) -I src -c src/multicore_fastboot.c -o $@
++
++src/multicore_fastboot_tool.o: src/multicore_fastboot_tool.c src/multicore_fastboot.h src/mkimage_common.h
++	@echo "Compiling multicore_fastboot_tool.c"
++	$(CC) $(CFLAGS) -I src -c src/multicore_fastboot_tool.c -o $@
++
++bin: $(MKIMG) $(FASTBOOT_TOOL)
+ 
+ src/build_info.h:
+ 	@echo -n '#define MKIMAGE_COMMIT 0x' > src/build_info.h
+@@ -86,4 +102,3 @@ help:
+ 	@echo
+ 	@echo "Typical flash cmd: dd if=iMX8QM/flash.bin of=/dev/<your device> bs=1k seek=33"
+ 	@echo
+-
+diff --git a/doc/README_FASTBOOT.md b/doc/README_FASTBOOT.md
+new file mode 100644
+index 0000000..3d9bc65
+--- /dev/null
++++ b/doc/README_FASTBOOT.md
+@@ -0,0 +1,524 @@
++# Multicore Fastboot User Guide
++
++## Table of Contents
++- [Overview](#overview)
++- [Quick Start](#quick-start)
++- [Configuration Methods](#configuration-methods)
++- [Usage Examples](#usage-examples)
++- [Configuration Reference](#configuration-reference)
++- [Troubleshooting](#troubleshooting)
++- [Advanced Usage](#advanced-usage)
++
++## Overview
++
++The Multicore Fastboot feature allows you to boot multiple images on different Cortex-A cores simultaneously on i.MX platforms. This is useful for:
++
++- Running RTOS on secondary cores alongside U-Boot/Linux on the primary core
++- Running multiple RTOS instances on different cores
++- Bare-metal applications on specific cores
++- Asymmetric Multi-Processing (AMP) configurations
++
++### What You Can Do
++
++- Boot up to one images on each Cortex-A Cores
++- Choose whether Core 0 runs U-Boot or a custom image
++- Mix and match: U-Boot + RTOS, multiple RTOS, or any combination
++- Configure via simple configuration files or command line parameters
++
++## Quick Start
++
++### Prerequisites
++
++1. **Configure U-Boot with fastboot support** (if running U-Boot on Core 0):
++   ```kconfig
++   CONFIG_EMBEDDED_FASTBOOT_BLOB=y
++   CONFIG_EMBEDDED_FASTBOOT_BLOB_SIZE=256
++   ```
++
++2. **Your binary images** ready (e.g., RTOS binaries, bare-metal apps)
++
++3. **Know your memory addresses** where each image should be loaded
++
++4. Copy the other ensential images to imx-mkimage/iMX93 folder, for example u-boot.bin, u-boot-spl.bin, bl31.bin, DDR firmware, etc.
++
++### Basic Example: U-Boot + One RTOS
++
++**Scenario**: Run U-Boot on Core 0, FreeRTOS on Core 1
++
++```bash
++# Method 1: Using configuration file
++cd imx-mkimage
++copy the image to be run on Core 1 to imx-mkimage/iMX93 folder and rename it to be ca55_rtos0_img.bin
++make clean
++make SOC=iMX93 flash_singleboot fastboot=fastboot_uboot_1_rtos.mak
++
++# Method 2: Using command line parameters
++cd imx-mkimage
++make clean
++make SOC=iMX93 flash_singleboot \
++     CA_CORE1_IMG=ca55_rtos0_img.bin \
++     CA_CORE1_IMG_LOAD_ADDR=0xD0000000
++```
++
++That's it! The build system will:
++1. Create fastboot entries for your cores
++2. Embed boot entryies into U-Boot
++3. Add all images to the boot container
++4. Generate `flash.bin` ready to flash
++
++### Basic Example: Multiple RTOS and no U-Boot
++
++**Scenario**: Run RTOS on Core 0, another RTOS on Core 1
++
++```bash
++# Method 1: Using configuration file
++cd imx-mkimage
++copy the image to be run on Core 1 to imx-mkimage/iMX93 folder and rename it to be ca55_rtos0_img.bin, and copy the image to be run on Core 0 to imx-mkimage/iMX93 folder and rename it to be ca55_rtos1_img.bin
++make clean
++make SOC=iMX93 flash_singleboot fastboot=fastboot_2_rtos.mak
++
++# Method 2: Using command line parameters
++cd imx-mkimage
++make clean
++make SOC=iMX93 flash_singleboot \
++     CA_CORE0_IMG=ca55_rtos1_img.bin \
++     CA_CORE0_IMG_LOAD_ADDR=0xD1000000 \
++     CA_CORE1_IMG=ca55_rtos0_img.bin \
++     CA_CORE1_IMG_LOAD_ADDR=0xD0000000
++```
++
++That's it! The build system will:
++1. Create fastboot entries for your cores
++2. Embed boot entries into dummy U-Boot as no U-Boot on Core 0
++3. Add all images to the boot container
++4. Generate `flash.bin` ready to flash
++
++### Flash to Device
++
++For i.MX93 boards, flash the generated `flash.bin`:
++```bash
++# For SD card (replace /dev/sdX with your SD card device)
++sudo dd if=flash.bin of=/dev/sdX bs=1k seek=32 conv=fsync
++
++# For eMMC (from U-Boot prompt)
++=> tftp ${loadaddr} flash.bin
++=> setexpr blkcnt ${filesize} + 0x1ff && setexpr blkcnt ${blkcnt} / 0x200
++=> mmc dev 0
++=> mmc write ${loadaddr} 0x40 ${blkcnt}
++```
++
++## Configuration Methods
++
++You have two ways to configure fastboot:
++
++### Method 1: Configuration File (Recommended for Reuse)
++
++For iMX93, it provides two default configuration file: `fastboot_uboot_1_rtos.mak` and `fastboot_2_rtos.mak`.
++Could use these default configuration files directly, or copy them and customize as needed:
++
++```makefile:iMX93/my_fastboot_config.mak
++# Core 0: FreeRTOS
++CA_CORE0_IMG = freertos.bin
++CA_CORE0_IMG_LOAD_ADDR = 0xD0000000
++
++# Core 1: Zephyr
++CA_CORE1_IMG = zephyr.bin
++CA_CORE1_IMG_LOAD_ADDR = 0xD1000000
++
++# Not Embed in U-Boot as Core0 not run U-Boot
++FASTBOOT_ENTRY_EMBEDDED_UBOOT = no
++```
++
++Build with:
++```bash
++make SOC=iMX93 flash_singleboot fastboot=my_fastboot_config.mak
++```
++
++### Method 2: Command Line Parameters (Quick Testing)
++
++Specify parameters directly on the command line:
++
++```bash
++make SOC=iMX93 flash_singleboot \
++     CA_CORE0_IMG=freertos.bin \
++     CA_CORE0_IMG_LOAD_ADDR=0xD0000000 \
++     CA_CORE1_IMG=zephyr.bin \
++     CA_CORE1_IMG_LOAD_ADDR=0xD1000000 \
++     FASTBOOT_ENTRY_EMBEDDED_UBOOT=no
++```
++
++### Method 3: Hybrid (Override Config File)
++
++Use a config file but override specific values:
++
++```bash
++make SOC=iMX93 flash_singleboot \
++     fastboot=my_fastboot_config.mak \
++     CA_CORE1_IMG_LOAD_ADDR=0xD2000000  # Override address
++```
++
++## Usage Examples
++
++### Example 1: U-Boot + Single RTOS
++
++**Scenario**: U-Boot on Core 0, FreeRTOS on Core 1
++
++```bash
++# Prepare your binary
++cp /path/to/freertos.bin iMX93/
++
++# Build
++make clean
++make SOC=iMX93 flash_singleboot \
++     CA_CORE1_IMG=freertos.bin \
++     CA_CORE1_IMG_LOAD_ADDR=0xD0000000
++```
++
++**What happens**:
++- Core 0: Boots U-Boot (default)
++- Core 1: Boots FreeRTOS at 0xD0000000
++- Fastboot entries embedded in U-Boot
++- `FASTBOOT_ENTRY_EMBEDDED_UBOOT` automatically set to `yes`
++
++### Example 2: Two Independent RTOS (No U-Boot)
++
++**Scenario**: RTOS on Core 0, another RTOS on Core 1
++
++```bash
++cd iMX93
++make clean
++make SOC=iMX93 flash_singleboot \
++     CA_CORE0_IMG=rtos_core0.bin \
++     CA_CORE0_IMG_LOAD_ADDR=0xD0000000 \
++     CA_CORE1_IMG=rtos_core1.bin \
++     CA_CORE1_IMG_LOAD_ADDR=0xD1000000
++```
++
++**What happens**:
++- Core 0: Boots rtos_core0.bin at 0xD0000000
++- Core 1: Boots rtos_core1.bin at 0xD1000000
++- No U-Boot involved
++- `FASTBOOT_ENTRY_EMBEDDED_UBOOT` automatically set to `no`
++- Dummy file created to carry fastboot entries
++
++### Example 3: U-Boot + Multiple RTOS
++
++**Scenario**: U-Boot on Core 0, RTOS on Cores 1, 2, and 3
++
++Create config file:
++```makefile:iMX9xx/fastboot_multi_rtos.mak
++# Core 1: Real-time processing
++CA_CORE1_IMG = rt_processing.bin
++CA_CORE1_IMG_LOAD_ADDR = 0xD0000000
++
++# Core 2: Data acquisition
++CA_CORE2_IMG = data_acq.bin
++CA_CORE2_IMG_LOAD_ADDR = 0xD1000000
++
++# Core 3: Communication
++CA_CORE3_IMG = comm.bin
++CA_CORE3_IMG_LOAD_ADDR = 0xD2000000
++
++# Embed in U-Boot
++FASTBOOT_ENTRY_EMBEDDED_UBOOT = yes
++```
++
++Build:
++```bash
++make clean
++make SOC=iMX9xx flash_singleboot fastboot=fastboot_multi_rtos.mak
++```
++
++## Configuration Reference
++
++### Required Parameters
++
++For each core you want to configure:
++
++| Parameter | Description | Example |
++|-----------|-------------|---------|
++| `CA_CORE<N>_IMG` | Path to binary image for Core N | `freertos.bin` |
++| `CA_CORE<N>_IMG_LOAD_ADDR` | Load address for Core N (hex) | `0xD0000000` |
++
++**Important**: If you set `CA_CORE<N>_IMG`, you **must** also set `CA_CORE<N>_IMG_LOAD_ADDR`, otherwise the build will fail.
++
++### Optional Parameters
++
++| Parameter | Description | Default | Values |
++|-----------|-------------|---------|--------|
++| `FASTBOOT_ENTRY_EMBEDDED_UBOOT` | Where to store fastboot entries | Auto | `yes` or `no` |
++
++**Default behavior**:
++- If `CA_CORE0_IMG` is **not set**: defaults to `yes` (Core 0 runs U-Boot, embed entries in U-Boot)
++- If `CA_CORE0_IMG` **is set**: defaults to `no` (Core 0 runs custom image, create dummy file)
++
++### Supported Cores
++
++You can configure any combination of cores from 0 to 15:
++- `CA_CORE0_IMG` / `CA_CORE0_IMG_LOAD_ADDR`
++- `CA_CORE1_IMG` / `CA_CORE1_IMG_LOAD_ADDR`
++- `CA_CORE2_IMG` / `CA_CORE2_IMG_LOAD_ADDR`
++- ...
++- `CA_CORE15_IMG` / `CA_CORE15_IMG_LOAD_ADDR`
++
++## Boot Sequence
++
++Understanding the boot sequence is important for system initialization and inter-core communication.
++
++The multicore fastboot follows a specific boot order to boot each core listed in the fastboot entries:
++1. **Secondary cores (Core 1, 2, 3, ...) boot first**
++- Boot in ascending order for each secondary core listed in fastboot entries: Core 1 → Core 2 → Core 3 → ...
++
++2. **Primary core (Core 0) boots last**
++- **Always boots last**, regardless of configuration
++- If `CA_CORE0_IMG` is not set: boots U-Boot
++- If `CA_CORE0_IMG` is set: boots the specified custom image
++
++## Troubleshooting
++
++### Error: Missing Load Address
++
++```
++ERROR: CA_CORE1_IMG is set to 'freertos.bin' but CA_CORE1_IMG_LOAD_ADDR is not set
++```
++
++**Solution**: Always specify both image and load address:
++```bash
++make SOC=iMX93 flash_singleboot \
++     CA_CORE1_IMG=freertos.bin \
++     CA_CORE1_IMG_LOAD_ADDR=0xD0000000  # Add this
++```
++
++### Error: Invalid Configuration
++
++```
++ERROR: FASTBOOT_ENTRY_EMBEDDED_UBOOT is set to 'no' but CA_CORE0_IMG is not set.
++```
++
++**Explanation**: If Core 0 runs U-Boot (no `CA_CORE0_IMG`), fastboot entries must be embedded in U-Boot.
++
++**Solution**: Either:
++1. Remove `FASTBOOT_ENTRY_EMBEDDED_UBOOT=no` (let it auto-default to `yes`)
++2. Or specify a Core 0 image:
++   ```bash
++   CA_CORE0_IMG=core0.bin \
++   CA_CORE0_IMG_LOAD_ADDR=0xD0000000 \
++   FASTBOOT_ENTRY_EMBEDDED_UBOOT=no
++   ```
++
++### Warning: Conflicting Configuration
++
++```
++WARNING: Conflicting fastboot configuration!
++CA_CORE0_IMG is set to: core0.bin
++FASTBOOT_ENTRY_EMBEDDED_UBOOT is set to: yes
++```
++
++**Explanation**: You specified a custom image for Core 0, but asked to embed entries in U-Boot. This is unusual.
++
++**Solution**: Change to `FASTBOOT_ENTRY_EMBEDDED_UBOOT=no`:
++```bash
++make SOC=iMX93 flash_singleboot \
++     CA_CORE0_IMG=core0.bin \
++     CA_CORE0_IMG_LOAD_ADDR=0xD0000000 \
++     FASTBOOT_ENTRY_EMBEDDED_UBOOT=no  # Change this
++```
++
++### Error: U-Boot Missing Reservation
++
++```
++Error: Invalid magic number at offset 0x10 in u-boot.bin
++       Target file does not have a valid fastboot entries reservation
++```
++
++**Cause**: Your U-Boot was not built with fastboot support.
++
++**Solution**: Rebuild U-Boot with:
++```kconfig
++CONFIG_EMBEDDED_FASTBOOT_BLOB=y
++CONFIG_EMBEDDED_FASTBOOT_BLOB_SIZE=256
++```
++
++**Verify**:
++```bash
++xxd -s 0x10 -l 4 u-boot.bin
++# Should show: 46 53 42 54 (magic number)
++```
++
++### Boot Fails After Flashing
++
++**Debug steps**:
++
++1. **Verify flash.bin**:
++   ```bash
++   ./mkimage_imx8 -soc IMX9 -parse iMX93/flash.bin
++   ```
++
++2. **Check fastboot entries**:
++   ```bash
++   ../multicore_fastboot_tool --dump u-boot-fastboot.bin --offset 0x10
++   ```
++
++3. **Verify addresses are in valid RAM**:
++   - Check your platform's memory map
++   - Ensure no overlap between images
++
++4. **Test without fastboot**:
++   ```bash
++   make clean
++   make SOC=iMX93 flash_singleboot  # Without fastboot
++   # If this works, issue is in fastboot configuration
++   ```
++
++5. **Check serial console output** for boot errors
++
++## Advanced Usage
++
++### Inspecting Fastboot Entries
++
++View entries in a built image:
++
++```bash
++cd imx-mkimage
++./multicore_fastboot_tool --dump iMX93/u-boot-fastboot.bin --offset 0x10
++```
++
++Output:
++```
++========================================
++Fastboot Entry File Dump
++========================================
++File: u-boot-fastboot.bin
++File size: 524288 bytes
++========================================
++
++Header Information:
++----------------------------------------
++Magic:           0x54425346 ('FSBT') [VALID]
++Version:         0x0001 [VALID]
++Entry count:     2
++Checksum:        0x12345678 [VALID]
++
++Boot Entries:
++----------------------------------------
++Core ID  Entry Address      Flags      Reserved
++-------  -----------------  ---------- ----------
++1        0x00000000D0000000 0x00000000 0x00000000
++2        0x00000000D1000000 0x00000000 0x00000000
++========================================
++```
++
++### Extracting Images from Container
++
++```bash
++cd iMX93
++./mkimage_imx8 -soc IMX9 -extract flash.bin
++cd extracted_imgs
++ls -lh
++```
++
++### Using Pre-built Configuration Files
++
++The repository includes ready-to-use configurations:
++
++```bash
++# U-Boot + 1 RTOS
++make SOC=iMX93 flash_singleboot fastboot=fastboot_uboot_1_rtos.mak
++
++# 2 RTOS (no U-Boot)
++make SOC=iMX93 flash_singleboot fastboot=fastboot_2_rtos.mak
++```
++
++Customize them by copying:
++```bash
++cd iMX93
++cp fastboot_uboot_1_rtos.mak my_config.mak
++# Edit my_config.mak
++make SOC=iMX93 flash_singleboot fastboot=my_config.mak
++```
++
++### Verifying Your Configuration
++
++Before building, verify your setup:
++
++```bash
++# Check that all required files exist
++ls -lh iMX93/freertos.bin
++ls -lh iMX93/u-boot.bin
++
++# Verify U-Boot has fastboot support (if using embedded mode)
++xxd -s 0x10 -l 4 iMX93/u-boot.bin
++
++# Do a dry run to see what will be built
++make SOC=iMX93 flash_singleboot \
++     CA_CORE1_IMG=freertos.bin \
++     CA_CORE1_IMG_LOAD_ADDR=0xD0000000 \
++     --dry-run
++```
++
++## Summary
++
++**Quick Reference**:
++
++| Scenario | Command |
++|----------|---------|
++| U-Boot + 1 RTOS | `make SOC=iMX93 flash_singleboot CA_CORE1_IMG=rtos.bin CA_CORE1_IMG_LOAD_ADDR=0xD0000000` |
++| 2 RTOS (no U-Boot) | `make SOC=iMX93 flash_singleboot CA_CORE0_IMG=rtos0.bin CA_CORE0_IMG_LOAD_ADDR=0xD0000000 CA_CORE1_IMG=rtos1.bin CA_CORE1_IMG_LOAD_ADDR=0xD1000000` |
++| Use config file | `make SOC=iMX93 flash_singleboot fastboot=my_config.mak` |
++| Inspect entries | `./multicore_fastboot_tool --dump u-boot-fastboot.bin --offset 0x10` |
++
++**Remember**:
++- Always specify both `IMG` and `IMG_LOAD_ADDR` for each core
++- Let `FASTBOOT_ENTRY_EMBEDDED_UBOOT` auto-default unless you have a specific reason
++- Verify your U-Boot has fastboot support if using embedded mode
++- Check memory addresses don't overlap
++- Use serial console to debug boot issues
++
++For more details on the binary format and internal implementation, see the [Technical Appendix](#technical-appendix) section.
++
++---
++
++## Technical Appendix
++
++### Binary File Format
++
++Fastboot entries are stored in a binary format with the following structure:
++
++**Header (64 bytes)**:
++- Magic: `0x54425346` ("FSBT")
++- Version: `0x0001`
++- Entry count: Number of cores configured
++- CRC32 checksum for integrity
++
++**Entry (24 bytes per core)**:
++- Core ID (0-15)
++- Entry address (64-bit)
++- Flags (reserved)
++
++### Embedding Location
++
++When `FASTBOOT_ENTRY_EMBEDDED_UBOOT=yes`:
++- Entries are embedded at offset `0x10` (16 bytes) in u-boot.bin
++- U-Boot must have a pre-allocated reservation area
++- Maximum size depends on `CONFIG_EMBEDDED_FASTBOOT_BLOB_SIZE`
++
++### Boot Flow
++
++1. TF-A (BL31) starts
++2. TF-A checks for fastboot entries at U-Boot offset 0x10
++3. If found and valid:
++   - TF-A loads each core's image
++   - TF-A sets entry points
++   - TF-A releases secondary cores
++4. TF-A boots Core 0 (U-Boot or custom image)
++5. All cores run simultaneously
++
++### File Locations
++
++After build:
++```
++iMX93/
++├── flash.bin                    # Final boot image
++├── u-boot-fastboot.bin          # U-Boot with embedded entries
++└── fastboot_entries.bin         # Standalone entries (if not embedded)
++```
+diff --git a/iMX93/fastboot_2_rtos.mak b/iMX93/fastboot_2_rtos.mak
+new file mode 100644
+index 0000000..98911e6
+--- /dev/null
++++ b/iMX93/fastboot_2_rtos.mak
+@@ -0,0 +1,19 @@
++# Fastboot configuration for 2 RTOS cores without U-Boot
++# If U-Boot is not used, set FASTBOOT_ENTRY_EMBEDDED to no,
++# and a dummy u-boot.bin will be generated to carry the fastboot entry.
++
++# Core 0 configuration, customerize these variables as needed
++CA_CORE0_IMG ?= ca55_rtos1_img.bin
++CA_CORE0_IMG_LOAD_ADDR ?= 0xD1000000
++
++# Core 1 configuration, customerize these variables as needed
++CA_CORE1_IMG ?= ca55_rtos0_img.bin
++CA_CORE1_IMG_LOAD_ADDR ?= 0xD0000000
++
++# Fastboot entry is not embeded into U-Boot image
++FASTBOOT_ENTRY_EMBEDDED_UBOOT ?= no
++
++# Note: When FASTBOOT_ENTRY_EMBEDDED_UBOOT=no, a dummy file with name
++# u-boot-fastboot.bin will be generated to carry the fastboot
++# entry data and the fastboot entry data will be written to this file
++# at the offset specified by FASTBOOT_ENTRY_DUMMY_OFFSET
+diff --git a/iMX93/fastboot_uboot_1_rtos.mak b/iMX93/fastboot_uboot_1_rtos.mak
+new file mode 100644
+index 0000000..249987b
+--- /dev/null
++++ b/iMX93/fastboot_uboot_1_rtos.mak
+@@ -0,0 +1,15 @@
++# Fastboot configuration for U-Boot + 1 RTOS core
++# If U-Boot is used, default Core0 image is U-Boot Image, so don't define core0 image
++# Embedded fastboot entry in U-Boot Image.
++
++# Core 0 is U-Boot by default, no need to configure it
++
++# Core 1 configuration, customerize these variables as needed
++CA_CORE1_IMG ?= ca55_rtos0_img.bin
++CA_CORE1_IMG_LOAD_ADDR ?= 0xD0000000
++
++# Fastboot entry is embeded into U-Boot image
++# When FASTBOOT_ENTRY_EMBEDDED_UBOOT=yes, the fastboot entry data
++# will be overlaid into u-boot.bin at the offset specified by
++# FASTBOOT_ENTRY_EMBEDDED_OFFSET
++FASTBOOT_ENTRY_EMBEDDED_UBOOT ?= yes
+diff --git a/iMX93/soc.mak b/iMX93/soc.mak
+index ebe3d01..0257332 100644
+--- a/iMX93/soc.mak
++++ b/iMX93/soc.mak
+@@ -13,6 +13,10 @@ QSPI_PACKER = ../scripts/fspi_packer.sh
+ QSPI_FCB_GEN = ../scripts/fspi_fcb_gen.sh
+ PAD_IMAGE = ../scripts/pad_image.sh
+ 
++# Fastboot support
++FASTBOOT_TOOL = ../multicore_fastboot_tool
++FASTBOOT_ENTRY_FILE = fastboot_entries.bin
++
+ ifneq ($(wildcard /usr/bin/rename.ul),)
+     RENAME = rename.ul
+ else
+@@ -26,6 +30,7 @@ AHAB_IMG = mx93$(LC_REVISION)-ahab-container.img
+ SPL_LOAD_ADDR ?= 0x2049A000
+ SPL_LOAD_ADDR_M33_VIEW ?= 0x3049A000
+ ATF_LOAD_ADDR ?= 0x204E0000
++UBOOT_IMG := u-boot.bin
+ UBOOT_LOAD_ADDR ?= 0x80200000
+ MCU_TCM_ADDR ?= 0x1FFE0000		# 128KB TCM
+ MCU_TCM_ADDR_ACORE_VIEW ?= 0x201E0000
+@@ -46,6 +51,87 @@ MCU_XIP_ADDR ?= 0x28032000 # Point entry of m33 in flexspi0 nor flash
+ M33_IMAGE_XIP_OFFSET ?= 0x31000 # 1st container offset is 0x1000 when boot device is flexspi0 nor
+ 				# flash, actually the m33_image.bin is in 0x31000 + 0x1000 = 0x32000.
+ 
++# Check if fastboot is enabled either by config file or direct parameters
++FASTBOOT_DIRECT_PARAMS := $(or $(CA_CORE0_IMG),$(CA_CORE1_IMG))
++
++ifneq ($(FASTBOOT_DIRECT_PARAMS),)
++    FASTBOOT_ENABLED = yes
++endif
++
++# Include fastboot configuration file if specified
++ifneq ($(fastboot),)
++    include $(fastboot)
++    FASTBOOT_ENABLED = yes
++endif
++
++ifeq ($(FASTBOOT_ENABLED),yes)
++    # Validate that each IMG has corresponding LOAD_ADDR
++    ifneq ($(CA_CORE0_IMG),)
++        ifeq ($(CA_CORE0_IMG_LOAD_ADDR),)
++            $(error ERROR: CA_CORE0_IMG is set to '$(CA_CORE0_IMG)' but CA_CORE0_IMG_LOAD_ADDR is not set)
++        endif
++    endif
++    ifneq ($(CA_CORE1_IMG),)
++        ifeq ($(CA_CORE1_IMG_LOAD_ADDR),)
++            $(error ERROR: CA_CORE1_IMG is set to '$(CA_CORE1_IMG)' but CA_CORE1_IMG_LOAD_ADDR is not set)
++        endif
++    endif
++
++    $(info include fastboot_helper.mak)
++    include ../scripts/fastboot_helper.mak
++    fastboot_entries_string := $(call build_fastboot_entries_string)
++
++    # Set default value for FASTBOOT_ENTRY_EMBEDDED_UBOOT if not specified
++    # If CA_CORE0_IMG is set, default to no (Core 0 will run different image)
++    # If CA_CORE0_IMG is not set, default to yes (Core 0 will run U-Boot)
++    ifeq ($(FASTBOOT_ENTRY_EMBEDDED_UBOOT),)
++        ifneq ($(CA_CORE0_IMG),)
++            FASTBOOT_ENTRY_EMBEDDED_UBOOT = no
++            $(info FASTBOOT_ENTRY_EMBEDDED_UBOOT not specified, defaulting to 'no' (CA_CORE0_IMG is set， Core 0 will run different image))
++        else
++            FASTBOOT_ENTRY_EMBEDDED_UBOOT = yes
++            $(info FASTBOOT_ENTRY_EMBEDDED_UBOOT not specified, defaulting to 'yes' (CA_CORE0_IMG is not set, Core 0 will run U-Boot))
++        endif
++    endif
++
++    # Check for conflicting configuration: CA_CORE0_IMG set but FASTBOOT_ENTRY_EMBEDDED_UBOOT=yes
++    ifneq ($(CA_CORE0_IMG),)
++        ifeq ($(FASTBOOT_ENTRY_EMBEDDED_UBOOT),yes)
++            $(warning ========================================)
++            $(warning WARNING: Conflicting fastboot configuration!)
++            $(warning CA_CORE0_IMG is set to: $(CA_CORE0_IMG))
++            $(warning FASTBOOT_ENTRY_EMBEDDED_UBOOT is set to: yes)
++            $(warning )
++            $(warning This means Core 0 will run '$(CA_CORE0_IMG)' instead of U-Boot,)
++            $(warning but fastboot entries will still be embedded in u-boot.bin.)
++            $(warning )
++            $(warning Recommended: Set FASTBOOT_ENTRY_EMBEDDED_UBOOT=no)
++            $(warning ========================================)
++        endif
++    endif
++
++    # Check for conflicting configuration: CA_CORE0_IMG not set but FASTBOOT_ENTRY_EMBEDDED_UBOOT=no
++    ifeq ($(CA_CORE0_IMG),)
++        ifeq ($(FASTBOOT_ENTRY_EMBEDDED_UBOOT),no)
++            $(error ERROR: FASTBOOT_ENTRY_EMBEDDED_UBOOT is set to 'no' but CA_CORE0_IMG is not set. \
++                    When Core 0 runs U-Boot (CA_CORE0_IMG not set), fastboot entries must be embedded in u-boot.bin. \
++                    Either set CA_CORE0_IMG or change FASTBOOT_ENTRY_EMBEDDED_UBOOT to 'yes')
++        endif
++    endif
++
++    UBOOT_IMG = u-boot-fastboot.bin
++    FASTBOOT_ENTRY_EMBEDDED_IMG = u-boot.bin
++    FASTBOOT_ENTRY_EMBEDDED_OFFSET = 16
++
++    ifeq ($(FASTBOOT_ENTRY_EMBEDDED_UBOOT),yes)
++        $(info Fastboot entry will be embedded in u-boot.bin at offset $(FASTBOOT_ENTRY_EMBEDDED_OFFSET))
++    else
++        $(info Fastboot entry will be embedded in dummy u-boot.bin at offset $(FASTBOOT_ENTRY_EMBEDDED_OFFSET))
++    endif
++else
++    FASTBOOT_ENABLED = no
++    fastboot_entries_string =
++endif
+ 
+ ###########################
+ # Append container macro
+@@ -99,9 +185,17 @@ u-boot-spl-ddr-qb.bin: u-boot-spl.bin $(lpddr4_imem_qb) $(lpddr4_dmem_qb) $(lpdd
+ 	@cat u-boot-spl-pad.bin lpddr4_pmu_qb_fw.bin $(lpddr4_qb_data) > u-boot-spl-ddr-qb.bin
+ 	@rm -f u-boot-spl-pad.bin lpddr4_pmu_qb_imem_pad.bin lpddr4_pmu_qb_dmem_pad.bin lpddr4_pmu_qb_fw.bin
+ 
+-u-boot-hash.bin: u-boot.bin
++u-boot-fastboot.bin:
++ifeq ($(FASTBOOT_ENABLED),yes)
++	$(call process_fastboot_entries)
++	@if [ "$(FASTBOOT_ENTRY_EMBEDDED_UBOOT)" = "no" ]; then \
++		dd if=${FASTBOOT_ENTRY_FILE} of=u-boot-fastboot.bin bs=1 seek=$(FASTBOOT_ENTRY_EMBEDDED_OFFSET) conv=notrunc; \
++	fi
++endif
++
++u-boot-hash.bin: ${UBOOT_IMG}
+ 	./$(MKIMG) -commit > head.hash
+-	@cat u-boot.bin head.hash > u-boot-hash.bin
++	@cat ${UBOOT_IMG} head.hash > u-boot-hash.bin
+ 
+ u-boot-atf.bin: u-boot-hash.bin bl31.bin
+ 	@cp bl31.bin u-boot-atf.bin
+@@ -126,17 +220,21 @@ u-boot-atf-container.img: bl31.bin u-boot-hash.bin
+ 				   -ap bl31.bin a55 $(ATF_LOAD_ADDR) \
+ 				   -ap u-boot-hash.bin a55 $(UBOOT_LOAD_ADDR) \
+ 				   -ap $(TEE) a55 $(TEE_LOAD_ADDR) \
++				   ${fastboot_entries_string} \
+ 				   -out u-boot-atf-container.img; \
+ 		else \
+ 			./$(MKIMG) -soc IMX9 -c \
+ 				   -ap bl31.bin a55 $(ATF_LOAD_ADDR) \
+ 				   -ap u-boot-hash.bin a55 $(UBOOT_LOAD_ADDR) \
+-				   -ap $(TEE) a55 $(TEE_LOAD_ADDR) -out u-boot-atf-container.img; \
++				   -ap $(TEE) a55 $(TEE_LOAD_ADDR) \
++				   ${fastboot_entries_string} \
++				   -out u-boot-atf-container.img; \
+ 		fi; \
+ 	else \
+ 		./$(MKIMG) -soc IMX9 -c \
+ 			   -ap bl31.bin a55 $(ATF_LOAD_ADDR) \
+ 			   -ap u-boot-hash.bin a55 $(UBOOT_LOAD_ADDR) \
++			   ${fastboot_entries_string} \
+ 			   -out u-boot-atf-container.img; \
+ 	fi
+ 
+@@ -148,18 +246,21 @@ u-boot-atf-container-spinand.img: bl31.bin u-boot-hash.bin
+ 				   -ap bl31.bin a55 $(ATF_LOAD_ADDR) \
+ 				   -ap u-boot-hash.bin a55 $(UBOOT_LOAD_ADDR) \
+ 				   -ap $(TEE) a55 $(TEE_LOAD_ADDR) \
++				   ${fastboot_entries_string} \
+ 				   -out u-boot-atf-container-spinand.img; \
+ 		else \
+ 			./$(MKIMG) -soc IMX9 -dev nand 4K -c \
+ 				   -ap bl31.bin a55 $(ATF_LOAD_ADDR) \
+ 				   -ap u-boot-hash.bin a55 $(UBOOT_LOAD_ADDR) \
+ 				   -ap $(TEE) a55 $(TEE_LOAD_ADDR) \
++				   ${fastboot_entries_string} \
+ 				   -out u-boot-atf-container-spinand.img; \
+ 		fi; \
+ 	else \
+ 		./$(MKIMG) -soc IMX9 -dev nand 4K -c \
+ 			   -ap bl31.bin a55 $(ATF_LOAD_ADDR) \
+ 			   -ap u-boot-hash.bin a55 $(UBOOT_LOAD_ADDR) \
++			   ${fastboot_entries_string} \
+ 			   -out u-boot-atf-container-spinand.img; \
+ 	fi
+ 
+@@ -172,7 +273,8 @@ flash_fw.bin: FORCE
+ 
+ .PHONY: clean nightly
+ clean:
+-	@rm -f $(MKIMG) u-boot-atf-container.img u-boot-spl-ddr.bin u-boot-spl-ddr-qb.bin u-boot-hash.bin
++	@rm -f $(MKIMG) u-boot-atf-container.img u-boot-spl-ddr.bin u-boot-spl-ddr-qb.bin u-boot-hash.bin u-boot-fastboot.bin ${FASTBOOT_ENTRY_FILE}
++	@rm -f $(FASTBOOT_ENTRY_FILE)
+ 	@rm -rf extracted_imgs
+ 	@echo "imx93 clean done"
+ 
+@@ -194,12 +296,12 @@ endif
+ delete_capsule_key:
+ 	@rm -rf CRT.*
+ 
+-overlay: u-boot.bin
+-	./$(MKIMG) -soc IMX9 -split u-boot.bin
++overlay: ${UBOOT_IMG}
++	./$(MKIMG) -soc IMX9 -split ${UBOOT_IMG}
+ 	dtc -@ -I dts -O dtb -o signature.dtbo signature.dts
+ 	fdtoverlay -i gen-uboot.dtb -o gen-uboot.dtb signature.dtbo
+ 	@cat gen-u-boot-nodtb.bin gen-uboot.dtb > gen-u-boot.bin
+-	@mv -f gen-u-boot.bin u-boot.bin
++	@mv -f gen-u-boot.bin ${UBOOT_IMG}
+ 
+ flash_singleboot_stmm_capsule: overlay flash_singleboot
+ 	./mkeficapsule flash.bin --monotonic-count 1 \
+@@ -213,7 +315,6 @@ flash_singleboot_stmm_capsule: overlay flash_singleboot
+ flash_singleboot_stmm: flash_singleboot_stmm_capsule
+ endif
+ 
+-
+ flash_singleboot: $(MKIMG) $(AHAB_IMG) $(SPL_A55_IMG) u-boot-atf-container.img
+ 	./$(MKIMG) -soc IMX9 -append $(AHAB_IMG) -c -ap $(SPL_A55_IMG) a55 $(SPL_LOAD_ADDR) -out flash.bin
+ 	$(call append_container,u-boot-atf-container.img,1)
+diff --git a/scripts/fastboot_helper.mak b/scripts/fastboot_helper.mak
+new file mode 100644
+index 0000000..3b4e22e
+--- /dev/null
++++ b/scripts/fastboot_helper.mak
+@@ -0,0 +1,59 @@
++###########################
++# Fastboot entry processing
++###########################
++define process_fastboot_entries
++	@echo "========================================="
++	@echo "Processing Fastboot Entries"
++	@echo "========================================="
++	@echo "Fastboot configuration: $(fastboot)"
++	@echo "FASTBOOT_ENTRY_EMBEDDED_UBOOT: $(FASTBOOT_ENTRY_EMBEDDED_UBOOT)"
++	@if [ "$(FASTBOOT_ENTRY_EMBEDDED_UBOOT)" = "yes" ]; then \
++		echo "Embedded image: $(FASTBOOT_ENTRY_EMBEDDED_IMG)"; \
++		echo "Embedded offset: $(FASTBOOT_ENTRY_EMBEDDED_OFFSET)"; \
++	else \
++		echo "Dummy image: $(FASTBOOT_ENTRY_DUMMY_IMG)"; \
++	fi
++	@echo "========================================="
++	@# Build command line arguments for the tool
++	@TOOL_ARGS=""; \
++	if [ -n "$(CA_CORE0_IMG)" ] && [ -n "$(CA_CORE0_IMG_LOAD_ADDR)" ]; then \
++		TOOL_ARGS="$$TOOL_ARGS --core 0 $(CA_CORE0_IMG_LOAD_ADDR)"; \
++	fi; \
++	if [ -n "$(CA_CORE1_IMG)" ] && [ -n "$(CA_CORE1_IMG_LOAD_ADDR)" ]; then \
++		TOOL_ARGS="$$TOOL_ARGS --core 1 $(CA_CORE1_IMG_LOAD_ADDR)"; \
++	fi; \
++	if [ -n "$(CA_CORE2_IMG)" ] && [ -n "$(CA_CORE2_IMG_LOAD_ADDR)" ]; then \
++		TOOL_ARGS="$$TOOL_ARGS --core 2 $(CA_CORE2_IMG_LOAD_ADDR)"; \
++	fi; \
++	if [ -n "$(CA_CORE3_IMG)" ] && [ -n "$(CA_CORE3_IMG_LOAD_ADDR)" ]; then \
++		TOOL_ARGS="$$TOOL_ARGS --core 3 $(CA_CORE3_IMG_LOAD_ADDR)"; \
++	fi; \
++	if [ -n "$(CA_CORE4_IMG)" ] && [ -n "$(CA_CORE4_IMG_LOAD_ADDR)" ]; then \
++		TOOL_ARGS="$$TOOL_ARGS --core 4 $(CA_CORE4_IMG_LOAD_ADDR)"; \
++	fi; \
++	if [ -n "$(CA_CORE5_IMG)" ] && [ -n "$(CA_CORE5_IMG_LOAD_ADDR)" ]; then \
++		TOOL_ARGS="$$TOOL_ARGS --core 5 $(CA_CORE5_IMG_LOAD_ADDR)"; \
++	fi; \
++	if [ "$(FASTBOOT_ENTRY_EMBEDDED_UBOOT)" = "yes" ]; then \
++		TOOL_ARGS="$$TOOL_ARGS --embed $(FASTBOOT_ENTRY_EMBEDDED_IMG) $(FASTBOOT_ENTRY_EMBEDDED_OFFSET)"; \
++	else \
++		TOOL_ARGS="$$TOOL_ARGS --output ${FASTBOOT_ENTRY_FILE}"; \
++	fi; \
++	echo "Calling: $(FASTBOOT_TOOL) $$TOOL_ARGS"; \
++	$(FASTBOOT_TOOL) $$TOOL_ARGS
++	@echo "========================================="
++endef
++
++###########################
++# Build fastboot entries string for mkimage
++###########################
++define build_fastboot_entries_string
++$(strip \
++	$(if $(CA_CORE0_IMG), -ap $(CA_CORE0_IMG) a55 $(CA_CORE0_IMG_LOAD_ADDR)) \
++	$(if $(CA_CORE1_IMG), -ap $(CA_CORE1_IMG) a55 $(CA_CORE1_IMG_LOAD_ADDR)) \
++	$(if $(CA_CORE2_IMG), -ap $(CA_CORE2_IMG) a55 $(CA_CORE2_IMG_LOAD_ADDR)) \
++	$(if $(CA_CORE3_IMG), -ap $(CA_CORE3_IMG) a55 $(CA_CORE3_IMG_LOAD_ADDR)) \
++	$(if $(CA_CORE4_IMG), -ap $(CA_CORE4_IMG) a55 $(CA_CORE4_IMG_LOAD_ADDR)) \
++	$(if $(CA_CORE5_IMG), -ap $(CA_CORE5_IMG) a55 $(CA_CORE5_IMG_LOAD_ADDR)) \
++)
++endef
+diff --git a/src/multicore_fastboot.c b/src/multicore_fastboot.c
+new file mode 100644
+index 0000000..c010508
+--- /dev/null
++++ b/src/multicore_fastboot.c
+@@ -0,0 +1,905 @@
++/*
++ * Copyright 2026 NXP
++ *
++ * SPDX-License-Identifier:     GPL-2.0+
++ *
++ * Multicore Fast Boot Entry Management
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <stdint.h>
++#include <stdbool.h>
++#include <sys/stat.h>
++#include <unistd.h>
++#include <inttypes.h>
++
++#include "multicore_fastboot.h"
++#include "mkimage_common.h"
++
++/* Internal state */
++static fastboot_boot_entry_t fastboot_entries[MAX_FASTBOOT_ENTRIES];
++static int fastboot_entry_count = 0;
++
++/* CRC32 lookup table and initialization flag */
++static uint32_t crc32_table[256];
++static bool crc32_table_initialized = false;
++
++/**
++ * Initialize CRC32 lookup table
++ */
++static void init_crc32_table(void)
++{
++	uint32_t polynomial = 0xEDB88320;
++
++	for (uint32_t i = 0; i < 256; i++) {
++		uint32_t crc = i;
++		for (uint32_t j = 0; j < 8; j++) {
++			if (crc & 1)
++				crc = (crc >> 1) ^ polynomial;
++			else
++				crc >>= 1;
++		}
++		crc32_table[i] = crc;
++	}
++	crc32_table_initialized = true;
++}
++
++/**
++ * Calculate CRC32 checksum
++ * @param data: Pointer to data
++ * @param length: Length of data in bytes
++ * @return: CRC32 checksum
++ */
++static uint32_t calculate_crc32(const void *data, size_t length)
++{
++	const uint8_t *bytes = (const uint8_t *)data;
++	uint32_t crc = 0xFFFFFFFF;
++
++	if (!crc32_table_initialized)
++		init_crc32_table();
++
++	for (size_t i = 0; i < length; i++) {
++		uint8_t index = (crc ^ bytes[i]) & 0xFF;
++		crc = (crc >> 8) ^ crc32_table[index];
++	}
++
++	return ~crc;
++}
++
++/**
++ * Comparison function for qsort - sort by core_id in ascending order
++ */
++static int compare_entries_by_core_id(const void *a, const void *b)
++{
++	const fastboot_boot_entry_t *entry_a = (const fastboot_boot_entry_t *)a;
++	const fastboot_boot_entry_t *entry_b = (const fastboot_boot_entry_t *)b;
++
++	if (entry_a->core_id < entry_b->core_id)
++		return -1;
++	else if (entry_a->core_id > entry_b->core_id)
++		return 1;
++	else
++		return 0;
++}
++
++/**
++ * Sort boot entries by core_id in ascending order
++ */
++void multicore_fastboot_sort_entries(void)
++{
++	if (fastboot_entry_count > 1) {
++		qsort(fastboot_entries, fastboot_entry_count, sizeof(fastboot_boot_entry_t),
++		      compare_entries_by_core_id);
++		fprintf(stdout, "Sorted %d Cortex-A Core boot entries by core ID\n",
++			fastboot_entry_count);
++	}
++}
++
++/**
++ * Initialize fastboot boot entries file
++ * Removes existing file if present and resets internal state
++ */
++void multicore_fastboot_init(void)
++{
++	/* Reset entry count and clear entries array */
++	fastboot_entry_count = 0;
++	memset(fastboot_entries, 0, sizeof(fastboot_entries));
++
++	fprintf(stdout, "Initialized Cortex-A Core boot entries\n");
++}
++
++/**
++ * Check if a core ID already exists
++ * @param core_id: Core ID to check
++ * @return: true if exists, false otherwise
++ */
++bool multicore_fastboot_is_core_duplicate(uint32_t core_id)
++{
++	for (int i = 0; i < fastboot_entry_count; i++) {
++		if (fastboot_entries[i].core_id == core_id) {
++			return true;
++		}
++	}
++	return false;
++}
++
++/**
++ * Add a new multicore boot entry
++ * Entries will be automatically sorted by core_id when written to file
++ * @param core_id: Cortex-A Core ID
++ * @param entry_addr: Entry address for this core
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_add_entry(uint32_t core_id, uint64_t entry_addr)
++{
++	/* Check for duplicate core ID */
++	if (multicore_fastboot_is_core_duplicate(core_id)) {
++		fprintf(stderr, "Error: Cortex-A Core ID %u overlaps with existing entry\n", 
++			core_id);
++		return -1;
++	}
++
++	/* Check if we exceeded max entries */
++	if (fastboot_entry_count >= MAX_FASTBOOT_ENTRIES) {
++		fprintf(stderr, "Error: Maximum number of Cortex-A Core entries (%d) exceeded\n",
++			MAX_FASTBOOT_ENTRIES);
++		return -1;
++	}
++
++	/* Store entry in memory */
++	fastboot_entries[fastboot_entry_count].core_id = core_id;
++	fastboot_entries[fastboot_entry_count].entry_addr = entry_addr;
++	fastboot_entries[fastboot_entry_count].flags = 0;
++	fastboot_entries[fastboot_entry_count].reserved = 0;
++	fastboot_entry_count++;
++
++	return 0;
++}
++
++/**
++ * Write all boot entries to binary file with header
++ * Entries are sorted by core_id before writing
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_write_file(void)
++{
++	return multicore_fastboot_write_file_custom(FASTBOOT_ENTRIES_FILE);
++}
++
++/**
++ * Write all boot entries to custom binary file with header
++ * Entries are sorted by core_id before writing
++ * @param filename: Output filename
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_write_file_custom(const char *filename)
++{
++	FILE *fp;
++	fastboot_entries_header_t header;
++	uint32_t checksum;
++	size_t entries_data_size;
++	fastboot_boot_entry_t *entries_le = NULL;
++	int ret = 0;
++
++	/* Sort entries by core_id before writing */
++	multicore_fastboot_sort_entries();
++
++	/* Calculate entries data size */
++	entries_data_size = fastboot_entry_count * sizeof(fastboot_boot_entry_t);
++
++	/* Allocate temporary buffer for little-endian conversion */
++	if (fastboot_entry_count > 0) {
++		entries_le = malloc(entries_data_size);
++		if (entries_le == NULL) {
++			fprintf(stderr, "Error: Memory allocation failed\n");
++			return -1;
++		}
++
++		/* Convert entries to little-endian */
++		for (int i = 0; i < fastboot_entry_count; i++) {
++			entries_le[i].core_id = cpu_to_le32(fastboot_entries[i].core_id);
++			entries_le[i].entry_addr = cpu_to_le64(fastboot_entries[i].entry_addr);
++			entries_le[i].flags = cpu_to_le32(fastboot_entries[i].flags);
++			entries_le[i].reserved = cpu_to_le32(fastboot_entries[i].reserved);
++		}
++
++		/* Calculate checksum of little-endian entries data */
++		checksum = calculate_crc32(entries_le, entries_data_size);
++	} else {
++		checksum = 0;
++	}
++
++	/* Prepare header in little-endian format */
++	memset(&header, 0, sizeof(header));
++	header.magic = cpu_to_le32(FASTBOOT_ENTRIES_MAGIC);
++	header.version = cpu_to_le16(FASTBOOT_ENTRIES_VERSION);
++	header.entry_count = cpu_to_le16(fastboot_entry_count);
++	header.header_size = cpu_to_le32(sizeof(fastboot_entries_header_t));
++	header.entry_size = cpu_to_le32(sizeof(fastboot_boot_entry_t));
++	header.total_size = cpu_to_le32(sizeof(header) + entries_data_size);
++	header.checksum = cpu_to_le32(checksum);
++
++	/* Open file for binary writing */
++	fp = fopen(filename, "wb");
++	if (fp == NULL) {
++		fprintf(stderr, "Error: Failed to create %s\n", filename);
++		if (entries_le)
++			free(entries_le);
++		return -1;
++	}
++
++	/* Write header */
++	if (fwrite(&header, sizeof(header), 1, fp) != 1) {
++		fprintf(stderr, "Error: Failed to write header to %s\n", filename);
++		ret = -1;
++		goto cleanup;
++	}
++
++	/* Write entries */
++	if (fastboot_entry_count > 0) {
++		if (fwrite(entries_le, entries_data_size, 1, fp) != 1) {
++			fprintf(stderr, "Error: Failed to write entries to %s\n", filename);
++			ret = -1;
++			goto cleanup;
++		}
++	}
++
++	fprintf(stdout, "\n");
++	fprintf(stdout, "========================================\n");
++	fprintf(stdout, "Cortex-A Core Boot Entries File Summary\n");
++	fprintf(stdout, "========================================\n");
++	fprintf(stdout, "File: %s\n", filename);
++	fprintf(stdout, "Format: Binary\n");
++	fprintf(stdout, "Magic: 0x%08X ('FSBT')\n", FASTBOOT_ENTRIES_MAGIC);
++	fprintf(stdout, "Version: 0x%04X\n", FASTBOOT_ENTRIES_VERSION);
++	fprintf(stdout, "Entry count: %d\n", fastboot_entry_count);
++	fprintf(stdout, "Header size: %zu bytes\n", sizeof(header));
++	fprintf(stdout, "Entry size: %zu bytes\n", sizeof(fastboot_boot_entry_t));
++	fprintf(stdout, "Total size: %zu bytes\n", sizeof(header) + entries_data_size);
++	fprintf(stdout, "Checksum: 0x%08X\n", checksum);
++	fprintf(stdout, "----------------------------------------\n");
++	fprintf(stdout, "Boot Entries (sorted by Core ID):\n");
++	for (int i = 0; i < fastboot_entry_count; i++) {
++		fprintf(stdout, "  Core %u: 0x%016" PRIX64 "\n",
++			fastboot_entries[i].core_id, fastboot_entries[i].entry_addr);
++	}
++	fprintf(stdout, "========================================\n");
++	fprintf(stdout, "\n");
++
++cleanup:
++	if (entries_le)
++		free(entries_le);
++	fclose(fp);
++	return ret;
++}
++
++/**
++ * Embed boot entries file into target file at specified offset
++ * Creates a new file with "-fastboot" suffix instead of overwriting the original
++ * Validates that the target file has proper magic number and sufficient reserved space
++ * @param entries_file: Path to the boot entries file
++ * @param target_file: Path to the target file to embed into
++ * @param offset: Offset in target file where entries should be embedded
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_embed_entries(const char *entries_file, const char *target_file, uint64_t offset)
++{
++	FILE *entries_fp = NULL;
++	FILE *target_fp = NULL;
++	FILE *output_fp = NULL;
++	struct stat st;
++	uint8_t *entries_data = NULL;
++	uint8_t *target_data = NULL;
++	char *output_file = NULL;
++	size_t target_size;
++	uint32_t magic_at_offset;
++	uint32_t reserved_space_size;
++	int ret = 0;
++
++	/* Check if entries file exists */
++	if (stat(entries_file, &st) != 0) {
++		fprintf(stderr, "Error: Entries file %s does not exist\n", entries_file);
++		return -1;
++	}
++
++	size_t entries_size = st.st_size;
++
++	/* Check if target file exists */
++	if (stat(target_file, &st) != 0) {
++		fprintf(stderr, "Error: Target file %s does not exist\n", target_file);
++		return -1;
++	}
++
++	target_size = st.st_size;
++
++	/* Check if offset is valid (need at least 8 bytes for magic + size) */
++	if (offset + 8 > (uint64_t)target_size) {
++		fprintf(stderr, "Error: Offset 0x%llX + 8 bytes exceeds target file size %zu\n",
++			(unsigned long long)offset, target_size);
++		return -1;
++	}
++
++	/* Read target file */
++	target_fp = fopen(target_file, "rb");
++	if (target_fp == NULL) {
++		fprintf(stderr, "Error: Failed to open %s for reading\n", target_file);
++		return -1;
++	}
++
++	target_data = malloc(target_size);
++	if (target_data == NULL) {
++		fprintf(stderr, "Error: Memory allocation failed\n");
++		fclose(target_fp);
++		return -1;
++	}
++
++	if (fread(target_data, target_size, 1, target_fp) != 1) {
++		fprintf(stderr, "Error: Failed to read %s\n", target_file);
++		free(target_data);
++		fclose(target_fp);
++		return -1;
++	}
++	fclose(target_fp);
++	target_fp = NULL;
++
++	/* Validate magic number at offset (first 32 bits) */
++	memcpy(&magic_at_offset, target_data + offset, sizeof(uint32_t));
++	magic_at_offset = le32_to_cpu(magic_at_offset);
++
++	if (magic_at_offset != FASTBOOT_ENTRIES_MAGIC) {
++		fprintf(stderr, "Error: Invalid magic number at offset 0x%llX in %s\n",
++			(unsigned long long)offset, target_file);
++		fprintf(stderr, "       Found: 0x%08X, Expected: 0x%08X ('FSBT')\n",
++			magic_at_offset, FASTBOOT_ENTRIES_MAGIC);
++		fprintf(stderr, "       Target file does not have a valid fastboot entries reservation\n");
++		fprintf(stderr, "       If target file is a u-boot image, ensure CONFIG_EMBEDDED_FASTBOOT_BLOB is enabled\n");
++		free(target_data);
++		return -1;
++	}
++
++	/* Read reserved space size (second 32 bits) */
++	memcpy(&reserved_space_size, target_data + offset + 4, sizeof(uint32_t));
++	reserved_space_size = le32_to_cpu(reserved_space_size);
++
++	/* Validate reserved space size */
++	if (reserved_space_size < entries_size) {
++		fprintf(stderr, "Error: Reserved space at offset 0x%llX is too small\n",
++			(unsigned long long)offset);
++		fprintf(stderr, "       Reserved: %u bytes, Required: %zu bytes\n",
++			reserved_space_size, entries_size);
++		fprintf(stderr, "       Entries file is %zu bytes larger than reserved space\n",
++			entries_size - reserved_space_size);
++		fprintf(stderr, "       If target file is a u-boot image, set reserved space by\n");
++		fprintf(stderr, "       configuring CONFIG_EMBEDDED_FASTBOOT_BLOB_SIZE\n");
++		free(target_data);
++		return -1;
++	}
++
++	/* Check if reserved space fits within target file */
++	if (offset + reserved_space_size > (uint64_t)target_size) {
++		fprintf(stderr, "Error: Reserved space (offset 0x%llX + %u bytes) exceeds target file size %zu\n",
++			(unsigned long long)offset, reserved_space_size, target_size);
++		free(target_data);
++		return -1;
++	}
++
++	fprintf(stdout, "Validation successful:\n");
++	fprintf(stdout, "  Magic number: 0x%08X ('FSBT') [VALID]\n", magic_at_offset);
++	fprintf(stdout, "  Reserved space: %u bytes\n", reserved_space_size);
++	fprintf(stdout, "  Entries size: %zu bytes\n", entries_size);
++	fprintf(stdout, "  Available space: %u bytes\n", reserved_space_size - (uint32_t)entries_size);
++	fprintf(stdout, "\n");
++
++	/* Generate output filename with "-fastboot" suffix */
++	const char *dot = strrchr(target_file, '.');
++	const char *slash = strrchr(target_file, '/');
++
++	/* Find the position to insert "-fastboot" */
++	if (dot != NULL && (slash == NULL || dot > slash)) {
++		/* Has extension: insert before the extension */
++		size_t base_len = dot - target_file;
++		size_t ext_len = strlen(dot);
++		output_file = malloc(base_len + strlen("-fastboot") + ext_len + 1);
++		if (output_file == NULL) {
++			fprintf(stderr, "Error: Memory allocation failed\n");
++			free(target_data);
++			return -1;
++		}
++		strncpy(output_file, target_file, base_len);
++		output_file[base_len] = '\0';
++		strcat(output_file, "-fastboot");
++		strcat(output_file, dot);
++	} else {
++		/* No extension: append "-fastboot" to the end */
++		output_file = malloc(strlen(target_file) + strlen("-fastboot") + 1);
++		if (output_file == NULL) {
++			fprintf(stderr, "Error: Memory allocation failed\n");
++			free(target_data);
++			return -1;
++		}
++		strcpy(output_file, target_file);
++		strcat(output_file, "-fastboot");
++	}
++
++	/* Read entries file */
++	entries_fp = fopen(entries_file, "rb");
++	if (entries_fp == NULL) {
++		fprintf(stderr, "Error: Failed to open %s\n", entries_file);
++		ret = -1;
++		goto cleanup;
++	}
++
++	entries_data = malloc(entries_size);
++	if (entries_data == NULL) {
++		fprintf(stderr, "Error: Memory allocation failed\n");
++		ret = -1;
++		goto cleanup;
++	}
++
++	if (fread(entries_data, entries_size, 1, entries_fp) != 1) {
++		fprintf(stderr, "Error: Failed to read %s\n", entries_file);
++		ret = -1;
++		goto cleanup;
++	}
++	fclose(entries_fp);
++	entries_fp = NULL;
++
++	/* Embed entries data into target data at specified offset */
++	memcpy(target_data + offset, entries_data, entries_size);
++
++	/* Write to output file */
++	output_fp = fopen(output_file, "wb");
++	if (output_fp == NULL) {
++		fprintf(stderr, "Error: Failed to create %s\n", output_file);
++		ret = -1;
++		goto cleanup;
++	}
++
++	if (fwrite(target_data, target_size, 1, output_fp) != 1) {
++		fprintf(stderr, "Error: Failed to write to %s\n", output_file);
++		ret = -1;
++		goto cleanup;
++	}
++
++	fprintf(stdout, "Successfully embedded %zu bytes from %s into %s at offset 0x%llX\n",
++		entries_size, entries_file, output_file, (unsigned long long)offset);
++	fprintf(stdout, "Output file: %s\n", output_file);
++
++cleanup:
++	if (entries_data)
++		free(entries_data);
++	if (target_data)
++		free(target_data);
++	if (output_file)
++		free(output_file);
++	if (entries_fp)
++		fclose(entries_fp);
++	if (target_fp)
++		fclose(target_fp);
++	if (output_fp)
++		fclose(output_fp);
++
++	return ret;
++}
++
++
++/**
++ * Read and validate boot entries from binary file
++ * @param filename: Path to the boot entries file
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_read_file(const char *filename)
++{
++	FILE *fp;
++	fastboot_entries_header_t header;
++	struct stat st;
++	uint32_t calculated_checksum;
++	size_t entries_data_size;
++	fastboot_boot_entry_t *entries_le = NULL;
++	int ret = 0;
++
++	/* Check if file exists */
++	if (stat(filename, &st) != 0) {
++		fprintf(stderr, "Error: File %s does not exist\n", filename);
++		return -1;
++	}
++
++	/* Open file for binary reading */
++	fp = fopen(filename, "rb");
++	if (fp == NULL) {
++		fprintf(stderr, "Error: Failed to open %s\n", filename);
++		return -1;
++	}
++
++	/* Read header */
++	if (fread(&header, sizeof(header), 1, fp) != 1) {
++		fprintf(stderr, "Error: Failed to read header from %s\n", filename);
++		ret = -1;
++		goto cleanup;
++	}
++
++	/* Convert header fields from little-endian */
++	header.magic = le32_to_cpu(header.magic);
++	header.version = le16_to_cpu(header.version);
++	header.entry_count = le16_to_cpu(header.entry_count);
++	header.header_size = le32_to_cpu(header.header_size);
++	header.entry_size = le32_to_cpu(header.entry_size);
++	header.total_size = le32_to_cpu(header.total_size);
++	header.checksum = le32_to_cpu(header.checksum);
++
++	/* Validate magic number */
++	if (header.magic != FASTBOOT_ENTRIES_MAGIC) {
++		fprintf(stderr, "Error: Invalid magic number in %s (0x%08X, expected 0x%08X)\n",
++			filename, header.magic, FASTBOOT_ENTRIES_MAGIC);
++		fprintf(stderr, "       This is not a valid Cortex-A Core boot entries file\n");
++		ret = -1;
++		goto cleanup;
++	}
++
++	/* Validate version */
++	if (header.version != FASTBOOT_ENTRIES_VERSION) {
++		fprintf(stderr, "Warning: File version mismatch (0x%04X, expected 0x%04X)\n",
++			header.version, FASTBOOT_ENTRIES_VERSION);
++	}
++
++	/* Validate header size */
++	if (header.header_size != sizeof(fastboot_entries_header_t)) {
++		fprintf(stderr, "Error: Header size mismatch (%u, expected %zu)\n",
++			header.header_size, sizeof(fastboot_entries_header_t));
++		ret = -1;
++		goto cleanup;
++	}
++
++	/* Validate entry size */
++	if (header.entry_size != sizeof(fastboot_boot_entry_t)) {
++		fprintf(stderr, "Error: Entry size mismatch (%u, expected %zu)\n",
++			header.entry_size, sizeof(fastboot_boot_entry_t));
++		ret = -1;
++		goto cleanup;
++	}
++
++	/* Validate file size */
++	if ((size_t)st.st_size != header.total_size) {
++		fprintf(stderr, "Error: File size mismatch (%ld bytes, expected %u bytes)\n",
++			(long)st.st_size, header.total_size);
++		fprintf(stderr, "       File may be corrupted or incomplete\n");
++		ret = -1;
++		goto cleanup;
++	}
++
++	/* Validate entry count */
++	if (header.entry_count > MAX_FASTBOOT_ENTRIES) {
++		fprintf(stderr, "Error: Too many entries (%u, maximum %d)\n",
++			header.entry_count, MAX_FASTBOOT_ENTRIES);
++		ret = -1;
++		goto cleanup;
++	}
++
++	/* Read entries */
++	entries_data_size = header.entry_count * sizeof(fastboot_boot_entry_t);
++	if (header.entry_count > 0) {
++		entries_le = malloc(entries_data_size);
++		if (entries_le == NULL) {
++			fprintf(stderr, "Error: Memory allocation failed\n");
++			ret = -1;
++			goto cleanup;
++		}
++
++		if (fread(entries_le, entries_data_size, 1, fp) != 1) {
++			fprintf(stderr, "Error: Failed to read entries from %s\n", filename);
++			ret = -1;
++			goto cleanup;
++		}
++
++		/* Calculate and verify checksum before conversion */
++		calculated_checksum = calculate_crc32(entries_le, entries_data_size);
++
++		if (calculated_checksum != header.checksum) {
++			fprintf(stderr, "Error: Checksum mismatch (0x%08X, expected 0x%08X)\n",
++				calculated_checksum, header.checksum);
++			fprintf(stderr, "       File may be corrupted\n");
++			ret = -1;
++			goto cleanup;
++		}
++
++		/* Convert entries from little-endian */
++		for (int i = 0; i < header.entry_count; i++) {
++			fastboot_entries[i].core_id = le32_to_cpu(entries_le[i].core_id);
++			fastboot_entries[i].entry_addr = le64_to_cpu(entries_le[i].entry_addr);
++			fastboot_entries[i].flags = le32_to_cpu(entries_le[i].flags);
++			fastboot_entries[i].reserved = le32_to_cpu(entries_le[i].reserved);
++		}
++	}
++
++	fastboot_entry_count = header.entry_count;
++
++	fprintf(stdout, "\n");
++	fprintf(stdout, "========================================\n");
++	fprintf(stdout, "Successfully validated: %s\n", filename);
++	fprintf(stdout, "========================================\n");
++	fprintf(stdout, "Magic: 0x%08X (valid)\n", header.magic);
++	fprintf(stdout, "Version: 0x%04X\n", header.version);
++	fprintf(stdout, "Entry count: %d\n", header.entry_count);
++	fprintf(stdout, "Checksum: 0x%08X (valid)\n", header.checksum);
++	fprintf(stdout, "File size: %u bytes (valid)\n", header.total_size);
++	fprintf(stdout, "----------------------------------------\n");
++	fprintf(stdout, "Boot Entries:\n");
++	for (int i = 0; i < fastboot_entry_count; i++) {
++		fprintf(stdout, "  Core %u: 0x%016" PRIX64 "\n",
++			fastboot_entries[i].core_id, fastboot_entries[i].entry_addr);
++	}
++	fprintf(stdout, "========================================\n");
++	fprintf(stdout, "\n");
++
++cleanup:
++	if (entries_le)
++		free(entries_le);
++	fclose(fp);
++	return ret;
++}
++
++/**
++ * Dump and display fastboot entries from file or embedded location
++ * @param filename: Path to the file containing fastboot entries
++ * @param offset: Offset in file where entries are located (0 for standalone file)
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_dump_file(const char *filename, uint64_t offset)
++{
++	FILE *fp;
++	fastboot_entries_header_t header;
++	struct stat st;
++	uint32_t calculated_checksum;
++	size_t entries_data_size;
++	fastboot_boot_entry_t *entries_le = NULL;
++	fastboot_boot_entry_t *entries = NULL;
++	int ret = 0;
++
++	/* Check if file exists */
++	if (stat(filename, &st) != 0) {
++		fprintf(stderr, "Error: File %s does not exist\n", filename);
++		return -1;
++	}
++
++	/* Check if offset is valid */
++	if (offset >= (uint64_t)st.st_size) {
++		fprintf(stderr, "Error: Offset 0x%llX exceeds file size %ld\n",
++			(unsigned long long)offset, (long)st.st_size);
++		return -1;
++	}
++
++	/* Open file for binary reading */
++	fp = fopen(filename, "rb");
++	if (fp == NULL) {
++		fprintf(stderr, "Error: Failed to open %s\n", filename);
++		return -1;
++	}
++
++	/* Seek to offset if specified */
++	if (offset > 0) {
++		if (fseek(fp, offset, SEEK_SET) != 0) {
++			fprintf(stderr, "Error: Failed to seek to offset 0x%llX\n",
++				(unsigned long long)offset);
++			fclose(fp);
++			return -1;
++		}
++	}
++
++	/* Read header */
++	if (fread(&header, sizeof(header), 1, fp) != 1) {
++		fprintf(stderr, "Error: Failed to read header from %s at offset 0x%llX\n",
++			filename, (unsigned long long)offset);
++		ret = -1;
++		goto cleanup;
++	}
++
++	/* Convert header fields from little-endian */
++	header.magic = le32_to_cpu(header.magic);
++	header.version = le16_to_cpu(header.version);
++	header.entry_count = le16_to_cpu(header.entry_count);
++	header.header_size = le32_to_cpu(header.header_size);
++	header.entry_size = le32_to_cpu(header.entry_size);
++	header.total_size = le32_to_cpu(header.total_size);
++	header.checksum = le32_to_cpu(header.checksum);
++
++	/* Print file information */
++	fprintf(stdout, "\n");
++	fprintf(stdout, "========================================\n");
++	fprintf(stdout, "Fastboot Entry File Dump\n");
++	fprintf(stdout, "========================================\n");
++	fprintf(stdout, "File: %s\n", filename);
++	if (offset > 0) {
++		fprintf(stdout, "Offset: 0x%llX (%llu bytes)\n",
++			(unsigned long long)offset, (unsigned long long)offset);
++	}
++	fprintf(stdout, "File size: %ld bytes\n", (long)st.st_size);
++	fprintf(stdout, "========================================\n");
++	fprintf(stdout, "\n");
++
++	/* Print header information */
++	fprintf(stdout, "Header Information:\n");
++	fprintf(stdout, "----------------------------------------\n");
++	fprintf(stdout, "Magic:           0x%08X", header.magic);
++	if (header.magic == FASTBOOT_ENTRIES_MAGIC) {
++		fprintf(stdout, " ('ACOR') [VALID]\n");
++	} else {
++		fprintf(stdout, " [INVALID - Expected 0x%08X]\n", FASTBOOT_ENTRIES_MAGIC);
++		fprintf(stderr, "\nError: Invalid magic number - not a fastboot entry file\n");
++		ret = -1;
++		goto cleanup;
++	}
++
++	fprintf(stdout, "Version:         0x%04X", header.version);
++	if (header.version == FASTBOOT_ENTRIES_VERSION) {
++		fprintf(stdout, " [VALID]\n");
++	} else {
++		fprintf(stdout, " [WARNING - Expected 0x%04X]\n", FASTBOOT_ENTRIES_VERSION);
++	}
++
++	fprintf(stdout, "Entry count:     %u\n", header.entry_count);
++	fprintf(stdout, "Header size:     %u bytes", header.header_size);
++	if (header.header_size == sizeof(fastboot_entries_header_t)) {
++		fprintf(stdout, " [VALID]\n");
++	} else {
++		fprintf(stdout, " [INVALID - Expected %zu]\n", sizeof(fastboot_entries_header_t));
++	}
++
++	fprintf(stdout, "Entry size:      %u bytes", header.entry_size);
++	if (header.entry_size == sizeof(fastboot_boot_entry_t)) {
++		fprintf(stdout, " [VALID]\n");
++	} else {
++		fprintf(stdout, " [INVALID - Expected %zu]\n", sizeof(fastboot_boot_entry_t));
++	}
++
++	fprintf(stdout, "Total size:      %u bytes\n", header.total_size);
++	fprintf(stdout, "Checksum:        0x%08X\n", header.checksum);
++	fprintf(stdout, "Reserved[0]:     0x%08X\n", le32_to_cpu(header.reserved[0]));
++	fprintf(stdout, "Reserved[1]:     0x%08X\n", le32_to_cpu(header.reserved[1]));
++	fprintf(stdout, "Reserved[2]:     0x%08X\n", le32_to_cpu(header.reserved[2]));
++	fprintf(stdout, "Reserved[3]:     0x%08X\n", le32_to_cpu(header.reserved[3]));
++	fprintf(stdout, "\n");
++
++	/* Validate entry count */
++	if (header.entry_count > MAX_FASTBOOT_ENTRIES) {
++		fprintf(stderr, "Error: Too many entries (%u, maximum %d)\n",
++			header.entry_count, MAX_FASTBOOT_ENTRIES);
++		ret = -1;
++		goto cleanup;
++	}
++
++	/* Read entries */
++	entries_data_size = header.entry_count * sizeof(fastboot_boot_entry_t);
++	if (header.entry_count > 0) {
++		entries_le = malloc(entries_data_size);
++		entries = malloc(entries_data_size);
++		if (entries_le == NULL || entries == NULL) {
++			fprintf(stderr, "Error: Memory allocation failed\n");
++			ret = -1;
++			goto cleanup;
++		}
++
++		if (fread(entries_le, entries_data_size, 1, fp) != 1) {
++			fprintf(stderr, "Error: Failed to read entries from %s\n", filename);
++			ret = -1;
++			goto cleanup;
++		}
++
++		/* Calculate and verify checksum before conversion */
++		calculated_checksum = calculate_crc32(entries_le, entries_data_size);
++
++		fprintf(stdout, "Checksum Verification:\n");
++		fprintf(stdout, "----------------------------------------\n");
++		fprintf(stdout, "Stored checksum:     0x%08X\n", header.checksum);
++		fprintf(stdout, "Calculated checksum: 0x%08X\n", calculated_checksum);
++		if (calculated_checksum == header.checksum) {
++			fprintf(stdout, "Status:              VALID\n");
++		} else {
++			fprintf(stdout, "Status:              INVALID (Data may be corrupted)\n");
++		}
++		fprintf(stdout, "\n");
++
++		/* Convert entries from little-endian */
++		for (int i = 0; i < header.entry_count; i++) {
++			entries[i].core_id = le32_to_cpu(entries_le[i].core_id);
++			entries[i].entry_addr = le64_to_cpu(entries_le[i].entry_addr);
++			entries[i].flags = le32_to_cpu(entries_le[i].flags);
++			entries[i].reserved = le32_to_cpu(entries_le[i].reserved);
++		}
++
++		/* Print entries */
++		fprintf(stdout, "Boot Entries:\n");
++		fprintf(stdout, "----------------------------------------\n");
++		fprintf(stdout, "%-8s %-18s %-10s %-10s\n", "Core ID", "Entry Address", "Flags", "Reserved");
++		fprintf(stdout, "%-8s %-18s %-10s %-10s\n", "-------", "-----------------", "----------", "----------");
++
++		for (int i = 0; i < header.entry_count; i++) {
++			fprintf(stdout, "%-8u 0x%016" PRIX64 " 0x%08X 0x%08X\n",
++				entries[i].core_id,
++				entries[i].entry_addr,
++				entries[i].flags,
++				entries[i].reserved);
++		}
++		fprintf(stdout, "\n");
++
++		/* Print hex dump of raw entry data */
++		fprintf(stdout, "Raw Entry Data (Hex Dump):\n");
++		fprintf(stdout, "----------------------------------------\n");
++		uint8_t *raw_data = (uint8_t *)entries_le;
++		for (size_t i = 0; i < entries_data_size; i += 16) {
++			fprintf(stdout, "%04zX: ", i);
++
++			/* Print hex bytes */
++			for (size_t j = 0; j < 16; j++) {
++				if (i + j < entries_data_size) {
++					fprintf(stdout, "%02X ", raw_data[i + j]);
++				} else {
++					fprintf(stdout, "   ");
++				}
++				if (j == 7) fprintf(stdout, " ");
++			}
++
++			fprintf(stdout, " |");
++
++			/* Print ASCII representation */
++			for (size_t j = 0; j < 16; j++) {
++				if (i + j < entries_data_size) {
++					uint8_t c = raw_data[i + j];
++					fprintf(stdout, "%c", (c >= 32 && c <= 126) ? c : '.');
++				}
++			}
++
++			fprintf(stdout, "|\n");
++		}
++		fprintf(stdout, "\n");
++	} else {
++		fprintf(stdout, "No boot entries found in file.\n\n");
++	}
++
++	fprintf(stdout, "========================================\n");
++	fprintf(stdout, "Dump completed successfully\n");
++	fprintf(stdout, "========================================\n");
++	fprintf(stdout, "\n");
++
++cleanup:
++	if (entries_le)
++		free(entries_le);
++	if (entries)
++		free(entries);
++	fclose(fp);
++	return ret;
++}
++
++/**
++ * Parse core ID from string like "core0", "core1", etc.
++ * @param str: Input string
++ * @param core_id: Output core ID
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_parse_core_id(const char *str, uint32_t *core_id)
++{
++	if (strncmp(str, "core", 4) != 0) {
++		return -1;
++	}
++
++	char *endptr;
++	long id = strtol(str + 4, &endptr, 10);
++
++	/* Check if conversion was successful and entire string was consumed */
++	if (*endptr != '\0' || id < 0 || id > 255) {
++		return -1;
++	}
++
++	*core_id = (uint32_t)id;
++	return 0;
++}
++
++/**
++ * Get the number of boot entries
++ * @return: Number of entries
++ */
++int multicore_fastboot_get_entry_count(void)
++{
++	return fastboot_entry_count;
++}
+diff --git a/src/multicore_fastboot.h b/src/multicore_fastboot.h
+new file mode 100644
+index 0000000..c630651
+--- /dev/null
++++ b/src/multicore_fastboot.h
+@@ -0,0 +1,121 @@
++/*
++ * Copyright 2026 NXP
++ *
++ * SPDX-License-Identifier:     GPL-2.0+
++ *
++ * Multicore Fast Boot Entry Management
++ */
++
++#ifndef _MULTICORE_FASTBOOT_H_
++#define _MULTICORE_FASTBOOT_H_
++
++#include <stdint.h>
++#include <stdbool.h>
++
++/* Multicore boot entries file format definitions */
++#define FASTBOOT_ENTRIES_MAGIC      0x54425346  /* "FSBT" in ASCII (little-endian) */
++#define FASTBOOT_ENTRIES_VERSION    0x0001
++#define FASTBOOT_ENTRIES_FILE  "fastboot_entries.bin"
++#define MAX_FASTBOOT_ENTRIES        16
++
++/* File header structure - binary format */
++typedef struct {
++	uint32_t magic;          /* Magic number to identify file type */
++	uint32_t total_size;     /* Total file size (header + entries) in bytes */
++	uint16_t version;        /* File format version */
++	uint16_t entry_count;    /* Number of boot entries */
++	uint32_t header_size;    /* Size of this header structure */
++	uint32_t entry_size;     /* Size of each entry structure */
++	uint32_t checksum;       /* CRC32 checksum of entries data */
++	uint32_t reserved[4];    /* Reserved for future use */
++} __attribute__((packed)) fastboot_entries_header_t;
++
++/* Boot entry structure - binary format */
++typedef struct {
++	uint32_t core_id;        /* Cortex-A Core ID */
++	uint64_t entry_addr;     /* Entry address for this core */
++	uint32_t flags;          /* Flags (reserved for future use) */
++	uint32_t reserved;       /* Reserved for alignment */
++} __attribute__((packed)) fastboot_boot_entry_t;
++
++/**
++ * Initialize fastboot boot entries file
++ * Removes existing file if present and resets internal state
++ */
++void multicore_fastboot_init(void);
++
++/**
++ * Add a new multicore boot entry
++ * Entries will be automatically sorted by core_id when written to file
++ * @param core_id: Cortex-A Core ID
++ * @param entry_addr: Entry address for this core
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_add_entry(uint32_t core_id, uint64_t entry_addr);
++
++/**
++ * Write all boot entries to binary file with header
++ * Entries are sorted by core_id before writing
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_write_file(void);
++
++/**
++ * Write all boot entries to custom binary file with header
++ * Entries are sorted by core_id before writing
++ * @param filename: Output filename
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_write_file_custom(const char *filename);
++
++/**
++ * Embed boot entries file into target file at specified offset
++ * @param entries_file: Path to the boot entries file
++ * @param target_file: Path to the target file to embed into
++ * @param offset: Offset in target file where entries should be embedded
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_embed_entries(const char *entries_file, const char *target_file, uint64_t offset);
++
++/**
++ * Read and validate boot entries from binary file
++ * @param filename: Path to the boot entries file
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_read_file(const char *filename);
++
++/**
++ * Dump and display fastboot entries from file or embedded location
++ * @param filename: Path to the file containing fastboot entries
++ * @param offset: Offset in file where entries are located (0 for standalone file)
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_dump_file(const char *filename, uint64_t offset);
++
++/**
++ * Parse core ID from string like "core0", "core1", etc.
++ * @param str: Input string
++ * @param core_id: Output core ID
++ * @return: 0 on success, -1 on error
++ */
++int multicore_fastboot_parse_core_id(const char *str, uint32_t *core_id);
++
++/**
++ * Get the number of boot entries
++ * @return: Number of entries
++ */
++int multicore_fastboot_get_entry_count(void);
++
++/**
++ * Check if a core ID already exists
++ * @param core_id: Core ID to check
++ * @return: true if exists, false otherwise
++ */
++bool multicore_fastboot_is_core_duplicate(uint32_t core_id);
++
++/**
++ * Sort boot entries by core_id in ascending order
++ */
++void multicore_fastboot_sort_entries(void);
++
++#endif /* _MULTICORE_FASTBOOT_H_ */
+diff --git a/src/multicore_fastboot_tool.c b/src/multicore_fastboot_tool.c
+new file mode 100644
+index 0000000..a27d451
+--- /dev/null
++++ b/src/multicore_fastboot_tool.c
+@@ -0,0 +1,204 @@
++/*
++ * Copyright 2026 NXP
++ *
++ * SPDX-License-Identifier:     GPL-2.0+
++ *
++ * Cortex-A Core Fast Boot Entry Tool - Command Line Interface
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <stdint.h>
++#include <stdbool.h>
++
++#include "multicore_fastboot.h"
++
++static void print_usage(const char *prog_name)
++{
++	fprintf(stderr, "\nUsage: %s [options]\n\n", prog_name);
++	fprintf(stderr, "Options:\n");
++	fprintf(stderr, "  --core <id> <addr>         - Add boot entry (id: 0-15, addr: hex)\n");
++	fprintf(stderr, "  --output <filename>        - Output filename (default: fastboot_entries.dat)\n");
++	fprintf(stderr, "  --embed <file> <offset>    - Embed entries into file at offset\n");
++	fprintf(stderr, "  --dump <filename>          - Dump and display fastboot entry file contents\n");
++	fprintf(stderr, "  --help                     - Show this help message\n");
++	fprintf(stderr, "\nExamples:\n");
++	fprintf(stderr, "  Create entries:\n");
++	fprintf(stderr, "    %s --core 0 0xD0000000 --core 1 0xD1000000\n", prog_name);
++	fprintf(stderr, "    %s --core 1 0xD0000000 --embed u-boot.bin 0x2000\n", prog_name);
++	fprintf(stderr, "    %s --core 0 0xD0000000 --output custom_entries.dat\n", prog_name);
++	fprintf(stderr, "\n  Dump entries:\n");
++	fprintf(stderr, "    %s --dump fastboot_entries.dat\n", prog_name);
++	fprintf(stderr, "    %s --dump u-boot.bin --offset 0x2000\n\n", prog_name);
++}
++
++int main(int argc, char *argv[])
++{
++	const char *output_file = FASTBOOT_ENTRIES_FILE;
++	const char *embed_file = NULL;
++	const char *dump_file = NULL;
++	uint64_t embed_offset = 0;
++	uint64_t dump_offset = 0;
++	int core_count = 0;
++	bool dump_mode = false;
++
++	if (argc < 2) {
++		fprintf(stderr, "Error: No arguments specified\n");
++		print_usage(argv[0]);
++		return EXIT_FAILURE;
++	}
++
++	/* Parse command line arguments */
++	for (int i = 1; i < argc; i++) {
++		if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
++			print_usage(argv[0]);
++			return EXIT_SUCCESS;
++		}
++		else if (strcmp(argv[i], "--dump") == 0) {
++			if (i + 1 >= argc) {
++				fprintf(stderr, "Error: --dump requires 1 argument: <filename>\n");
++				return EXIT_FAILURE;
++			}
++			dump_file = argv[i + 1];
++			dump_mode = true;
++			i += 1;
++		}
++		else if (strcmp(argv[i], "--offset") == 0) {
++			if (i + 1 >= argc) {
++				fprintf(stderr, "Error: --offset requires 1 argument: <offset>\n");
++				return EXIT_FAILURE;
++			}
++			char *endptr;
++			dump_offset = strtoull(argv[i + 1], &endptr, 0);
++			if (*endptr != '\0') {
++				fprintf(stderr, "Error: Invalid offset format '%s'\n", argv[i + 1]);
++				return EXIT_FAILURE;
++			}
++			i += 1;
++		}
++		else if (strcmp(argv[i], "--core") == 0) {
++			if (dump_mode) {
++				fprintf(stderr, "Error: Cannot use --core in dump mode\n");
++				return EXIT_FAILURE;
++			}
++
++			if (i + 2 >= argc) {
++				fprintf(stderr, "Error: --core requires 2 arguments: <id> <addr>\n");
++				return EXIT_FAILURE;
++			}
++
++			/* Parse core ID */
++			char *endptr;
++			long core_id = strtol(argv[i + 1], &endptr, 10);
++			if (*endptr != '\0' || core_id < 0 || core_id > 15) {
++				fprintf(stderr, "Error: Invalid core ID '%s' (must be 0-15)\n", argv[i + 1]);
++				return EXIT_FAILURE;
++			}
++
++			/* Parse entry address */
++			uint64_t entry_addr = strtoull(argv[i + 2], &endptr, 16);
++			if (*endptr != '\0') {
++				fprintf(stderr, "Error: Invalid address format '%s'\n", argv[i + 2]);
++				fprintf(stderr, "Expected hexadecimal address (e.g., 0xD0000000)\n");
++				return EXIT_FAILURE;
++			}
++
++			/* Initialize on first core */
++			if (core_count == 0) {
++				multicore_fastboot_init();
++			}
++
++			/* Add entry */
++			if (multicore_fastboot_add_entry((uint32_t)core_id, entry_addr) != 0) {
++				fprintf(stderr, "Error: Failed to add boot entry for core %ld\n", core_id);
++				return EXIT_FAILURE;
++			}
++
++			fprintf(stdout, "Added boot entry: Core %ld @ 0x%016llX\n", 
++				core_id, (unsigned long long)entry_addr);
++			core_count++;
++
++			i += 2; /* Skip the next 2 arguments */
++		}
++		else if (strcmp(argv[i], "--output") == 0) {
++			if (dump_mode) {
++				fprintf(stderr, "Error: Cannot use --output in dump mode\n");
++				return EXIT_FAILURE;
++			}
++			if (i + 1 >= argc) {
++				fprintf(stderr, "Error: --output requires 1 argument: <filename>\n");
++				return EXIT_FAILURE;
++			}
++			output_file = argv[i + 1];
++			i += 1;
++		}
++		else if (strcmp(argv[i], "--embed") == 0) {
++			if (dump_mode) {
++				fprintf(stderr, "Error: Cannot use --embed in dump mode\n");
++				return EXIT_FAILURE;
++			}
++			if (i + 2 >= argc) {
++				fprintf(stderr, "Error: --embed requires 2 arguments: <file> <offset>\n");
++				return EXIT_FAILURE;
++			}
++			embed_file = argv[i + 1];
++
++			char *endptr;
++			embed_offset = strtoull(argv[i + 2], &endptr, 0);
++			if (*endptr != '\0') {
++				fprintf(stderr, "Error: Invalid offset format '%s'\n", argv[i + 2]);
++				return EXIT_FAILURE;
++			}
++			i += 2;
++		}
++		else {
++			fprintf(stderr, "Error: Unknown option '%s'\n", argv[i]);
++			print_usage(argv[0]);
++			return EXIT_FAILURE;
++		}
++	}
++
++	/* Handle dump mode */
++	if (dump_mode) {
++		if (dump_file == NULL) {
++			fprintf(stderr, "Error: No file specified for dump\n");
++			return EXIT_FAILURE;
++		}
++
++		if (multicore_fastboot_dump_file(dump_file, dump_offset) != 0) {
++			fprintf(stderr, "Error: Failed to dump fastboot entries from %s\n", dump_file);
++			return EXIT_FAILURE;
++		}
++
++		return EXIT_SUCCESS;
++	}
++
++	/* Handle create mode */
++	/* Check if any cores were added */
++	if (core_count == 0) {
++		fprintf(stderr, "Error: No boot entries specified\n");
++		fprintf(stderr, "Use --core option to add at least one entry\n");
++		return EXIT_FAILURE;
++	}
++
++	/* Write entries to file */
++	if (multicore_fastboot_write_file_custom(output_file) != 0) {
++		fprintf(stderr, "Error: Failed to write boot entries file\n");
++		return EXIT_FAILURE;
++	}
++
++	fprintf(stdout, "Boot entries written to %s successfully\n", output_file);
++
++	/* Embed into target file if requested */
++	if (embed_file != NULL) {
++		if (multicore_fastboot_embed_entries(output_file, embed_file, embed_offset) != 0) {
++			fprintf(stderr, "Error: Failed to embed entries into %s\n", embed_file);
++			return EXIT_FAILURE;
++		}
++		fprintf(stdout, "Entries embedded into %s at offset 0x%llX\n",
++			embed_file, (unsigned long long)embed_offset);
++	}
++
++	return EXIT_SUCCESS;
++}
+-- 
+2.43.0
+
