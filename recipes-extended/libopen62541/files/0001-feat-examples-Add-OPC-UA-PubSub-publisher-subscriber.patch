@@ -1,63 +1,31 @@
-From 1d4a4d26847443c396d92d4ae62b87f495dd7d49 Mon Sep 17 00:00:00 2001
+From 9dace99fb8098ff5de9d87848b43ce2ce5c43530 Mon Sep 17 00:00:00 2001
 From: Tao Yang <Tao.Yang1@nxp.com>
-Date: Thu, 15 Sep 2022 13:21:11 +0800
-Subject: [PATCH] feat(examples): Add pubsub TSN sample applications
+Date: Thu, 4 Jun 2026 12:04:19 +0900
+Subject: [PATCH] feat(examples): Add OPC UA PubSub publisher/subscriber example
+ applications
+
+Add the NXP real-time OPC UA PubSub publisher and subscriber example
+applications (and their thermal/timestamp helpers) to the realtime
+examples, wired into examples/CMakeLists.txt.
 
 Upstream-Status: Pending
----
- CMakeLists.txt                                |    5 +
- examples/CMakeLists.txt                       |   17 +-
- .../pubsub_realtime/opcua_pubsub_publisher.c  | 1029 +++++++++++++++
- .../pubsub_realtime/opcua_pubsub_subscriber.c | 1115 +++++++++++++++++
- examples/pubsub_realtime/thermal.c            |   42 +
- examples/pubsub_realtime/thermal.h            |   12 +
- examples/pubsub_realtime/timestamp.c          |  196 +++
- examples/pubsub_realtime/timestamp.h          |   16 +
- .../open62541/plugin/pubsub_ethernet.h        |    4 +
- plugins/ua_pubsub_ethernet.c                  |   32 +
- 10 files changed, 2465 insertions(+), 3 deletions(-)
- create mode 100644 examples/pubsub_realtime/opcua_pubsub_publisher.c
- create mode 100644 examples/pubsub_realtime/opcua_pubsub_subscriber.c
- create mode 100644 examples/pubsub_realtime/thermal.c
- create mode 100644 examples/pubsub_realtime/thermal.h
- create mode 100644 examples/pubsub_realtime/timestamp.c
- create mode 100644 examples/pubsub_realtime/timestamp.h
 
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 9184b943..bb5a4c3f 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -278,6 +278,11 @@ option(UA_ENABLE_PUBSUB_ETH_UADP_XDP "Enable Subscribe UADP over Ethernet using
- mark_as_advanced(UA_ENABLE_PUBSUB_ETH_UADP_XDP)
- option(UA_ENABLE_PUBSUB_ETH_UADP_ETF "Use ETF implementation for the ETH_UADP publish" OFF)
- mark_as_advanced(UA_ENABLE_PUBSUB_ETH_UADP_ETF)
-+option(UA_ENABLE_PUBSUB_ETH_RX_HW_TIMESTAMP "Enable getting Rx HW timestamp on Ethernet packet" OFF)
-+mark_as_advanced(UA_ENABLE_PUBSUB_ETH_RX_HW_TIMESTAMP)
-+if(UA_ENABLE_PUBSUB_ETH_RX_HW_TIMESTAMP)
-+    add_definitions(-DUA_ENABLE_PUBSUB_ETH_RX_HW_TIMESTAMP)
-+endif()
- 
- if(UA_ENABLE_PUBSUB_ETH_UADP)
-     if(NOT CMAKE_SYSTEM MATCHES "Linux")
 diff --git a/examples/CMakeLists.txt b/examples/CMakeLists.txt
-index 70c84560..268e2486 100644
+index dccf097dd..bf50581a9 100644
 --- a/examples/CMakeLists.txt
 +++ b/examples/CMakeLists.txt
-@@ -199,7 +199,7 @@ add_subdirectory(nodeset)
- if(UA_ENABLE_PUBSUB)
+@@ -209,7 +209,6 @@ if(UA_ENABLE_PUBSUB)
      add_example(tutorial_pubsub_connection pubsub/tutorial_pubsub_connection.c)
      add_example(tutorial_pubsub_publish pubsub/tutorial_pubsub_publish.c)
--	add_example(server_pubsub_publisher_iop pubsub/server_pubsub_publisher_iop.c)
-+    add_example(server_pubsub_publisher_iop pubsub/server_pubsub_publisher_iop.c)
+     add_example(tutorial_pubsub_publish_raw pubsub/tutorial_pubsub_publish_raw.c)
+-    add_example(tutorial_pubsub_subscribe_raw pubsub/tutorial_pubsub_subscribe_raw.c)
+     add_example(server_pubsub_publisher_iop pubsub/server_pubsub_publisher_iop.c)
      add_example(server_pubsub_publish_rt_level pubsub/server_pubsub_publisher_rt_level.c)
-     add_example(server_pubsub_rt_information_model pubsub/server_pubsub_rt_field_information_model.c)
-     if(CMAKE_SYSTEM MATCHES "Linux")
-@@ -210,9 +210,20 @@ if(UA_ENABLE_PUBSUB)
-         endif()
-     endif()
-     if (BUILD_SHARED_LIBS)
--        message(WARNING "PubSub subscriber API is not finished. Build option BUILD_SHARED_LIBS is not supported. Skipping PubSub subscriber examples.")
-+        if(CMAKE_SYSTEM MATCHES "Linux")
+     add_example(server_pubsub_publish_rt_level_raw pubsub/server_pubsub_publisher_rt_level_raw.c)
+@@ -231,6 +230,16 @@ if(UA_ENABLE_PUBSUB)
+             add_example(pubsub_TSN_loopback_single_thread pubsub_realtime/pubsub_TSN_loopback_single_thread.c)
+             target_link_libraries(pubsub_TSN_publisher_multiple_thread rt pthread)
+             target_link_libraries(pubsub_TSN_loopback_single_thread rt pthread)
 +            include_directories(${PROJECT_SOURCE_DIR}/../src/server)
 +            add_example(opcua_pubsub_publisher pubsub_realtime/opcua_pubsub_publisher.c)
 +            target_sources(opcua_pubsub_publisher PRIVATE pubsub_realtime/thermal.c)
@@ -68,19 +36,15 @@ index 70c84560..268e2486 100644
 +                target_sources(opcua_pubsub_subscriber PRIVATE pubsub_realtime/timestamp.c)
 +                target_link_libraries(opcua_pubsub_subscriber rt pthread)
 +            endif()
-+        endif()
-     else (NOT BUILD_SHARED_LIBS)
--	    add_example(server_pubsub_subscribe_rt_level pubsub/server_pubsub_subscriber_rt_level.c)
-+        add_example(server_pubsub_subscribe_rt_level pubsub/server_pubsub_subscriber_rt_level.c)
-         if(UA_ENABLE_AMALGAMATION)
-             message(WARNING "PubSub subscriber tutorial (preview) can not be used with AMALGAMATION. Skipping tutorial_pubsub_subscribe.")
-         else(NOT UA_ENABLE_AMALGAMATION)
+             if(UA_ENABLE_PUBSUB_ETH_UADP)
+                 add_subdirectory(pubsub_realtime/nodeset)
+                 add_example(pubsub_TSN_publisher pubsub_realtime/pubsub_TSN_publisher.c)
 diff --git a/examples/pubsub_realtime/opcua_pubsub_publisher.c b/examples/pubsub_realtime/opcua_pubsub_publisher.c
 new file mode 100644
-index 00000000..9fc2802a
+index 000000000..ff299be2f
 --- /dev/null
 +++ b/examples/pubsub_realtime/opcua_pubsub_publisher.c
-@@ -0,0 +1,1029 @@
+@@ -0,0 +1,1024 @@
 +/* This work is licensed under a Creative Commons CCZero 1.0 Universal License.
 + * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
 + *
@@ -380,7 +344,9 @@ index 00000000..9fc2802a
 +static UA_StatusCode
 +addPubSubApplicationCallback(UA_Server *server, UA_NodeId identifier,
 +                             UA_ServerCallback callback, void *data,
-+                             UA_Double interval_ms, UA_UInt64 *callbackId) {
++                             UA_Double interval_ms,
++                             UA_DateTime *baseTime, UA_TimerPolicy timerPolicy,
++                             UA_UInt64 *callbackId) {
 +    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,
 +                "Publisher cycle time : %lf ms", interval_ms);
 +
@@ -413,7 +379,8 @@ index 00000000..9fc2802a
 +
 +static UA_StatusCode
 +changePubSubApplicationCallbackInterval(UA_Server *server, UA_NodeId identifier,
-+                                        UA_UInt64 callbackId, UA_Double interval_ms) {
++                                        UA_UInt64 callbackId, UA_Double interval_ms,
++                                        UA_DateTime *baseTime, UA_TimerPolicy timerPolicy) {
 +    /* Callback interval need not be modified as it is thread based implementation.
 +     * The thread uses nanosleep for calculating cycle time and modification in
 +     * nanosleep value changes cycle time */
@@ -745,7 +712,7 @@ index 00000000..9fc2802a
 +    writerGroupConfig.encodingMimeType = UA_PUBSUB_ENCODING_UADP;
 +    writerGroupConfig.rtLevel = UA_PUBSUB_RT_FIXED_SIZE;
 +    writerGroupConfig.pubsubManagerCallback.addCustomCallback = addPubSubApplicationCallback;
-+    writerGroupConfig.pubsubManagerCallback.changeCustomCallbackInterval = changePubSubApplicationCallbackInterval;
++    writerGroupConfig.pubsubManagerCallback.changeCustomCallback = changePubSubApplicationCallbackInterval;
 +    writerGroupConfig.pubsubManagerCallback.removeCustomCallback = removePubSubApplicationCallback;
 +
 +    writerGroupConfig.messageSettings.encoding = UA_EXTENSIONOBJECT_DECODED;
@@ -940,15 +907,7 @@ index 00000000..9fc2802a
 +    UA_ServerConfig *config = UA_Server_getConfig(server);
 +    UA_ServerConfig_setDefault(config);
 +
-+    config->pubsubTransportLayers =
-+        (UA_PubSubTransportLayer *) UA_malloc(sizeof(UA_PubSubTransportLayer));
-+    if(!config->pubsubTransportLayers) {
-+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Can't allocate a UA_PubSubTransportLayer");
-+        UA_Server_delete(server);
-+        return EXIT_FAILURE;
-+    }
-+    config->pubsubTransportLayers[0] = UA_PubSubTransportLayerEthernet();
-+    config->pubsubTransportLayersSize++;
++    UA_ServerConfig_addPubSubTransportLayer(config, UA_PubSubTransportLayerEthernet());
 +
 +    addServerNodes(server);
 +
@@ -1112,10 +1071,10 @@ index 00000000..9fc2802a
 +}
 diff --git a/examples/pubsub_realtime/opcua_pubsub_subscriber.c b/examples/pubsub_realtime/opcua_pubsub_subscriber.c
 new file mode 100644
-index 00000000..e046d67c
+index 000000000..d0cd742ab
 --- /dev/null
 +++ b/examples/pubsub_realtime/opcua_pubsub_subscriber.c
-@@ -0,0 +1,1115 @@
+@@ -0,0 +1,1110 @@
 +/* This work is licensed under a Creative Commons CCZero 1.0 Universal License.
 + * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
 + *
@@ -1355,7 +1314,9 @@ index 00000000..e046d67c
 +static UA_StatusCode
 +addPubSubApplicationCallback(UA_Server *server, UA_NodeId identifier,
 +                             UA_ServerCallback callback, void *data,
-+                             UA_Double interval_ms, UA_UInt64 *callbackId) {
++                             UA_Double interval_ms,
++                             UA_DateTime *baseTime, UA_TimerPolicy timerPolicy,
++                             UA_UInt64 *callbackId) {
 +    threadArg *threadArgs = (threadArg *) UA_malloc(sizeof(threadArg));
 +
 +    /* Pass the value required for the threads */
@@ -1380,7 +1341,8 @@ index 00000000..e046d67c
 +
 +static UA_StatusCode
 +changePubSubApplicationCallbackInterval(UA_Server *server, UA_NodeId identifier,
-+                                        UA_UInt64 callbackId, UA_Double interval_ms) {
++                                        UA_UInt64 callbackId, UA_Double interval_ms,
++                                        UA_DateTime *baseTime, UA_TimerPolicy timerPolicy) {
 +    /* Callback interval need not be modified as it is thread based implementation.
 +     * The thread uses nanosleep for calculating cycle time and modification in
 +     * nanosleep value changes cycle time */
@@ -1536,7 +1498,7 @@ index 00000000..e046d67c
 +    readerGroupConfig.name = UA_STRING("Demo ReaderGroup");
 +    readerGroupConfig.rtLevel = UA_PUBSUB_RT_FIXED_SIZE;
 +    readerGroupConfig.pubsubManagerCallback.addCustomCallback = addPubSubApplicationCallback;
-+    readerGroupConfig.pubsubManagerCallback.changeCustomCallbackInterval = changePubSubApplicationCallbackInterval;
++    readerGroupConfig.pubsubManagerCallback.changeCustomCallback = changePubSubApplicationCallbackInterval;
 +    readerGroupConfig.pubsubManagerCallback.removeCustomCallback = removePubSubApplicationCallback;
 +
 +    retval |= UA_Server_addReaderGroup(server, connectionIdent, &readerGroupConfig,
@@ -2043,15 +2005,7 @@ index 00000000..e046d67c
 +    UA_ServerConfig *config = UA_Server_getConfig(server);
 +    UA_ServerConfig_setMinimal(config, 4801, NULL);
 +
-+    config->pubsubTransportLayers =
-+        (UA_PubSubTransportLayer *) UA_malloc(sizeof(UA_PubSubTransportLayer));
-+    if(!config->pubsubTransportLayers) {
-+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Can't allocate a UA_PubSubTransportLayer");
-+        UA_Server_delete(server);
-+        return EXIT_FAILURE;
-+    }
-+    config->pubsubTransportLayers[0] = UA_PubSubTransportLayerEthernet();
-+    config->pubsubTransportLayersSize++;
++    UA_ServerConfig_addPubSubTransportLayer(config, UA_PubSubTransportLayerEthernet());
 +
 +    addServerNodes(server);
 +
@@ -2233,7 +2187,7 @@ index 00000000..e046d67c
 +}
 diff --git a/examples/pubsub_realtime/thermal.c b/examples/pubsub_realtime/thermal.c
 new file mode 100644
-index 00000000..dd11aa09
+index 000000000..dd11aa09c
 --- /dev/null
 +++ b/examples/pubsub_realtime/thermal.c
 @@ -0,0 +1,42 @@
@@ -2281,7 +2235,7 @@ index 00000000..dd11aa09
 +}
 diff --git a/examples/pubsub_realtime/thermal.h b/examples/pubsub_realtime/thermal.h
 new file mode 100644
-index 00000000..1ee4f6bb
+index 000000000..1ee4f6bbe
 --- /dev/null
 +++ b/examples/pubsub_realtime/thermal.h
 @@ -0,0 +1,12 @@
@@ -2299,7 +2253,7 @@ index 00000000..1ee4f6bb
 +#endif /* _THERMAL_H_ */
 diff --git a/examples/pubsub_realtime/timestamp.c b/examples/pubsub_realtime/timestamp.c
 new file mode 100644
-index 00000000..1eb6a348
+index 000000000..1eb6a348f
 --- /dev/null
 +++ b/examples/pubsub_realtime/timestamp.c
 @@ -0,0 +1,196 @@
@@ -2501,7 +2455,7 @@ index 00000000..1eb6a348
 +}
 diff --git a/examples/pubsub_realtime/timestamp.h b/examples/pubsub_realtime/timestamp.h
 new file mode 100644
-index 00000000..db7682ec
+index 000000000..db7682ece
 --- /dev/null
 +++ b/examples/pubsub_realtime/timestamp.h
 @@ -0,0 +1,16 @@
@@ -2521,85 +2475,5 @@ index 00000000..db7682ec
 +int getRxTimestamp(int sock, unsigned long long *timestamp);
 +
 +#endif /* _TIMESTAMP_H_ */
-diff --git a/plugins/include/open62541/plugin/pubsub_ethernet.h b/plugins/include/open62541/plugin/pubsub_ethernet.h
-index cbf62683..f95c2b7a 100644
---- a/plugins/include/open62541/plugin/pubsub_ethernet.h
-+++ b/plugins/include/open62541/plugin/pubsub_ethernet.h
-@@ -11,6 +11,10 @@
- 
- _UA_BEGIN_DECLS
- 
-+#ifdef UA_ENABLE_PUBSUB_ETH_RX_HW_TIMESTAMP
-+UA_EXPORT extern UA_UInt64 rxHwTimestamp;
-+#endif
-+
- UA_PubSubTransportLayer UA_EXPORT
- UA_PubSubTransportLayerEthernet(void);
- 
-diff --git a/plugins/ua_pubsub_ethernet.c b/plugins/ua_pubsub_ethernet.c
-index ead8dffa..73684685 100644
---- a/plugins/ua_pubsub_ethernet.c
-+++ b/plugins/ua_pubsub_ethernet.c
-@@ -38,6 +38,10 @@ typedef struct {
-     UA_Byte targetAddress[ETH_ALEN];
- } UA_PubSubChannelDataEthernet;
- 
-+#ifdef UA_ENABLE_PUBSUB_ETH_RX_HW_TIMESTAMP
-+UA_UInt64 rxHwTimestamp;
-+#endif
-+
- /*
-  * OPC-UA specification Part 14:
-  *
-@@ -420,6 +424,14 @@ UA_PubSubChannelEthernet_receive(UA_PubSubChannel *channel, UA_ByteString *messa
-     UA_Int32        receiveFlags;
-     UA_StatusCode   retval = UA_STATUSCODE_GOOD;
-     UA_UInt16       rcvCount = 0;
-+#ifdef UA_ENABLE_PUBSUB_ETH_RX_HW_TIMESTAMP
-+    union {
-+        struct cmsghdr cm;
-+        char buf[512];
-+    } u;
-+    struct cmsghdr *cmsg;
-+    struct timespec *ts = NULL;
-+#endif
- 
-     memset(&tmptv, 0, sizeof(tmptv));
- 
-@@ -477,6 +489,10 @@ UA_PubSubChannelEthernet_receive(UA_PubSubChannel *channel, UA_ByteString *messa
-         iov[1].iov_len  = remainingMessageLength;
-         msg.msg_iov     = iov;
-         msg.msg_iovlen  = 2;
-+#ifdef UA_ENABLE_PUBSUB_ETH_RX_HW_TIMESTAMP
-+        msg.msg_control = u.buf;
-+        msg.msg_controllen = sizeof(u.buf);
-+#endif
- 
-         dataLen = recvmsg(channel->sockfd, &msg, receiveFlags);
-         if(dataLen < 0) {
-@@ -503,6 +519,22 @@ UA_PubSubChannelEthernet_receive(UA_PubSubChannel *channel, UA_ByteString *messa
-             break;
-         }
- 
-+#ifdef UA_ENABLE_PUBSUB_ETH_RX_HW_TIMESTAMP
-+        rxHwTimestamp = 0;
-+        for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
-+            if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SO_TIMESTAMPING) {
-+                if (cmsg->cmsg_len < sizeof(*ts) * 3) {
-+                    UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
-+                                 "short SO_TIMESTAMPING message!\n");
-+                } else {
-+                    ts = (struct timespec *)CMSG_DATA(cmsg);
-+                    rxHwTimestamp = (UA_UInt64)(ts[2].tv_sec * 1000000000 + ts[2].tv_nsec);
-+                }
-+                break;
-+            }
-+        }
-+#endif
-+
-         /* Make sure we match our target */
-         if(memcmp(eth_hdr.ether_dhost, channelDataEthernet->targetAddress, ETH_ALEN) != 0) {
-             retval = UA_STATUSCODE_GOODNODATA;
--- 
-2.17.1
-
+--
+2.43.0

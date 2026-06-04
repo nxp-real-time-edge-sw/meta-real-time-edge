@@ -1,25 +1,15 @@
-From 3bf5e7e17734678d6eaeaa24ee11069c9d4a90c3 Mon Sep 17 00:00:00 2001
+From e03086b0e8dd72388e398dd1b4eb6b0d84db26b7 Mon Sep 17 00:00:00 2001
 From: Chenhui Zhao <chenhui.zhao@nxp.com>
-Date: Wed, 29 Oct 2025 15:49:53 +0800
+Date: Thu, 4 Jun 2026 12:05:00 +0900
 Subject: [PATCH] feat(examples): Add OPC UA PUBSUB summation example
  applications
 
 Upstream-Status: Inappropriate [embedded specific]
----
- examples/CMakeLists.txt                       |  10 +
- examples/pubsub_realtime/netc_fm.h            |  34 +
- .../opcua_summation_controller.c              | 652 ++++++++++++++++++
- .../pubsub_realtime/opcua_summation_device.c  | 249 +++++++
- 4 files changed, 945 insertions(+)
- create mode 100644 examples/pubsub_realtime/netc_fm.h
- create mode 100644 examples/pubsub_realtime/opcua_summation_controller.c
- create mode 100644 examples/pubsub_realtime/opcua_summation_device.c
-
 diff --git a/examples/CMakeLists.txt b/examples/CMakeLists.txt
 index 268e24863..3b5fe552d 100644
 --- a/examples/CMakeLists.txt
 +++ b/examples/CMakeLists.txt
-@@ -220,6 +220,16 @@ if(UA_ENABLE_PUBSUB)
+@@ -239,6 +239,16 @@ if(UA_ENABLE_PUBSUB)
                  add_example(opcua_pubsub_subscriber pubsub_realtime/opcua_pubsub_subscriber.c)
                  target_sources(opcua_pubsub_subscriber PRIVATE pubsub_realtime/timestamp.c)
                  target_link_libraries(opcua_pubsub_subscriber rt pthread)
@@ -34,8 +24,8 @@ index 268e24863..3b5fe552d 100644
 +                unset(STATIC_OBJECTS)
 +
              endif()
-         endif()
-     else (NOT BUILD_SHARED_LIBS)
+             if(UA_ENABLE_PUBSUB_ETH_UADP)
+                 add_subdirectory(pubsub_realtime/nodeset)
 diff --git a/examples/pubsub_realtime/netc_fm.h b/examples/pubsub_realtime/netc_fm.h
 new file mode 100644
 index 000000000..aabe9f4dc
@@ -78,7 +68,7 @@ index 000000000..aabe9f4dc
 +#endif
 diff --git a/examples/pubsub_realtime/opcua_summation_controller.c b/examples/pubsub_realtime/opcua_summation_controller.c
 new file mode 100644
-index 000000000..a9284911d
+index 000000000..312e60830
 --- /dev/null
 +++ b/examples/pubsub_realtime/opcua_summation_controller.c
 @@ -0,0 +1,652 @@
@@ -736,10 +726,10 @@ index 000000000..a9284911d
 +}
 diff --git a/examples/pubsub_realtime/opcua_summation_device.c b/examples/pubsub_realtime/opcua_summation_device.c
 new file mode 100644
-index 000000000..41fe5091b
+index 000000000..8bab5f696
 --- /dev/null
 +++ b/examples/pubsub_realtime/opcua_summation_device.c
-@@ -0,0 +1,249 @@
+@@ -0,0 +1,251 @@
 +/* This work is licensed under a Creative Commons CCZero 1.0 Universal License.  * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
 + *
 + *    Copyright 2025 NXP
@@ -761,9 +751,9 @@ index 000000000..41fe5091b
 +
 +#include <open62541/server.h>
 +#include <open62541/server_config_default.h>
-+#include <open62541/types_generated_encoding_binary.h>
 +#include <open62541/types_generated_handling.h>
 +
++#include "ua_types_encoding_binary.h"
 +#include "ua_pubsub_networkmessage.h"
 +#include "netc_fm.h"
 +
@@ -838,13 +828,15 @@ index 000000000..41fe5091b
 +
 +    // encode DataSet Writer ID field
 +    UA_UInt16 writer_id = node_id * 10 + 1;
-+    rv = UA_UInt16_encodeBinary(&writer_id, &start, end);
++    rv = UA_encodeBinaryInternal(&writer_id, &UA_TYPES[UA_TYPES_UINT16],
++                                 &start, (const UA_Byte **)&end, NULL, NULL);
 +    if (rv != UA_STATUSCODE_GOOD)
 +        return 0;
 +
 +    UA_UInt16 sz = 0;
 +    sz = (UA_UInt16)UA_DataSetMessage_calcSizeBinary(dsm, NULL, 0);
-+    rv = UA_UInt16_encodeBinary(&sz, &start, end);
++    rv = UA_encodeBinaryInternal(&sz, &UA_TYPES[UA_TYPES_UINT16],
++                                 &start, (const UA_Byte **)&end, NULL, NULL);
 +    if(rv != UA_STATUSCODE_GOOD)
 +        return 0;
 +
@@ -990,5 +982,5 @@ index 000000000..41fe5091b
 +{
 +}
 -- 
-2.34.1
+2.43.0
 
