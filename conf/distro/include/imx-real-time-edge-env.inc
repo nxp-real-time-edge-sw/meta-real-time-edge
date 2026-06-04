@@ -35,3 +35,6 @@ BBMULTICONFIG:imx93evk = "mc-imx93-9x9-qsb mc-imx93-11x11-frdm mc-imx93-14x14-ev
 
 # Enable multiconfig for imx8mpevk machine
 BBMULTICONFIG:imx8mpevk = "mc-imx8mp-navq mc-imx8mp-ddr4-evk mc-imx8mp-lpddr4-frdm"
+
+# Enable multiconfig for imx943evk machine
+BBMULTICONFIG:imx943evk = "mc-imx943-19x19-lpddr4-evk mc-imx943-15x15-lpddr4-evk"

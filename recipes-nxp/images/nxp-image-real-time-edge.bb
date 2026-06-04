@@ -43,3 +43,4 @@ require common-examples-multiconfig.inc
 include imx91evk-examples-multiconfig.inc
 include imx93evk-examples-multiconfig.inc
 include imx8mpevk-examples-multiconfig.inc
+include imx943evk-examples-multiconfig.inc
