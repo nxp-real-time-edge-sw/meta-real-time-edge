@@ -8,6 +8,8 @@ SRCBRANCH ?= "1.3"
 SRC_URI = "gitsm://github.com/open62541/open62541.git;protocol=https;branch=${SRCBRANCH} \
            file://0001-feat-examples-Add-OPC-UA-PubSub-publisher-subscriber.patch \
            file://0002-feat-examples-Add-OPC-UA-PUBSUB-summation-example-ap.patch \
+           file://0003-feat-pubsub-Add-Ethernet-RX-hardware-timestamp-and-X.patch \
+           file://0004-examples-Port-pubsub-TSN-samples-to-non-x86-architec.patch \
 "
 
 # Build the library statically. The NXP real-time PubSub example apps
@@ -19,11 +21,20 @@ SRC_URI = "gitsm://github.com/open62541/open62541.git;protocol=https;branch=${SR
 # examples are actually built and installed.
 LIBOPEN62541_BUILD_SHARED_LIBS = "OFF"
 
-# PubSub over Ethernet (UADP) is required by the NXP example applications.
+# PubSub over Ethernet (UADP) plus the XDP/AF_XDP accelerated subscribe path.
+# Notes:
+#   - UA_ENABLE_PUBSUB_ETH_UADP_XDP is a cosmetic/unused option in this
+#     open62541 version (declared but never referenced), so it is intentionally
+#     not passed. The real XDP gate is the LIBBPF_EBPF macro auto-defined in
+#     plugins/ua_pubsub_ethernet.c when <xdp/xsk.h> (provided by libxdp) is
+#     available at compile time.
+#   - UA_ENABLE_PUBSUB_ETH_RX_HW_TIMESTAMP is effective (adds a -D define and
+#     enables the subscriber/summation realtime examples).
 EXTRA_OECMAKE:append = " \
     -DUA_ENABLE_COVERAGE=OFF \
     -DUA_ENABLE_PUBSUB=ON \
     -DUA_ENABLE_PUBSUB_ETH_UADP=ON \
+    -DUA_ENABLE_PUBSUB_ETH_RX_HW_TIMESTAMP=ON \
 "
 
 
@@ -38,7 +49,10 @@ EXTRA_OECMAKE:append:arm = " \
 PV = "v1.3.17"
 SRCREV = "41f4deef34a9d0f94fcb830e2c831a9eb6236ade"
 
-DEPENDS = "openssl"
+# libbpf provides the low-level bpf() syscall wrappers; libxdp provides the
+# AF_XDP socket helpers (<xdp/xsk.h>, xsk_socket__create, umem rings) that the
+# ethernet PubSub plugin uses for the XDP accelerated path.
+DEPENDS = "openssl libbpf libxdp"
 
 ERROR_QA:remove = "buildpaths"
 WARN_QA:append = " buildpaths"
