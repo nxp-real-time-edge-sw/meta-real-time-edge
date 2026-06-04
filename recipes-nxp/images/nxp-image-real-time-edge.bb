@@ -37,3 +37,7 @@ CLINFO:mx8mm-nxp-bsp = ""
 CLINFO:mx7-nxp-bsp   = ""
 
 # do_image[mcdepends] = "mc:imx8mp-lpddr4-evk:evkmimx8mp:demo-hello-world:do_install"
+
+# Include multiconfig support for multi-machine examples
+require common-examples-multiconfig.inc
+include imx91evk-examples-multiconfig.inc

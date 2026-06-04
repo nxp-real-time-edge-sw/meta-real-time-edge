@@ -26,3 +26,6 @@ IMAGE_IMXBOOT_TARGET:imx95-19x19-lpddr5-evk = \
 M4_DEFAULT_IMAGE:imx95-19x19-lpddr5-evk = \
     "${@bb.utils.contains('SYSTEM_MANAGER_CONFIG', 'mx95netc', 'netc_share_cm7.bin', \
                                                                'imx95-19x19-evk_m7_TCM_power_mode_switch.bin', d)}"
+
+# Enable multiconfig for imx91evk machine
+BBMULTICONFIG:imx91evk = "mc-imx91-9x9-qsb mc-imx91-11x11-frdm mc-imx91-11x11-frdm-imx91s"
