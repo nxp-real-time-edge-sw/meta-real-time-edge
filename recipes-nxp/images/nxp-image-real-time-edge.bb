@@ -41,3 +41,4 @@ CLINFO:mx7-nxp-bsp   = ""
 # Include multiconfig support for multi-machine examples
 require common-examples-multiconfig.inc
 include imx91evk-examples-multiconfig.inc
+include imx93evk-examples-multiconfig.inc

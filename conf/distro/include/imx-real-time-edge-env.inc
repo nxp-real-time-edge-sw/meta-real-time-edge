@@ -29,3 +29,6 @@ M4_DEFAULT_IMAGE:imx95-19x19-lpddr5-evk = \
 
 # Enable multiconfig for imx91evk machine
 BBMULTICONFIG:imx91evk = "mc-imx91-9x9-qsb mc-imx91-11x11-frdm mc-imx91-11x11-frdm-imx91s"
+
+# Enable multiconfig for imx93evk machine
+BBMULTICONFIG:imx93evk = "mc-imx93-9x9-qsb mc-imx93-11x11-frdm mc-imx93-14x14-evk"
