@@ -216,6 +216,11 @@ heterogeneous_multicore_examples:append:imx91-11x11-lpddr4-evk = " \
     hmc-tools \
 "
 
+heterogeneous_multicore_examples:append:imx952-19x19-lpddr5-evk = " \
+    hello-world \
+    hmc-tools \
+"
+
 heterogeneous_multi_soc_examples ?= ""
 heterogeneous_multi_soc_examples:append:imx8mp-lpddr4-evk = " dsa-switch-evkmimxrt1180-cm33 "
 heterogeneous_multi_soc_examples:append:imx93evk = " dsa-switch-evkmimxrt1180-cm33 "
