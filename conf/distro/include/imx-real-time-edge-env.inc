@@ -3,6 +3,7 @@ require conf/distro/include/real-time-edge-base.inc
 
 include conf/distro/include/igh-ethercat.inc
 include conf/distro/include/libopen62541.inc
+include conf/distro/include/imx-fastboot-env.inc
 
 # System Manager config
 SYSTEM_MANAGER_CONFIG:imx943-19x19-lpddr4-evk = "mx94rte"
