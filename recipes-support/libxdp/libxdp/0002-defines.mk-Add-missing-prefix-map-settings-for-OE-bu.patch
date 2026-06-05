@@ -1,0 +1,40 @@
+From 5463269f58b7b9a28bd29e7c6e6a1085a9cbebc1 Mon Sep 17 00:00:00 2001
+From: Ryan Eatmon <reatmon@ti.com>
+Date: Mon, 5 May 2025 14:30:10 -0500
+Subject: [PATCH 2/5] defines.mk: Add missing prefix-map settings for OE builds
+
+The defines was only pulling in one of the four *-prefix-map options
+from CFLAGS.
+
+Upstream-Status: Inappropriate [OE-Specific]
+
+Signed-off-by: Ryan Eatmon <reatmon@ti.com>
+---
+ lib/defines.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/lib/defines.mk b/lib/defines.mk
+index 411a97e..f789e4d 100644
+--- a/lib/defines.mk
++++ b/lib/defines.mk
+@@ -26,7 +26,7 @@ TEST_DIR = $(LIB_DIR)/testing
+ LIBXDP_DIR := $(LIB_DIR)/libxdp
+ LIBBPF_DIR := $(LIB_DIR)/libbpf
+ 
+-DEFINES := -DBPF_DIR_MNT=\"$(BPF_DIR_MNT)\" -DBPF_OBJECT_PATH=\"$(BPF_OBJECT_DIR)\" \
++DEFINES := -DBPF_DIR_MNT=\"$(BPF_DIR_MNT)\" -DBPF_OBJECT_PATH=\"$(OE_BPF_OBJECT_DIR)\" \
+ 	-DMAX_DISPATCHER_ACTIONS=$(MAX_DISPATCHER_ACTIONS) -DTOOLS_VERSION=\"$(TOOLS_VERSION)\" \
+ 	-DLIBBPF_VERSION=\"$(LIBBPF_VERSION)\" -DRUNDIR=\"$(RUNDIR)\"
+ 
+@@ -43,7 +43,7 @@ endif
+ DEFINES += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+ 
+ CFLAGS += -std=gnu11 -Wextra -Werror $(DEFINES) $(ARCH_INCLUDES)
+-BPF_CFLAGS += $(DEFINES) $(filter -ffile-prefix-map=%,$(CFLAGS)) $(filter -I%,$(CFLAGS)) $(ARCH_INCLUDES)
++BPF_CFLAGS += $(DEFINES) $(filter -fcoverage-prefix-map=%,$(CFLAGS)) $(filter -fdebug-prefix-map=%,$(CFLAGS)) $(filter -ffile-prefix-map=%,$(CFLAGS)) $(filter -fmacro-prefix-map=%,$(CFLAGS)) $(filter -I%,$(CFLAGS)) $(ARCH_INCLUDES)
+ 
+ CONFIGMK := $(LIB_DIR)/../config.mk
+ LIBMK := Makefile $(CONFIGMK) $(LIB_DIR)/defines.mk $(LIB_DIR)/common.mk $(LIB_DIR)/../version.mk
+-- 
+2.34.1
+

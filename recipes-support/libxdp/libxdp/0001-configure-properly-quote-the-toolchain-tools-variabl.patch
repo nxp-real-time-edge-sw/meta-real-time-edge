@@ -1,7 +1,7 @@
-From 677c69a18e8a538e1313dc020dcf9e9158559d96 Mon Sep 17 00:00:00 2001
+From 0cfe8ceaaf72226e8f49762957f6ac13a58560ca Mon Sep 17 00:00:00 2001
 From: Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
 Date: Thu, 9 Nov 2023 10:24:15 +0100
-Subject: [PATCH] configure: properly quote the toolchain tools variables
+Subject: [PATCH 1/5] configure: properly quote the toolchain tools variables
  before the check
 
 Bitbake will declare toolchain tools variables with multiple options: use double quote
@@ -17,7 +17,7 @@ Upstream-Status: Pending
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/configure b/configure
-index 1c71ec9..26eeff9 100755
+index f363ef6..830ebb1 100755
 --- a/configure
 +++ b/configure
 @@ -70,7 +70,7 @@ check_toolchain()
@@ -29,3 +29,6 @@ index 1c71ec9..26eeff9 100755
          if [ ! $(command -v ${TOOL} 2>/dev/null) ]; then
              echo "*** ERROR: Cannot find tool ${TOOL}" ;
              exit 1;
+-- 
+2.34.1
+
