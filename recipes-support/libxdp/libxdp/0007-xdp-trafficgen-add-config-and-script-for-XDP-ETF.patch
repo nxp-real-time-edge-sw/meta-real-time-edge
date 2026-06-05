@@ -1,0 +1,371 @@
+From 2b1c492e24944b87505e6003b8b28c9f34b985e3 Mon Sep 17 00:00:00 2001
+From: Chenhui Zhao <chenhui.zhao@nxp.com>
+Date: Thu, 4 Jun 2026 16:35:36 +0800
+Subject: [PATCH] xdp-trafficgen: add config and script for XDP ETF
+
+Upstream-Status: Pending
+
+Signed-off-by: Chenhui Zhao <chenhui.zhao@nxp.com>
+---
+ xdp-trafficgen/etf_config.txt |   4 +
+ xdp-trafficgen/xdp-etf-run.sh | 337 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 341 insertions(+)
+ create mode 100644 xdp-trafficgen/etf_config.txt
+ create mode 100755 xdp-trafficgen/xdp-etf-run.sh
+
+diff --git a/xdp-trafficgen/etf_config.txt b/xdp-trafficgen/etf_config.txt
+new file mode 100644
+index 0000000..ac4dc4b
+--- /dev/null
++++ b/xdp-trafficgen/etf_config.txt
+@@ -0,0 +1,4 @@
++index cycle_us offset_us preload_us
++1     1000     0         200
++2     2000     200       400
++3     2000     400       1000
+diff --git a/xdp-trafficgen/xdp-etf-run.sh b/xdp-trafficgen/xdp-etf-run.sh
+new file mode 100755
+index 0000000..a63cbfd
+--- /dev/null
++++ b/xdp-trafficgen/xdp-etf-run.sh
+@@ -0,0 +1,337 @@
++#!/bin/bash
++#
++# xdp-etf-setup.sh — Set up and run XDP ETF (Earliest TxTime First) traffic
++# generation on a given interface.
++#
++# This script:
++#   1. Disables EEE
++#   2. Enables threaded NAPI and pins + prioritizes the NAPI thread
++#   3. Starts phc2sys for clock synchronization
++#   4. Configures qdisc (mqprio or taprio) + ETF
++#   5. Launches xdp-trafficgen in ETF mode
++#   6. Cleans up everything on exit (trap)
++#
++# Requires: root, ethtool, tc, phc2sys, chrt, taskset, xdp-trafficgen
++
++set -euo pipefail
++
++# ——————————————————————————————————————————————
++# Defaults
++# ——————————————————————————————————————————————
++QUEUE=3
++PKT_SIZE=64
++SCHED_PRIO=62
++CPU=""			# empty = same as QUEUE
++QBV=false
++DST_MAC="00:04:9f:09:b5:59"
++SRC_MAC="00:04:9f:09:b5:00"
++STREAMS_CONFIG=""
++NETIF=""
++XDP_TRAFFICGEN=$(command -v xdp-trafficgen)
++
++# PIDs to clean up
++PHC2SYS_PID=""
++TRAFFICGEN_PID=""
++DMESG_WAS_ON=true
++QDISC_INSTALLED=false
++
++# ——————————————————————————————————————————————
++# Usage
++# ——————————————————————————————————————————————
++usage() {
++	cat <<-EOF
++	Usage: $(basename "$0") [options] <interface>
++
++	Set up and run XDP ETF traffic generation.
++
++	Required:
++	  <interface>            Network interface (positional, last arg)
++
++	Options:
++	  -q, --queue NUM        TX queue index (default: $QUEUE)
++	  -M, --dst-mac ADDR     Destination MAC address (default: $DST_MAC).
++	  -m, --src-mac ADDR     Source MAC address (default: $SRC_MAC). The last octet will be changed as a stream index.
++	  -s, --pkt-size NUM     Packet size in bytes (default: $PKT_SIZE)
++	  -c, --config FILE      ETF streams config file (required)
++	  -p, --prio NUM         SCHED_FIFO priority (default: $SCHED_PRIO)
++	  -C, --cpu NUM          CPU to pin NAPI thread (default: same as queue)
++	      --qbv              Use taprio (802.1Qbv) instead of mqprio
++	  -h, --help             Show this help
++
++	Examples:
++	  $(basename "$0") -q 3 -c etf_config.txt eth1
++
++	  $(basename "$0") --qbv -q 3 -c etf_config.txt eth1
++	EOF
++	exit "${1:-0}"
++}
++
++# ——————————————————————————————————————————————
++# Argument parsing
++# ——————————————————————————————————————————————
++while [ $# -gt 0 ]; do
++	case "$1" in
++	-q|--queue)		QUEUE="$2"; shift 2 ;;
++	-M|--dst-mac)		DST_MAC="$2"; shift 2 ;;
++	-m|--src-mac)		SRC_MAC="$2"; shift 2 ;;
++	-s|--pkt-size)		PKT_SIZE="$2"; shift 2 ;;
++	-c|--config)		STREAMS_CONFIG="$2"; shift 2 ;;
++	-p|--prio)		SCHED_PRIO="$2"; shift 2 ;;
++	-C|--cpu)		CPU="$2"; shift 2 ;;
++	--qbv)			QBV=true; shift ;;
++
++	-h|--help)		usage 0 ;;
++	-*)			echo "Unknown option: $1" >&2; usage 1 ;;
++	*)			NETIF="$1"; shift ;;
++	esac
++done
++
++# ——————————————————————————————————————————————
++# Validation
++# ——————————————————————————————————————————————
++if [ -z "$NETIF" ]; then
++	echo "Error: interface name is required" >&2
++	usage 1
++fi
++
++if [ -z "$STREAMS_CONFIG" ]; then
++	echo "Error: --config <file> is required" >&2
++	usage 1
++fi
++
++if [ ! -f "$STREAMS_CONFIG" ]; then
++	echo "Error: streams config file not found: $STREAMS_CONFIG" >&2
++	exit 1
++fi
++
++if [ "$(id -u)" -ne 0 ]; then
++	echo "Error: must be run as root" >&2
++	exit 1
++fi
++
++if ! ip link show "$NETIF" > /dev/null 2>&1; then
++	echo "Error: interface $NETIF does not exist" >&2
++	exit 1
++fi
++
++if [ ! -x "$XDP_TRAFFICGEN" ]; then
++	# Try PATH
++	if command -v xdp-trafficgen > /dev/null 2>&1; then
++		XDP_TRAFFICGEN="xdp-trafficgen"
++	else
++		echo "Error: xdp-trafficgen not found" >&2
++		exit 1
++	fi
++fi
++
++for tool in ethtool tc phc2sys chrt taskset; do
++	if ! command -v "$tool" > /dev/null 2>&1; then
++		echo "Error: required tool '$tool' not found in PATH" >&2
++		exit 1
++	fi
++done
++
++# Default CPU = queue index
++[ -z "$CPU" ] && CPU="$QUEUE"
++
++# ETF qdisc parent = 100:<queue+1>
++ETF_PARENT="100:$((QUEUE + 1))"
++
++echo "=== XDP ETF Setup ==="
++echo "Interface:    $NETIF"
++echo "Queue:        $QUEUE"
++echo "CPU:          $CPU"
++echo "Scheduling:   SCHED_FIFO, $SCHED_PRIO"
++echo "Packet size:  $PKT_SIZE"
++echo "Streams:      $STREAMS_CONFIG"
++echo "QBV mode:     $QBV"
++[ -n "$DST_MAC" ] && echo "Dst MAC:      $DST_MAC"
++[ -n "$SRC_MAC" ] && echo "Src MAC:      $SRC_MAC"
++echo "==================="
++
++# ——————————————————————————————————————————————
++# Cleanup handler
++# ——————————————————————————————————————————————
++cleanup() {
++	echo ""
++	echo "=== Cleaning up ==="
++
++	# Kill xdp-trafficgen
++	if [ -n "$TRAFFICGEN_PID" ] && kill -0 "$TRAFFICGEN_PID" 2>/dev/null; then
++		echo "Stopping xdp-trafficgen (PID $TRAFFICGEN_PID)..."
++		kill -TERM "$TRAFFICGEN_PID" 2>/dev/null || true
++		wait "$TRAFFICGEN_PID" 2>/dev/null || true
++	fi
++
++	# Kill phc2sys
++	if [ -n "$PHC2SYS_PID" ] && kill -0 "$PHC2SYS_PID" 2>/dev/null; then
++		echo "Stopping phc2sys (PID $PHC2SYS_PID)..."
++		kill -TERM "$PHC2SYS_PID" 2>/dev/null || true
++		wait "$PHC2SYS_PID" 2>/dev/null || true
++	fi
++
++	# Remove qdiscs
++	if $QDISC_INSTALLED; then
++		echo "Removing qdiscs on $NETIF..."
++		tc qdisc del dev "$NETIF" root 2>/dev/null || true
++	fi
++
++	# Restore dmesg
++	if $DMESG_WAS_ON; then
++		dmesg -E 2>/dev/null || true
++	fi
++
++	echo "=== Cleanup done ==="
++}
++
++trap cleanup EXIT INT TERM
++
++# ——————————————————————————————————————————————
++# Step 1: Suppress noisy kernel messages
++# ——————————————————————————————————————————————
++echo "[1/6] Suppressing kernel messages..."
++dmesg -D 2>/dev/null || DMESG_WAS_ON=false
++# Disable RCU CPU stall warning messages
++echo 1 > /sys/module/rcupdate/parameters/rcu_cpu_stall_suppress 2>/dev/null || true
++
++# ——————————————————————————————————————————————
++# Step 2: Disable EEE, enable threaded NAPI, pin NAPI thread
++# ——————————————————————————————————————————————
++echo "[2/6] Configuring NIC and NAPI..."
++ethtool --set-eee "$NETIF" tx-timer 0 tx-lpi off eee off advertise 0 2>/dev/null || true
++
++echo 1 > "/sys/class/net/$NETIF/threaded"
++sleep 1
++
++# Auto-detect NAPI thread for this interface + queue
++NAPI_PID=""
++for pattern in "napi/${NETIF}-rxtx-${QUEUE}" "napi/${NETIF}-${QUEUE}" "napi/${NETIF}-"; do
++	NAPI_PID=$(pgrep -f "$pattern" 2>/dev/null | head -1) || true
++	if [ -n "$NAPI_PID" ]; then
++		break
++	fi
++done
++
++if [ -z "$NAPI_PID" ]; then
++	# Fallback: try to find any NAPI thread for this interface
++	NAPI_PID=$(pgrep "napi/${NETIF}" 2>/dev/null | tail -1) || true
++fi
++
++if [ -n "$NAPI_PID" ]; then
++	echo "  NAPI thread PID: $NAPI_PID"
++	chrt -f -p "$SCHED_PRIO" "$NAPI_PID"
++	taskset -cp "$CPU" "$NAPI_PID"
++else
++	echo "  Warning: could not find NAPI thread for $NETIF queue $QUEUE"
++fi
++
++# ——————————————————————————————————————————————
++# Step 3: Start phc2sys for clock synchronization
++# ——————————————————————————————————————————————
++echo "[3/6] Starting phc2sys..."
++PHC2SYS_LOG="./phc2sys-${NETIF}.log"
++phc2sys -s "$NETIF" -c CLOCK_REALTIME -O 0 -m > "$PHC2SYS_LOG" 2>&1 &
++PHC2SYS_PID=$!
++echo "  phc2sys PID: $PHC2SYS_PID, log: $PHC2SYS_LOG"
++
++# Wait for clock sync to stabilize
++echo "  Waiting 8s for clock sync..."
++sleep 8
++tail -n 5 "$PHC2SYS_LOG" 2>/dev/null || true
++
++# ——————————————————————————————————————————————
++# Step 4: Configure qdisc (mqprio or taprio) + ETF
++# ——————————————————————————————————————————————
++echo "[4/6] Configuring qdiscs..."
++
++# Check if mqprio/taprio is already configured
++ROOT_QDISC=$(tc qdisc show dev "$NETIF" root 2>/dev/null || true)
++
++if echo "$ROOT_QDISC" | grep -q "mqprio\|taprio"; then
++	echo "  Root qdisc already configured (mqprio/taprio), keeping it."
++elif $QBV; then
++	echo "  Using taprio (QBV)..."
++	tc qdisc replace dev "$NETIF" parent root handle 100: \
++		taprio num_tc 4 map 0 1 2 3 \
++		queues 1@0 1@1 1@2 1@3 \
++		base-time 0 \
++		sched-entry S 8 100000 \
++		sched-entry S 0 900000 \
++		flags 2
++else
++	echo "  Using mqprio..."
++	tc qdisc add dev "$NETIF" root handle 100: mqprio \
++		num_tc 4 \
++		map 0 1 2 3  0 0 0 0  0 0 0 0  0 0 0 0 \
++		queues 1@0 1@1 1@2 1@3 \
++		hw 1
++fi
++
++ETF_QDISC=$(tc qdisc show dev "$NETIF" parent "$ETF_PARENT" 2>/dev/null || true)
++
++if echo "$ETF_QDISC" | grep -q "etf"; then
++	echo "  ETF qdisc already configured on parent $ETF_PARENT, keeping it."
++else
++	tc qdisc add dev "$NETIF" parent "$ETF_PARENT" etf \
++		clockid CLOCK_TAI \
++		offload
++fi
++
++QDISC_INSTALLED=true
++sleep 2
++
++echo "  Qdisc state:"
++tc qdisc show dev "$NETIF"
++
++# ——————————————————————————————————————————————
++# Step 5: Launch xdp-trafficgen
++# ——————————————————————————————————————————————
++echo "[5/6] Launching xdp-trafficgen..."
++
++# Build command
++CMD="$XDP_TRAFFICGEN xsk-etf"
++CMD="$CMD -q $QUEUE"
++CMD="$CMD -s $PKT_SIZE"
++CMD="$CMD -W SCHED_FIFO"
++CMD="$CMD -U $SCHED_PRIO"
++CMD="$CMD -w TAI"
++CMD="$CMD -y"
++CMD="$CMD -a"
++CMD="$CMD -M $DST_MAC"
++CMD="$CMD -m $SRC_MAC"
++CMD="$CMD --etf-streams-config $STREAMS_CONFIG"
++CMD="$CMD $NETIF"
++
++# CPU affinity mask: pin to target CPU
++CPU_MASK=$(printf '%x' $((1 << CPU)))
++
++export LIBXDP_SKIP_DISPATCHER=1
++
++echo "  Command: taskset $CPU_MASK $CMD"
++
++taskset "$CPU_MASK" $CMD > /dev/null 2>&1 &
++TRAFFICGEN_PID=$!
++echo "  xdp-trafficgen PID: $TRAFFICGEN_PID"
++
++sleep 3
++
++# ——————————————————————————————————————————————
++# Step 6: Optional debug toggle
++# ——————————————————————————————————————————————
++XDP_ETF_DEBUG="/sys/kernel/debug/${NETIF}/xdp_etf"
++if [ -f "$XDP_ETF_DEBUG" ]; then
++	echo "[6/6] Reset xdp_etf counters..."
++	echo 0 > "$XDP_ETF_DEBUG"
++else
++	echo "[6/6] No xdp_etf debug file found (skipping)"
++fi
++
++echo ""
++echo "=== XDP ETF traffic running (PID $TRAFFICGEN_PID) ==="
++echo "To stop and clean up, run:"
++echo "  kill $TRAFFICGEN_PID; kill $PHC2SYS_PID; tc qdisc del dev $NETIF root"
++echo ""
++echo "Check XDP ETF counter: cat /sys/kernel/debug/$NETIF/xdp_etf"
++
++# Disable trap so exiting the script doesn't kill background processes
++trap - EXIT INT TERM
+-- 
+2.34.1
+

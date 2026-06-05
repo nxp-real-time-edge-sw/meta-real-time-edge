@@ -22,6 +22,8 @@ SRC_URI = "git://github.com/xdp-project/xdp-tools.git;nobranch=1;protocol=https 
              file://0003-Makefile-It-does-not-detect-libbpf-header-from-sysro.patch \
              file://0004-Makefile-fix-KeyError-failure.patch \
              file://0005-Makefile-fix-libxdp.pc-error.patch \
+             file://0006-xdp-trafficgen-support-XDP-ETF.patch \
+             file://0007-xdp-trafficgen-add-config-and-script-for-XDP-ETF.patch \
            "
 
 # xdp-tools v1.6.3
@@ -59,4 +61,6 @@ do_compile:prepend:aarch64 () {
 
 do_install () {
     oe_runmake install
+    install -m 0755 ${S}/xdp-trafficgen/xdp-etf-run.sh ${D}/usr/sbin/
+    install -m 0644 ${S}/xdp-trafficgen/etf_config.txt ${D}/usr/sbin/
 }
