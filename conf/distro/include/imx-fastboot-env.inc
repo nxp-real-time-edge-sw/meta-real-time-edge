@@ -13,8 +13,14 @@
 #   Primary core (Core 0) boots last (U-Boot or custom image)
 #
 # Usage:
-#   Enable fastboot by adding to local.conf:
-#     DISTRO_FEATURES:append = " fastboot"
+#   Fastboot is implemented as an imx-boot variant (IMXBOOT_VARIANT), aligned
+#   with the BSP variant mechanism used by netc/jailhouse/etc. Enable it by
+#   selecting the fastboot variant in local.conf:
+#     IMXBOOT_VARIANT = "fastboot"
+#
+#   This produces a dedicated boot artifact named with the variant suffix, e.g.
+#     imx-boot-variant-fastboot-imx93evk-sd.bin-flash_singleboot
+#   Each bitbake invocation builds a single variant (same as netc/jailhouse).
 #
 #   Default: Two RTOS mode (no U-Boot):
 #     Core 0: hello_world RTOS at 0xD0000000
@@ -29,8 +35,13 @@
 #     CA_CORE1_IMG = "examples/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS0_UART2.bin"
 #     CA_CORE1_IMG_LOAD_ADDR = "0xD0000000"
 
-# Fastboot feature flag (controlled by DISTRO_FEATURES)
-FASTBOOT_ENABLED = "${@bb.utils.contains('DISTRO_FEATURES', 'fastboot', '1', '0', d)}"
+# Register the fastboot variant in the machine's allowed variant list so that
+# BOOT_VARIANT (defined in imx-base-extend.inc) resolves to "-variant-fastboot"
+# when IMXBOOT_VARIANT = "fastboot".
+IMXBOOT_VARIANTS:append:mx93-nxp-bsp = " fastboot"
+
+# Fastboot feature flag (driven by the IMXBOOT_VARIANT selection)
+FASTBOOT_ENABLED = "${@bb.utils.contains('IMXBOOT_VARIANT', 'fastboot', '1', '0', d)}"
 
 # Core 0 configuration (empty = U-Boot on Core 0)
 # Full path relative to DEPLOY_DIR_IMAGE

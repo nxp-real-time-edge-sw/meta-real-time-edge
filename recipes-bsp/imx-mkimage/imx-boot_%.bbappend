@@ -4,8 +4,18 @@
 # This bbappend adds support for building boot images with multicore fastboot,
 # allowing multiple RTOS images to be loaded on different Cortex-A cores.
 #
-# Enable by adding to local.conf:
-#   DISTRO_FEATURES:append = " fastboot"
+# Enable by selecting the fastboot imx-boot variant in local.conf:
+#   IMXBOOT_VARIANT = "fastboot"
+#
+# This is aligned with the BSP variant mechanism (BOOT_VARIANT in
+# imx-base-extend.inc) used by netc/jailhouse/etc. Each bitbake invocation
+# builds a single variant, and the produced artifacts carry the
+# -variant-fastboot suffix. The make targets are driven by UBOOT_CONFIG (not by
+# the variant), so an i.MX93 SD build iterates three IMXBOOT_TARGETS and deploys
+# three suffixed artifacts, e.g.
+#   imx-boot-variant-fastboot-imx93evk-sd.bin-flash_singleboot
+#   imx-boot-variant-fastboot-imx93evk-sd.bin-flash_singleboot_gdet
+#   imx-boot-variant-fastboot-imx93evk-sd.bin-flash_singleboot_gdet_auto
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
@@ -23,18 +33,17 @@ SRC_URI:append = " \
 # work-shared/hmc-source/.../freertos-kernel/*.c). imx-boot cannot strip paths
 # from inside the opaque concatenated boot image, so the buildpaths QA check would
 # fail on the embedded firmware. Skip that check only when fastboot is enabled.
-INSANE_SKIP:${PN} += "${@bb.utils.contains('DISTRO_FEATURES', 'fastboot', 'buildpaths', '', d)}"
+INSANE_SKIP:${PN} += "${@'buildpaths' if d.getVar('FASTBOOT_ENABLED') == '1' else ''}"
 
 # Fastboot dependencies - require all HMC RTOS examples when fastboot is enabled
 FASTBOOT_HMC_DEPENDS = ""
 
-FASTBOOT_HMC_DEPENDS:mx93-nxp-bsp = "${@bb.utils.contains('DISTRO_FEATURES', 'fastboot', \
-    'hello-world:do_deploy \
+FASTBOOT_HMC_DEPENDS:mx93-nxp-bsp = "${@'hello-world:do_deploy \
      rt-latency:do_deploy \
      rpmsg-str-echo:do_deploy \
      rpmsg-pingpong:do_deploy \
      virtio-perf:do_deploy \
-     virtio-net-backend:do_deploy', '', d)}"
+     virtio-net-backend:do_deploy' if d.getVar('FASTBOOT_ENABLED') == '1' else ''}"
 
 do_compile[depends] += "${FASTBOOT_HMC_DEPENDS}"
 
@@ -140,7 +149,9 @@ def get_fastboot_mkimage_args(d):
 
     return ' '.join(args)
 
-# Append fastboot arguments to MKIMAGE_EXTRA_ARGS
+# Append fastboot arguments to MKIMAGE_EXTRA_ARGS.
+# Since each bitbake invocation builds a single IMXBOOT_VARIANT, these args only
+# take effect in the fastboot-variant build and never leak into a normal build.
 MKIMAGE_EXTRA_ARGS:append:mx93-nxp-bsp = " ${@get_fastboot_mkimage_args(d)}"
 
 # Deploy fastboot-related files
