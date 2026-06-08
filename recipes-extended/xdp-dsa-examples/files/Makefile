@@ -41,8 +41,9 @@ BPF_OBJS := xdp_dsa_redirect.o xdp_dsa_meta.o
 all: $(BPF_OBJS) $(APPS)
 
 # BPF objects (clang, bpf target). Built natively, not cross-compiled.
-xdp_dsa_redirect.o: xdp_dsa_redirect.c
+xdp_dsa_redirect.o: xdp_dsa_redirect.c xdp_dsa_meta.h
 	$(CLANG) $(BPF_CFLAGS) -c $< -o $@
+
 
 xdp_dsa_meta.o: xdp_dsa_meta.c xdp_dsa_meta.h
 	$(CLANG) $(BPF_CFLAGS) -c $< -o $@

@@ -132,6 +132,8 @@ struct xdp_app {
     int ifindex;
     __u32 queue_id;
     int verbose;
+    int xdp_mode;       /* XDP_MODE_NATIVE (default) or XDP_MODE_SKB */
+
 
     /* Statistics */
     struct port_stats ports[MAX_PORTS];
@@ -193,7 +195,8 @@ static void print_packet_info(struct xdp_app *app, void *pkt, size_t len,
 {
     struct ethhdr *eth = pkt;
     struct hms_vlan_tag *tag = (struct hms_vlan_tag *)(eth + 1);
-    __u16 inner_proto;
+    int have_inner;
+    __u16 inner_proto = 0;
     struct timespec ts;
     char time_str[32];
 
@@ -201,8 +204,16 @@ static void print_packet_info(struct xdp_app *app, void *pkt, size_t len,
     clock_gettime(CLOCK_REALTIME, &ts);
     strftime(time_str, sizeof(time_str), "%H:%M:%S", localtime(&ts.tv_sec));
 
-    /* Get inner ethertype (after the VLAN tag) */
-    inner_proto = ntohs(*(__be16 *)((void *)tag + sizeof(struct hms_vlan_tag)));
+    /*
+     * The inner ethertype follows the Ethernet header and the 4-byte
+     * VLAN tag. Only read it if the frame is long enough to contain it,
+     * otherwise it would read past the end of the packet buffer.
+     */
+    have_inner = len >= sizeof(struct ethhdr) + sizeof(struct hms_vlan_tag) +
+                        sizeof(__be16);
+    if (have_inner)
+        inner_proto = ntohs(*(__be16 *)((void *)tag +
+                                        sizeof(struct hms_vlan_tag)));
 
     printf("[%s.%06ld] hms0p%u (switch %u): ",
            time_str, ts.tv_nsec / 1000, port, switch_id);
@@ -414,7 +425,7 @@ static int load_xdp_program(struct xdp_app *app)
     }
 
     /* Attach XDP program to interface */
-    ret = xdp_program__attach(app->xdp_prog, app->ifindex, XDP_MODE_NATIVE, 0);
+    ret = xdp_program__attach(app->xdp_prog, app->ifindex, app->xdp_mode, 0);
     if (ret) {
         fprintf(stderr, "Failed to attach XDP program: %s\n", strerror(-ret));
         xdp_program__close(app->xdp_prog);
@@ -426,10 +437,11 @@ static int load_xdp_program(struct xdp_app *app)
         xdp_program__bpf_obj(app->xdp_prog), "xsk_map");
     if (!xsk_map) {
         fprintf(stderr, "Failed to find xsk_map\n");
-        xdp_program__detach(app->xdp_prog, app->ifindex, XDP_MODE_NATIVE, 0);
+        xdp_program__detach(app->xdp_prog, app->ifindex, app->xdp_mode, 0);
         xdp_program__close(app->xdp_prog);
         return -1;
     }
+
 
     app->xsk_map_fd = bpf_map__fd(xsk_map);
 
@@ -445,7 +457,11 @@ static int create_xsk_socket(struct xdp_app *app)
     struct xsk_socket_config cfg = {
         .rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS,
         .tx_size = 0,  /* RX only - no TX ring */
-        .libbpf_flags = 0,
+        /*
+         * Let libxdp manage the XDP program we already attached rather
+         * than loading its built-in dispatcher.
+         */
+        .libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD,
         .xdp_flags = 0,
         .bind_flags = XDP_USE_NEED_WAKEUP,
     };
@@ -486,7 +502,7 @@ static void cleanup(struct xdp_app *app)
         free(app->umem_area);
 
     if (app->xdp_prog) {
-        xdp_program__detach(app->xdp_prog, app->ifindex, XDP_MODE_NATIVE, 0);
+        xdp_program__detach(app->xdp_prog, app->ifindex, app->xdp_mode, 0);
         xdp_program__close(app->xdp_prog);
     }
 }
@@ -518,6 +534,9 @@ int main(int argc, char **argv)
     struct xdp_app app = {0};
     struct pollfd fds[1];
     int opt, ret;
+
+    /* Default to native driver XDP mode. */
+    app.xdp_mode = XDP_MODE_NATIVE;
 
     /* Parse command line arguments */
     while ((opt = getopt(argc, argv, "i:q:vh")) != -1) {
