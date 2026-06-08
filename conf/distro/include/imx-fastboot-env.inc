@@ -23,16 +23,26 @@
 #   Each bitbake invocation builds a single variant (same as netc/jailhouse).
 #
 #   Default: Two RTOS mode (no U-Boot):
-#     Core 0: hello_world RTOS at 0xD0000000
-#     Core 1: hello_world RTOS at 0xD1000000
+#     Core 0: hello_world RTOS1 binary at 0xD0000000
+#     Core 1: hello_world RTOS0 binary at 0xD1000000
+#
+#   Note the crossed naming: Core 0 uses an RTOS1 binary and Core 1 uses an RTOS0
+#   binary. This is intentional and matches the boot-order semantics (Core 1 boots
+#   first, Core 0 boots last); always configure by CA_CORE<N>, not by the RTOS<n>
+#   substring in the file name.
+#
+#   The HMC example recipes deploy their RTOS binaries to
+#   ${DEPLOY_DIR_IMAGE}/examples/${MACHINE}/heterogeneous-multicore/<recipe>-<rtos>/
+#   (see HMC_EXAMPLE_INSTALL_DIR in meta-rtos-industrial), so the CA_CORE*_IMG
+#   paths below are machine-relative via examples/${MACHINE}.
 #
 #   Customize RTOS images in local.conf (full path relative to DEPLOY_DIR_IMAGE):
-#     CA_CORE0_IMG = "examples/heterogeneous-multicore/rt-latency-freertos/rt_latency_ca55_RTOS0_UART2.bin"
-#     CA_CORE1_IMG = "examples/heterogeneous-multicore/hello-world-zephyr/hello_world_ca55_RTOS1_UART1.bin"
+#     CA_CORE0_IMG = "examples/${MACHINE}/heterogeneous-multicore/hello-world-zephyr/hello_world_ca55_RTOS1_UART1.bin"
+#     CA_CORE1_IMG = "examples/${MACHINE}/heterogeneous-multicore/rt-latency-freertos/rt_latency_ca55_RTOS0_UART2.bin"
 #
 #   U-Boot + single RTOS mode:
 #     CA_CORE0_IMG = ""
-#     CA_CORE1_IMG = "examples/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS0_UART2.bin"
+#     CA_CORE1_IMG = "examples/${MACHINE}/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS0_UART2.bin"
 #     CA_CORE1_IMG_LOAD_ADDR = "0xD0000000"
 
 # Register the fastboot variant in the machine's allowed variant list so that
@@ -73,7 +83,9 @@ FASTBOOT_CONFIG ?= ""
 #
 
 # i.MX93: Default Two RTOS mode (Core 0 + Core 1, no U-Boot)
-CA_CORE0_IMG:mx93-nxp-bsp ?= "examples/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS1_UART1.bin"
+# Paths are relative to DEPLOY_DIR_IMAGE and match the HMC example deploy layout
+# examples/${MACHINE}/heterogeneous-multicore/<recipe>-<rtos>/.
+CA_CORE0_IMG:mx93-nxp-bsp ?= "examples/${MACHINE}/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS1_UART1.bin"
 CA_CORE0_IMG_LOAD_ADDR:mx93-nxp-bsp ?= "0xD0000000"
-CA_CORE1_IMG:mx93-nxp-bsp ?= "examples/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS0_UART2.bin"
+CA_CORE1_IMG:mx93-nxp-bsp ?= "examples/${MACHINE}/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS0_UART2.bin"
 CA_CORE1_IMG_LOAD_ADDR:mx93-nxp-bsp ?= "0xD1000000"
