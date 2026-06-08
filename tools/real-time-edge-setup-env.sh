@@ -227,14 +227,30 @@ add_layers
 
 # NXP development board images are more useful with the empty root password.
 echo -e "\n========================================= Important Note ========================================"
-echo "                              RELEASE ENVIRONMENT"
-echo "                        Using GitHub public repositories"
+if [ -d "${ROOTDIR}/sources/meta-real-time-edge-internal" ]; then
+    echo "                       INTERNAL DEVELOPMENT ENVIRONMENT"
+    echo "                    Using Bitbucket internal repositories"
+    echo "                    (AUTOREV enabled for real-time-edge repos)"
+else
+    echo "                              RELEASE ENVIRONMENT"
+    echo "                        Using GitHub public repositories"
+fi
 echo ""
 echo "This setup is optimized for NXP development boards and is not appropriate for production boards."
 
 bitbake-config-build enable-fragment core/yocto/root-login-with-empty-password
 
 echo -e "================================================================================================\n"
+
+# Add internal layer if it exists
+if [ -d "${ROOTDIR}/sources/meta-real-time-edge-internal" ]; then
+    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-real-time-edge-internal\"" >> $BUILD_DIR/conf/bblayers.conf
+fi
+
+# setup internal build servers if the hook exists
+if [ -f "${ROOTDIR}/sources/imx-build-bamboo/build/hook-in-internal-servers.sh" ]; then
+    source "${ROOTDIR}/sources/imx-build-bamboo/build/hook-in-internal-servers.sh"
+fi
 
 cd  $BUILD_DIR
 clean_up
