@@ -35,15 +35,6 @@ install_examples_with_params() {
 
     bbnote "Installing ${evk_machine} examples from all machine variants"
 
-    install -d ${IMAGE_ROOTFS}/examples/${evk_machine}
-    if [ -d "${IMAGE_ROOTFS}/examples/heterogeneous-multicore" ]; then
-        mv ${IMAGE_ROOTFS}/examples/heterogeneous-multicore ${IMAGE_ROOTFS}/examples/${evk_machine}
-    fi
-
-    if [ -d "${IMAGE_ROOTFS}/examples/mcuxsdk" ]; then
-        mv ${IMAGE_ROOTFS}/examples/mcuxsdk ${IMAGE_ROOTFS}/examples/${evk_machine}
-    fi
-
     for mapping in ${mc_map}; do
         mc="${mapping%%:*}"
         MACHINE_NAME="${mapping#*:}"
@@ -55,16 +46,16 @@ install_examples_with_params() {
 
         MC_DEPLOY="${TOPDIR}/tmp-${mc}/deploy/images/${MACHINE_NAME}"
 
-        if [ -d "${MC_DEPLOY}/examples/heterogeneous-multicore" ]; then
+        if [ -d "${MC_DEPLOY}/examples/${MACHINE_NAME}/heterogeneous-multicore" ]; then
             install -d ${IMAGE_ROOTFS}/examples/${MACHINE_NAME}/heterogeneous-multicore
-            cp -r ${MC_DEPLOY}/examples/heterogeneous-multicore/* \
+            cp -r ${MC_DEPLOY}/examples/${MACHINE_NAME}/heterogeneous-multicore/* \
                 ${IMAGE_ROOTFS}/examples/${MACHINE_NAME}/heterogeneous-multicore/ 2>/dev/null || true
             bbnote "Installed HMC examples for ${MACHINE_NAME}"
         fi
 
-        if [ -d "${MC_DEPLOY}/examples/mcuxsdk" ]; then
+        if [ -d "${MC_DEPLOY}/examples/${MACHINE_NAME}/mcuxsdk" ]; then
             install -d ${IMAGE_ROOTFS}/examples/${MACHINE_NAME}/mcuxsdk
-            cp -r ${MC_DEPLOY}/examples/mcuxsdk/* \
+            cp -r ${MC_DEPLOY}/examples/${MACHINE_NAME}/mcuxsdk/* \
                 ${IMAGE_ROOTFS}/examples/${MACHINE_NAME}/mcuxsdk/ 2>/dev/null || true
             bbnote "Installed MCUX examples for ${MACHINE_NAME}"
         fi
