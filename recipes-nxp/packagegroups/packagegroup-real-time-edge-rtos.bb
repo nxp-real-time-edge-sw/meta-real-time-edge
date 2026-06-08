@@ -160,6 +160,7 @@ heterogeneous_multicore_examples:append:imx93-9x9-lpddr4-qsb = " \
 heterogeneous_multicore_examples:append:imx943-19x19-lpddr4-evk = " \
     hello-world \
     rt-latency \
+    rpmsg-str-echo \
     hmc-tools \
     soem-digital-io \
     soem-servo \
@@ -169,6 +170,7 @@ heterogeneous_multicore_examples:append:imx943-19x19-lpddr4-evk = " \
 heterogeneous_multicore_examples:append:imx943-19x19-lpddr5-evk = " \
     hello-world \
     rt-latency \
+    rpmsg-str-echo \
     hmc-tools \
     soem-digital-io \
     soem-servo \
@@ -178,6 +180,7 @@ heterogeneous_multicore_examples:append:imx943-19x19-lpddr5-evk = " \
 heterogeneous_multicore_examples:append:imx943-15x15-lpddr4-evk = " \
     hello-world \
     rt-latency \
+    rpmsg-str-echo \
     hmc-tools \
 "
 
