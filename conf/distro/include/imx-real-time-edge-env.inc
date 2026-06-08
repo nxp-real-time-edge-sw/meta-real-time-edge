@@ -10,6 +10,7 @@ SYSTEM_MANAGER_CONFIG:imx943-19x19-lpddr4-evk = "mx94rte"
 SYSTEM_MANAGER_CONFIG:imx943-19x19-lpddr5-evk = "mx94rte"
 SYSTEM_MANAGER_CONFIG:imx943-15x15-lpddr4-evk = "mx94rte"
 SYSTEM_MANAGER_CONFIG:imx95-15x15-lpddr4x-evk = "mx95rte"
+SYSTEM_MANAGER_CONFIG:imx952-19x19-lpddr5-evk = "mx952rte"
 # Multiple system manager configs by IMXBOOT_VARIANT
 SYSTEM_MANAGER_CONFIG:imx95-19x19-lpddr5-evk = \
     "${@bb.utils.contains('IMXBOOT_VARIANT', 'netc',      'mx95netc', \

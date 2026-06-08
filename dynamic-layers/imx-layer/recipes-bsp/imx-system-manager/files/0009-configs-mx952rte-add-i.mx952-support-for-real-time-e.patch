@@ -1,0 +1,73 @@
+From 44c7d151c1c8d1282a706a50a040ad5fbe96d218 Mon Sep 17 00:00:00 2001
+From: Wenbin Song <wenbin.song@nxp.com>
+Date: Fri, 5 Jun 2026 18:29:03 +0800
+Subject: [PATCH 2/2] configs: mx952rte: add i.mx952 support for real-time edge
+
+Signed-off-by: Wenbin Song <wenbin.song@nxp.com>
+Upstream-Status: Pending
+---
+ configs/other/mx952rte.cfg | 22 +++++++++++++++++++---
+ 1 file changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/configs/other/mx952rte.cfg b/configs/other/mx952rte.cfg
+index aee1ea13..9db9ca2e 100755
+--- a/configs/other/mx952rte.cfg
++++ b/configs/other/mx952rte.cfg
+@@ -33,9 +33,9 @@
+ # SM configuration file for the MX952 EVK
+ 
+ MAKE    soc=MIMX952, board=mcimx952evk, build=gcc_cross, var=no_rx_replica
+-DOX     name=MX952EVK, desc="i.MX952 EVK Configuration Data"
++DOX     name=MX952RTE, desc="i.MX952 EVK Real-time-edge Configuration Data"
+ 
+-include ../devices/MIMX952/configtool/device.cfg
++include ../../devices/MIMX952/configtool/device.cfg
+ 
+ #==========================================================================#
+ # Board                                                                    #
+@@ -552,7 +552,7 @@ DATA:               perm=rw
+ 
+ # RPC Interface
+ 
+-SCMI_AGENT2         name="AP-NS"
++SCMI_AGENT2         name="AP-NS-agent0"
+ MAILBOX             type=mu, mu=3, test=2
+ CHANNEL             db=0, xport=smt, rpc=scmi, type=a2p
+ CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
+@@ -806,6 +806,7 @@ LPTPM4              OWNER
+ LPTPM5              OWNER
+ LPTPM6              OWNER
+ LPUART1             OWNER
++LPUART3             ACCESS
+ LPUART4             OWNER
+ LPUART5             OWNER
+ LPUART6             OWNER
+@@ -951,6 +952,8 @@ PIN_GPIO_IO10        OWNER
+ PIN_GPIO_IO11        OWNER
+ PIN_GPIO_IO12        OWNER
+ PIN_GPIO_IO13        OWNER
++PIN_GPIO_IO14        OWNER
++PIN_GPIO_IO15        OWNER
+ PIN_GPIO_IO16        OWNER
+ PIN_GPIO_IO17        OWNER
+ PIN_GPIO_IO18        OWNER
+@@ -1032,3 +1035,16 @@ GPU                 DATA, begin=0x04D900000, end=0x04DD7FFFF
+ DDR                 EXEC, begin=0x088000000, end=0x089FFFFFF
+ DDR                 EXEC, begin=0x08E000000, end=0x87FFFFFFF
+ 
++# RPC Interface of A55 NS agent1 (duplicated AP-NS-agent0)
++
++SCMI_AGENT3         name="AP-NS-agent1", dup=2
++MAILBOX             type=mu, mu=5, test=4
++CHANNEL             db=0, xport=smt, rpc=scmi, type=a2p
++CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
++
++# RPC Interface of A55 NS agent2 (duplicated AP-NS-agent0)
++
++SCMI_AGENT4         name="AP-NS-agent2", dup=2
++MAILBOX             type=mu, mu=7, test=6
++CHANNEL             db=0, xport=smt, rpc=scmi, type=a2p
++CHANNEL             db=1, xport=smt, rpc=scmi, type=p2a_notify
+-- 
+2.53.0
+
