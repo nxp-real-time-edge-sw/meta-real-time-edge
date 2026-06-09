@@ -64,3 +64,18 @@ do_install () {
     install -m 0755 ${S}/xdp-trafficgen/xdp-etf-run.sh ${D}/usr/sbin/
     install -m 0644 ${S}/xdp-trafficgen/etf_config.txt ${D}/usr/sbin/
 }
+
+# Ship the files installed by xdp-tools that are not covered by the default
+# FILES:${PN}:
+#   - ${libdir}/bpf: pre-compiled BPF programs loaded at runtime by the
+#     xdp-tools utilities (xdp-filter, xdpdump, AF_XDP default program, etc.).
+#   - ${datadir}/xdp-tools: the xdp-tools helper scripts, test programs and
+#     test BPF objects.
+# The .o files are BPF bytecode and the test programs are not standard ELF
+# executables, so disable the arch/GNU_HASH checks that do not apply to them.
+FILES:${PN} += "${nonarch_libdir}/bpf ${libdir}/bpf ${datadir}/xdp-tools"
+INSANE_SKIP:${PN} += "arch"
+
+# The xdp-tools test/helper scripts under ${datadir}/xdp-tools use a
+# "#!/bin/bash" shebang, so the package needs a real bash at runtime.
+RDEPENDS:${PN} += "bash"
