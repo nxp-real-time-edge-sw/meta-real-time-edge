@@ -66,7 +66,11 @@ KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-root.dtb \
 					       freescale/imx8mp-evk-revb4-dsa-enetc.dtb \
 					       freescale/imx8mp-evk-revb4-dsa-fec-swp0.dtb \
 					       freescale/imx8mp-evk-revb4-dsa-fec-swp3.dtb "
-KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-uart-sharing-cm33.dtb \
+# i.MX93 11x11 EVK is the primary board of the consolidated imx93evk machine.
+# Its board override imx93-11x11-lpddr4x-evk is active for both the consolidated
+# build (via MACHINEOVERRIDES in imx93evk.conf) and the dedicated 11x11 build, so
+# attach the primary-board feature dtbs to the board override (not imx93evk).
+KERNEL_DEVICETREE:append:imx93-11x11-lpddr4x-evk = " freescale/imx93-11x11-evk-uart-sharing-cm33.dtb \
 				      freescale/imx93-11x11-evk-virtio-net-ca55.dtb \
 				      freescale/imx93-11x11-evk-virtio-net-cm33.dtb \
 				      freescale/imx93-11x11-evk-dsa.dtb \
@@ -116,18 +120,18 @@ KERNEL_DEVICETREE:append:imx95-15x15-lpddr4x-evk = " ${IMX95_15X15_MULTICORE_DTB
 KERNEL_DEVICETREE:append:imx6ull14x14evk = " nxp/imx/imx6ull-14x14-evk-igh.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-igh.dtb"
 KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-igh.dtb"
-KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-igh.dtb"
+KERNEL_DEVICETREE:append:imx93-11x11-lpddr4x-evk = " freescale/imx93-11x11-evk-igh.dtb"
 
 # dtb for plc
 KERNEL_DEVICETREE:append:imx6ull14x14evk = " nxp/imx/imx6ull-14x14-evk-ecat.dtb"
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-ecat.dtb"
 KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-ecat.dtb"
-KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-ecat.dtb"
+KERNEL_DEVICETREE:append:imx93-11x11-lpddr4x-evk = " freescale/imx93-11x11-evk-ecat.dtb"
 
 # dtb for EtherCAT userspace application
 KERNEL_DEVICETREE:append:imx8mm-lpddr4-evk = " freescale/imx8mm-evk-ecat-userspace.dtb"
 KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-ecat-userspace.dtb"
-KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-ecat-userspace.dtb"
+KERNEL_DEVICETREE:append:imx93-11x11-lpddr4x-evk = " freescale/imx93-11x11-evk-ecat-userspace.dtb"
 
 # dtb for lpuart
 # imx95-15x15-evk-lpuart is part of the consolidated imx95evk image, whose active
