@@ -242,14 +242,19 @@ bitbake-config-build enable-fragment core/yocto/root-login-with-empty-password
 
 echo -e "================================================================================================\n"
 
-# Add internal layer if it exists
-if [ -d "${ROOTDIR}/sources/meta-real-time-edge-internal" ]; then
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-real-time-edge-internal\"" >> $BUILD_DIR/conf/bblayers.conf
+# Setup internal source-server redirects.
+if [ "${PLATFORM}" = "imx" ]; then
+    if [ -f "${ROOTDIR}/sources/imx-build-bamboo/build/hook-in-internal-servers.sh" ]; then
+        source "${ROOTDIR}/sources/imx-build-bamboo/build/hook-in-internal-servers.sh"
+    fi
+else
+    if [ -f "${ROOTDIR}/sources/meta-nxp-common/bsp-internal/conf/distro/include/fsl-ls-internal-servers.inc" ]; then
+        echo "require \${BSPDIR}/sources/meta-nxp-common/bsp-internal/conf/distro/include/fsl-ls-internal-servers.inc" >> "$BUILD_DIR/conf/local.conf"
+    fi
 fi
 
-# setup internal build servers if the hook exists
-if [ -f "${ROOTDIR}/sources/imx-build-bamboo/build/hook-in-internal-servers.sh" ]; then
-    source "${ROOTDIR}/sources/imx-build-bamboo/build/hook-in-internal-servers.sh"
+if [ -f "${ROOTDIR}/sources/meta-real-time-edge-internal/conf/distro/include/rte-internal-servers.inc" ]; then
+    echo "require \${BSPDIR}/sources/meta-real-time-edge-internal/conf/distro/include/rte-internal-servers.inc" >> "$BUILD_DIR/conf/local.conf"
 fi
 
 cd  $BUILD_DIR
