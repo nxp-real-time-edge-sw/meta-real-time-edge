@@ -17,9 +17,13 @@ INSANE_SKIP:${PN}:remove = "ldflags"
 ERROR_QA:remove = "ldflags"
 WARN_QA:append = " ldflags"
 
-# bash-completion package is already added by meta-imx bbappend
-# PACKAGES += "${PN}-bash-completion"
-# FILES:${PN}-bash-completion = "${datadir}/bash-completion/completions/jailhouse"
+# For i.MX builds the meta-imx bbappend ships the bash-completion file in a
+# dedicated package. That bbappend is not in the layer stack for qoriq builds,
+# so the inherited bash-completion file would be installed but never packaged,
+# which fails do_package QA. Add the package for qoriq only to avoid a
+# duplicate PACKAGES entry on i.MX.
+PACKAGES:append:qoriq = " ${PN}-bash-completion"
+FILES:${PN}-bash-completion = "${datadir}/bash-completion/completions/jailhouse"
 
 RDEPENDS:${PN} += " \
     pyjailhouse \
