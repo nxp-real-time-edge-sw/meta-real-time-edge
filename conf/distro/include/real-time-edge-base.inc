@@ -76,22 +76,41 @@ KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-uart-sharing-cm3
 				      freescale/imx93-11x11-evk-dpdk.dtb \
 				      freescale/imx93-11x11-evk-multicore-rpmsg.dtb \
 				      freescale/imx93-11x11-evk-multicore-rtos.dtb"
-KERNEL_DEVICETREE:append:imx93-9x9-lpddr4-qsb = " freescale/imx93-9x9-qsb-inmate.dtb \
-						  freescale/imx93-9x9-qsb-root.dtb \
-						  freescale/imx93-9x9-qsb-uart-sharing-cm33.dtb"
+# RTE feature device trees for the i.MX93 9x9 QSB variant.
+# The consolidated imx93evk machine bundles the 9x9 variant, but its active
+# overrides are imx93-11x11-lpddr4x-evk/mx93 (see imx93evk.conf), not
+# imx93-9x9-lpddr4-qsb. Append for both the consolidated machine and the
+# dedicated 9x9 build so the dtbs are present in either case.
+IMX93_9X9_RTE_DTB = " freescale/imx93-9x9-qsb-inmate.dtb \
+		      freescale/imx93-9x9-qsb-root.dtb \
+		      freescale/imx93-9x9-qsb-uart-sharing-cm33.dtb"
+KERNEL_DEVICETREE:append:imx93evk = " ${IMX93_9X9_RTE_DTB}"
+KERNEL_DEVICETREE:append:imx93-9x9-lpddr4-qsb = " ${IMX93_9X9_RTE_DTB}"
 
-KERNEL_DEVICETREE:append:imx93-14x14-lpddr4x-evk = " freescale/imx93-14x14-evk-uart-sharing-cm33.dtb \
-						     freescale/imx93-14x14-evk-virtio-net-ca55.dtb \
-						     freescale/imx93-14x14-evk-virtio-net-cm33.dtb \
-						     freescale/imx93-14x14-evk-multicore-rpmsg.dtb \
-						     freescale/imx93-14x14-evk-multicore-rtos.dtb"
+# RTE feature device trees for the i.MX93 14x14 EVK variant.
+# Same rationale as the 9x9 block above: the consolidated imx93evk machine does
+# not enable the imx93-14x14-lpddr4x-evk override, so append for both.
+IMX93_14X14_RTE_DTB = " freescale/imx93-14x14-evk-uart-sharing-cm33.dtb \
+			freescale/imx93-14x14-evk-virtio-net-ca55.dtb \
+			freescale/imx93-14x14-evk-virtio-net-cm33.dtb \
+			freescale/imx93-14x14-evk-multicore-rpmsg.dtb \
+			freescale/imx93-14x14-evk-multicore-rtos.dtb"
+KERNEL_DEVICETREE:append:imx93evk = " ${IMX93_14X14_RTE_DTB}"
+KERNEL_DEVICETREE:append:imx93-14x14-lpddr4x-evk = " ${IMX93_14X14_RTE_DTB}"
 
 KERNEL_DEVICETREE:append:mx943 = " freescale/imx943-evk-multicore-rtos.dtb \
 				   freescale/imx943-evk-multicore-rpmsg.dtb"
 KERNEL_DEVICETREE:append:imx95-19x19-lpddr5-evk = " freescale/imx95-19x19-evk-multicore-rtos.dtb \
 						    freescale/imx95-19x19-evk-multicore-rpmsg.dtb"
-KERNEL_DEVICETREE:append:imx95-15x15-lpddr4x-evk = " freescale/imx95-15x15-evk-multicore-rtos.dtb \
-						     freescale/imx95-15x15-evk-multicore-rpmsg.dtb"
+# RTE multicore device trees for the i.MX95 15x15 EVK variant.
+# The consolidated imx95evk machine bundles the 15x15 variant, but its active
+# overrides are imx95-19x19-lpddr5-evk/mx95 (see imx95evk.conf), not
+# imx95-15x15-lpddr4x-evk. Append for both the consolidated machine and the
+# dedicated 15x15 build so the dtbs are present in either case.
+IMX95_15X15_MULTICORE_DTB = " freescale/imx95-15x15-evk-multicore-rtos.dtb \
+			      freescale/imx95-15x15-evk-multicore-rpmsg.dtb"
+KERNEL_DEVICETREE:append:imx95evk = " ${IMX95_15X15_MULTICORE_DTB}"
+KERNEL_DEVICETREE:append:imx95-15x15-lpddr4x-evk = " ${IMX95_15X15_MULTICORE_DTB}"
 
 # dtb for igh
 KERNEL_DEVICETREE:append:imx6ull14x14evk = " nxp/imx/imx6ull-14x14-evk-igh.dtb"
@@ -111,11 +130,11 @@ KERNEL_DEVICETREE:append:imx8mp-lpddr4-evk = " freescale/imx8mp-evk-ecat-userspa
 KERNEL_DEVICETREE:append:imx93evk = " freescale/imx93-11x11-evk-ecat-userspace.dtb"
 
 # dtb for lpuart
+# imx95-15x15-evk-lpuart is part of the consolidated imx95evk image, whose active
+# overrides do not include imx95-15x15-lpddr4x-evk, so append for both.
 KERNEL_DEVICETREE:append:imx6ull14x14evk = " nxp/imx/imx6ull-14x14-evk-lpuart.dtb"
+KERNEL_DEVICETREE:append:imx95evk = " freescale/imx95-15x15-evk-lpuart.dtb"
 KERNEL_DEVICETREE:append:imx95-15x15-lpddr4x-evk = " freescale/imx95-15x15-evk-lpuart.dtb"
-
-# dtb for imxai2eth-ath
-KERNEL_DEVICETREE:append:imx93-14x14-lpddr4x-evk = " freescale/imx93-14x14-evk-imxai2eth-ath.dtb"
 
 # dtb for DSA
 KERNEL_DEVICETREE:append:mx943 = " freescale/imx943-evk-hms-dsa.dtb"
