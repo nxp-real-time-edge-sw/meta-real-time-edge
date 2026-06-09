@@ -1,0 +1,131 @@
+From d2e025ee0aaef0b54ee30eda592e5ff1f7a17ddb Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Tue, 28 Apr 2026 17:35:52 +0800
+Subject: [PATCH 2/2] Update Readme_For_User_Space_IGH_EtherCAT.txt
+
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
+---
+ Readme_For_User_Space_IGH_EtherCAT.txt | 62 ++++++++++++++++----------
+ 1 file changed, 39 insertions(+), 23 deletions(-)
+
+diff --git a/Readme_For_User_Space_IGH_EtherCAT.txt b/Readme_For_User_Space_IGH_EtherCAT.txt
+index 74678525..7d497a69 100644
+--- a/Readme_For_User_Space_IGH_EtherCAT.txt
++++ b/Readme_For_User_Space_IGH_EtherCAT.txt
+@@ -93,9 +93,7 @@ int ecus_slave_is_ready(uint32_t master_index, uint16_t alias, uint16_t position
+  * master:	the pointer of the corresponding master
+  * cycle:	denote whether this calling will calculate jiffies for master FSM
+  *
+- * Note: this function should be called twice in one loop of RT thread,
+- *	 the first one is called after RX, the second one is called after TX.
+- *	 only the first one should set cycle = 1
++ * Note: this function should be called before send operation.
+  **/
+ int ecus_master_operation_loop(ec_master_t *master, int cycle);
+ 
+@@ -131,16 +129,15 @@ static void *user_cycle_thread(void *p)
+ 	while (1) {
+ 		ecrt_master_receive(ec_master);
+ 
+-		/* call operation function after RX */
++		... /* process data and update status */
++
++		/* call loop function before send operation */
+ 		ecus_master_operation_loop(ec_master, 1);
+ 
+-		...
++		... /* enqueue data to domain queue */
+ 
+ 		ecrt_master_send(ec_master);
+ 
+-		/* call operation function after TX */
+-		ecus_master_operation_loop(ec_master, 0);
+-
+ 		usleep(1000);
+ 	}
+ }
+@@ -173,12 +170,6 @@ int main()
+ 	return 0;
+ }
+ 
+-NOTE:
+-For user space IGH EtherCAT, should use *-dpdk.dtb for Linux kernel, for example:
+-- imx8mm-evk-dpdk.dtb
+-- imx8mp-evk-dpdk.dtb
+-- imx93-11x11-evk-dpdk.dtb
+-
+ 5. How to run user's EtherCAT application
+ 
+ Before running application, we should set hugepage related configuration:
+@@ -212,33 +203,58 @@ or
+ 
+ Note:
+ 1) If want to run user's application, should exit and close ethercat_master program.
+-2) For i.MX8MP, i.MX8MM and i.MX93 platform:
+-   a. should export the following environment variable, like: export ECAT_MAIN_DEV="fec"
++
++7. How to use user space EtherCAT stack on NXP platform?
++7.1 For i.MX8MP, i.MX8MM and i.MX93 platform:
++   a. export the following environment variable:
++   FEC port:
++     export ECAT_MAIN_DEV="fec"
++   EQOS port:
++     export ECAT_MAIN_DEV="eqos"
++
+    b. should limit DDR memory in 4G bytes in U-Boot bootargs, for example: 'mem=4096M'
+ 
+-7. How to use user space EtherCAT stack on i.MX95 and i.MX943 platform?
+-7.1 i.MX95
++NOTE:
++  For user space IGH EtherCAT, should use *-userspace.dtb for Linux, for example:
++  - imx8mm-evk-ecat-userspace.dtb
++  - imx8mp-evk-ecat-userspace.dtb
++  - imx93-11x11-evk-ecat-userspace.dtb
++
++7.2 i.MX95
+ * eth0:
+-    echo -n 0002:00:00.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
++    echo -n 0002:00:00.0 > /sys/bus/pci/drivers/nxp_enetc4/unbind
+     echo -n enetc_pci_uio > /sys/bus/pci/devices/0002:00:00.0/driver_override
+     echo -n 0002:00:00.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
+     export ECAT_MAIN_DEV="enetc4@0002:00:00.0"
+ 
+ * eth1:
+-    echo -n 0002:00:10.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
++    echo -n 0002:00:10.0 > /sys/bus/pci/drivers/nxp_enetc4/unbind
+     echo -n enetc_pci_uio > /sys/bus/pci/devices/0002:00:10.0/driver_override
+     echo -n 0002:00:10.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
+     export ECAT_MAIN_DEV="enetc4@0002:00:10.0"
+ 
+-7.2 i.MX943
++7.3 FRDM-i.MX95
++* eth0:
++    echo -n 0001:00:00.0 > /sys/bus/pci/drivers/nxp_enetc4/unbind
++    echo -n enetc_pci_uio > /sys/bus/pci/devices/0001:00:00.0/driver_override
++    echo -n 0001:00:00.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
++    export ECAT_MAIN_DEV="enetc4@0001:00:00.0"
++
++* eth1:
++    echo -n 0001:00:08.0 > /sys/bus/pci/drivers/nxp_enetc4/unbind
++    echo -n enetc_pci_uio > /sys/bus/pci/devices/0001:00:08.0/driver_override
++    echo -n 0001:00:08.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
++    export ECAT_MAIN_DEV="enetc4@0001:00:08.0"
++
++7.4 i.MX943
+ * eth1:
+-    echo -n 0001:01:08.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
++    echo -n 0001:01:08.0 > /sys/bus/pci/drivers/nxp_enetc4/unbind
+     echo -n enetc_pci_uio > /sys/bus/pci/devices/0001:01:08.0/driver_override
+     echo -n 0001:01:08.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
+     export ECAT_MAIN_DEV="enetc4@0001:01:08.0"
+ 
+ * eth2:
+-    echo -n 0001:01:10.0 > /sys/bus/pci/drivers/fsl_enetc4/unbind
++    echo -n 0001:01:10.0 > /sys/bus/pci/drivers/nxp_enetc4/unbind
+     echo -n enetc_pci_uio > /sys/bus/pci/devices/0001:01:10.0/driver_override
+     echo -n 0001:01:10.0 > /sys/bus/pci/drivers/enetc_pci_uio/bind
+     export ECAT_MAIN_DEV="enetc4@0001:01:10.0"
+-- 
+2.43.0
+

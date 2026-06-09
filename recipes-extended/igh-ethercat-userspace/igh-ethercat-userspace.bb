@@ -26,6 +26,8 @@ SRC_URI += " \
     file://0001-Add-code-to-support-both-i.MX943-and-i.MX-RT1180-ser.patch \
     file://0002-Support-main-and-backup-devices-for-multiple-masters.patch \
     file://0003-remove-bool-definition.patch \
+    file://0001-Run-master_operation_loop-once-for-improved-performa.patch \
+    file://0002-Update-Readme_For_User_Space_IGH_EtherCAT.txt.patch \
     file://libus_drv.a;subdir=${S}/devices/nxp_userspace/ \
 "
 

@@ -1,0 +1,29 @@
+From 91ddf80ceba5df774a9ac411a9fb5ec10b13d57c Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Tue, 28 Apr 2026 17:00:38 +0800
+Subject: [PATCH 1/2] Run master_operation_loop once for improved performance
+
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
+---
+ examples/motor_control/main.c | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/examples/motor_control/main.c b/examples/motor_control/main.c
+index da3a4a21..37a433ac 100644
+--- a/examples/motor_control/main.c
++++ b/examples/motor_control/main.c
+@@ -408,10 +408,6 @@ void run_main_cycle_task(void)
+ 		/* send process data */
+ 		ecrt_domain_queue(sec_domain);
+ 		ecrt_master_send(sec_master);
+-
+-#ifdef EC_MASTER_IN_USERSPACE
+-		ecus_master_operation_loop(sec_master, 0);
+-#endif
+ 	}
+ }
+ 
+-- 
+2.43.0
+
