@@ -61,7 +61,11 @@ change_conf()
     echo "" >> $BUILD_DIR/conf/local.conf
     echo "# Share cache" >> $BUILD_DIR/conf/local.conf
     echo "SSTATE_DIR ?= \"\${BSPDIR}/sstate-cache\"" >> $BUILD_DIR/conf/local.conf
-    echo "BB_HASHSERVE_DB_DIR = \"\${SSTATE_DIR}\"" >> $BUILD_DIR/conf/local.conf
+    # Keep the hash equivalence database outside the build dir to allow
+    # sstate reuse. BSPDIR must be local, since sqlite is unreliable on NFS.
+    echo "BB_HASHSERVE = \"auto\"" >> $BUILD_DIR/conf/local.conf
+    echo "BB_HASHSERVE_DB_DIR = \"\${BSPDIR}/cache/hashserv\"" >> $BUILD_DIR/conf/local.conf
+
 
     echo >> $BUILD_DIR/conf/local.conf
     echo "# Switch to Debian packaging and include package-management in the image" >> $BUILD_DIR/conf/local.conf
