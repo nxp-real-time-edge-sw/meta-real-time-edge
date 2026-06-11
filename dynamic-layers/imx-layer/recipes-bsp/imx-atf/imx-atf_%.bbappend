@@ -16,6 +16,13 @@ SRC_URI:append = " \
     file://0009-plat-imx9-add-SIP-cpu_off-service.patch \
     file://0010-imx8mp-Set-RDC-to-level-0.patch \
     file://0011-plat-imx93-add-platform-API-plat_core_mpidr_by_idx.patch \
+"
+
+# Multicore fastboot ATF support is only needed when the fastboot imx-boot
+# variant is selected (IMXBOOT_VARIANT = "fastboot", which sets
+# FASTBOOT_ENABLED=1 in imx-fastboot-env.inc). Apply these patches only then so
+# a normal build keeps the stock ATF.
+SRC_URI:append = "${@' \
     file://0012-bl31-add-multicore-fastboot-support.patch \
     file://0013-plat-imx93-enable-fastboot-support.patch \
-"
+' if d.getVar('FASTBOOT_ENABLED') == '1' else ''}"
