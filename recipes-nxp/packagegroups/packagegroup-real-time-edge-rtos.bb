@@ -19,6 +19,7 @@ demo_apps:append:imx943-19x19-lpddr4-evk = " demo-hello-world "
 demo_apps:append:imx943-19x19-lpddr5-evk = " demo-hello-world "
 demo_apps:append:imx95-15x15-lpddr4x-evk = " demo-hello-world "
 demo_apps:append:imx95-19x19-lpddr5-evk = " demo-hello-world "
+demo_apps:append:imx952-19x19-lpddr5-evk = " demo-hello-world "
 
 freertos_examples ?= ""
 freertos_examples:append:imx8mm-lpddr4-evk = " freertos-hello "
@@ -28,6 +29,7 @@ freertos_examples:append:imx943-19x19-lpddr4-evk = " freertos-hello "
 freertos_examples:append:imx943-19x19-lpddr5-evk = " freertos-hello "
 freertos_examples:append:imx95-15x15-lpddr4x-evk = " freertos-hello "
 freertos_examples:append:imx95-19x19-lpddr5-evk = " freertos-hello "
+freertos_examples:append:imx952-19x19-lpddr5-evk = " freertos-hello "
 
 driver_examples ?= ""
 driver_examples:append:imx8mm-lpddr4-evk = " igpio-led-output "
@@ -37,6 +39,7 @@ driver_examples:append:imx943-19x19-lpddr4-evk = " rgpio-led-output "
 driver_examples:append:imx943-19x19-lpddr5-evk = " rgpio-led-output "
 driver_examples:append:imx95-15x15-lpddr4x-evk = " rgpio-led-output "
 driver_examples:append:imx95-19x19-lpddr5-evk = " rgpio-led-output "
+driver_examples:append:imx952-19x19-lpddr5-evk = " rgpio-led-output "
 
 soem_examples ?= ""
 soem_examples:append:imx8mm-lpddr4-evk = " \
