@@ -23,8 +23,8 @@
 #   Each bitbake invocation builds a single variant (same as netc/jailhouse).
 #
 #   Default: Two RTOS mode (no U-Boot):
-#     Core 0: hello_world RTOS1 binary at 0xD0000000
-#     Core 1: hello_world RTOS0 binary at 0xD1000000
+#     Core 0: hello_world RTOS1 binary at 0xD1000000
+#     Core 1: hello_world RTOS0 binary at 0xD0000000
 #
 #   Note the crossed naming: Core 0 uses an RTOS1 binary and Core 1 uses an RTOS0
 #   binary. This is intentional and matches the boot-order semantics (Core 1 boots
@@ -89,6 +89,6 @@ RTOS_MACHINE:imx93evk = "imx93-11x11-lpddr4x-evk"
 # Paths are relative to DEPLOY_DIR_IMAGE and match the HMC example deploy layout
 # examples/${RTOS_MACHINE}/heterogeneous-multicore/<recipe>-<rtos>/.
 CA_CORE0_IMG:mx93-nxp-bsp ?= "examples/${RTOS_MACHINE}/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS1_UART1.bin"
-CA_CORE0_IMG_LOAD_ADDR:mx93-nxp-bsp ?= "0xD0000000"
+CA_CORE0_IMG_LOAD_ADDR:mx93-nxp-bsp ?= "0xD1000000"
 CA_CORE1_IMG:mx93-nxp-bsp ?= "examples/${RTOS_MACHINE}/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS0_UART2.bin"
-CA_CORE1_IMG_LOAD_ADDR:mx93-nxp-bsp ?= "0xD1000000"
+CA_CORE1_IMG_LOAD_ADDR:mx93-nxp-bsp ?= "0xD0000000"
