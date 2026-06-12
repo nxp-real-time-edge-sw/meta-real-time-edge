@@ -8,5 +8,5 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI:append = " \
-    file://0001-iMX93-add-fastboot-support.patch \
+    file://fastboot.patch \
 "

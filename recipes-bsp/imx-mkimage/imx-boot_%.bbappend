@@ -24,7 +24,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 # imx-boot source as well, since imx-boot is the recipe that runs the
 # imx-mkimage build target to generate the boot image.
 SRC_URI:append = " \
-    file://0001-iMX93-add-fastboot-support.patch \
+    file://fastboot.patch \
 "
 
 # When fastboot is enabled, the RTOS firmware images are concatenated into the
