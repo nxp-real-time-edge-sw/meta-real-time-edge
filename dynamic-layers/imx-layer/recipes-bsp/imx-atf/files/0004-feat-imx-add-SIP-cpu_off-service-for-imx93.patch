@@ -1,7 +1,7 @@
-From a1c5b518c754fe26445743d7c32e2e41568411b6 Mon Sep 17 00:00:00 2001
+From 9bdda2708efa46a4fc3a26c93acbc61c49f20f0f Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 12 Mar 2026 18:03:39 +0800
-Subject: [PATCH 04/10] feat(imx): add SIP cpu_off service for imx93
+Subject: [PATCH 04/13] feat(imx): add SIP cpu_off service for imx93
 
 SIP cpu_off service is used to turn off specified CPU Core by any
 other management CPU Core, SGI interrupt is trigged by managment
@@ -12,7 +12,7 @@ Add common layer of inter-core service, so that we can use single
 shared SGI interrupt to more inter-core notifyication service.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
-Upstream-Status: Pending
+Upstream-Status: Submitted
 ---
  plat/imx/common/imx_cpu_off.c               | 43 ++++++++++
  plat/imx/common/imx_intercore_svc.c         | 88 +++++++++++++++++++++

@@ -1,7 +1,7 @@
-From b6c10804fbbcca3f13cc7af8608646246cf135df Mon Sep 17 00:00:00 2001
+From 5e31891cff1b93471bb52c060996e0a46e62376d Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Thu, 2 Jan 2025 15:43:30 +0800
-Subject: [PATCH 09/10] plat: imx9: add SIP cpu_off service
+Subject: [PATCH 09/13] plat: imx9: add SIP cpu_off service
 
 Added SIP cpu_off service for imx95, imx94 and imx952
 

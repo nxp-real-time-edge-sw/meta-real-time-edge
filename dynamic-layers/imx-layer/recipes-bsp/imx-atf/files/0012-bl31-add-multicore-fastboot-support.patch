@@ -1,4 +1,4 @@
-From 14d513beb9c27de74821e68e34c6f53f6aad8218 Mon Sep 17 00:00:00 2001
+From ac71f9b9aeecef7f37cc8c46ac35149ade4648a1 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Tue, 14 Apr 2026 14:11:16 +0800
 Subject: [PATCH 12/13] bl31: add multicore fastboot support
@@ -218,7 +218,7 @@ index 09c286500..2c67c1a3b 100644
   * into the next image after BL31 at the next ERET.
 diff --git a/bl31/multicore_fastboot.c b/bl31/multicore_fastboot.c
 new file mode 100644
-index 000000000..d609a4880
+index 000000000..7777c585e
 --- /dev/null
 +++ b/bl31/multicore_fastboot.c
 @@ -0,0 +1,396 @@
@@ -250,7 +250,7 @@ index 000000000..d609a4880
 +/**
 + * Initialize CRC32 lookup table
 + */
-+static void init_crc32_table(void)
++static inline void init_crc32_table(void)
 +{
 +	uint32_t polynomial = 0xEDB88320;
 +
@@ -273,7 +273,7 @@ index 000000000..d609a4880
 + * @param length: Length of data in bytes
 + * @return: CRC32 checksum
 + */
-+static uint32_t calculate_crc32(const void *data, size_t length)
++static inline uint32_t calculate_crc32(const void *data, size_t length)
 +{
 +	const uint8_t *bytes = (const uint8_t *)data;
 +	uint32_t crc = 0xFFFFFFFF;
@@ -323,7 +323,7 @@ index 000000000..d609a4880
 + * @param header: Output pointer to store header data
 + * @return: 0 on success, negative error code on failure
 + */
-+static int validate_fastboot_header(uintptr_t blob_addr, fastboot_entries_header_t *header)
++static inline int validate_fastboot_header(uintptr_t blob_addr, fastboot_entries_header_t *header)
 +{
 +	/* Read header fields */
 +	memcpy(header, (const void *)blob_addr, sizeof(fastboot_entries_header_t));

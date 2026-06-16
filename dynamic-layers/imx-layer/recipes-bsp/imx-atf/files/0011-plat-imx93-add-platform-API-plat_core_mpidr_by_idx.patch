@@ -1,4 +1,4 @@
-From 3f145d4aa98ef0a28401626e996ad8ed94f73bde Mon Sep 17 00:00:00 2001
+From 96b093a19a684c6b5afc127bec8e452820eadfa8 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Tue, 14 Apr 2026 10:11:30 +0800
 Subject: [PATCH 11/13] plat: imx93: add platform API plat_core_mpidr_by_idx

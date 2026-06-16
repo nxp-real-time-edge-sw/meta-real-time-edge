@@ -1,4 +1,4 @@
-From ab81c867fcba9a5d812a78b390411ef446cc2a15 Mon Sep 17 00:00:00 2001
+From 5100d0f20e36f27fef287f9ab99637c14a632862 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Tue, 14 Apr 2026 14:29:38 +0800
 Subject: [PATCH 13/13] plat: imx93: enable fastboot support
@@ -48,7 +48,7 @@ index ff9ea771f..4c6b38a00 100644
  		{0}
  	};
 diff --git a/plat/imx/imx93/include/platform_def.h b/plat/imx/imx93/include/platform_def.h
-index b990b4af2..24fbf0bf2 100644
+index b990b4af2..e66f77edb 100644
 --- a/plat/imx/imx93/include/platform_def.h
 +++ b/plat/imx/imx93/include/platform_def.h
 @@ -41,6 +41,10 @@
@@ -67,7 +67,7 @@ index b990b4af2..24fbf0bf2 100644
  
  #ifdef SPD_trusty
 +#if ENABLE_FASTBOOT
-+#define MAX_XLAT_TABLES			15
++#define MAX_XLAT_TABLES			16
 +#define MAX_MMAP_REGIONS		20
 +#else /* ENABLE_FASTBOOT */
  #define MAX_XLAT_TABLES			15
@@ -76,7 +76,7 @@ index b990b4af2..24fbf0bf2 100644
 +#endif /* ENABLE_FASTBOOT */
 +#else /* SPD_trusty */
 +#if ENABLE_FASTBOOT
-+#define MAX_XLAT_TABLES			12
++#define MAX_XLAT_TABLES			13
 +#define MAX_MMAP_REGIONS		17
 +#else /* ENABLE_FASTBOOT */
  #define MAX_XLAT_TABLES			12

@@ -1,7 +1,7 @@
-From b7cb3c308e8790330ead2a9bcec8fc31fa47c5e3 Mon Sep 17 00:00:00 2001
+From 8f9678249a1706cda9266c27633d26a5d2b712d6 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Wed, 25 Sep 2024 17:34:55 +0800
-Subject: [PATCH 07/10] plat: imx8m: add SIP cpu_off service
+Subject: [PATCH 07/13] plat: imx8m: add SIP cpu_off service
 
 Added SIP cpu_off service for imx8mm/n/p.
 

@@ -1,7 +1,7 @@
-From 4f579921ebc2389bb664d7c243ba17dadb6ad6a3 Mon Sep 17 00:00:00 2001
+From f2e57c026f86b3e46c3892d2ade38da50b263843 Mon Sep 17 00:00:00 2001
 From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
 Date: Tue, 17 Jun 2025 22:28:54 +0800
-Subject: [PATCH 10/10] imx8mp: Set RDC to level 0
+Subject: [PATCH 10/13] imx8mp: Set RDC to level 0
 
 Heterogeneous-multicore examples need flexible configuration of
 the RDC for peripherals access permision. So enable the NS access

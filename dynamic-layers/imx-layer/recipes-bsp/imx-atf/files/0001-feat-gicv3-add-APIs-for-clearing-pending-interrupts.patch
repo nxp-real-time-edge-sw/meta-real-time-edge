@@ -1,7 +1,7 @@
-From d86b7cc44b70299a4f4421084a380eff2566db0b Mon Sep 17 00:00:00 2001
+From 635f9e92373ca2deecd85f5a8d31eefb8d25d8ac Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Fri, 13 Mar 2026 14:14:24 +0800
-Subject: [PATCH 01/10] feat(gicv3): add APIs for clearing pending interrupts
+Subject: [PATCH 01/13] feat(gicv3): add APIs for clearing pending interrupts
 
 Add two new APIs:
 1. Clean interrupts from distributor for a CPU Core, it will clear
@@ -11,7 +11,7 @@ Add two new APIs:
    pending and disable all SGIs/PPIs on this redistributor interface.
 
 Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
-Upstream-Status: Pending
+Upstream-Status: Submitted
 ---
  drivers/arm/gic/v3/gicv3_helpers.c | 40 ++++++++++++++++++++++++++++++
  drivers/arm/gic/v3/gicv3_main.c    | 28 +++++++++++++++++++++
