@@ -1,4 +1,4 @@
-From 28e5b00ce53b1bba50ad43306084b2630fd70ca0 Mon Sep 17 00:00:00 2001
+From 56c99065589c68722973c102cf475bb1f6326967 Mon Sep 17 00:00:00 2001
 From: Jiafei Pan <Jiafei.Pan@nxp.com>
 Date: Wed, 8 Apr 2026 10:57:31 +0800
 Subject: [PATCH] iMX93: add fastboot support
@@ -14,12 +14,12 @@ Upstream-Status: Pending
  doc/README_FASTBOOT.md          | 524 ++++++++++++++++++
  iMX93/fastboot_2_rtos.mak       |  19 +
  iMX93/fastboot_uboot_1_rtos.mak |  15 +
- iMX93/soc.mak                   | 117 ++++-
+ iMX93/soc.mak                   | 128 ++++-
  scripts/fastboot_helper.mak     |  59 +++
  src/multicore_fastboot.c        | 905 ++++++++++++++++++++++++++++++++
  src/multicore_fastboot.h        | 121 +++++
  src/multicore_fastboot_tool.c   | 204 +++++++
- 9 files changed, 1976 insertions(+), 13 deletions(-)
+ 9 files changed, 1987 insertions(+), 13 deletions(-)
  create mode 100644 doc/README_FASTBOOT.md
  create mode 100644 iMX93/fastboot_2_rtos.mak
  create mode 100644 iMX93/fastboot_uboot_1_rtos.mak
@@ -665,7 +665,7 @@ index 0000000..249987b
 +# FASTBOOT_ENTRY_EMBEDDED_OFFSET
 +FASTBOOT_ENTRY_EMBEDDED_UBOOT ?= yes
 diff --git a/iMX93/soc.mak b/iMX93/soc.mak
-index ebe3d01..0257332 100644
+index ebe3d01..f02a847 100644
 --- a/iMX93/soc.mak
 +++ b/iMX93/soc.mak
 @@ -13,6 +13,10 @@ QSPI_PACKER = ../scripts/fspi_packer.sh
@@ -687,7 +687,7 @@ index ebe3d01..0257332 100644
  UBOOT_LOAD_ADDR ?= 0x80200000
  MCU_TCM_ADDR ?= 0x1FFE0000		# 128KB TCM
  MCU_TCM_ADDR_ACORE_VIEW ?= 0x201E0000
-@@ -46,6 +51,87 @@ MCU_XIP_ADDR ?= 0x28032000 # Point entry of m33 in flexspi0 nor flash
+@@ -46,6 +51,98 @@ MCU_XIP_ADDR ?= 0x28032000 # Point entry of m33 in flexspi0 nor flash
  M33_IMAGE_XIP_OFFSET ?= 0x31000 # 1st container offset is 0x1000 when boot device is flexspi0 nor
  				# flash, actually the m33_image.bin is in 0x31000 + 0x1000 = 0x32000.
  
@@ -721,22 +721,33 @@ index ebe3d01..0257332 100644
 +    include ../scripts/fastboot_helper.mak
 +    fastboot_entries_string := $(call build_fastboot_entries_string)
 +
-+    # Set default value for FASTBOOT_ENTRY_EMBEDDED_UBOOT if not specified
++    # Derive internal variable _FASTBOOT_ENTRY_EMBEDDED_UBOOT from the user-supplied
++    # FASTBOOT_ENTRY_EMBEDDED_UBOOT. Using an internal variable avoids the issue where
++    # a command-line assignment such as FASTBOOT_ENTRY_EMBEDDED_UBOOT= (empty) prevents
++    # the default value set inside the Makefile from taking effect.
++    #
 +    # If CA_CORE0_IMG is set, default to no (Core 0 will run different image)
 +    # If CA_CORE0_IMG is not set, default to yes (Core 0 will run U-Boot)
 +    ifeq ($(FASTBOOT_ENTRY_EMBEDDED_UBOOT),)
 +        ifneq ($(CA_CORE0_IMG),)
-+            FASTBOOT_ENTRY_EMBEDDED_UBOOT = no
-+            $(info FASTBOOT_ENTRY_EMBEDDED_UBOOT not specified, defaulting to 'no' (CA_CORE0_IMG is set， Core 0 will run different image))
++            _FASTBOOT_ENTRY_EMBEDDED_UBOOT = no
++            $(info FASTBOOT_ENTRY_EMBEDDED_UBOOT not specified, defaulting to 'no' (CA_CORE0_IMG is set, Core 0 will run different image))
 +        else
-+            FASTBOOT_ENTRY_EMBEDDED_UBOOT = yes
++            _FASTBOOT_ENTRY_EMBEDDED_UBOOT = yes
 +            $(info FASTBOOT_ENTRY_EMBEDDED_UBOOT not specified, defaulting to 'yes' (CA_CORE0_IMG is not set, Core 0 will run U-Boot))
 +        endif
++    else
++        ifneq ($(FASTBOOT_ENTRY_EMBEDDED_UBOOT),yes)
++            ifneq ($(FASTBOOT_ENTRY_EMBEDDED_UBOOT),no)
++                $(error ERROR: FASTBOOT_ENTRY_EMBEDDED_UBOOT must be 'yes' or 'no', got '$(FASTBOOT_ENTRY_EMBEDDED_UBOOT)')
++            endif
++        endif
++        _FASTBOOT_ENTRY_EMBEDDED_UBOOT = $(FASTBOOT_ENTRY_EMBEDDED_UBOOT)
 +    endif
 +
-+    # Check for conflicting configuration: CA_CORE0_IMG set but FASTBOOT_ENTRY_EMBEDDED_UBOOT=yes
++    # Check for conflicting configuration: CA_CORE0_IMG set but _FASTBOOT_ENTRY_EMBEDDED_UBOOT=yes
 +    ifneq ($(CA_CORE0_IMG),)
-+        ifeq ($(FASTBOOT_ENTRY_EMBEDDED_UBOOT),yes)
++        ifeq ($(_FASTBOOT_ENTRY_EMBEDDED_UBOOT),yes)
 +            $(warning ========================================)
 +            $(warning WARNING: Conflicting fastboot configuration!)
 +            $(warning CA_CORE0_IMG is set to: $(CA_CORE0_IMG))
@@ -750,9 +761,9 @@ index ebe3d01..0257332 100644
 +        endif
 +    endif
 +
-+    # Check for conflicting configuration: CA_CORE0_IMG not set but FASTBOOT_ENTRY_EMBEDDED_UBOOT=no
++    # Check for conflicting configuration: CA_CORE0_IMG not set but _FASTBOOT_ENTRY_EMBEDDED_UBOOT=no
 +    ifeq ($(CA_CORE0_IMG),)
-+        ifeq ($(FASTBOOT_ENTRY_EMBEDDED_UBOOT),no)
++        ifeq ($(_FASTBOOT_ENTRY_EMBEDDED_UBOOT),no)
 +            $(error ERROR: FASTBOOT_ENTRY_EMBEDDED_UBOOT is set to 'no' but CA_CORE0_IMG is not set. \
 +                    When Core 0 runs U-Boot (CA_CORE0_IMG not set), fastboot entries must be embedded in u-boot.bin. \
 +                    Either set CA_CORE0_IMG or change FASTBOOT_ENTRY_EMBEDDED_UBOOT to 'yes')
@@ -763,7 +774,7 @@ index ebe3d01..0257332 100644
 +    FASTBOOT_ENTRY_EMBEDDED_IMG = u-boot.bin
 +    FASTBOOT_ENTRY_EMBEDDED_OFFSET = 16
 +
-+    ifeq ($(FASTBOOT_ENTRY_EMBEDDED_UBOOT),yes)
++    ifeq ($(_FASTBOOT_ENTRY_EMBEDDED_UBOOT),yes)
 +        $(info Fastboot entry will be embedded in u-boot.bin at offset $(FASTBOOT_ENTRY_EMBEDDED_OFFSET))
 +    else
 +        $(info Fastboot entry will be embedded in dummy u-boot.bin at offset $(FASTBOOT_ENTRY_EMBEDDED_OFFSET))
@@ -775,7 +786,7 @@ index ebe3d01..0257332 100644
  
  ###########################
  # Append container macro
-@@ -99,9 +185,17 @@ u-boot-spl-ddr-qb.bin: u-boot-spl.bin $(lpddr4_imem_qb) $(lpddr4_dmem_qb) $(lpdd
+@@ -99,9 +196,17 @@ u-boot-spl-ddr-qb.bin: u-boot-spl.bin $(lpddr4_imem_qb) $(lpddr4_dmem_qb) $(lpdd
  	@cat u-boot-spl-pad.bin lpddr4_pmu_qb_fw.bin $(lpddr4_qb_data) > u-boot-spl-ddr-qb.bin
  	@rm -f u-boot-spl-pad.bin lpddr4_pmu_qb_imem_pad.bin lpddr4_pmu_qb_dmem_pad.bin lpddr4_pmu_qb_fw.bin
  
@@ -783,7 +794,7 @@ index ebe3d01..0257332 100644
 +u-boot-fastboot.bin:
 +ifeq ($(FASTBOOT_ENABLED),yes)
 +	$(call process_fastboot_entries)
-+	@if [ "$(FASTBOOT_ENTRY_EMBEDDED_UBOOT)" = "no" ]; then \
++	@if [ "$(_FASTBOOT_ENTRY_EMBEDDED_UBOOT)" = "no" ]; then \
 +		dd if=${FASTBOOT_ENTRY_FILE} of=u-boot-fastboot.bin bs=1 seek=$(FASTBOOT_ENTRY_EMBEDDED_OFFSET) conv=notrunc; \
 +	fi
 +endif
@@ -795,7 +806,7 @@ index ebe3d01..0257332 100644
  
  u-boot-atf.bin: u-boot-hash.bin bl31.bin
  	@cp bl31.bin u-boot-atf.bin
-@@ -126,17 +220,21 @@ u-boot-atf-container.img: bl31.bin u-boot-hash.bin
+@@ -126,17 +231,21 @@ u-boot-atf-container.img: bl31.bin u-boot-hash.bin
  				   -ap bl31.bin a55 $(ATF_LOAD_ADDR) \
  				   -ap u-boot-hash.bin a55 $(UBOOT_LOAD_ADDR) \
  				   -ap $(TEE) a55 $(TEE_LOAD_ADDR) \
@@ -818,7 +829,7 @@ index ebe3d01..0257332 100644
  			   -out u-boot-atf-container.img; \
  	fi
  
-@@ -148,18 +246,21 @@ u-boot-atf-container-spinand.img: bl31.bin u-boot-hash.bin
+@@ -148,18 +257,21 @@ u-boot-atf-container-spinand.img: bl31.bin u-boot-hash.bin
  				   -ap bl31.bin a55 $(ATF_LOAD_ADDR) \
  				   -ap u-boot-hash.bin a55 $(UBOOT_LOAD_ADDR) \
  				   -ap $(TEE) a55 $(TEE_LOAD_ADDR) \
@@ -840,7 +851,7 @@ index ebe3d01..0257332 100644
  			   -out u-boot-atf-container-spinand.img; \
  	fi
  
-@@ -172,7 +273,8 @@ flash_fw.bin: FORCE
+@@ -172,7 +284,8 @@ flash_fw.bin: FORCE
  
  .PHONY: clean nightly
  clean:
@@ -850,7 +861,7 @@ index ebe3d01..0257332 100644
  	@rm -rf extracted_imgs
  	@echo "imx93 clean done"
  
-@@ -194,12 +296,12 @@ endif
+@@ -194,12 +307,12 @@ endif
  delete_capsule_key:
  	@rm -rf CRT.*
  
@@ -866,7 +877,7 @@ index ebe3d01..0257332 100644
  
  flash_singleboot_stmm_capsule: overlay flash_singleboot
  	./mkeficapsule flash.bin --monotonic-count 1 \
-@@ -213,7 +315,6 @@ flash_singleboot_stmm_capsule: overlay flash_singleboot
+@@ -213,7 +326,6 @@ flash_singleboot_stmm_capsule: overlay flash_singleboot
  flash_singleboot_stmm: flash_singleboot_stmm_capsule
  endif
  
@@ -876,7 +887,7 @@ index ebe3d01..0257332 100644
  	$(call append_container,u-boot-atf-container.img,1)
 diff --git a/scripts/fastboot_helper.mak b/scripts/fastboot_helper.mak
 new file mode 100644
-index 0000000..3b4e22e
+index 0000000..6606303
 --- /dev/null
 +++ b/scripts/fastboot_helper.mak
 @@ -0,0 +1,59 @@
@@ -888,8 +899,8 @@ index 0000000..3b4e22e
 +	@echo "Processing Fastboot Entries"
 +	@echo "========================================="
 +	@echo "Fastboot configuration: $(fastboot)"
-+	@echo "FASTBOOT_ENTRY_EMBEDDED_UBOOT: $(FASTBOOT_ENTRY_EMBEDDED_UBOOT)"
-+	@if [ "$(FASTBOOT_ENTRY_EMBEDDED_UBOOT)" = "yes" ]; then \
++	@echo "FASTBOOT_ENTRY_EMBEDDED_UBOOT: $(_FASTBOOT_ENTRY_EMBEDDED_UBOOT)"
++	@if [ "$(_FASTBOOT_ENTRY_EMBEDDED_UBOOT)" = "yes" ]; then \
 +		echo "Embedded image: $(FASTBOOT_ENTRY_EMBEDDED_IMG)"; \
 +		echo "Embedded offset: $(FASTBOOT_ENTRY_EMBEDDED_OFFSET)"; \
 +	else \
@@ -916,7 +927,7 @@ index 0000000..3b4e22e
 +	if [ -n "$(CA_CORE5_IMG)" ] && [ -n "$(CA_CORE5_IMG_LOAD_ADDR)" ]; then \
 +		TOOL_ARGS="$$TOOL_ARGS --core 5 $(CA_CORE5_IMG_LOAD_ADDR)"; \
 +	fi; \
-+	if [ "$(FASTBOOT_ENTRY_EMBEDDED_UBOOT)" = "yes" ]; then \
++	if [ "$(_FASTBOOT_ENTRY_EMBEDDED_UBOOT)" = "yes" ]; then \
 +		TOOL_ARGS="$$TOOL_ARGS --embed $(FASTBOOT_ENTRY_EMBEDDED_IMG) $(FASTBOOT_ENTRY_EMBEDDED_OFFSET)"; \
 +	else \
 +		TOOL_ARGS="$$TOOL_ARGS --output ${FASTBOOT_ENTRY_FILE}"; \
