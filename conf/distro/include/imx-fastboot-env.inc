@@ -69,10 +69,7 @@ CA_CORE3_IMG ?= ""
 CA_CORE3_IMG_LOAD_ADDR ?= ""
 
 # Fastboot entry embedding mode (matches imx-mkimage parameter)
-# - "yes": Embed fastboot entries in U-Boot (when Core 0 runs U-Boot)
-# - "no": Use standalone fastboot entries file (when Core 0 runs custom image)
-# - Auto-detected based on CA_CORE0_IMG
-FASTBOOT_ENTRY_EMBEDDED_UBOOT ?= "${@'no' if d.getVar('CA_CORE0_IMG') else 'yes'}"
+FASTBOOT_ENTRY_EMBEDDED_UBOOT ?= ""
 
 # Fastboot config file (maps to fastboot=<file> in make command)
 # If set, this .mak file is passed to imx-mkimage instead of individual variables

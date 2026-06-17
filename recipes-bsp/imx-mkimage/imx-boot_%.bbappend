@@ -74,9 +74,6 @@ python do_validate_fastboot() {
     if embedded == 'no' and not core0_img:
         errors.append("FASTBOOT_ENTRY_EMBEDDED_UBOOT=no requires CA_CORE0_IMG to be set")
     
-    if embedded == 'yes' and core0_img:
-        warnings.append(f"Conflicting config: CA_CORE0_IMG='{core0_img}' but FASTBOOT_ENTRY_EMBEDDED_UBOOT=yes")
-
     for warn in warnings:
         bb.warn(f"Fastboot: {warn}")
     
@@ -131,6 +128,11 @@ def get_fastboot_mkimage_args(d):
         args.append(f'fastboot={fastboot_config}')
         return ' '.join(args)
 
+    # Set FASTBOOT_ENTRY_EMBEDDED_UBOOT args if variable is configured
+    embedded_uboot = d.getVar('FASTBOOT_ENTRY_EMBEDDED_UBOOT')
+    if embedded_uboot:
+        args.append(f'FASTBOOT_ENTRY_EMBEDDED_UBOOT=${embedded_uboot}')
+
     # Build arguments from individual variables
     # Core 0 (custom image instead of U-Boot)
     core0_img = d.getVar('CA_CORE0_IMG')
@@ -138,7 +140,6 @@ def get_fastboot_mkimage_args(d):
     if core0_img and core0_addr:
         args.append('CA_CORE0_IMG=ca55_rtos0_img.bin')
         args.append(f'CA_CORE0_IMG_LOAD_ADDR={core0_addr}')
-        args.append('FASTBOOT_ENTRY_EMBEDDED_UBOOT=no')
 
     # Core 1
     core1_img = d.getVar('CA_CORE1_IMG')
