@@ -58,14 +58,14 @@ python do_validate_fastboot() {
 
     # Check each core's configuration
     for core_id in range(4):
-        img_var = f'CA_CORE{core_id}_IMG'
-        addr_var = f'CA_CORE{core_id}_IMG_LOAD_ADDR'
+        img_var = 'CA_CORE%d_IMG' % core_id
+        addr_var = 'CA_CORE%d_IMG_LOAD_ADDR' % core_id
         
         img = d.getVar(img_var)
         addr = d.getVar(addr_var)
         
         if img and not addr:
-            errors.append(f"{img_var} is set to '{img}' but {addr_var} is not set")
+            errors.append("%s is set to '%s' but %s is not set" % (img_var, img, addr_var))
 
     # Validate embedding configuration
     embedded = d.getVar('FASTBOOT_ENTRY_EMBEDDED_UBOOT')
@@ -75,11 +75,11 @@ python do_validate_fastboot() {
         errors.append("FASTBOOT_ENTRY_EMBEDDED_UBOOT=no requires CA_CORE0_IMG to be set")
     
     for warn in warnings:
-        bb.warn(f"Fastboot: {warn}")
-    
+        bb.warn("Fastboot: %s" % warn)
+
     if errors:
         for err in errors:
-            bb.error(f"Fastboot: {err}")
+            bb.error("Fastboot: %s" % err)
         bb.fatal("Fastboot configuration validation failed")
 }
 addtask validate_fastboot before do_compile after do_configure
@@ -125,13 +125,13 @@ def get_fastboot_mkimage_args(d):
     # If config file specified, use it
     fastboot_config = d.getVar('FASTBOOT_CONFIG')
     if fastboot_config:
-        args.append(f'fastboot={fastboot_config}')
+        args.append('fastboot=%s' % fastboot_config)
         return ' '.join(args)
 
     # Set FASTBOOT_ENTRY_EMBEDDED_UBOOT args if variable is configured
     embedded_uboot = d.getVar('FASTBOOT_ENTRY_EMBEDDED_UBOOT')
     if embedded_uboot:
-        args.append(f'FASTBOOT_ENTRY_EMBEDDED_UBOOT=${embedded_uboot}')
+        args.append('FASTBOOT_ENTRY_EMBEDDED_UBOOT=%s' % embedded_uboot)
 
     # Build arguments from individual variables
     # Core 0 (custom image instead of U-Boot)
@@ -139,14 +139,14 @@ def get_fastboot_mkimage_args(d):
     core0_addr = d.getVar('CA_CORE0_IMG_LOAD_ADDR')
     if core0_img and core0_addr:
         args.append('CA_CORE0_IMG=ca55_rtos0_img.bin')
-        args.append(f'CA_CORE0_IMG_LOAD_ADDR={core0_addr}')
+        args.append('CA_CORE0_IMG_LOAD_ADDR=%s' % core0_addr)
 
     # Core 1
     core1_img = d.getVar('CA_CORE1_IMG')
     core1_addr = d.getVar('CA_CORE1_IMG_LOAD_ADDR')
     if core1_img and core1_addr:
         args.append('CA_CORE1_IMG=ca55_rtos1_img.bin')
-        args.append(f'CA_CORE1_IMG_LOAD_ADDR={core1_addr}')
+        args.append('CA_CORE1_IMG_LOAD_ADDR=%s' % core1_addr)
 
     return ' '.join(args)
 
