@@ -36,13 +36,13 @@
 #   (see HMC_EXAMPLE_INSTALL_DIR in meta-rtos-industrial), so the CA_CORE*_IMG
 #   paths below are machine-relative via examples/${RTOS_MACHINE}.
 #
-#   Customize RTOS images in local.conf (full path relative to DEPLOY_DIR_IMAGE):
-#     CA_CORE0_IMG = "examples/${RTOS_MACHINE}/heterogeneous-multicore/hello-world-zephyr/hello_world_ca55_RTOS1_UART1.bin"
-#     CA_CORE1_IMG = "examples/${RTOS_MACHINE}/heterogeneous-multicore/rt-latency-freertos/rt_latency_ca55_RTOS0_UART2.bin"
+#   Customize RTOS images in local.conf (full path):
+#     CA_CORE0_IMG = "/path/to/your/ca55_rtos1_img.bin"
+#     CA_CORE1_IMG = "/path/to/your/ca55_rtos0_img.bin"
 #
 #   U-Boot + single RTOS mode:
 #     CA_CORE0_IMG = ""
-#     CA_CORE1_IMG = "examples/${RTOS_MACHINE}/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS0_UART2.bin"
+#     CA_CORE1_IMG = "/path/to/your/ca55_rtos0_img.bin"
 #     CA_CORE1_IMG_LOAD_ADDR = "0xD0000000"
 
 # Register the fastboot variant in the machine's allowed variant list so that
@@ -85,7 +85,7 @@ RTOS_MACHINE:imx93evk = "imx93-11x11-lpddr4x-evk"
 # i.MX93: Default Two RTOS mode (Core 0 + Core 1, no U-Boot)
 # Paths are relative to DEPLOY_DIR_IMAGE and match the HMC example deploy layout
 # examples/${RTOS_MACHINE}/heterogeneous-multicore/<recipe>-<rtos>/.
-CA_CORE0_IMG:mx93-nxp-bsp ?= "examples/${RTOS_MACHINE}/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS1_UART1.bin"
+CA_CORE0_IMG:mx93-nxp-bsp ?= "${DEPLOY_DIR_IMAGE}/examples/${RTOS_MACHINE}/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS1_UART1.bin"
 CA_CORE0_IMG_LOAD_ADDR:mx93-nxp-bsp ?= "0xD1000000"
-CA_CORE1_IMG:mx93-nxp-bsp ?= "examples/${RTOS_MACHINE}/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS0_UART2.bin"
+CA_CORE1_IMG:mx93-nxp-bsp ?= "${DEPLOY_DIR_IMAGE}/examples/${RTOS_MACHINE}/heterogeneous-multicore/hello-world-freertos/hello_world_ca55_RTOS0_UART2.bin"
 CA_CORE1_IMG_LOAD_ADDR:mx93-nxp-bsp ?= "0xD0000000"

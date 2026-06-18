@@ -92,7 +92,7 @@ do_compile:prepend:mx93-nxp-bsp() {
         
         # Core 0 RTOS image -> ca55_rtos0_img.bin (boots last)
         if [ -n "${CA_CORE0_IMG}" ]; then
-            RTOS_IMG="${DEPLOY_DIR_IMAGE}/${CA_CORE0_IMG}"
+            RTOS_IMG="${CA_CORE0_IMG}"
             if [ -f "${RTOS_IMG}" ]; then
                 cp "${RTOS_IMG}" ${BOOT_STAGING}/ca55_rtos0_img.bin
                 bbnote "Fastboot: Core 0 image: ${RTOS_IMG} -> ca55_rtos0_img.bin"
@@ -103,7 +103,7 @@ do_compile:prepend:mx93-nxp-bsp() {
 
         # Core 1 RTOS image -> ca55_rtos1_img.bin (boots first)
         if [ -n "${CA_CORE1_IMG}" ]; then
-            RTOS_IMG="${DEPLOY_DIR_IMAGE}/${CA_CORE1_IMG}"
+            RTOS_IMG="${CA_CORE1_IMG}"
             if [ -f "${RTOS_IMG}" ]; then
                 cp "${RTOS_IMG}" ${BOOT_STAGING}/ca55_rtos1_img.bin
                 bbnote "Fastboot: Core 1 image: ${RTOS_IMG} -> ca55_rtos1_img.bin"
