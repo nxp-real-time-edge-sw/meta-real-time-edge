@@ -1,0 +1,39 @@
+From 3b520178e5df5f38f1bb17afbd99a666c3e9603b Mon Sep 17 00:00:00 2001
+From: Jony Zhang <jony.zhang@nxp.com>
+Date: Mon, 22 Jun 2026 20:10:06 +0800
+Subject: [PATCH] bugfix: enetc4: fix modprobe fatal error
+
+log: modprobe: FATAL: Module enetc4 not found in directory /lib/modules/6.18.20-rt4-2.0.0-gbfe6afd8efbe
+
+Add module checks to eliminate this error.
+
+Signed-off-by: Jony Zhang <jony.zhang@nxp.com>
+Upstream-Status: Pending
+---
+ script/ethercatctl.in | 3 +++
+ 1 file changed, 3 insertions(+)
+ mode change 100755 => 100644 script/ethercatctl.in
+
+diff --git a/script/ethercatctl.in b/script/ethercatctl.in
+old mode 100755
+new mode 100644
+index 945f7f56..8b6bfacf
+--- a/script/ethercatctl.in
++++ b/script/ethercatctl.in
+@@ -218,6 +218,8 @@ stop)
+             done < ${ENETC_LOG}
+             rm -f ${ENETC_LOG}
+             continue
++        elif [ "${MODULE}" = "enetc4" ]; then
++            continue
+         elif [ "${MODULE}" == "generic" ] || [ "${MODULE}" == "ccat" ]; then
+             continue
+         elif [ "${MODULE}" == "dpaa1" ]; then
+@@ -285,3 +287,4 @@ status)
+ esac
+ 
+ #------------------------------------------------------------------------------
++
+-- 
+2.43.0
+

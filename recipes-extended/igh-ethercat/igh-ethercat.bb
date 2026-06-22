@@ -17,6 +17,7 @@ SRC_URI += "\
 	file://0004-ec_enetc-Add-ec_enetc-native-driver.patch \
 	file://0005-Add-support-for-NXP-DPAA1-ethercat-port.patch \
 	file://0006-examples-mini-fix-compile-error-because-of-kernel-up.patch \
+	file://0001-bugfix-enetc4-fix-modprobe-fatal-error.patch \
 "
 
 ERROR_QA:remove = "buildpaths"
