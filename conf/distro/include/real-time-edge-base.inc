@@ -143,6 +143,8 @@ KERNEL_DEVICETREE:append:imx95-15x15-lpddr4x-evk = " freescale/imx95-15x15-evk-l
 # dtb for DSA
 KERNEL_DEVICETREE:append:mx943-nxp-bsp = " freescale/imx943-evk-hms-dsa.dtb"
 
+KERNEL_DEVICETREE:append:mx952-nxp-bsp = " freescale/imx952-evk-multicore-rtos.dtb"
+
 # opcua override default log level
 LIBOPEN62541_LOGLEVE = "300"
 
