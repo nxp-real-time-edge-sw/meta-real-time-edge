@@ -1,0 +1,78 @@
+From 1c6ae0454bf3147de56da57f173cfc0f0deac8fa Mon Sep 17 00:00:00 2001
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
+Date: Wed, 24 Jun 2026 10:29:32 +0800
+Subject: [PATCH] configs: mx952rte: enable ca55 to control cm7
+
+Enable CA55 to control CM7, so that could use U-Boot command
+or Linux remoteproc to start CM7.
+
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Upstream-Status: Pending
+---
+ configs/other/mx952rte.cfg | 20 +++++++-------------
+ 1 file changed, 7 insertions(+), 13 deletions(-)
+
+diff --git a/configs/other/mx952rte.cfg b/configs/other/mx952rte.cfg
+index 9db9ca2e..c9efdd18 100755
+--- a/configs/other/mx952rte.cfg
++++ b/configs/other/mx952rte.cfg
+@@ -354,18 +354,6 @@ DATA:               perm=rw
+ PD_M7               start=1, stop=2
+ CPU_M7P             start=2, stop=1
+ 
+-# Start/Stop (mSel=1)
+-
+-MODE                msel=1, boot=2
+-
+-PD_M7               msel=1, start=1, stop=2
+-CPU_M7P             msel=1, start=2, stop=1
+-
+-# Start/Stop (mSel=2)
+-
+-PD_M7               msel=2, start=1, stop=2
+-CPU_M7P             msel=2, start=2, stop=1
+-
+ # RPC Interface
+ 
+ SCMI_AGENT0         name="M7"
+@@ -428,6 +416,7 @@ PIN_GPIO_IO15       OWNER
+ M7MIX               DATA, begin=0x020380000, end=0x02047FFFF
+ M7MIX               DATA, begin=0x04A060000, end=0x04A09FFFF
+ DDR                 EXEC, begin=0x080000000, end=0x089FFFFFF
++DDR                 EXEC, begin=0x0C0000000, end=0x0CFFFFFFF
+ 
+ # Faults
+ 
+@@ -511,6 +500,8 @@ PERLPI_LPUART8      ALL
+ PERLPI_WDOG3        ALL
+ PERLPI_WDOG4        ALL
+ SYS                 ALL
++CPU_M7P             ALL
++LMM_1               ALL
+ 
+ # Resources
+ 
+@@ -584,7 +575,8 @@ CLOCK_OUT3                ALL
+ CLOCK_OUT4                ALL
+ HSIO_PLL                  ALL
+ LDB_PLL                   ALL
+-LMM_1                     NOTIFY
++LMM_1                     ALL
++PD_M7                     ALL
+ PERF_A55                  ALL
+ PERF_DRAM                 ALL
+ RTC                       ALL, test
+@@ -1032,8 +1024,10 @@ OCRAM_C             EXEC, begin=0x001000000, end=0x001017FFF
+ OCRAM_D             EXEC, begin=0x001000000, end=0x001008FFF
+ OCRAM               EXEC, begin=0x0204C0000, size=96K
+ GPU                 DATA, begin=0x04D900000, end=0x04DD7FFFF
++DDR                 DATA, begin=0x080000000, end=0x088000000
+ DDR                 EXEC, begin=0x088000000, end=0x089FFFFFF
+ DDR                 EXEC, begin=0x08E000000, end=0x87FFFFFFF
++M7MIX               DATA, begin=0x020380000, end=0x02047FFFF
+ 
+ # RPC Interface of A55 NS agent1 (duplicated AP-NS-agent0)
+ 
+-- 
+2.43.0
+
