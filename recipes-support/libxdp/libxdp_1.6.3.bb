@@ -24,6 +24,7 @@ SRC_URI = "git://github.com/xdp-project/xdp-tools.git;nobranch=1;protocol=https 
              file://0005-Makefile-fix-libxdp.pc-error.patch \
              file://0006-xdp-trafficgen-support-XDP-ETF.patch \
              file://0007-xdp-trafficgen-add-config-and-script-for-XDP-ETF.patch \
+             file://0008-xdp-trafficgen-fix-ETF-multi-stream-CQ-drain-and-sta.patch \
            "
 
 # xdp-tools v1.6.3

@@ -1,0 +1,891 @@
+From cde4de498e27bf503aa19264419bac6b862476c1 Mon Sep 17 00:00:00 2001
+From: Chenhui Zhao <chenhui.zhao@nxp.com>
+Date: Wed, 17 Jun 2026 19:45:25 +0800
+Subject: [PATCH] xdp-trafficgen: fix ETF multi-stream CQ drain and startup
+ races
+
+- Add atomic trylock so children can also drain the shared CQ
+- Re-sync CQ ring cache after fork() to prevent double-processing
+- Create all stream contexts before forking (two-pass setup)
+- Compute a common start time so all streams align
+- Size UMEM per-stream (FRAMES_PER_STREAM) and pre-fault pages
+- Add backoff sleep and needs_wakeup check to reduce CPU overhead
+- Move parse_stream_config() to xdp-trafficgen.c with validation
+- Extract run_stream_child(); increase MAX_STREAM_COUNT to 64
+
+Upstream-Status: Pending
+
+Signed-off-by: Chenhui Zhao <chenhui.zhao@nxp.com>
+---
+ lib/util/xdpsock.c              | 401 +++++++++++++++++++++-----------
+ lib/util/xdpsock.h              |  18 +-
+ xdp-trafficgen/xdp-trafficgen.c | 109 ++++++++-
+ 3 files changed, 388 insertions(+), 140 deletions(-)
+
+diff --git a/lib/util/xdpsock.c b/lib/util/xdpsock.c
+index 5ab13e4..0117e9b 100644
+--- a/lib/util/xdpsock.c
++++ b/lib/util/xdpsock.c
+@@ -72,6 +72,7 @@
+ #endif
+ 
+ #define NUM_FRAMES (4 * 1024UL)
++#define FRAMES_PER_STREAM 1024
+ #define IS_EOP_DESC(options) (!((options) & XDP_PKT_CONTD))
+ 
+ #define DEBUG_HEXDUMP 0
+@@ -92,8 +93,10 @@
+ 
+ #define POLL_TIMEOUT 1000
+ 
++/* Drain CQ when a child's outstanding TX count reaches this threshold */
++#define CQ_DRAIN_THRESHOLD 64
++
+ #define TX_METADATA_SIZE	32
+-#define MAX_LINE_LENGTH		256
+ 
+ struct vlan_ethhdr {
+ 	unsigned char h_dest[6];
+@@ -179,17 +182,6 @@ struct xsk_socket_info {
+ 	__u32 frame_nb;
+ };
+ 
+-/*
+- * Parse stream config entries first (without forking), so we know
+- * the total count and can partition frames.
+- */
+-struct stream_cfg {
+-	unsigned long index;
+-	unsigned int cycle_us;
+-	unsigned int offset_us;
+-	unsigned int preload_us;
+-};
+-
+ static volatile sig_atomic_t child_running = 1;
+ 
+ static int xsk_set_sched_priority(enum xsk_sched_policy sched_policy,
+@@ -614,6 +606,10 @@ static bool is_benchmark_done(struct xsk_ctx *ctx)
+ 	if (sample_immediate_exit())
+ 		ctx->benchmark_done = true;
+ 
++	/* Check if a child process signaled shutdown */
++	if (ctx->shared_done && *ctx->shared_done)
++		ctx->benchmark_done = true;
++
+ 	if (ctx->benchmark_done && ctx->shared_done)
+ 		*ctx->shared_done = true;
+ 
+@@ -686,24 +682,38 @@ static inline int etf_stream_free_pop(struct etf_stream_ctx *s, __u64 *addr)
+  * frames back to the owning stream's per-stream free ring.
+  * Frame ownership is determined by address range (static partitioning).
+  *
+- * Thread safety: this function is only called from the parent's
+- * single-threaded xsk_stats_poller() loop.  Children never touch
+- * the CQ — they only produce to their own TX rings and consume
+- * from their per-stream SPSC free rings.  The CQ is single-consumer
+- * by AF_XDP design, and the parent is the sole consumer.
++ * Thread safety: callers must serialise access via ctx->cq_drain_lock
++ * (atomic trylock).  Both the parent (stats-poller) and children
++ * (spin-waiting for free frames) may call try_drain_shared_cq().
++ * The CQ is single-consumer by AF_XDP design; the trylock ensures
++ * only one process touches it at any time.
+  */
+-static void drain_shared_cq(struct xsk_ctx *ctx)
++static void drain_shared_cq(struct xsk_ctx *ctx,
++			    struct xsk_socket_info *caller_xsk,
++			    struct etf_stream_ctx *caller_stream)
+ {
+ 	struct xsk_umem_info *umem = ctx->umem;
+-	__u32 frames_per_stream;
+ 	unsigned int rcvd;
+ 	__u32 idx = 0;
+ 	unsigned int i;
++	unsigned int caller_reclaimed = 0;
+ 
+ 	if (!umem || !umem->umem || ctx->stream_idx <= 0)
+ 		return;
+ 
+-	frames_per_stream = NUM_FRAMES / ctx->stream_idx;
++	/*
++	 * Re-sync the consumer ring cache from shared pointers.
++	 * After fork(), each process keeps its own cached_cons/cached_prod
++	 * (heap memory, COW-private), while *consumer / *producer live in
++	 * shared mmap'd pages updated by the kernel and whichever process
++	 * last drained.  Without this resync a child could re-process
++	 * completions already consumed by another process, double-pushing
++	 * frames into per-stream free rings and corrupting the CQ state.
++	 */
++	umem->cq.cached_prod = __atomic_load_n(umem->cq.producer,
++					       __ATOMIC_ACQUIRE);
++	umem->cq.cached_cons = __atomic_load_n(umem->cq.consumer,
++					       __ATOMIC_ACQUIRE);
+ 
+ 	rcvd = xsk_ring_cons__peek(&umem->cq, 64, &idx);
+ 	if (!rcvd)
+@@ -719,14 +729,49 @@ static void drain_shared_cq(struct xsk_ctx *ctx)
+ 
+ 		/* Determine owning stream by frame index range */
+ 		frame_idx = addr / ctx->opt.frame_size;
+-		sid = frame_idx / frames_per_stream;
++		sid = frame_idx / FRAMES_PER_STREAM;
++
++		if (sid < 0 || sid >= ctx->stream_idx) {
++			pr_warn("CQ drain: unexpected sid %d for addr 0x%llx\n",
++				sid, (unsigned long long)addr);
++			continue;
++		}
+ 
+ 		if (etf_stream_free_push(ctx->streams[sid], addr))
+ 			pr_warn("CQ drain: stream %d free ring full, frame 0x%llx lost\n",
+ 				sid, (unsigned long long)addr);
++
++		/* Track completions belonging to the calling child */
++		if (caller_stream && ctx->streams[sid] == caller_stream)
++			caller_reclaimed++;
+ 	}
+ 
+ 	xsk_ring_cons__release(&umem->cq, rcvd);
++
++	/* Update the caller's outstanding_tx counter */
++	if (caller_xsk && caller_reclaimed)
++		caller_xsk->outstanding_tx -= caller_reclaimed;
++}
++
++/*
++ * Atomic-trylock wrapper around drain_shared_cq().
++ * Returns immediately if another process already holds the lock.
++ */
++static void try_drain_shared_cq(struct xsk_ctx *ctx,
++				struct xsk_socket_info *caller_xsk,
++				struct etf_stream_ctx *caller_stream)
++{
++	int expected = 0;
++
++	if (!atomic_compare_exchange_strong_explicit(ctx->cq_drain_lock,
++						     &expected, 1,
++						     memory_order_acquire,
++						     memory_order_relaxed))
++		return; /* someone else is draining */
++
++	drain_shared_cq(ctx, caller_xsk, caller_stream);
++
++	atomic_store_explicit(ctx->cq_drain_lock, 0, memory_order_release);
+ }
+ 
+ int xsk_stats_poller(struct xsk_ctx *ctx)
+@@ -768,7 +813,7 @@ int xsk_stats_poller(struct xsk_ctx *ctx)
+ 
+ 		/* In ETF mode, always drain CQ to reclaim frames for children */
+ 		if (etf_mode)
+-			drain_shared_cq(ctx);
++			try_drain_shared_cq(ctx, NULL, NULL);
+ 
+ 		if (pfd[0].revents & POLLIN) {
+ 			ret = signal_cb(ctx);
+@@ -864,8 +909,11 @@ void xsk_ctx__destroy(struct xsk_ctx *ctx)
+ 	if (ctx->shared_done && ctx->shared_done != MAP_FAILED)
+ 		munmap((void *)ctx->shared_done, sizeof(bool));
+ 
++	if (ctx->cq_drain_lock && ctx->cq_drain_lock != MAP_FAILED)
++		munmap((void *)ctx->cq_drain_lock, sizeof(_Atomic int));
++
+ 	close(ctx->signal_fd);
+-	munmap(ctx->bufs, NUM_FRAMES * ctx->opt.frame_size);
++	munmap(ctx->bufs, ctx->num_frames * ctx->opt.frame_size);
+ 	free(ctx);
+ }
+ 
+@@ -1194,7 +1242,7 @@ static void gen_eth_frames(struct xsk_ctx *ctx, struct xsk_umem_info *umem, __u3
+ 	__u32 len = 0;
+ 	unsigned int i;
+ 
+-	for (i = 0; i < NUM_FRAMES; i++) {
++	for (i = 0; i < ctx->num_frames; i++) {
+ 		__u64 addr = (__u64)i * frame_size;
+ 
+ 		if (!len) {
+@@ -1545,7 +1593,7 @@ static int tx_only(struct xsk_ctx *ctx, struct xsk_socket_info *xsk, __u32 *fram
+ 				xsk->ring_stats.tx_npkts++;
+ 			}
+ 			len -= tx_desc->len;
+-			*frame_nb = (*frame_nb + 1) % NUM_FRAMES;
++			*frame_nb = (*frame_nb + 1) % ctx->num_frames;
+ 			i++;
+ 
+ 			if (ctx->opt.timestamp) {
+@@ -1579,6 +1627,18 @@ static int tx_only(struct xsk_ctx *ctx, struct xsk_socket_info *xsk, __u32 *fram
+  * ============================================================
+  */
+ 
++#define BACKOFF_INIT_US		10
++#define BACKOFF_MAX_US		100000
++
++static inline void backoff_sleep(unsigned int *backoff_us)
++{
++	usleep(*backoff_us);
++	if (*backoff_us < BACKOFF_MAX_US)
++		*backoff_us *= 2;
++	if (*backoff_us > BACKOFF_MAX_US)
++		*backoff_us = BACKOFF_MAX_US;
++}
++
+ static void etf_tx_only(struct xsk_ctx *ctx, struct etf_stream_ctx *stream,
+ 			struct xsk_socket_info *xsk, unsigned long tx_ns)
+ {
+@@ -1589,11 +1649,20 @@ static void etf_tx_only(struct xsk_ctx *ctx, struct etf_stream_ctx *stream,
+ 	void *frame_ptr;
+ 	void *pkt_ptr;
+ 	__u32 idx;
++	unsigned int reserve_backoff_us = BACKOFF_INIT_US;
++	unsigned int frame_backoff_us = BACKOFF_INIT_US;
+ 
+ 	while (xsk_ring_prod__reserve(&xsk->tx, 1, &idx) < 1) {
+-		kick_tx(xsk);
++		if (ctx->opt.no_need_wakeup ||
++		    xsk_ring_prod__needs_wakeup(&xsk->tx)) {
++			if (kick_tx(xsk)) {
++				*ctx->shared_done = true;
++				return;
++			}
++		}
+ 		if (*ctx->shared_done)
+ 			return;
++		backoff_sleep(&reserve_backoff_us);
+ 	}
+ 
+ 	tx_desc = xsk_ring_prod__tx_desc(&xsk->tx, idx);
+@@ -1601,12 +1670,23 @@ static void etf_tx_only(struct xsk_ctx *ctx, struct etf_stream_ctx *stream,
+ 
+ 	/* Get a free frame from per-stream SPSC ring (parent refills via CQ) */
+ 	while (etf_stream_free_pop(stream, &frame_offset) != 0) {
+-		kick_tx(xsk);
++		if (ctx->opt.no_need_wakeup ||
++		    xsk_ring_prod__needs_wakeup(&xsk->tx)) {
++			if (kick_tx(xsk)) {
++				*ctx->shared_done = true;
++				xsk->tx.cached_prod--;
++				return;
++			}
++		}
++
++		try_drain_shared_cq(ctx, xsk, stream);
++
+ 		if (*ctx->shared_done) {
+ 			/* Undo the TX ring reservation */
+ 			xsk->tx.cached_prod--;
+ 			return;
+ 		}
++		backoff_sleep(&frame_backoff_us);
+ 	}
+ 
+ 	frame_ptr = xsk_umem__get_data(xsk->umem->buffer, frame_offset);
+@@ -1640,7 +1720,16 @@ static void etf_tx_only(struct xsk_ctx *ctx, struct etf_stream_ctx *stream,
+ 	stream->tx_frags++;
+ 
+ 	/* Kick TX so kernel processes the descriptor */
+-	kick_tx(xsk);
++	if (ctx->opt.no_need_wakeup ||
++	    xsk_ring_prod__needs_wakeup(&xsk->tx)) {
++		if (kick_tx(xsk)) {
++			*ctx->shared_done = true;
++			return;
++		}
++	}
++
++	if (xsk->outstanding_tx >= CQ_DRAIN_THRESHOLD)
++		try_drain_shared_cq(ctx, xsk, stream);
+ }
+ 
+ static void child_signal_handler(int sig)
+@@ -1652,13 +1741,15 @@ static void child_signal_handler(int sig)
+ static void xsk_tx_only_child(struct etf_stream_ctx *stream,
+ 			     struct xsk_ctx *ctx)
+ {
+-	unsigned long tx_cycle_base_ns = 0;
++	unsigned long tx_cycle_base_ns;
+ 	unsigned long hw_tx_time_ns = 0;
+ 	unsigned long sw_tx_time_ns = 0;
+ 
+-	/* Align Tx time to one cycle boundary */
+-	tx_cycle_base_ns = (get_nsecs(ctx->opt.clock) / stream->tx_cycle_ns)
+-		* stream->tx_cycle_ns + TIME_US_TO_NS(10000);
++	/*
++	 * Use the common start time computed by the parent so that all
++	 * streams begin transmitting on the same aligned cycle boundary.
++	 */
++	tx_cycle_base_ns = stream->tx_cycle_base_ns;
+ 
+ 	while (child_running && !*ctx->shared_done) {
+ 		unsigned long now = 0;
+@@ -1695,56 +1786,80 @@ static void xsk_tx_only_child(struct etf_stream_ctx *stream,
+ 
+ 		tx_cycle_base_ns += stream->tx_cycle_ns;
+ 	}
++
++	/* Wait until the NIC has passed the launch time of the last packet */
++	if (hw_tx_time_ns) {
++		do {
++			usleep(100000);
++		} while (get_nsecs(ctx->opt.clock) < hw_tx_time_ns + TIME_US_TO_NS(100000));
++	}
+ }
+ 
+-static int parse_stream_config(const char *path, struct stream_cfg *cfgs,
+-			       int max_count)
++/*
++ * Child process entry point for a single ETF stream.
++ * Sets up signal handling, scheduler priority, and runs the TX loop
++ * before cleaning up and exiting.  Never returns.
++ */
++static void __attribute__((noreturn)) run_stream_child(struct etf_stream_ctx *stream,
++					struct xsk_ctx *ctx, int stream_idx)
+ {
+-	char line[MAX_LINE_LENGTH];
+-	FILE *fp;
+-	int count = 0;
+-
+-	fp = fopen(path, "r");
+-	if (!fp) {
+-		pr_warn("Failed to open XDP ETF stream config file: %s\n",
+-			strerror(errno));
+-		return -errno;
+-	}
++	struct sigaction sa;
++	sigset_t unblock;
+ 
+-	while (fgets(line, sizeof(line), fp)) {
+-		char *comment;
++	/* Install signal handler for clean shutdown */
++	memset(&sa, 0, sizeof(sa));
++	sa.sa_handler = child_signal_handler;
++	sigaction(SIGTERM, &sa, NULL);
++	sigaction(SIGINT, &sa, NULL);
+ 
+-		comment = strchr(line, '#');
+-		if (comment)
+-			*comment = '\0';
++	/* Unblock signals that parent blocked for signalfd */
++	sigemptyset(&unblock);
++	sigaddset(&unblock, SIGTERM);
++	sigaddset(&unblock, SIGINT);
++	sigaddset(&unblock, SIGQUIT);
++	sigprocmask(SIG_UNBLOCK, &unblock, NULL);
+ 
+-		if (count >= max_count) {
+-			pr_warn("Too many streams (max %d)\n", max_count);
+-			break;
+-		}
++	/* Lock all pages in child process */
++	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 
+-		if (sscanf(line, "%lu %u %u %u",
+-			   &cfgs[count].index,
+-			   &cfgs[count].cycle_us,
+-			   &cfgs[count].offset_us,
+-			   &cfgs[count].preload_us) == 4)
+-			count++;
+-	}
++	/* Set scheduler priority */
++	xsk_set_sched_priority(ctx->opt.sched_policy, ctx->opt.sched_prio);
+ 
+-	fclose(fp);
+-	return count;
++	/*
++	 * Use the pre-created socket for this stream.
++	 * The child inherits the fd from fork().
++	 * Point ctx->xsks[0] to this stream's socket.
++	 */
++	ctx->xsks[0] = ctx->stream_xsks[stream_idx];
++	ctx->num_socks = 1;
++
++	/* Run TX loop */
++	xsk_tx_only_child(stream, ctx);
++
++	/*
++	 * Cleanup: close our copy of the socket fd explicitly, then
++	 * _exit().  Do NOT call xsk_socket__delete() -- it tries to
++	 * detach XDP programs and manipulate libxdp refcounts, which
++	 * would corrupt parent state.
++	 *
++	 * Close the socket fd for this stream's socket so the kernel
++	 * releases resources promptly.  _exit() closes remaining
++	 * inherited fds (anchor socket, other stream sockets, signalfd).
++	 */
++	close(xsk_socket__fd(ctx->stream_xsks[stream_idx]->xsk));
++	_exit(0);
+ }
+ 
+ int xsk_tx_streams(struct xsk_ctx *ctx)
+ {
+-	struct stream_cfg cfgs[MAX_STREAM_COUNT];
+ 	struct etf_stream_ctx *stream;
+ 	int num_streams, i;
+ 	__u32 frames_per_stream;
++	unsigned long common_ref;
+ 	pid_t pid;
+ 	int ret;
+ 
+-	if (!ctx->opt.etf_streams_config)
++	if (ctx->opt.num_etf_streams <= 0)
+ 		return -EINVAL;
+ 
+ 	if ((__u32)(PKT_SIZE(&ctx->opt) + TX_METADATA_SIZE) > ctx->opt.frame_size) {
+@@ -1758,12 +1873,11 @@ int xsk_tx_streams(struct xsk_ctx *ctx)
+ 	ctx->stream_idx = 0;
+ 	ctx->num_stream_xsks = 0;
+ 
+-	num_streams = parse_stream_config(ctx->opt.etf_streams_config,
+-					  cfgs, MAX_STREAM_COUNT);
++	num_streams = ctx->num_stream_cfgs;
+ 	if (num_streams <= 0)
+-		return num_streams ? num_streams : -EINVAL;
++		return -EINVAL;
+ 
+-	frames_per_stream = NUM_FRAMES / num_streams;
++	frames_per_stream = FRAMES_PER_STREAM;
+ 
+ 	/*
+ 	 * Create all per-stream sockets on the shared UMEM BEFORE forking.
+@@ -1788,7 +1902,15 @@ int xsk_tx_streams(struct xsk_ctx *ctx)
+ 		ctx->num_stream_xsks++;
+ 	}
+ 
+-	/* Fork one child per stream */
++	/*
++	 * Pass 1: create all stream contexts BEFORE forking.
++	 *
++	 * Every forked child inherits the full ctx->streams[] array and
++	 * the final ctx->stream_idx, so any child can drain CQ entries
++	 * belonging to any stream.  Without this, a child forked early
++	 * would see a partial streams[] and reject completions for
++	 * later streams with "unexpected sid".
++	 */
+ 	for (i = 0; i < num_streams; i++) {
+ 		/* Allocate stream context in shared memory */
+ 		stream = mmap(NULL, sizeof(struct etf_stream_ctx),
+@@ -1800,10 +1922,10 @@ int xsk_tx_streams(struct xsk_ctx *ctx)
+ 		}
+ 		memset(stream, 0, sizeof(*stream));
+ 
+-		stream->index = cfgs[i].index;
+-		stream->tx_cycle_ns = TIME_US_TO_NS(cfgs[i].cycle_us);
+-		stream->tx_offset_time_ns = TIME_US_TO_NS(cfgs[i].offset_us);
+-		stream->tx_preload_time_ns = TIME_US_TO_NS(cfgs[i].preload_us);
++		stream->index = ctx->stream_cfgs[i].index;
++		stream->tx_cycle_ns = TIME_US_TO_NS(ctx->stream_cfgs[i].cycle_us);
++		stream->tx_offset_time_ns = TIME_US_TO_NS(ctx->stream_cfgs[i].offset_us);
++		stream->tx_preload_time_ns = TIME_US_TO_NS(ctx->stream_cfgs[i].preload_us);
+ 		stream->frame_start = i * frames_per_stream;
+ 		stream->frame_count = frames_per_stream;
+ 
+@@ -1822,6 +1944,26 @@ int xsk_tx_streams(struct xsk_ctx *ctx)
+ 				      memory_order_release);
+ 
+ 		ctx->streams[ctx->stream_idx++] = stream;
++	}
++
++	/*
++	 * Compute a common start reference for all streams so every child
++	 * begins transmitting on the same cycle boundary.  Pick a point
++	 * 50 ms in the future -- enough headroom for the fork loop below.
++	 * Each stream's base is aligned to its own cycle period.
++	 */
++	common_ref =
++		((get_nsecs(ctx->opt.clock) / NSEC_PER_SEC) + 2) * NSEC_PER_SEC;
++
++	for (i = 0; i < num_streams; i++) {
++		stream = ctx->streams[i];
++		stream->tx_cycle_base_ns =
++			(common_ref / stream->tx_cycle_ns + 1) * stream->tx_cycle_ns;
++	}
++
++	/* Pass 2: fork one child per stream */
++	for (i = 0; i < num_streams; i++) {
++		stream = ctx->streams[i];
+ 
+ 		pid = fork();
+ 		if (pid < 0) {
+@@ -1830,64 +1972,17 @@ int xsk_tx_streams(struct xsk_ctx *ctx)
+ 			goto err_streams;
+ 		}
+ 
+-		if (pid == 0) {
+-			/* --- Child process --- */
+-			struct sigaction sa;
+-
+-			/* Install signal handler for clean shutdown */
+-			memset(&sa, 0, sizeof(sa));
+-			sa.sa_handler = child_signal_handler;
+-			sigaction(SIGTERM, &sa, NULL);
+-			sigaction(SIGINT, &sa, NULL);
+-
+-			/* Unblock signals that parent blocked for signalfd */
+-			sigset_t unblock;
+-			sigemptyset(&unblock);
+-			sigaddset(&unblock, SIGTERM);
+-			sigaddset(&unblock, SIGINT);
+-			sigaddset(&unblock, SIGQUIT);
+-			sigprocmask(SIG_UNBLOCK, &unblock, NULL);
+-
+-			/* Lock all pages in child process */
+-			mlockall(MCL_CURRENT | MCL_FUTURE);
+-
+-			/* Set scheduler priority */
+-			xsk_set_sched_priority(ctx->opt.sched_policy,
+-					       ctx->opt.sched_prio);
+-
+-			/*
+-			 * Use the pre-created socket for this stream.
+-			 * The child inherits the fd from fork().
+-			 * Point ctx->xsks[0] to this stream's socket.
+-			 */
+-			ctx->xsks[0] = ctx->stream_xsks[i];
+-			ctx->num_socks = 1;
+-
+-			/* Run TX loop */
+-			xsk_tx_only_child(stream, ctx);
+-
+-			/*
+-			 * Cleanup: close our copy of the socket fd
+-			 * explicitly, then _exit().  Do NOT call
+-			 * xsk_socket__delete() — it tries to detach
+-			 * XDP programs and manipulate libxdp refcounts,
+-			 * which would corrupt parent state.
+-			 *
+-			 * Close the socket fd for this stream's socket
+-			 * so the kernel releases resources promptly.
+-			 * _exit() closes remaining inherited fds
+-			 * (anchor socket, other stream sockets, signalfd).
+-			 */
+-			close(xsk_socket__fd(ctx->stream_xsks[i]->xsk));
+-			_exit(0);
+-		}
++		if (pid == 0)
++			run_stream_child(stream, ctx, i);
+ 
+ 		/* --- Parent process --- */
+ 		stream->pid = pid;
+-		pr_info("Process %d (stream %ld): cycle = %u us, "
++		pr_info("Process %d (stream %lu): cycle = %u us, "
+ 			"offset = %u us, preload = %u us\n",
+-			pid, cfgs[i].index, cfgs[i].cycle_us,
+-			cfgs[i].offset_us, cfgs[i].preload_us);
++			pid, ctx->stream_cfgs[i].index,
++			ctx->stream_cfgs[i].cycle_us,
++			ctx->stream_cfgs[i].offset_us,
++			ctx->stream_cfgs[i].preload_us);
+ 	}
+ 
+ 	return 0;
+@@ -2325,6 +2420,7 @@ struct xsk_ctx *xsk_ctx__create(const struct xsk_opts *opt, enum xsk_benchmark_t
+ 	bool rx = false, tx = false;
+ 	struct xsk_ctx *ctx;
+ 	int ret = -ENOMEM;
++	__u32 num_frames;
+ 	sigset_t st;
+ 	void *bufs;
+ 
+@@ -2346,7 +2442,7 @@ struct xsk_ctx *xsk_ctx__create(const struct xsk_opts *opt, enum xsk_benchmark_t
+ 		umem_flags = XDP_UMEM_UNALIGNED_CHUNK_FLAG;
+ 	}
+ 
+-	if (opt->etf_streams_config)
++	if (opt->num_etf_streams > 0)
+ 		umem_flags |= XDP_UMEM_TX_METADATA_LEN;
+ 
+ 	if (opt->shared_umem)
+@@ -2356,6 +2452,23 @@ struct xsk_ctx *xsk_ctx__create(const struct xsk_opts *opt, enum xsk_benchmark_t
+ 	if (!ctx)
+ 		return ERR_PTR(-ENOMEM);
+ 
++	/*
++	 * In ETF mode the UMEM is partitioned into FRAMES_PER_STREAM
++	 * frames per stream, so total frames = streams * FRAMES_PER_STREAM.
++	 * In non-ETF mode the legacy NUM_FRAMES constant is used.
++	 *
++	 * The caller is responsible for parsing stream configs and
++	 * passing the count via opt->num_etf_streams.  After this
++	 * function returns the caller copies the parsed cfgs into
++	 * ctx->stream_cfgs / ctx->num_stream_cfgs.
++	 */
++	if (opt->num_etf_streams > 0) {
++		num_frames = (__u32)opt->num_etf_streams * FRAMES_PER_STREAM;
++	} else {
++		num_frames = NUM_FRAMES;
++	}
++	ctx->num_frames = num_frames;
++
+ 	/*
+ 	 * ETF mode needs MAP_SHARED because forked children write
+ 	 * packet data into the UMEM buffer which the kernel reads
+@@ -2363,9 +2476,9 @@ struct xsk_ctx *xsk_ctx__create(const struct xsk_opts *opt, enum xsk_benchmark_t
+ 	 * private copies of written pages, invisible to the kernel's
+ 	 * UMEM mapping of the original physical pages.
+ 	 */
+-	bufs = mmap(NULL, NUM_FRAMES * opt->frame_size,
++	bufs = mmap(NULL, num_frames * opt->frame_size,
+ 		    PROT_READ | PROT_WRITE,
+-		    ((tx && opt->etf_streams_config) ? MAP_SHARED : MAP_PRIVATE) |
++		    ((tx && opt->num_etf_streams > 0) ? MAP_SHARED : MAP_PRIVATE) |
+ 		    MAP_ANONYMOUS | mmap_flags,
+ 		    -1, 0);
+ 	if (bufs == MAP_FAILED) {
+@@ -2373,8 +2486,20 @@ struct xsk_ctx *xsk_ctx__create(const struct xsk_opts *opt, enum xsk_benchmark_t
+ 		goto err;
+ 	}
+ 
++	/* Touch every page to force physical allocation now, avoiding
++	 * page faults on the data path.
++	 */
++	{
++		volatile char *p = bufs;
++		size_t total = (size_t)num_frames * opt->frame_size;
++		long page_size = sysconf(_SC_PAGESIZE);
++
++		for (size_t off = 0; off < total; off += page_size)
++			p[off] = 0;
++	}
++
+ 	/* Create sockets... */
+-	umem = xsk_configure_umem(bufs, NUM_FRAMES * opt->frame_size,
++	umem = xsk_configure_umem(bufs, num_frames * opt->frame_size,
+ 				  opt->frame_size, umem_flags);
+ 	if (IS_ERR(umem)) {
+ 		ret = PTR_ERR(umem);
+@@ -2426,7 +2551,7 @@ struct xsk_ctx *xsk_ctx__create(const struct xsk_opts *opt, enum xsk_benchmark_t
+ 	 * to SCHED_FIFO is unnecessary and can starve other system
+ 	 * work on the same CPU.
+ 	 */
+-	if (!opt->etf_streams_config) {
++	if (opt->num_etf_streams <= 0) {
+ 		ret = xsk_set_sched_priority(opt->sched_policy, opt->sched_prio);
+ 		if (ret)
+ 			goto err;
+@@ -2483,6 +2608,16 @@ struct xsk_ctx *xsk_ctx__create(const struct xsk_opts *opt, enum xsk_benchmark_t
+ 	}
+ 	*ctx->shared_done = false;
+ 
++	/* Allocate shared CQ drain trylock for cross-process serialization */
++	ctx->cq_drain_lock = mmap(NULL, sizeof(_Atomic int),
++				  PROT_READ | PROT_WRITE,
++				  MAP_SHARED | MAP_ANONYMOUS, -1, 0);
++	if (ctx->cq_drain_lock == MAP_FAILED) {
++		ret = -errno;
++		goto err;
++	}
++	atomic_store_explicit(ctx->cq_drain_lock, 0, memory_order_relaxed);
++
+ 	ctx->poll_timeout = POLL_TIMEOUT;
+ 	ctx->duration = opt->duration * NSEC_PER_SEC;
+ 	ctx->retries = opt->retries;
+@@ -2502,7 +2637,7 @@ err:
+ 		free(ctx->xsks[i]);
+ 	}
+ 	free(umem);
+-	munmap(bufs, NUM_FRAMES * opt->frame_size);
++	munmap(bufs, num_frames * opt->frame_size);
+ 	free(ctx);
+ 	return ERR_PTR(ret);
+ }
+diff --git a/lib/util/xdpsock.h b/lib/util/xdpsock.h
+index 7eadfe3..c8703f9 100644
+--- a/lib/util/xdpsock.h
++++ b/lib/util/xdpsock.h
+@@ -18,10 +18,10 @@
+ #include "params.h"
+ 
+ #define MAX_SOCKS 4
+-#define MAX_STREAM_COUNT	(50)
++#define MAX_STREAM_COUNT	(64)
+ #define MIN_PKT_SIZE 64
+ #define MAX_PKT_SIZE 9728 /* Max frame size supported by many NICs */
+-#define STREAM_FREE_RING_SIZE 4096 /* must be >= NUM_FRAMES / num_streams */
++#define STREAM_FREE_RING_SIZE 4096 /* must be >= FRAMES_PER_STREAM */
+ 
+ enum xsk_benchmark_type {
+ 	XSK_BENCH_RXDROP = 0,
+@@ -89,12 +89,21 @@ struct xsk_opts {
+ 	struct mac_addr dst_mac;
+ 	struct mac_addr src_mac;
+ 	char *etf_streams_config;
++	int num_etf_streams;
++};
++
++struct stream_cfg {
++	unsigned long index;
++	unsigned int cycle_us;
++	unsigned int offset_us;
++	unsigned int preload_us;
+ };
+ 
+ struct etf_stream_ctx {
+ 	pid_t pid;
+ 	int index;
+ 	unsigned long tx_cycle_ns;
++	unsigned long tx_cycle_base_ns;
+ 	__u32 tx_offset_time_ns;
+ 	__u32 tx_preload_time_ns;
+ 	__u32 frame_start;
+@@ -131,6 +140,7 @@ struct xsk_ctx {
+ 	int irqs_at_init;
+ 	__u32 sequence;
+ 	int frames_per_pkt;
++	__u32 num_frames;
+ 	int poll_timeout;
+ 	__u32 retries;
+ 
+@@ -149,8 +159,12 @@ struct xsk_ctx {
+ 	bool rx;
+ 	bool tx;
+ 	volatile bool *shared_done;
++	_Atomic int *cq_drain_lock;   /* shared-memory trylock for CQ drain */
+ 	struct etf_stream_ctx *streams[MAX_STREAM_COUNT];
+ 	int stream_idx;
++
++	struct stream_cfg stream_cfgs[MAX_STREAM_COUNT];
++	int num_stream_cfgs;
+ };
+ 
+ int xsk_validate_opts(const struct xsk_opts *opt);
+diff --git a/xdp-trafficgen/xdp-trafficgen.c b/xdp-trafficgen/xdp-trafficgen.c
+index 2c5ee7f..6ebcf00 100644
+--- a/xdp-trafficgen/xdp-trafficgen.c
++++ b/xdp-trafficgen/xdp-trafficgen.c
+@@ -848,6 +848,7 @@ const struct xsk_opts defaults_xsk_etf = {
+ 	.timestamp = true,
+ 	.shared_umem = false,
+ 	.unaligned = false,
++	.no_need_wakeup = false,
+ };
+ 
+ struct prog_option xsk_etf_options[] = {
+@@ -930,23 +931,121 @@ struct prog_option xsk_etf_options[] = {
+ 	END_OPTIONS
+ };
+ 
++#define MAX_LINE_LENGTH		256
++#define MIN_CYCLE_US		60
++#define MAX_CYCLE_US		1000000
++#define MIN_PRELOAD_US		60
++#define MAX_PRELOAD_US		1000000
++
++static int parse_stream_config(const char *path, struct stream_cfg *cfgs,
++			       int max_count)
++{
++	char line[MAX_LINE_LENGTH];
++	FILE *fp;
++	int count = 0;
++
++	fp = fopen(path, "r");
++	if (!fp) {
++		pr_warn("Failed to open XDP ETF stream config file: %s\n",
++			strerror(errno));
++		return -errno;
++	}
++
++	while (fgets(line, sizeof(line), fp)) {
++		char *comment;
++
++		comment = strchr(line, '#');
++		if (comment)
++			*comment = '\0';
++
++		if (count >= max_count) {
++			pr_warn("Too many streams (max %d)\n", max_count);
++			break;
++		}
++
++		if (sscanf(line, "%lu %u %u %u",
++			   &cfgs[count].index,
++			   &cfgs[count].cycle_us,
++			   &cfgs[count].offset_us,
++			   &cfgs[count].preload_us) == 4) {
++			if (cfgs[count].index >= MAX_STREAM_COUNT) {
++				pr_warn("Stream %d: index %lu exceeds max %d\n",
++					count, cfgs[count].index,
++					MAX_STREAM_COUNT - 1);
++				fclose(fp);
++				return -EINVAL;
++			}
++			for (int i = 0; i < count; i++) {
++				if (cfgs[i].index == cfgs[count].index) {
++					pr_warn("Stream %d: duplicate index %lu (same as stream %d)\n",
++						count, cfgs[count].index, i);
++					fclose(fp);
++					return -EINVAL;
++				}
++			}
++			if (cfgs[count].cycle_us < MIN_CYCLE_US ||
++			    cfgs[count].cycle_us > MAX_CYCLE_US) {
++				pr_warn("Stream %d: cycle_us %u out of range [%u, %u]\n",
++					count, cfgs[count].cycle_us,
++					MIN_CYCLE_US, MAX_CYCLE_US);
++				fclose(fp);
++				return -EINVAL;
++			}
++			if (cfgs[count].offset_us > cfgs[count].cycle_us) {
++				pr_warn("Stream %d: offset_us %u exceeds cycle_us %u\n",
++					count, cfgs[count].offset_us,
++					cfgs[count].cycle_us);
++				fclose(fp);
++				return -EINVAL;
++			}
++			if (cfgs[count].preload_us < MIN_PRELOAD_US ||
++			    cfgs[count].preload_us > MAX_PRELOAD_US) {
++				pr_warn("Stream %d: preload_us %u out of range [%u, %u]\n",
++					count, cfgs[count].preload_us,
++					MIN_PRELOAD_US, MAX_PRELOAD_US);
++				fclose(fp);
++				return -EINVAL;
++			}
++			count++;
++		}
++	}
++
++	fclose(fp);
++	return count;
++}
++
+ static int do_xsk_etf(const void *cfg, __unused const char *pin_root_path)
+ {
+-	const struct xsk_opts *opt = cfg;
++	struct xsk_opts opt = *(const struct xsk_opts *)cfg;
++	struct stream_cfg stream_cfgs[MAX_STREAM_COUNT];
+ 	struct xsk_ctx *ctx;
+-	int ret;
++	int ret, ns = 0;
+ 
+-	ret = xsk_validate_opts(opt);
++	ret = xsk_validate_opts(&opt);
+ 	if (ret)
+ 		return ret;
+ 
+-	ctx = xsk_ctx__create(opt, XSK_BENCH_TXONLY);
++	if (opt.etf_streams_config) {
++		ns = parse_stream_config(opt.etf_streams_config,
++					 stream_cfgs, MAX_STREAM_COUNT);
++		if (ns < 1)
++			return -EINVAL;
++		opt.num_etf_streams = ns;
++	}
++
++	ctx = xsk_ctx__create(&opt, XSK_BENCH_TXONLY);
+ 	ret = libxdp_get_error(ctx);
+ 	if (ret)
+ 		return ret;
+ 
++	if (ns > 0) {
++		memcpy(ctx->stream_cfgs, stream_cfgs,
++		       ns * sizeof(struct stream_cfg));
++		ctx->num_stream_cfgs = ns;
++	}
++
+ 	pr_info("Transmitting on %s (ifindex %d)\n",
+-	       opt->iface.ifname, opt->iface.ifindex);
++	       opt.iface.ifname, opt.iface.ifindex);
+ 
+ 	ret = xsk_tx_streams(ctx);
+ 	if (ret)
+-- 
+2.34.1
+
