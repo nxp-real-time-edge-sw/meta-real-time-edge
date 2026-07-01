@@ -60,8 +60,6 @@ do_compile() {
         BPF_CFLAGS="-O2 -g -target bpf -D__TARGET_ARCH_arm64 -D__aarch64__ -D__LP64__ -I${STAGING_INCDIR}"
 }
 
-
-
 do_install() {
     # Install the applications, BPF object files and the user guide together
     # under /examples, so the example set is self-contained in one directory.

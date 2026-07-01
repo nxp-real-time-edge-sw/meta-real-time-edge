@@ -29,6 +29,9 @@ cantools ?= ""
 cantools:ls1021aiot = "libsocketcan can-utils"
 cantools:ls1028ardb = "libsocketcan can-utils"
 
+xdp_examples ?= ""
+xdp_examples:mx943-nxp-bsp = "xdp-dsa-examples"
+
 RDEPENDS:${PN} = " \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-sysrepo', 'real-time-edge-sysrepo', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'real-time-edge-nodejs-lbt', 'real-time-edge-nodejs-lbt', '', d)} \
@@ -52,4 +55,5 @@ RDEPENDS:${PN} = " \
     pktgen-scripts \
     isochron \
     mstpd \
+    ${xdp_examples} \
 "
