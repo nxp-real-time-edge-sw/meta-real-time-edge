@@ -1,15 +1,15 @@
 NXP Software Content Register
 
-Release - Real-time Edge Software 3.4
- April 2026
+Release - Real-time Edge Software 3.5
+ July 2026
 
 Outgoing License: LA_OPT_NXP_Software_License v63 May 2025 - Additional distribution license granted - Section 2.3 applies
 License File:     LICENSE.txt
 
 Yocto Project recipe manifest:
-repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-walnascar -m real-time-edge-3.4.0.xml
+repo init -u https://github.com/nxp-real-time-edge-sw/yocto-real-time-edge.git -b real-time-edge-wrynose -m real-time-edge-3.5.0.xml
 
-Release tag: Real-Time-Edge-v3.4-202604
+Release tag: Real-Time-Edge-v3.5-202607
 Release Location: https://www.nxp.com/design/software/development-software/real-time-edge-software:REALTIME-EDGE-SOFTWARE
 
 --------------------------------------------
@@ -17,26 +17,26 @@ BSP Packages
 --------------------------------------------
 
 Package:                     qoriq-atf.git
-Version:                     2.12
+Version:                     2.14
 Outgoing License:            BSD-3-Clause
 License File:                docs/license.rst
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://github.com/nxp-qoriq/atf -b lf-6.18.2-1.0.0
+Release Location:            https://github.com/nxp-qoriq/atf -b lf-6.18.20-2.0.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
 --------------------------------------------
 
 Package:                     imx-atf.git
-Version:                     2.12
+Version:                     2.14
 Outgoing License:            BSD-3-Clause
 License File:                docs/license.rst
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    ARM Trusted Firmware
-Release Location:            https://github.com/nxp-imx/imx-atf -b lf-6.18.2-1.0.0
+Release Location:            https://github.com/nxp-imx/imx-atf -b lf-6.18.20-2.0.0
 Origin:                      NXP (BSD-3-clause)
                              arm-trusted-firmware - ARM Limited (BSD-3-clause) - http://github.com/ARM-software/arm-trusted-firmware/
 
@@ -49,32 +49,32 @@ License File:                LICENSE
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Reset Configuration Word
-Release Location:            https://github.com/nxp-qoriq/rcw -b lf-6.18.2-1.0.0
+Release Location:            https://github.com/nxp-qoriq/rcw -b lf-6.18.20-2.0.0
 Origin:                      NXP (BSD-3-Clause)
 
 --------------------------------------------
 
 Package:                     real-time-edge-linux.git
-Version:                     6.18.2
+Version:                     6.18.20
 Outgoing License:            GPL-2.0 WITH Linux-syscall-note
 License File:                COPYING
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    The Linux kernel with PREEMPT-RT enabled
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-linux -b linux_6.18.2
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-linux -b linux_6.18.20
 Origin:                      NXP (GPL-2.0)
                              kernel.org (GPL-2.0) - https://www.kernel.org/
 
 --------------------------------------------
 
 Package:                     real-time-edge-uboot.git
-Version:                     2025.04
+Version:                     2026.04
 Outgoing License:            GPL-2.0
 License File:                Licenses/gpl-2.0.txt
 Package Category:            BSP
 Type of Content:             source
 Description and comments:    Bootloader with Real-time Edge specific capabilities
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b uboot_v2025.04-3.4.0
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b uboot_v2026.04-3.5.0
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -89,20 +89,20 @@ License File:                COPYING
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A partitioning Hypervisor based on Linux
-Release Location:            https://github.com/nxp-imx/imx-jailhouse -b lf-6.18.2-1.0.0
+Release Location:            https://github.com/nxp-imx/imx-jailhouse -b lf-6.18.20-2.0.0
 Origin:                      NXP (GPL-2.0)
                              Siemens AG (GPL-2.0) - https://github.com/siemens/jailhouse
 
 --------------------------------------------
 
 Package:                     real-time-edge-baremetal
-Version:                     2025.04
+Version:                     2026.04
 Outgoing License:            GPL-2.0
 License File:                Licenses/gpl-2.0.txt
 Package Category:            Real-time System
 Type of Content:             source
 Description and comments:    A baremetal framework
-Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2025.04-3.4.0
+Release Location:            https://github.com/nxp-real-time-edge-sw/real-time-edge-uboot -b baremetal-uboot_v2026.04-3.5.0
 Origin:                      NXP (GPL-2.0)
                              Das U-Boot - Universal Bootloader (GPL-2.0) - http://www.denx.de/wiki/U-Boot/WebHome
 
@@ -135,13 +135,13 @@ Origin:                      Lathiat (LGPLv-2.1)
 --------------------------------------------
 
 Package:                     ethtool
-Version:                     6.15
+Version:                     6.19
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    Display or change ethernet card settings
-Release Location:            https://mirrors.edge.kernel.org/pub/software/network/ethtool/ethtool-6.15.tar.gz
+Release Location:            https://mirrors.edge.kernel.org/pub/software/network/ethtool/ethtool-6.19.tar.gz
 Origin:                      Michal Kubecek (GPL-2.0)
 
 --------------------------------------------
@@ -159,13 +159,13 @@ Origin:                      NXP (GPL-2.0-or-later, BSD-3-Clause)
 --------------------------------------------
 
 Package:                     iproute2
-Version:                     6.16.0
+Version:                     6.19.0
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    A collection of utilities for controlling networking and traffic
-Release Location:            https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/snapshot/iproute2-6.16.0.tar.gz
+Release Location:            https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/snapshot/iproute2-6.19.0.tar.gz
 Origin:                      Stephen Hemminger (GPL-2.0)
 
 --------------------------------------------
@@ -219,13 +219,13 @@ Origin:                      Rcochran (GPL-2.0)
 --------------------------------------------
 
 Package:                     lldpd
-Version:                     1.0.20
+Version:                     1.0.21
 Outgoing License:            ISC
 License Files:               LICENCE
 Package Category:            Real-time Networking
 Type of content:             source
 Description and comments:    Link Layer Discovery Protocol
-Release Location:            http://media.luffy.cx/files/lldpd/lldpd-1.0.19.tar.gz
+Release Location:            http://media.luffy.cx/files/lldpd/lldpd-1.0.21.tar.gz
 Origin:                      lldpd (ISC) - https://github.com/lldpd/lldpd.git
 
 --------------------------------------------
@@ -290,8 +290,20 @@ Origin:                      NXP (MIT or GPL-2.0)
 
 --------------------------------------------
 
+Package:                     yang-model
+Version:                     git
+Outgoing License:            Apache-2.0
+License Files:               LICENSE
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    YANG models for network device configuration
+Release Location:            https://github.com/YangModels/yang.git
+Origin:                      YangModels (Apache-2.0)
+
+--------------------------------------------
+
 Package:                     libbpf
-Version:                     1.2.2
+Version:                     1.7.0
 Outgoing License:            LGPL-2.1 OR BSD-2-Clause
 License Files:               LICENSE
 Package Category:            Real-time Networking
@@ -303,7 +315,7 @@ Origin:                      libbpf (https://github.com/libbpf/libbpf)
 --------------------------------------------
 
 Package:                     libxdp
-Version:                     1.4.1
+Version:                     1.6.3
 Outgoing License:            LGPL-2.1-or-later & GPL-2.0-or-later & BSD-2-Clause
 License Files:               LICENSE
 Package Category:            Real-time Networking
@@ -311,6 +323,18 @@ Type of content:             source
 Description and comments:    Library for XDP handling
 Release Location:            https://github.com/xdp-project/xdp-tools
 Origin:                      xdp-project (https://github.com/xdp-project/xdp-tools)
+
+--------------------------------------------
+
+Package:                     xdp-dsa-examples
+Version:                     1.0
+Outgoing License:            GPL-2.0-or-later
+License Files:               LICENSE
+Package Category:            Real-time Networking
+Type of content:             source
+Description and comments:    DSA XDP / AF_XDP per-port RX examples for the HMS switch
+Release Location:            Mirror
+Origin:                      NXP (GPL-2.0-or-later) - meta-real-time-edge/recipes-extended/xdp-dsa-examples/files/
 
 --------------------------------------------
 Industrial Packages
@@ -328,8 +352,20 @@ Origin:                      Lolitech (GPL-2.0)
 
 --------------------------------------------
 
+Package:                     canopenlinux
+Version:                     4.0
+Outgoing License:            Apache-2.0
+License Files:               LICENSE
+Package Category:            Industrial
+Type of content:             source
+Description and comments:    CANopenNode on Linux devices
+Release Location:            https://github.com/CANopenNode/CANopenLinux.git
+Origin:                      CANopenNode (Apache-2.0)
+
+--------------------------------------------
+
 Package:                     igh-ethercat
-Version:                     1.5.2
+Version:                     1.6.4
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Industrial
@@ -337,6 +373,18 @@ Type of content:             source
 Description and comments:    IgH EtherCAT Master for Linux
 Release Location:            https://gitlab.com/etherlab.org/ethercat
 Origin:                      IgH (GPL-2.0)
+
+--------------------------------------------
+
+Package:                     modbus-simulator
+Version:                     1.0
+Outgoing License:            GPL-2.0-only & MIT
+License Files:               LICENSE.md
+Package Category:            Industrial
+Type of content:             source
+Description and comments:    Modbus simulator based on libmodbus
+Release Location:            Mirror
+Origin:                      NXP (GPL-2.0-only & MIT) - meta-real-time-edge/recipes-extended/modbus-simulator/files/
 
 --------------------------------------------
 
@@ -352,13 +400,13 @@ Origin:                      NXP (Apache-2.0)
 
 --------------------------------------------
 
-Package:                     OPC UA (open62541)
-Version:                     1.2.2
+Package:                     OPC UA (libopen62541)
+Version:                     1.3.17
 Outgoing License:            MPL-2.0
-License File:                LICENCE
+License File:                LICENSE
 Package Category:            Industrial
 Type of Content:             source
-Description and comments:    An open source and free implementation of OPC UA
+Description and comments:    An open source and free implementation of OPC UA with TSN and XDP support
 Release Location:            https://github.com/open62541/open62541.git
 Origin:                      open62541.org (MPL-2.0)
 
@@ -427,7 +475,7 @@ Origin:                      NXP (BSD-3-Clause) - meta-real-time-edge/recipes-ex
 --------------------------------------------
 
 Package:                     rteval
-Version:                     3.3
+Version:                     3.10
 Outgoing License:            GPL-2.0
 License Files:               COPYING
 Package Category:            Tools
