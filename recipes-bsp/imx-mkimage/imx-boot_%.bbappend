@@ -47,6 +47,19 @@ FASTBOOT_HMC_DEPENDS:mx93-nxp-bsp = "${@'hello-world:do_deploy \
 
 do_compile[depends] += "${FASTBOOT_HMC_DEPENDS}"
 
+
+# The "netc" variant uses the netc-share Cortex-M firmware built by the
+# netc-share HMC recipe (meta-rtos-industrial). M33_IMAGE (i.MX943, mx943-nxp-bsp)
+# and M4_DEFAULT_IMAGE_MX95 (i.MX95 19x19 LPDDR5 EVK only) point at that binary
+# (see imx-real-time-edge-env.inc), so imx-boot must wait for it to be deployed.
+# The i.MX95 override is scoped to imx95-19x19-lpddr5-evk only (not the whole
+# mx95-nxp-bsp family) to match the machine-specific M4_DEFAULT_IMAGE_MX95 override.
+NETC_SHARE_DEPENDS = ""
+NETC_SHARE_DEPENDS:mx943-nxp-bsp = "${@'netc-share:do_deploy' if d.getVar('IMXBOOT_VARIANT') == 'netc' else ''}"
+NETC_SHARE_DEPENDS:imx95-19x19-lpddr5-evk = "${@'netc-share:do_deploy' if d.getVar('IMXBOOT_VARIANT') == 'netc' else ''}"
+
+do_compile[depends] += "${NETC_SHARE_DEPENDS}"
+
 # Validate fastboot configuration
 python do_validate_fastboot() {
     """Validate fastboot configuration before compile"""

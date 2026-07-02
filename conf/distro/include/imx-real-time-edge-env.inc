@@ -25,13 +25,31 @@ IMAGE_IMXBOOT_TARGET:imx95-19x19-lpddr5-evk = \
     "${@bb.utils.contains('IMXBOOT_VARIANT', 'netc',      '${IMXBOOT_TARGETS_BASENAME}_netc', \
                                                           '${IMXBOOT_TARGETS_BASENAME}_a55', d)}"
 
-M33_IMAGE:mx943-nxp-bsp = \
-    "${@bb.utils.contains('IMXBOOT_VARIANT', 'netc', 'netc_share_cm33_core1.bin', \
-                                                     'imx943evk_cm33_core1_TCM_power_mode_switch.bin', d)}"
+# For the "netc" variant, i.MX943 must use the netc-share Cortex-M33 firmware
+# built by the netc-share HMC recipe (meta-rtos-industrial) instead of the
+# default BSP mcore-demos binary. That firmware is deployed under
+# ${DEPLOY_DIR_IMAGE}/examples/${RTOS_MACHINE}/heterogeneous-multicore/netc-share-freertos/.
+# imx-boot copies M33_IMAGE relative to ${DEPLOY_DIR_IMAGE}/mcore-demos, so a
+# "../examples/..." relative path resolves to the netc-share deploy location.
+# The other variants keep the standard BSP mapping (see imx943-evk.inc).
+M33_IMAGE:mx943-nxp-bsp = "${@bb.utils.contains('IMXBOOT_VARIANT', 'netc',            '../examples/${RTOS_MACHINE}/heterogeneous-multicore/netc-share-freertos/netc_share_cm33_core1.bin', \
+                              bb.utils.contains('IMXBOOT_VARIANT', 'netc_reset',      'imx943evk_cm33_core1_TCM_all_reset_but_netc_switch.bin', \
+                              bb.utils.contains('IMXBOOT_VARIANT', 'netc_standalone', 'imx943evk_cm33_core1_TCM_netc_switch_standalone.bin', \
+                                                                                     'imx943evk_cm33_core1_TCM_power_mode_switch.bin', d), d), d)}"
 
-M4_DEFAULT_IMAGE:imx95-19x19-lpddr5-evk = \
-    "${@bb.utils.contains('SYSTEM_MANAGER_CONFIG', 'mx95netc', 'netc_share_cm7.bin', \
-                                                               'imx95-19x19-evk_m7_TCM_power_mode_switch.bin', d)}"
+# For the "netc" variant, i.MX95 19x19 LPDDR5 EVK must use the netc-share
+# Cortex-M7 firmware built by the netc-share HMC recipe (meta-rtos-industrial)
+# instead of the default BSP mcore-demos binary. That firmware is deployed under
+# ${DEPLOY_DIR_IMAGE}/examples/${RTOS_MACHINE}/heterogeneous-multicore/netc-share-freertos/.
+# The BSP resolves M4_DEFAULT_IMAGE:mx95-nxp-bsp = "${M4_DEFAULT_IMAGE_MX95}", so
+# we override the leaf M4_DEFAULT_IMAGE_MX95 (matching the BSP machine-conf style)
+# scoped to imx95-19x19-lpddr5-evk only. imx-boot copies M4_DEFAULT_IMAGE relative
+# to ${DEPLOY_DIR_IMAGE}/mcore-demos, so a "../examples/..." relative path resolves
+# to the netc-share deploy location.
+M4_DEFAULT_IMAGE_MX95:imx95-19x19-lpddr5-evk = \
+    "${@bb.utils.contains('IMXBOOT_VARIANT', 'netc', '../examples/${RTOS_MACHINE}/heterogeneous-multicore/netc-share-freertos/netc_share_cm7.bin', \
+                                                     'imx95-19x19-evk_m7_TCM_power_mode_switch.bin', d)}"
+
 
 # Enable multiconfig for imx91evk machine
 BBMULTICONFIG:imx91evk = "mc-imx91-9x9-qsb mc-imx91-11x11-frdm mc-imx91-11x11-frdm-imx91s"
