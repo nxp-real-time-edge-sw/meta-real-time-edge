@@ -5,25 +5,52 @@ include conf/distro/include/igh-ethercat.inc
 include conf/distro/include/libopen62541.inc
 include conf/distro/include/imx-fastboot-env.inc
 
-# System Manager config
-SYSTEM_MANAGER_CONFIG:imx95-15x15-lpddr4x-evk = "mx95rte"
-SYSTEM_MANAGER_CONFIG:imx952-19x19-lpddr5-evk = "mx952rte"
 # Multiple system manager configs by IMXBOOT_VARIANT
-SYSTEM_MANAGER_CONFIG:mx943-nxp-bsp = \
-    "${@bb.utils.contains('IMXBOOT_VARIANT', 'netc',      'mx94evknetc', \
-                                                          'mx94rte', d)}"
-SYSTEM_MANAGER_CONFIG:imx95-19x19-lpddr5-evk = \
-    "${@bb.utils.contains('IMXBOOT_VARIANT', 'netc',      'mx95netc', \
-                                                          'mx95rte', d)}"
+SYSTEM_MANAGER_CONFIG:mx943-nxp-bsp = "${@bb.utils.contains('IMXBOOT_VARIANT', 'alt',             'mx94alt', \
+                                          bb.utils.contains('IMXBOOT_VARIANT', 'jailhouse',       'mx94evkjailhouse', \
+                                          bb.utils.contains('IMXBOOT_VARIANT', 'netc',            'mx94evknetc', \
+                                          bb.utils.contains('IMXBOOT_VARIANT', 'netc_standalone', 'mx94evknetc', \
+                                          bb.utils.contains('IMXBOOT_VARIANT', 'netc_reset',      'mx94evknetc', \
+                                          bb.utils.contains('IMXBOOT_VARIANT', 'rpmsg',           'mx94evkrpmsg', \
+                                                                                                  'mx94rte', d), d), d), d), d),d) }"
 
-# boot image config
-IMAGE_IMXBOOT_TARGET:mx943-nxp-bsp = \
-    "${@bb.utils.contains('IMXBOOT_VARIANT', 'netc',      '${IMXBOOT_TARGETS_BASENAME}_all', \
-                                                          '${IMXBOOT_TARGETS_BASENAME}_a55', d)}"
-IMAGE_IMXBOOT_TARGET:imx95-15x15-lpddr4x-evk = "${IMXBOOT_TARGETS_BASENAME}_a55"
-IMAGE_IMXBOOT_TARGET:imx95-19x19-lpddr5-evk = \
-    "${@bb.utils.contains('IMXBOOT_VARIANT', 'netc',      '${IMXBOOT_TARGETS_BASENAME}_netc', \
-                                                          '${IMXBOOT_TARGETS_BASENAME}_a55', d)}"
+SYSTEM_MANAGER_CONFIG:mx95-nxp-bsp = "${@bb.utils.contains('IMXBOOT_VARIANT', 'alt',       'mx95alt', \
+                                         bb.utils.contains('IMXBOOT_VARIANT', 'jailhouse', 'mx95evkjailhouse', \
+                                         bb.utils.contains('IMXBOOT_VARIANT', 'netc',      'mx95netc', \
+                                         bb.utils.contains('IMXBOOT_VARIANT', 'rpmsg',     'mx95evkrpmsg', \
+                                         bb.utils.contains('IMXBOOT_VARIANT', 'sof',       'mx95evksof', \
+                                                                                           'mx95rte', d), d), d), d), d)}"
+
+SYSTEM_MANAGER_CONFIG:mx952-nxp-bsp = "${@bb.utils.contains('IMXBOOT_VARIANT', 'alt',       'mx952alt', \
+                                          bb.utils.contains('IMXBOOT_VARIANT', 'jailhouse', 'mx952evkjailhouse', \
+                                          bb.utils.contains('IMXBOOT_VARIANT', 'netc',      'mx952evknetc', \
+                                          bb.utils.contains('IMXBOOT_VARIANT', 'rpmsg',     'mx952evkrpmsg', \
+                                                                                            'mx952rte', d), d), d), d)}"
+
+# boot image config: if IMAGE_IMXBOOT_TARGET is not set, it will select the first of IMXBOOT_TARGETS
+IMXBOOT_TARGETS_SD:mx943-nxp-bsp = "${@bb.utils.contains('IMXBOOT_VARIANT', 'alt',             '${IMXBOOT_TARGETS_BASENAME}_a55', \
+                                       bb.utils.contains('IMXBOOT_VARIANT', 'jailhouse',       '${IMXBOOT_TARGETS_BASENAME}_jailhouse', \
+                                       bb.utils.contains('IMXBOOT_VARIANT', 'netc',            '${IMXBOOT_TARGETS_BASENAME}_all', \
+                                       bb.utils.contains('IMXBOOT_VARIANT', 'netc_standalone', '${IMXBOOT_TARGETS_BASENAME}_all', \
+                                       bb.utils.contains('IMXBOOT_VARIANT', 'netc_reset',      '${IMXBOOT_TARGETS_BASENAME}_all', \
+                                       bb.utils.contains('IMXBOOT_VARIANT', 'rpmsg',           '${IMXBOOT_TARGETS_BASENAME}_a55', \
+                                                                                               '${IMXBOOT_TARGETS_BASENAME}_a55 ${IMXBOOT_TARGETS_BASENAME}_all', d), d), d), d), d), d)} \
+"
+
+IMXBOOT_TARGETS_SD:mx95-nxp-bsp = "${@bb.utils.contains('IMXBOOT_VARIANT', 'alt',       '${IMXBOOT_TARGETS_BASENAME}_alt', \
+                                      bb.utils.contains('IMXBOOT_VARIANT', 'jailhouse', '${IMXBOOT_TARGETS_BASENAME}_jailhouse', \
+                                      bb.utils.contains('IMXBOOT_VARIANT', 'netc',      '${IMXBOOT_TARGETS_BASENAME}_netc', \
+                                      bb.utils.contains('IMXBOOT_VARIANT', 'rpmsg',     '${IMXBOOT_TARGETS_BASENAME}_lpboot_sm_a55', \
+                                      bb.utils.contains('IMXBOOT_VARIANT', 'sof',       '${IMXBOOT_TARGETS_BASENAME}_a55', \
+                                                                                        '${IMXBOOT_TARGETS_BASENAME}_a55 ${IMXBOOT_TARGETS_BASENAME}_all', d), d), d), d), d)} \
+"
+
+IMXBOOT_TARGETS_SD:mx952-nxp-bsp = "${@bb.utils.contains('IMXBOOT_VARIANT', 'alt',       '${IMXBOOT_TARGETS_BASENAME}_all', \
+                                       bb.utils.contains('IMXBOOT_VARIANT', 'jailhouse', '${IMXBOOT_TARGETS_BASENAME}_jailhouse', \
+                                       bb.utils.contains('IMXBOOT_VARIANT', 'netc',      '${IMXBOOT_TARGETS_BASENAME}_all', \
+                                       bb.utils.contains('IMXBOOT_VARIANT', 'rpmsg',     '${IMXBOOT_TARGETS_BASENAME}_lpboot_sm_a55', \
+                                                                                         '${IMXBOOT_TARGETS_BASENAME}_a55 ${IMXBOOT_TARGETS_BASENAME}_all', d), d), d), d)} \
+"
 
 # For the "netc" variant, i.MX943 must use the netc-share Cortex-M33 firmware
 # built by the netc-share HMC recipe (meta-rtos-industrial) instead of the
