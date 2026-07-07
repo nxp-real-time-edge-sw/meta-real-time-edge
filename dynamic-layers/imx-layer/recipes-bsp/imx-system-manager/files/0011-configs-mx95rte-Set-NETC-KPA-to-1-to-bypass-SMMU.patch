@@ -1,0 +1,44 @@
+From 5f1798ffcd6d88f8efaf9a3836b5d61a049414b4 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Mon, 9 Mar 2026 16:15:08 +0800
+Subject: [PATCH] configs: mx95rte: Set NETC KPA to 1 to bypass SMMU
+
+The SMMU is owned by Linux, when run NETC cases on RTOS on Cortex-A,
+the SMMU also blocks the NETC's accesses to BD rings located in memory.
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/other/mx95rte.cfg | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/configs/other/mx95rte.cfg b/configs/other/mx95rte.cfg
+index 17f8647e..4ed52599 100755
+--- a/configs/other/mx95rte.cfg
++++ b/configs/other/mx95rte.cfg
+@@ -805,14 +805,14 @@ NETC2               OWNER
+ NETC_ECAM           OWNER
+ NETC_EMDIO0         OWNER
+ NETC_IERB           OWNER
+-NETC_LDID1          OWNER, kpa=0, sid=0x20
+-NETC_LDID2          OWNER, kpa=0, sid=0x21
+-NETC_LDID3          OWNER, kpa=0, sid=0x22
+-NETC_LDID4          OWNER, kpa=0, sid=0x23
+-NETC_LDID5          OWNER, kpa=0, sid=0x24
+-NETC_LDID6          OWNER, kpa=0, sid=0x25
+-NETC_LDID7          OWNER, kpa=0, sid=0x26
+-NETC_LDID8          OWNER, kpa=0, sid=0x27
++NETC_LDID1          OWNER, kpa=1, sid=0x20
++NETC_LDID2          OWNER, kpa=1, sid=0x21
++NETC_LDID3          OWNER, kpa=1, sid=0x22
++NETC_LDID4          OWNER, kpa=1, sid=0x23
++NETC_LDID5          OWNER, kpa=1, sid=0x24
++NETC_LDID6          OWNER, kpa=1, sid=0x25
++NETC_LDID7          OWNER, kpa=1, sid=0x26
++NETC_LDID8          OWNER, kpa=1, sid=0x27
+ NETC_PRB            OWNER
+ NETC_TIMER0         OWNER
+ NETC_VSI0           OWNER
+-- 
+2.43.0
+
