@@ -203,6 +203,7 @@ heterogeneous_multicore_examples:append:imx95-15x15-lpddr4x-evk = " \
     soem-digital-io \
     soem-servo \
     soem-servo-rt1180 \
+    lwip-ping \
 "
 
 heterogeneous_multicore_examples:append:imx95-19x19-lpddr5-evk = " \
@@ -215,6 +216,7 @@ heterogeneous_multicore_examples:append:imx95-19x19-lpddr5-evk = " \
     soem-digital-io \
     soem-servo \
     soem-servo-rt1180 \
+    lwip-ping \
 "
 
 heterogeneous_multicore_examples:append:imx91-9x9-lpddr4-qsb = " \
