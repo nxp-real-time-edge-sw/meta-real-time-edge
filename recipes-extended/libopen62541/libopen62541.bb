@@ -10,6 +10,7 @@ SRC_URI = "gitsm://github.com/open62541/open62541.git;protocol=https;branch=${SR
            file://0002-feat-examples-Add-OPC-UA-PUBSUB-summation-example-ap.patch \
            file://0003-feat-pubsub-Add-Ethernet-RX-hardware-timestamp-and-X.patch \
            file://0004-examples-Port-pubsub-TSN-samples-to-non-x86-architec.patch \
+           file://0005-feat-pubsub-Overhaul-AF_XDP-support-with-custom-XDP-.patch \
 "
 
 # Build the library statically. The NXP real-time PubSub example apps
@@ -68,6 +69,7 @@ do_install:append () {
 	then
 		install -d ${D}${ROOT_HOME}/open62541_example/
 		install -m 0755 ${B}/bin/examples/* ${D}${ROOT_HOME}/open62541_example/
+		install -m 0755 ${S}/examples/pubsub_realtime/run_pubsub_TSN_xdp.sh ${D}${ROOT_HOME}/open62541_example/
 	fi
 }
 

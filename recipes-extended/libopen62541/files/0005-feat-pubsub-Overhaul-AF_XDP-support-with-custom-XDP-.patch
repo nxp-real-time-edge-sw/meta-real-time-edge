@@ -1,0 +1,1712 @@
+From 93faaa1bbaf25d6c0719029318a82d69167bd366 Mon Sep 17 00:00:00 2001
+From: Chenhui Zhao <chenhui.zhao@nxp.com>
+Date: Thu, 2 Jul 2026 18:32:58 +0800
+Subject: [PATCH] feat(pubsub): Overhaul AF_XDP support with custom XDP program
+ loading
+
+Add support for loading a user-supplied XDP object file via the new
+xdpProgPath connection property and CLI option, needed on platforms
+without hardware flow steering for Ethernet frames (e.g. NXP i.MX943 ENETC).
+
+Rewrite the XDP receive path to use per-packet callback processing with
+proper 802.1Q VLAN parsing, and fix multiple bugs: UMEM fill queue
+address calculation, TX ring rollover, negative errno handling in
+xsk_socket__create, memory leaks on error paths, and fill queue
+starvation from missing address recycling.
+
+Add XDP multicast registration via ioctl(SIOCADDMULTI/SIOCDELMULTI),
+packet hex dump debugging, startup option logging, and i.MX943 platform
+documentation with a helper script.
+
+Upstream-Status: Pending
+
+Signed-off-by: Chenhui Zhao <chenhui.zhao@nxp.com>
+---
+ .../README_pubsub_TSN_iMX943.txt              | 136 ++++
+ .../pubsub_realtime/pubsub_TSN_loopback.c     | 143 ++++-
+ .../pubsub_realtime/pubsub_TSN_publisher.c    | 146 ++++-
+ .../pubsub_realtime/run_pubsub_TSN_xdp.sh     | 101 +++
+ plugins/ua_pubsub_ethernet.c                  | 591 ++++++++++++++----
+ 5 files changed, 966 insertions(+), 151 deletions(-)
+ create mode 100644 examples/pubsub_realtime/README_pubsub_TSN_iMX943.txt
+ create mode 100755 examples/pubsub_realtime/run_pubsub_TSN_xdp.sh
+
+diff --git a/examples/pubsub_realtime/README_pubsub_TSN_iMX943.txt b/examples/pubsub_realtime/README_pubsub_TSN_iMX943.txt
+new file mode 100644
+index 000000000..e847db26d
+--- /dev/null
++++ b/examples/pubsub_realtime/README_pubsub_TSN_iMX943.txt
+@@ -0,0 +1,136 @@
++pubsub_TSN_publisher & pubsub_TSN_loopback on NXP i.MX943 EVK
++===============================================================
++
++Overview
++--------
++
++This guide covers running the OPC UA PubSub TSN round-trip latency examples
++on two NXP i.MX943 EVK boards using the run_pubsub_TSN_xdp.sh script, which
++automates PTP synchronization, qdisc setup, and application launch with
++AF_XDP subscriber.
++
++  Board 1 (publisher, PTP slave) runs pubsub_TSN_publisher:
++    - Publishes an incrementing counter via raw Ethernet UADP (ethertype 0xB62C)
++    - Subscribes to the echoed counter from Board 2
++
++  Board 2 (loopback, PTP master) runs pubsub_TSN_loopback:
++    - Subscribes to the counter from Board 1
++    - Publishes (echoes) it back to Board 1
++
++Trace points for the round-trip:
++
++             +--------------+                  +----------------+
++          T1 | OPCUA PubSub |  T8           T5 | OPCUA loopback |  T4
++          |  |  Application |  ^            |  |  Application   |  ^
++          |  +--------------+  |            |  +----------------+  |
++          |  |    Board 1   |  |            |  |    Board 2     |  |
++          v  +--------------+  |            v  +----------------+  |
++          T2 |      TX      |  T7<--------- T6 |      RX       |  T3
++          |  +--------------+                  +----------------+  ^
++          |                                                        |
++          ----------------------------------------------------------
++
++
++Prerequisites
++-------------
++
++On both boards:
++
++  - NXP i.MX943 EVK with TSN-capable Ethernet on interface eth2
++  - Linux kernel with PREEMPT_RT and XDP support
++  - Boards connected directly via eth2 (peer-to-peer Ethernet cable)
++  - linuxptp installed (ptp4l, phc2sys)
++  - iproute2 installed (tc)
++  - ethtool installed
++  - Pre-built binaries available:
++      /root/open62541_example/pubsub_TSN_publisher    (on Board 1)
++      /root/open62541_example/pubsub_TSN_loopback     (on Board 2)
++  - XDP BPF program available:
++      /usr/lib/bpf/xdpfilt_alw_uadp.o                 (on both boards)
++  - PTP configuration file:
++      /etc/ptp4l_cfg/gPTP.cfg                         (on both boards)
++
++
++Running the Test
++----------------
++
++The script is located at /root/open62541_example/run_pubsub_TSN_xdp.sh
++on both boards. Always start the loopback (Board 2) before the publisher
++(Board 1).
++
++Board 2 (loopback, PTP master) - run first:
++
++  sudo /root/open62541_example/run_pubsub_TSN_xdp.sh
++
++Board 1 (publisher, PTP slave) - run after PTP has synchronized:
++
++  sudo /root/open62541_example/run_pubsub_TSN_xdp.sh -pub
++
++The script waits approximately 20 seconds for PTP synchronization and
++displays log output from ptp4l and phc2sys before launching the
++application. With DEBUG=true (default), counter values are printed to
++the console on both boards.
++
++To stop:
++  Press Ctrl+C. The script automatically cleans up on exit.
++
++
++What the Script Does
++--------------------
++
++The script automates the following steps in order:
++
++  1. Disables RX and TX VLAN hardware offload on the network interface
++     so the XDP program can inspect VLAN tags in packet headers.
++
++  2. Disables receive hashing to force all incoming traffic to RX queue 0.
++
++  3. Stops systemd-timesyncd and ntpd to prevent clock interference.
++
++  4. Configures a mqprio qdisc with 4 traffic classes (1 queue each,
++     hardware offload) for traffic class separation.
++
++  5. Starts ptp4l with gPTP configuration for PTP clock synchronization.
++     The loopback board runs as PTP master; the publisher board (invoked
++     with -pub) runs as PTP slave.
++
++  6. Starts phc2sys to synchronize the PTP hardware clock to
++     CLOCK_REALTIME (UTC offset 0).
++
++Script Configuration
++--------------------
++
++Edit the variables at the top of /root/open62541_example/run_pubsub_TSN_xdp.sh
++to match your environment:
++
++  NETIF="eth2"
++      Network interface for PubSub traffic.
++
++  XDP_PROG="/usr/lib/bpf/xdpfilt_alw_uadp.o"
++      Path to the XDP BPF program that filters UADP packets.
++
++  CYCLE_MS=100
++      Cycle time in milliseconds.
++
++  DEBUG=true
++      Set to true to enable console output (-enableconsolePrint).
++      Set to false for silent operation.
++
++  PUBLISHER_CMD="/root/open62541_example/pubsub_TSN_publisher"
++      Path to the publisher binary (used on Board 1 with -pub).
++
++  LOOPBACK_CMD="/root/open62541_example/pubsub_TSN_loopback"
++      Path to the loopback binary (used on Board 2, default mode).
++
++
++Cleanup
++-------
++
++On Ctrl+C or normal exit, the script automatically:
++  - Restores RX/TX VLAN offload and receive hashing on the interface
++  - Kills ptp4l and phc2sys
++  - Restarts systemd-timesyncd and ntpd
++
++To run cleanup manually without launching the application:
++
++  sudo /root/open62541_example/run_pubsub_TSN_xdp.sh -clean
+diff --git a/examples/pubsub_realtime/pubsub_TSN_loopback.c b/examples/pubsub_realtime/pubsub_TSN_loopback.c
+index 318f707c5..15b9cc8f3 100644
+--- a/examples/pubsub_realtime/pubsub_TSN_loopback.c
++++ b/examples/pubsub_realtime/pubsub_TSN_loopback.c
+@@ -186,13 +186,14 @@ static UA_Int32   userAppCore          = DEFAULT_USER_APP_CORE;
+ static UA_Int32   qbvOffset            = DEFAULT_QBV_OFFSET;
+ static UA_UInt32  xdpQueue             = DEFAULT_XDP_QUEUE;
+ static UA_UInt32  xdpFlag              = XDP_FLAGS_SKB_MODE;
+-static UA_UInt32  xdpBindFlag          = XDP_COPY;
+-static UA_Boolean disableSoTxtime      = true;
++static UA_UInt16  xdpBindFlag          = XDP_COPY;
++static UA_Boolean enableSoTxtime       = true;
+ static UA_Boolean enableCsvLog         = false;
+ static UA_Boolean consolePrint         = false;
+ static UA_Boolean enableBlockingSocket = false;
+ static UA_Boolean signalTerm           = false;
+ static UA_Boolean enableXdpSubscribe   = false;
++static const char *xdpProgPath         = NULL;
+ 
+ /* Variables corresponding to PubSub connection creation,
+  * published data set and writer group */
+@@ -440,21 +441,33 @@ addPubSubConnectionSubscriber(UA_Server *server,
+     connectionConfig.name = UA_STRING("Subscriber Connection");
+     connectionConfig.enabled = true;
+ 
+-    UA_KeyValuePair connectionOptions[4];
+-    connectionOptions[0].key = UA_QUALIFIEDNAME(0, "enableXdpSocket");
++    UA_KeyValuePair connectionOptions[5];
++    size_t nConnOpts = 0;
++    connectionOptions[nConnOpts].key = UA_QUALIFIEDNAME(0, "enableXdpSocket");
+     UA_Boolean enableXdp = enableXdpSubscribe;
+-    UA_Variant_setScalar(&connectionOptions[0].value, &enableXdp, &UA_TYPES[UA_TYPES_BOOLEAN]);
+-    connectionOptions[1].key = UA_QUALIFIEDNAME(0, "xdpflag");
++    UA_Variant_setScalar(&connectionOptions[nConnOpts].value, &enableXdp, &UA_TYPES[UA_TYPES_BOOLEAN]);
++    nConnOpts++;
++    connectionOptions[nConnOpts].key = UA_QUALIFIEDNAME(0, "xdpflag");
+     UA_UInt32 flags = xdpFlag;
+-    UA_Variant_setScalar(&connectionOptions[1].value, &flags, &UA_TYPES[UA_TYPES_UINT32]);
+-    connectionOptions[2].key = UA_QUALIFIEDNAME(0, "hwreceivequeue");
++    UA_Variant_setScalar(&connectionOptions[nConnOpts].value, &flags, &UA_TYPES[UA_TYPES_UINT32]);
++    nConnOpts++;
++    connectionOptions[nConnOpts].key = UA_QUALIFIEDNAME(0, "hwreceivequeue");
+     UA_UInt32 rxqueue = xdpQueue;
+-    UA_Variant_setScalar(&connectionOptions[2].value, &rxqueue, &UA_TYPES[UA_TYPES_UINT32]);
+-    connectionOptions[3].key = UA_QUALIFIEDNAME(0, "xdpbindflag");
+-    UA_UInt32 bindflags = xdpBindFlag;
+-    UA_Variant_setScalar(&connectionOptions[3].value, &bindflags, &UA_TYPES[UA_TYPES_UINT16]);
++    UA_Variant_setScalar(&connectionOptions[nConnOpts].value, &rxqueue, &UA_TYPES[UA_TYPES_UINT32]);
++    nConnOpts++;
++    connectionOptions[nConnOpts].key = UA_QUALIFIEDNAME(0, "xdpbindflag");
++    UA_UInt16 bindflags = xdpBindFlag;
++    UA_Variant_setScalar(&connectionOptions[nConnOpts].value, &bindflags, &UA_TYPES[UA_TYPES_UINT16]);
++    nConnOpts++;
++    UA_String xdpProgPathStr = UA_STRING_NULL;
++    if(xdpProgPath) {
++        xdpProgPathStr = UA_STRING((char *)(uintptr_t)xdpProgPath);
++        connectionOptions[nConnOpts].key = UA_QUALIFIEDNAME(0, "xdpProgPath");
++        UA_Variant_setScalar(&connectionOptions[nConnOpts].value, &xdpProgPathStr, &UA_TYPES[UA_TYPES_STRING]);
++        nConnOpts++;
++    }
+     connectionConfig.connectionProperties = connectionOptions;
+-    connectionConfig.connectionPropertiesSize = 4;
++    connectionConfig.connectionPropertiesSize = nConnOpts;
+ 
+ 
+     UA_NetworkAddressUrlDataType networkAddressUrlsubscribe = *networkAddressUrlSubscriber;
+@@ -716,7 +729,7 @@ addPubSubConnection(UA_Server *server, UA_NetworkAddressUrlDataType *networkAddr
+     UA_Variant_setScalar(&connectionOptions[0].value, &socketPriority,
+                          &UA_TYPES[UA_TYPES_UINT32]);
+     connectionOptions[1].key = UA_QUALIFIEDNAME(0, "enablesotxtime");
+-    UA_Variant_setScalar(&connectionOptions[1].value, &disableSoTxtime,
++    UA_Variant_setScalar(&connectionOptions[1].value, &enableSoTxtime,
+                          &UA_TYPES[UA_TYPES_BOOLEAN]);
+     connectionConfig.connectionProperties = connectionOptions;
+     connectionConfig.connectionPropertiesSize = 2;
+@@ -923,7 +936,8 @@ updateMeasurementsPublisher(struct timespec start_time,
+     }
+ 
+     if(consolePrint)
+-        UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,"Pub:%ld,%ld.%09ld\n",
++        UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,
++                    "Pub:  counter: %ld, T5 time: %ld.%09ld\n",
+                     counterValue, start_time.tv_sec, start_time.tv_nsec);
+ 
+     if(signalTerm != true){
+@@ -954,8 +968,8 @@ updateMeasurementsSubscriber(struct timespec receive_time, UA_UInt64 counterValu
+ 
+     if(consolePrint)
+         UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,
+-                    "Sub:%ld,%ld.%09ld\n", counterValue,
+-                    receive_time.tv_sec, receive_time.tv_nsec);
++                    "Sub:  counter: %ld, T4 time: %ld.%09ld\n",
++                    counterValue, receive_time.tv_sec, receive_time.tv_nsec);
+ 
+     if(signalTerm != true){
+         subscribeTimestamp[measurementsSubscriber]     = receive_time;
+@@ -1410,6 +1424,7 @@ static void usage(char *appname) {
+         " -xdpQueue        [num]  XDP queue value (default %d)\n"
+         " -xdpFlagDrvMode         Use XDP in DRV mode\n"
+         " -xdpBindFlagZeroCopy    Use Zero-Copy mode in XDP\n"
++        " -xdpProgPath     [path] Path to custom XDP BPF object file to load\n"
+         "\n",
+         appname, DEFAULT_CYCLE_TIME, DEFAULT_SOCKET_PRIORITY, DEFAULT_PUB_SCHED_PRIORITY, \
+         DEFAULT_SUB_SCHED_PRIORITY, DEFAULT_USERAPPLICATION_SCHED_PRIORITY, \
+@@ -1417,6 +1432,92 @@ static void usage(char *appname) {
+         DEFAULT_PUBLISHING_MAC_ADDRESS, DEFAULT_SUBSCRIBING_MAC_ADDRESS, DEFAULT_QBV_OFFSET, DEFAULT_XDP_QUEUE);
+ }
+ 
++static void
++printOptionValues(const char *interface) {
++    /* Left-justify labels to align values in the same column */
++#define OPT_FMT "  %-56s "
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                "Application option values:");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "Network interface (-interface):", interface);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%lf",
++                "Publish/subscribe cycle time in ms (-cycleTimeInMsec):",
++                cycleTimeInMsec);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "Socket priority SO_PRIORITY (-socketPriority):",
++                socketPriority);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "Publisher thread priority (-pubPriority):", pubPriority);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "Subscriber thread priority (-subPriority):", subPriority);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "User application thread priority (-userAppPriority):",
++                userAppPriority);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "Publisher CPU core affinity (-pubCore):", pubCore);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "Subscriber CPU core affinity (-subCore):", subCore);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "User application CPU core affinity (-userAppCore):",
++                userAppCore);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "Publisher destination MAC address (-pubMacAddress):",
++                pubMacAddress);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "Subscriber source MAC address (-subMacAddress):",
++                subMacAddress);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "QBV offset in us (-qbvOffset):", qbvOffset);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "SO_TXTIME disabled (-disableSoTxtime):",
++                enableSoTxtime ? "false" : "true");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "CSV logging enabled (-enableCsvLog):",
++                enableCsvLog ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "Console print enabled (-enableconsolePrint):",
++                consolePrint ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "Blocking socket enabled (-enableBlockingSocket):",
++                enableBlockingSocket ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "XDP subscriber enabled (-enableXdpSubscribe):",
++                enableXdpSubscribe ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%u",
++                "XDP hardware queue index (-xdpQueue):", xdpQueue);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "XDP driver mode (-xdpFlagDrvMode):",
++                (xdpFlag == XDP_FLAGS_DRV_MODE) ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "XDP zero-copy mode (-xdpBindFlagZeroCopy):",
++                (xdpBindFlag == XDP_ZEROCOPY) ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "XDP BPF program path (-xdpProgPath):",
++                xdpProgPath ? xdpProgPath : "(none)");
++#undef OPT_FMT
++}
++
+ /**
+  * Main Server
+  * ~~~~~~~~~~~
+@@ -1463,6 +1564,7 @@ int main(int argc, char **argv) {
+         {"xdpFlagDrvMode",       no_argument,       0, 'r'},
+         {"xdpBindFlagZeroCopy",  no_argument,       0, 's'},
+         {"enableXdpSubscribe",   no_argument,       0, 't'},
++        {"xdpProgPath",          required_argument, 0, 'v'},
+         {"help",                 no_argument,       0, 'u'},
+         {0,                      0,                 0,  0 }
+     };
+@@ -1506,7 +1608,7 @@ int main(int argc, char **argv) {
+                 qbvOffset = atoi(optarg);
+                 break;
+             case 'm':
+-                disableSoTxtime = false;
++                enableSoTxtime = false;
+                 break;
+             case 'n':
+                 enableCsvLog = true;
+@@ -1530,6 +1632,9 @@ int main(int argc, char **argv) {
+             case 't':
+                 enableXdpSubscribe = true;
+                 break;
++            case 'v':
++                xdpProgPath = optarg;
++                break;
+             case 'u':
+                 usage(progname);
+                 return -1;
+@@ -1568,6 +1673,8 @@ int main(int argc, char **argv) {
+                         "Flag enableXdpSubscribe is false, running application without XDP");
+     }
+ 
++    printOptionValues(interface);
++
+     UA_ServerConfig_setMinimal(config, PORT_NUMBER, NULL);
+ 
+ #if defined(PUBLISHER)
+diff --git a/examples/pubsub_realtime/pubsub_TSN_publisher.c b/examples/pubsub_realtime/pubsub_TSN_publisher.c
+index 12fefe473..9270736f9 100644
+--- a/examples/pubsub_realtime/pubsub_TSN_publisher.c
++++ b/examples/pubsub_realtime/pubsub_TSN_publisher.c
+@@ -188,14 +188,15 @@ static UA_Int32   userAppCore          = DEFAULT_USER_APP_CORE;
+ static UA_Int32   qbvOffset            = DEFAULT_QBV_OFFSET;
+ static UA_UInt32  xdpQueue             = DEFAULT_XDP_QUEUE;
+ static UA_UInt32  xdpFlag              = XDP_FLAGS_SKB_MODE;
+-static UA_UInt32  xdpBindFlag          = XDP_COPY;
+-static UA_Boolean disableSoTxtime      = true;
++static UA_UInt16  xdpBindFlag          = XDP_COPY;
++static UA_Boolean enableSoTxtime       = true;
+ static UA_Boolean enableCsvLog         = false;
+ static UA_Boolean enableLatencyCsvLog  = false;
+ static UA_Boolean consolePrint         = false;
+ static UA_Boolean enableBlockingSocket = false;
+ static UA_Boolean signalTerm           = false;
+ static UA_Boolean enableXdpSubscribe   = false;
++static const char *xdpProgPath         = NULL;
+ 
+ /* Variables corresponding to PubSub connection creation,
+  * published data set and writer group */
+@@ -436,21 +437,33 @@ addPubSubConnectionSubscriber(UA_Server *server,
+     connectionConfig.name                                   = UA_STRING("Subscriber Connection");
+     connectionConfig.enabled                                = true;
+ 
+-    UA_KeyValuePair connectionOptions[4];
+-    connectionOptions[0].key                  = UA_QUALIFIEDNAME(0, "enableXdpSocket");
++    UA_KeyValuePair connectionOptions[5];
++    size_t nConnOpts = 0;
++    connectionOptions[nConnOpts].key          = UA_QUALIFIEDNAME(0, "enableXdpSocket");
+     UA_Boolean enableXdp                      = enableXdpSubscribe;
+-    UA_Variant_setScalar(&connectionOptions[0].value, &enableXdp, &UA_TYPES[UA_TYPES_BOOLEAN]);
+-    connectionOptions[1].key                  = UA_QUALIFIEDNAME(0, "xdpflag");
++    UA_Variant_setScalar(&connectionOptions[nConnOpts].value, &enableXdp, &UA_TYPES[UA_TYPES_BOOLEAN]);
++    nConnOpts++;
++    connectionOptions[nConnOpts].key          = UA_QUALIFIEDNAME(0, "xdpflag");
+     UA_UInt32 flags                           = xdpFlag;
+-    UA_Variant_setScalar(&connectionOptions[1].value, &flags, &UA_TYPES[UA_TYPES_UINT32]);
+-    connectionOptions[2].key                  = UA_QUALIFIEDNAME(0, "hwreceivequeue");
++    UA_Variant_setScalar(&connectionOptions[nConnOpts].value, &flags, &UA_TYPES[UA_TYPES_UINT32]);
++    nConnOpts++;
++    connectionOptions[nConnOpts].key          = UA_QUALIFIEDNAME(0, "hwreceivequeue");
+     UA_UInt32 rxqueue                         = xdpQueue;
+-    UA_Variant_setScalar(&connectionOptions[2].value, &rxqueue, &UA_TYPES[UA_TYPES_UINT32]);
+-    connectionOptions[3].key                  = UA_QUALIFIEDNAME(0, "xdpbindflag");
+-    UA_UInt32 bindflags                       = xdpBindFlag;
+-    UA_Variant_setScalar(&connectionOptions[3].value, &bindflags, &UA_TYPES[UA_TYPES_UINT16]);
++    UA_Variant_setScalar(&connectionOptions[nConnOpts].value, &rxqueue, &UA_TYPES[UA_TYPES_UINT32]);
++    nConnOpts++;
++    connectionOptions[nConnOpts].key          = UA_QUALIFIEDNAME(0, "xdpbindflag");
++    UA_UInt16 bindflags                       = xdpBindFlag;
++    UA_Variant_setScalar(&connectionOptions[nConnOpts].value, &bindflags, &UA_TYPES[UA_TYPES_UINT16]);
++    nConnOpts++;
++    UA_String xdpProgPathStr                  = UA_STRING_NULL;
++    if(xdpProgPath) {
++        xdpProgPathStr = UA_STRING((char *)(uintptr_t)xdpProgPath);
++        connectionOptions[nConnOpts].key      = UA_QUALIFIEDNAME(0, "xdpProgPath");
++        UA_Variant_setScalar(&connectionOptions[nConnOpts].value, &xdpProgPathStr, &UA_TYPES[UA_TYPES_STRING]);
++        nConnOpts++;
++    }
+     connectionConfig.connectionProperties     = connectionOptions;
+-    connectionConfig.connectionPropertiesSize = 4;
++    connectionConfig.connectionPropertiesSize = nConnOpts;
+ 
+ 
+     UA_NetworkAddressUrlDataType networkAddressUrlsubscribe = *networkAddressUrlSubscriber;
+@@ -707,7 +720,7 @@ addPubSubConnection(UA_Server *server, UA_NetworkAddressUrlDataType *networkAddr
+     connectionOptions[0].key                  = UA_QUALIFIEDNAME(0, "sockpriority");
+     UA_Variant_setScalar(&connectionOptions[0].value, &socketPriority, &UA_TYPES[UA_TYPES_UINT32]);
+     connectionOptions[1].key                  = UA_QUALIFIEDNAME(0, "enablesotxtime");
+-    UA_Variant_setScalar(&connectionOptions[1].value, &disableSoTxtime, &UA_TYPES[UA_TYPES_BOOLEAN]);
++    UA_Variant_setScalar(&connectionOptions[1].value, &enableSoTxtime, &UA_TYPES[UA_TYPES_BOOLEAN]);
+     connectionConfig.connectionProperties     = connectionOptions;
+     connectionConfig.connectionPropertiesSize = 2;
+ 
+@@ -907,7 +920,8 @@ updateMeasurementsPublisher(struct timespec start_time,
+ 
+     if(consolePrint)
+         UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,
+-                    "Pub:%ld,%ld.%09ld\n", counterValue, start_time.tv_sec, start_time.tv_nsec);
++                    "Pub:  counter: %ld, T1 time: %ld.%09ld\n",
++                    counterValue, start_time.tv_sec, start_time.tv_nsec);
+ 
+     if(signalTerm != true){
+         publishTimestamp[measurementsPublisher]        = start_time;
+@@ -936,7 +950,8 @@ updateMeasurementsSubscriber(struct timespec receive_time,
+     }
+ 
+     if(consolePrint)
+-        UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "Sub:%ld,%ld.%09ld\n",
++        UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,
++                    "Sub:  counter: %ld, T8 time: %ld.%09ld\n",
+                     counterValue, receive_time.tv_sec, receive_time.tv_nsec);
+ 
+     if(signalTerm != true)
+@@ -1476,6 +1491,7 @@ static void usage(char *appname)
+         " -xdpQueue        [num]  XDP queue value (default %d)\n"
+         " -xdpFlagDrvMode         Use XDP in DRV mode\n"
+         " -xdpBindFlagZeroCopy    Use Zero-Copy mode in XDP\n"
++        " -xdpProgPath     [path] Path to custom XDP BPF object file to load\n"
+         "\n",
+         appname, DEFAULT_CYCLE_TIME, DEFAULT_SOCKET_PRIORITY, DEFAULT_PUB_SCHED_PRIORITY, \
+         DEFAULT_SUB_SCHED_PRIORITY, DEFAULT_USERAPPLICATION_SCHED_PRIORITY, \
+@@ -1483,6 +1499,96 @@ static void usage(char *appname)
+         DEFAULT_PUBLISHING_MAC_ADDRESS, DEFAULT_SUBSCRIBING_MAC_ADDRESS, DEFAULT_QBV_OFFSET, DEFAULT_XDP_QUEUE);
+ }
+ 
++static void
++printOptionValues(const char *interface) {
++    /* Left-justify labels to align values in the same column */
++#define OPT_FMT "  %-56s "
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                "Application option values:");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "Network interface (-interface):", interface);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%lf",
++                "Publish/subscribe cycle time in ms (-cycleTimeInMsec):",
++                cycleTimeInMsec);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "Socket priority SO_PRIORITY (-socketPriority):",
++                socketPriority);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "Publisher thread priority (-pubPriority):", pubPriority);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "Subscriber thread priority (-subPriority):", subPriority);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "User application thread priority (-userAppPriority):",
++                userAppPriority);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "Publisher CPU core affinity (-pubCore):", pubCore);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "Subscriber CPU core affinity (-subCore):", subCore);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "User application CPU core affinity (-userAppCore):",
++                userAppCore);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "Publisher destination MAC address (-pubMacAddress):",
++                pubMacAddress);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "Subscriber source MAC address (-subMacAddress):",
++                subMacAddress);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%d",
++                "QBV offset in us (-qbvOffset):", qbvOffset);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "SO_TXTIME disabled (-disableSoTxtime):",
++                enableSoTxtime ? "false" : "true");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "CSV logging enabled (-enableCsvLog):",
++                enableCsvLog ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "Latency CSV logging enabled (-enableLatencyCsvLog):",
++                enableLatencyCsvLog ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "Console print enabled (-enableconsolePrint):",
++                consolePrint ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "Blocking socket enabled (-enableBlockingSocket):",
++                enableBlockingSocket ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "XDP subscriber enabled (-enableXdpSubscribe):",
++                enableXdpSubscribe ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%u",
++                "XDP hardware queue index (-xdpQueue):", xdpQueue);
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "XDP driver mode (-xdpFlagDrvMode):",
++                (xdpFlag == XDP_FLAGS_DRV_MODE) ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "XDP zero-copy mode (-xdpBindFlagZeroCopy):",
++                (xdpBindFlag == XDP_ZEROCOPY) ? "true" : "false");
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                OPT_FMT "%s",
++                "XDP BPF program path (-xdpProgPath):",
++                xdpProgPath ? xdpProgPath : "(none)");
++#undef OPT_FMT
++}
++
+ /**
+  * Main Server code
+  * ~~~~~~~~~~~~~~~~
+@@ -1529,6 +1635,7 @@ int main(int argc, char **argv) {
+         {"xdpFlagDrvMode",       no_argument,       0, 's'},
+         {"xdpBindFlagZeroCopy",  no_argument,       0, 't'},
+         {"enableXdpSubscribe",   no_argument,       0, 'u'},
++        {"xdpProgPath",          required_argument, 0, 'w'},
+         {"help",                 no_argument,       0, 'v'},
+         {0,                      0,                 0,  0 }
+     };
+@@ -1572,7 +1679,7 @@ int main(int argc, char **argv) {
+                 qbvOffset = atoi(optarg);
+                 break;
+             case 'm':
+-                disableSoTxtime = false;
++                enableSoTxtime = false;
+                 break;
+             case 'n':
+                 enableCsvLog = true;
+@@ -1599,6 +1706,9 @@ int main(int argc, char **argv) {
+             case 'u':
+                 enableXdpSubscribe = true;
+                 break;
++            case 'w':
++                xdpProgPath = optarg;
++                break;
+             case 'v':
+                 usage(progname);
+                 return -1;
+@@ -1635,6 +1745,8 @@ int main(int argc, char **argv) {
+                         "Flag enableXdpSubscribe is false, running application without XDP");
+     }
+ 
++    printOptionValues(interface);
++
+     UA_ServerConfig_setMinimal(config, PORT_NUMBER, NULL);
+ 
+ #if defined(PUBLISHER)
+diff --git a/examples/pubsub_realtime/run_pubsub_TSN_xdp.sh b/examples/pubsub_realtime/run_pubsub_TSN_xdp.sh
+new file mode 100755
+index 000000000..48e70efdb
+--- /dev/null
++++ b/examples/pubsub_realtime/run_pubsub_TSN_xdp.sh
+@@ -0,0 +1,101 @@
++#!/bin/sh
++
++NETIF="eth2"
++XDP_PROG="/usr/lib/bpf/xdpfilt_alw_uadp.o"
++CYCLE_MS=100
++DEBUG=true
++
++PUBLISHER_CMD="/root/open62541_example/pubsub_TSN_publisher"
++LOOPBACK_CMD="/root/open62541_example/pubsub_TSN_loopback"
++
++PTP_CMD=$(command -v ptp4l)
++PHC2SYS_CMD=$(command -v phc2sys)
++
++cleanup() {
++	systemctl start systemd-timesyncd.service
++	systemctl start ntpd.service
++
++	# restore network features
++	ethtool -K $NETIF receive-hashing on
++	ethtool -K $NETIF rx-vlan-offload on
++	ethtool -K $NETIF tx-vlan-offload on
++
++	pkill -9 ptp4l
++	pkill -9 phc2sys
++}
++
++trap cleanup EXIT INT TERM
++
++if [ "$1" = "-clean" ]; then
++	cleanup
++	exit 0
++fi
++
++if [ ! -x "$PTP_CMD" ]; then
++	echo "Error: $PTP_CMD not found" >&2
++	exit 1
++fi
++
++if [ ! -x "$PHC2SYS_CMD" ]; then
++	echo "Error: $PHC2SYS_CMD not found" >&2
++	exit 1
++fi
++
++if [ "$1" = "-pub" ]; then
++	CMD=$PUBLISHER_CMD
++	PTP_CMD="$PTP_CMD -s"
++else
++	CMD=$LOOPBACK_CMD
++fi
++
++if [ ! -x "$CMD" ]; then
++	echo "Error: $CMD not found" >&2
++	exit 1
++fi
++
++if $DEBUG; then
++	EXTRA_OPTIONS=" -enableconsolePrint"
++fi
++
++# disable TX/RX VLAN offload
++ethtool -K $NETIF rx-vlan-offload off
++ethtool -K $NETIF tx-vlan-offload off
++
++# make sure all traffic to arrive on Queue 0
++ethtool -K $NETIF receive-hashing off
++
++# stop clock synchronization services
++systemctl stop systemd-timesyncd.service
++systemctl stop ntpd.service
++sleep 2
++
++tc qdisc add dev $NETIF root handle 100: mqprio \
++        num_tc 4 \
++        map 0 1 2 3 0 0 0 0  0 0 0 0  0 0 0 0 \
++        queues 1@0 1@1 1@2 1@3 \
++        hw 1
++
++tc qdisc show dev $NETIF
++
++$PTP_CMD -i $NETIF -f /etc/ptp4l_cfg/gPTP.cfg -m  > /var/log/ptp4l.log 2>&1 &
++echo "Sync PTP clock. Wait for 20 seconds ..."
++sleep 15
++
++echo
++OUTPUT_CMD="tail -10 /var/log/ptp4l.log"
++echo $OUTPUT_CMD
++$OUTPUT_CMD
++
++$PHC2SYS_CMD -s $NETIF -c CLOCK_REALTIME -O 0 -m > /var/log/phc2sys.log 2>&1 &
++sleep 5
++echo
++OUTPUT_CMD="tail -10 /var/log/phc2sys.log"
++echo $OUTPUT_CMD
++$OUTPUT_CMD
++echo
++
++CMD="$CMD -interface $NETIF -xdpQueue 0 -enableXdpSubscribe -xdpFlagDrvMode -xdpBindFlagZeroCopy -xdpProgPath $XDP_PROG -cycleTimeInMsec $CYCLE_MS -socketPriority 3 $EXTRA_OPTIONS"
++echo "$CMD"
++eval "$CMD"
++
++exit 0
+diff --git a/plugins/ua_pubsub_ethernet.c b/plugins/ua_pubsub_ethernet.c
+index d136244f3..f9cd54a4e 100644
+--- a/plugins/ua_pubsub_ethernet.c
++++ b/plugins/ua_pubsub_ethernet.c
+@@ -73,6 +73,7 @@ static UA_THREAD_LOCAL UA_Byte ReceiveMsgBufferETH[RECEIVE_MSG_BUFFER_SIZE];
+ #endif
+ 
+ #if defined(LIBBPF_EBPF)
++
+ /* Theses structures shall be removed in the future XDP versions
+  * (when RT Linux and XDP are mainlined and stable) */
+ typedef struct {
+@@ -103,7 +104,6 @@ typedef struct {
+     UA_UInt32 idx_rx;
+     UA_UInt32 idx_fq;
+ } xdpsock;
+-#endif
+ 
+ /* Configuration parameters for xdp socket */
+ typedef struct {
+@@ -115,7 +115,8 @@ typedef struct {
+ } xskconfparam;
+ 
+ /* Default values for xdp socket parameters */
+-xskconfparam xsk_default_values = {2048, 2048, 2048, 2048, 2048};
++static const xskconfparam xsk_default_values = {2048, 2048, 2048, 2048, 2048};
++#endif
+ 
+ /* Ethernet network layer specific internal data */
+ typedef struct {
+@@ -129,6 +130,12 @@ typedef struct {
+ #if defined(LIBBPF_EBPF)
+     UA_UInt32 xdp_flags;
+     xdpsock* xdpsocket;
++    /* Custom XDP program: when set, the BPF object is loaded externally
++     * and xsk_socket__create() is told NOT to load its own default program
++     * (XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD). After socket creation the
++     * XSK fd is inserted into the XSKMAP of the loaded program. */
++    struct bpf_object *customXdpObj;
++    int customXskmapFd;
+ #endif
+     /* Send the packets with txtime ability - Linux specific */
+     UA_Boolean useSoTxTime;
+@@ -142,6 +149,8 @@ typedef struct {
+     UA_UInt32 xdp_flags;
+     UA_UInt32 hw_receive_queue;
+     UA_UInt16 xdp_bind_flags;
++    /* Path to a custom BPF .o file; when non-NULL, INHIBIT_PROG_LOAD is set */
++    char *xdpProgPath;
+     /* ETF related socket options - Linux specific */
+     UA_Boolean enableSocketTxTime;
+     UA_Int32   sotxtimeDeadlinemode;
+@@ -167,6 +176,52 @@ enum txtime_flags {
+ UA_UInt64 rxHwTimestamp;
+ #endif
+ 
++/* #define NETWORK_DEBUG */
++
++#if defined(NETWORK_DEBUG)
++/* Prints packets formatted as 16 bytes per line with both hex and ASCII columns. */
++static void
++dumpPacket(const char *name, const UA_Byte *data, size_t len) {
++    struct timespec currentTime;
++
++#if !defined(UA_ARCHITECTURE_POSIX)
++    clock_gettime(CLOCK_REALTIME, &currentTime);
++#else
++    clock_gettime(CLOCK_TAI, &currentTime);
++#endif
++
++    /* Header line */
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                "%s: packet dump (%zu bytes): (time: %ld.%09ld)",
++                name, len, currentTime.tv_sec, currentTime.tv_nsec);
++
++    /* Print 16 bytes per line */
++    for(size_t off = 0; off < len; off += 16) {
++        char hexPart[3 * 16 + 1];  /* "XX " x 16 + NUL */
++        char ascPart[16 + 1];
++        size_t hpos = 0;
++        size_t lineEnd = off + 16;
++        if(lineEnd > len)
++            lineEnd = len;
++
++        for(size_t i = off; i < lineEnd; i++) {
++            UA_Byte b = data[i];
++            static const char hexDigits[] = "0123456789abcdef";
++            hexPart[hpos++] = hexDigits[(b >> 4) & 0x0f];
++            hexPart[hpos++] = hexDigits[b & 0x0f];
++            hexPart[hpos++] = ' ';
++            ascPart[i - off] = (b >= 0x20 && b <= 0x7e) ? (char)b : '.';
++        }
++
++        hexPart[hpos] = '\0';
++        ascPart[lineEnd - off] = '\0';
++
++        UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                    "  %04zx: %-48s  %s", off, hexPart, ascPart);
++    }
++}
++#endif /* NETWORK_DEBUG */
++
+ /*
+  * OPC-UA specification Part 14:
+  *
+@@ -235,6 +290,7 @@ static xdp_umem *xdp_umem_configure(xskconfparam *xskparam) {
+                        xskparam->no_of_frames * xskparam->frame_size) != 0) {
+         UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+                      "buffer allocation of UMEM failed");
++        UA_free(umem);
+         return NULL;
+     }
+ 
+@@ -255,13 +311,14 @@ static xdp_umem *xdp_umem_configure(xskconfparam *xskparam) {
+ 
+     sret = xsk_ring_prod__reserve(&umem->fq, frames_per_ring, &idx);
+     if (sret != frames_per_ring){
++        (void)xsk_umem__delete(umem->umem);
+         UA_free(umem->buffer);
+         UA_free(umem);
+         return NULL;
+     }
+ 
+     for (UA_UInt64 i = 0; i < frames_per_ring; i++)
+-        *xsk_ring_prod__fill_addr(&umem->fq, idx++) = i * frames_per_ring;
++        *xsk_ring_prod__fill_addr(&umem->fq, idx++) = i * xskparam->frame_size;
+ 
+     xsk_ring_prod__submit(&umem->fq, frames_per_ring);
+ 
+@@ -276,7 +333,8 @@ static xdp_umem *xdp_umem_configure(xskconfparam *xskparam) {
+  */
+ static xdpsock *xsk_configure(xdp_umem *umem, UA_UInt32 hw_receive_queue,
+                               int ifindex, char *ifname,
+-                              UA_UInt32 xdp_flags, UA_UInt16 xdp_bind_flags) {
++                              UA_UInt32 xdp_flags, UA_UInt16 xdp_bind_flags,
++                              UA_Boolean inhibitProgLoad) {
+     xdpsock *xdp_socket;
+     int ret;
+     struct xsk_socket_config cfg;
+@@ -286,6 +344,7 @@ static xdpsock *xsk_configure(xdp_umem *umem, UA_UInt32 hw_receive_queue,
+ 
+     xdp_socket = (xdpsock *)UA_calloc(1, sizeof(*xdp_socket));
+     if (!xdp_socket) {
++        UA_free(xskparam);
+         return NULL;
+     }
+ 
+@@ -295,8 +354,6 @@ static xdpsock *xsk_configure(xdp_umem *umem, UA_UInt32 hw_receive_queue,
+         xdp_socket->umem = xdp_umem_configure(xskparam);
+ 
+     if (!xdp_socket->umem) {
+-        UA_close(xsk_socket__fd(xdp_socket->xskfd));
+-        bpf_xdp_detach(ifindex, xdp_flags, NULL);
+         UA_free(xskparam);
+         UA_free(xdp_socket);
+         return NULL;
+@@ -309,7 +366,10 @@ static xdpsock *xsk_configure(xdp_umem *umem, UA_UInt32 hw_receive_queue,
+     cfg.rx_size = xskparam->fill_queue_no_of_desc;
+     cfg.tx_size = xskparam->com_queue_no_of_desc;
+ 
+-    cfg.libbpf_flags = 0;
++    /* When a custom XDP program is provided, suppress the default program
++     * that libxdp/libbpf would otherwise attach automatically. */
++    cfg.libbpf_flags = inhibitProgLoad ?
++        XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD : 0;
+     cfg.xdp_flags = xdp_flags;
+     cfg.bind_flags = xdp_bind_flags;
+ 
+@@ -321,7 +381,7 @@ static xdpsock *xsk_configure(xdp_umem *umem, UA_UInt32 hw_receive_queue,
+                              &xdp_socket->tx_ring,
+                              &cfg);
+ 
+-    if (ret == ENOTSUP) {
++    if (ret == -ENOTSUP) {
+         UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+                       "PubSub connection creation failed."
+                       " xsk_socket__create not supported.");
+@@ -334,58 +394,193 @@ static xdpsock *xsk_configure(xdp_umem *umem, UA_UInt32 hw_receive_queue,
+     } else if (ret < 0) {
+         UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+                     "PubSub connection creation failed."
+-                    " xsk_socket__create failed: %s", strerror(errno));
++                    " xsk_socket__create failed: %s", strerror(-ret));
+         UA_free(xdp_socket->umem->buffer);
+         (void)xsk_umem__delete(xdp_socket->umem->umem);
+         UA_free(xdp_socket->umem);
+-        UA_close(xsk_socket__fd(xdp_socket->xskfd));
+-        bpf_xdp_detach(ifindex, xdp_flags, NULL);
+         UA_free(xskparam);
+         UA_free(xdp_socket);
+         return NULL;
+     }
+ 
+-    ret = bpf_xdp_query_id(ifindex, xdp_flags, &xdp_socket->bpf_prog_id);
+-    if (ret) {
+-        UA_LOG_ERROR (UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+-            "PubSub Connection creation failed. Unable to retrieve XDP program.");
+-        UA_free(xdp_socket->umem->buffer);
+-        (void)xsk_umem__delete(xdp_socket->umem->umem);
+-        UA_free(xdp_socket->umem);
+-        UA_close(xsk_socket__fd(xdp_socket->xskfd));
+-        bpf_xdp_detach(ifindex, xdp_flags, NULL);
+-        UA_free(xskparam);
+-        UA_free(xdp_socket);
+-        return NULL;
++    if (!inhibitProgLoad) {
++        ret = bpf_xdp_query_id(ifindex, xdp_flags, &xdp_socket->bpf_prog_id);
++        if (ret) {
++            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                "PubSub Connection creation failed."
++                " Unable to retrieve XDP program.");
++            xsk_socket__delete(xdp_socket->xskfd);
++            UA_free(xdp_socket->umem->buffer);
++            (void)xsk_umem__delete(xdp_socket->umem->umem);
++            UA_free(xdp_socket->umem);
++            UA_free(xskparam);
++            UA_free(xdp_socket);
++            return NULL;
++        }
+     }
+ 
+     UA_free(xskparam);
+     return xdp_socket;
+ }
+ 
++/**
++ * Load a custom BPF object file, attach its first XDP program to the
++ * interface, locate the XSKMAP named "xsks_map" and insert the AF_XDP
++ * socket fd at the given queue index.
++ *
++ * On success the loaded bpf_object and the XSKMAP fd are stored in
++ * channelDataEthernet so they can be cleaned up on close.
++ *
++ * @return UA_STATUSCODE_GOOD on success.
++ */
++static UA_StatusCode
++xdp_load_custom_prog(UA_PubSubChannelDataEthernet *channelDataEthernet,
++                     const char *progPath,
++                     UA_UInt32 hw_receive_queue) {
++    struct bpf_object *obj = NULL;
++    struct bpf_program *prog = NULL;
++    struct bpf_map *map = NULL;
++    int prog_fd, map_fd, xsk_fd, ret;
++
++    obj = bpf_object__open_file(progPath, NULL);
++    if (!obj) {
++        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                     "PubSub XDP: failed to open BPF object '%s': %s",
++                     progPath, strerror(errno));
++        return UA_STATUSCODE_BADINTERNALERROR;
++    }
++
++    ret = bpf_object__load(obj);
++    if (ret) {
++        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                     "PubSub XDP: failed to load BPF object '%s': %s",
++                     progPath, strerror(errno));
++        bpf_object__close(obj);
++        return UA_STATUSCODE_BADINTERNALERROR;
++    }
++
++    /* Use the first program in the object */
++    prog = bpf_object__next_program(obj, NULL);
++    if (!prog) {
++        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                     "PubSub XDP: no program found in BPF object '%s'",
++                     progPath);
++        bpf_object__close(obj);
++        return UA_STATUSCODE_BADINTERNALERROR;
++    }
++
++    prog_fd = bpf_program__fd(prog);
++    if (prog_fd < 0) {
++        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                     "PubSub XDP: invalid program fd in '%s'", progPath);
++        bpf_object__close(obj);
++        return UA_STATUSCODE_BADINTERNALERROR;
++    }
++
++    /* Attach XDP program to the interface */
++    ret = bpf_xdp_attach(channelDataEthernet->ifindex, prog_fd,
++                          channelDataEthernet->xdp_flags, NULL);
++    if (ret) {
++        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                     "PubSub XDP: bpf_xdp_attach failed for ifindex %d: %s",
++                     channelDataEthernet->ifindex, strerror(-ret));
++        bpf_object__close(obj);
++        return UA_STATUSCODE_BADINTERNALERROR;
++    }
++
++    /* Locate the XSKMAP (expected name: "xsks_map") */
++    map = bpf_object__find_map_by_name(obj, "xsks_map");
++    if (!map) {
++        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                     "PubSub XDP: map 'xsks_map' not found in '%s'",
++                     progPath);
++        bpf_xdp_detach(channelDataEthernet->ifindex,
++                        channelDataEthernet->xdp_flags, NULL);
++        bpf_object__close(obj);
++        return UA_STATUSCODE_BADINTERNALERROR;
++    }
++
++    map_fd = bpf_map__fd(map);
++    if (map_fd < 0) {
++        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                     "PubSub XDP: invalid fd for 'xsks_map' in '%s'",
++                     progPath);
++        bpf_xdp_detach(channelDataEthernet->ifindex,
++                        channelDataEthernet->xdp_flags, NULL);
++        bpf_object__close(obj);
++        return UA_STATUSCODE_BADINTERNALERROR;
++    }
++
++    /* Insert the AF_XDP socket fd into the XSKMAP at the queue index */
++    xsk_fd = xsk_socket__fd(channelDataEthernet->xdpsocket->xskfd);
++    int key = (int)hw_receive_queue;
++    ret = bpf_map_update_elem(map_fd, &key, &xsk_fd, 0);
++    if (ret) {
++        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                     "PubSub XDP: failed to insert XSK fd %d into"
++                     " xsks_map at key %d: %s",
++                     xsk_fd, key, strerror(-ret));
++        bpf_xdp_detach(channelDataEthernet->ifindex,
++                        channelDataEthernet->xdp_flags, NULL);
++        bpf_object__close(obj);
++        return UA_STATUSCODE_BADINTERNALERROR;
++    }
++
++    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                "PubSub XDP: loaded '%s', attached to ifindex %d,"
++                " XSK fd %d inserted into xsks_map[%d]",
++                progPath, channelDataEthernet->ifindex, xsk_fd, key);
++
++    channelDataEthernet->customXdpObj = obj;
++    channelDataEthernet->customXskmapFd = map_fd;
++    return UA_STATUSCODE_GOOD;
++}
++
+ static UA_StatusCode
+ UA_PubSubChannelEthernetXDP_open(UA_PubSubChannelDataEthernet *channelDataEthernet,
+                                  ethernetSocketOptions *sockOptions,
+                                  UA_NetworkAddressUrlDataType *address) {
+     struct rlimit resourcelimit = {RLIM_INFINITY, RLIM_INFINITY};
+     if (setrlimit(RLIMIT_MEMLOCK, &resourcelimit)) {
+-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Set limit on the consumption of resources failed");
++        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                     "Set limit on the consumption of resources failed");
+         return UA_STATUSCODE_BADINTERNALERROR;
+     }
+ 
++    UA_Boolean inhibitProgLoad = (sockOptions->xdpProgPath != NULL);
++
+     /* Create the UMEM and XDP sockets */
+-    channelDataEthernet->xdpsocket = xsk_configure(NULL,
+-                                                   sockOptions->hw_receive_queue,
+-                                                   channelDataEthernet->ifindex,
+-                                                   (char *)address->networkInterface.data,
+-                                                   sockOptions->xdp_flags,
+-                                                   sockOptions->xdp_bind_flags);
++    channelDataEthernet->xdpsocket = xsk_configure(
++        NULL,
++        sockOptions->hw_receive_queue,
++        channelDataEthernet->ifindex,
++        (char *)address->networkInterface.data,
++        sockOptions->xdp_flags,
++        sockOptions->xdp_bind_flags,
++        inhibitProgLoad);
+     if(!channelDataEthernet->xdpsocket) {
+-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "XDP Socket configuration failed");
+-        bpf_xdp_detach(channelDataEthernet->ifindex, sockOptions->xdp_flags, NULL);
++        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                     "XDP Socket configuration failed");
+         return UA_STATUSCODE_BADINTERNALERROR;
+     }
+ 
++    /* If a custom XDP program was requested, load it, attach it to the
++     * interface and insert the AF_XDP socket fd into its XSKMAP. */
++    if(inhibitProgLoad) {
++        UA_StatusCode rv = xdp_load_custom_prog(
++            channelDataEthernet, sockOptions->xdpProgPath,
++            sockOptions->hw_receive_queue);
++        if(rv != UA_STATUSCODE_GOOD) {
++            xsk_socket__delete(channelDataEthernet->xdpsocket->xskfd);
++            UA_free(channelDataEthernet->xdpsocket->umem->buffer);
++            (void)xsk_umem__delete(channelDataEthernet->xdpsocket->umem->umem);
++            UA_free(channelDataEthernet->xdpsocket->umem);
++            UA_free(channelDataEthernet->xdpsocket);
++            channelDataEthernet->xdpsocket = NULL;
++            return rv;
++        }
++    }
++
+     return UA_STATUSCODE_GOOD;
+ }
+ 
+@@ -435,6 +630,11 @@ UA_PubSubChannelEthernetXDP_send(UA_PubSubChannelDataEthernet *channelDataEthern
+     /* copy payload of ethernet message */
+     memcpy(ptr, buf->data, buf->length);
+ 
++#if defined(NETWORK_DEBUG)
++    /* Dump the complete Ethernet frame before transmitting */
++    dumpPacket("XDP TX", bufSend, lenBuf);
++#endif
++
+     /* TODO: Modify XDP TX to handle packet count upto BATCH_SIZE */
+     if (xsk_ring_prod__reserve(&xdp_socket->tx_ring, 1, &idx) != 1) {
+         UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+@@ -450,7 +650,7 @@ UA_PubSubChannelEthernetXDP_send(UA_PubSubChannelDataEthernet *channelDataEthern
+ 
+     /* Increase the cur_tx pointer, rollover if exceed */
+     xdp_socket->cur_tx += 1;
+-    xdp_socket->cur_tx %= xsk_default_values.frame_size;
++    xdp_socket->cur_tx %= xsk_default_values.no_of_frames;
+ 
+     rc = UA_sendto(xsk_socket__fd(xdp_socket->xskfd), NULL, 0, MSG_DONTWAIT, NULL, 0);
+     if (rc >= 0 || errno == ENOBUFS || errno == EAGAIN || errno == EBUSY) {
+@@ -473,78 +673,124 @@ UA_PubSubChannelEthernetXDP_send(UA_PubSubChannelDataEthernet *channelDataEthern
+ 
+ static UA_StatusCode
+ UA_PubSubChannelEthernetXDP_receive(UA_PubSubChannelDataEthernet *channelDataEthernet,
+-                                    UA_ByteString *message) {
+-    struct ether_header *eth_hdr;
++                                    UA_PubSubChannel *channel,
++                                    UA_PubSubReceiveCallback receiveCallback,
++                                    void *receiveCallbackContext) {
+     xdpsock *xdp_socket;
+     UA_UInt64 addr;
+     UA_UInt64 ret;
+     UA_UInt32 rcvd;
+-    UA_Byte *pkt, *buf;
++    UA_Byte *pkt;
+     ssize_t len;
++    UA_UInt16 ethProto;
++    UA_UInt16 tci;
++    UA_UInt16 rxVid;
++    UA_UInt16 innerProto;
++    UA_ByteString pktBuffer;
++    UA_StatusCode retval = UA_STATUSCODE_GOODNODATA;
+ 
+     xdp_socket = channelDataEthernet->xdpsocket;
+-    message->length = 0;
+ 
+-    rcvd = xsk_ring_cons__peek(&xdp_socket->rx_ring, BATCH_SIZE, &xdp_socket->idx_rx);
+-    if (!rcvd)
+-        return UA_STATUSCODE_GOODNODATA; //No packets even after select/poll
++    rcvd = xsk_ring_cons__peek(&xdp_socket->rx_ring, BATCH_SIZE,
++                               &xdp_socket->idx_rx);
++    if(!rcvd)
++        return UA_STATUSCODE_GOODNODATA;
++
++    ret = xsk_ring_prod__reserve(&xdp_socket->umem->fq, rcvd,
++                                 &xdp_socket->idx_fq);
++    if(ret != rcvd) {
++        xsk_ring_cons__release(&xdp_socket->rx_ring, rcvd);
++        return UA_STATUSCODE_BADINTERNALERROR;
++    }
+ 
+-    ret = xsk_ring_prod__reserve(&xdp_socket->umem->fq, rcvd, &xdp_socket->idx_fq);
+-    if(ret != rcvd)
+-        return UA_STATUSCODE_BADINTERNALERROR; //Got data but failed to reserve, something's wrong
++    /* Save starting rx index before the loop advances it, so we can
++     * recycle ALL rcvd addresses in cleanup regardless of early exit. */
++    UA_UInt32 start_idx_rx = xdp_socket->idx_rx;
+ 
+-    buf = message->data;
+     for(UA_UInt32 i = 0; i < rcvd; i++) {
+-        addr = xsk_ring_cons__rx_desc(&xdp_socket->rx_ring, xdp_socket->idx_rx)->addr;
+-        len  = (UA_UInt32) xsk_ring_cons__rx_desc(&xdp_socket->rx_ring, xdp_socket->idx_rx++)->len;
+-        pkt  = (UA_Byte *) xsk_umem__get_data(xdp_socket->umem->buffer, addr);
+-
+-        /* AF_XDP does not do any filtering on ethertype or protocol.
+-         * Manually check for VLAN headers and ETH UADP ethertype.
+-         * Note: we use UA_UInt16 to compare ethertype, which is 2-bytes
+-         */
+-        UA_UInt16 *pkt_proto = (UA_UInt16 *) (pkt + (ETH_ALEN * 2));
+-        if(channelDataEthernet->vid > 0 && *pkt_proto == htons(ETHERTYPE_VLAN))
+-            pkt_proto += 2;
+-
+-        if(*pkt_proto != htons(ETHERTYPE_UADP))
+-            return UA_STATUSCODE_GOODNODATA;
+-
+-        eth_hdr = (struct ether_header *) pkt;
+-        /* Make sure we match our target */
+-        if(memcmp(eth_hdr->ether_dhost, channelDataEthernet->targetAddress, ETH_ALEN) != 0) {
+-            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+-                         "Invalid hardware address - XDP socket receive");
+-            return UA_STATUSCODE_GOODNODATA;
+-        }
++        addr = xsk_ring_cons__rx_desc(&xdp_socket->rx_ring,
++                                      xdp_socket->idx_rx)->addr;
++        len  = (UA_UInt32)xsk_ring_cons__rx_desc(&xdp_socket->rx_ring,
++                                                  xdp_socket->idx_rx++)->len;
++        pkt  = (UA_Byte *)xsk_umem__get_data(xdp_socket->umem->buffer,
++                                              addr);
++
++#if defined(NETWORK_DEBUG)
++        /* Dump the complete raw Ethernet frame for debugging */
++        dumpPacket("XDP RX", pkt, (size_t)len);
++#endif
+ 
+-        UA_Byte *dataReceived = (UA_Byte *)pkt + sizeof(struct ether_header);
+-        size_t dataLength = (size_t)len - sizeof(struct ether_header);
+-        if(channelDataEthernet->vid > 0) {
+-            dataReceived += 4;
+-            dataLength -= 4;
+-        }
++        /* Need at least a standard ethernet header (14 bytes) */
++        if((size_t)len < sizeof(struct ether_header))
++            continue;
++
++        /* --- Parse the Ethernet header including optional VLAN --- */
++        /* Destination MAC check */
++        if(memcmp(pkt, channelDataEthernet->targetAddress, ETH_ALEN) != 0)
++            continue;
++
++        /* Read ethertype at offset 12 */
++        memcpy(&ethProto, pkt + (ETH_ALEN * 2), sizeof(UA_UInt16));
++        if(ethProto == htons(ETHERTYPE_VLAN)) {
++            /* VLAN-tagged frame: need at least 18 bytes
++             * (14 eth header + 4 VLAN tag) */
++            if((size_t)len < sizeof(struct ether_header) + VLAN_HEADER_SIZE)
++                continue;
++
++            /* Extract VID from the TCI field at offset 14
++             * TCI layout: 3-bit PCP | 1-bit DEI | 12-bit VID */
++            memcpy(&tci, pkt + (ETH_ALEN * 2) + 2, sizeof(UA_UInt16));
++            rxVid = ntohs(tci) & 0x0FFF;
++
++            /* Read inner ethertype at offset 16 */
++            memcpy(&innerProto, pkt + (ETH_ALEN * 2) + VLAN_HEADER_SIZE,
++                   sizeof(UA_UInt16));
++            if(innerProto != htons(ETHERTYPE_UADP))
++                continue;
++
++            if(channelDataEthernet->vid > 0) {
++                /* Compare configured VID with received VID */
++                if(rxVid != channelDataEthernet->vid)
++                    continue;
++            }
+ 
+-        /* Max buffer size allocated to receive a multiple messages is 4096 */
+-        if ((message->length + dataLength) > 4096) {
+-            UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
+-                        "During multiple receive max buffer size reached");
+-            break;
+-        }
++            /* vid == 0: accept any VLAN, just strip the tag */
++            /* Payload starts after ethernet header + VLAN tag */
++            pktBuffer.data = pkt + sizeof(struct ether_header)
++                             + VLAN_HEADER_SIZE;
++            pktBuffer.length = (size_t)len - sizeof(struct ether_header)
++                               - VLAN_HEADER_SIZE;
++        } else {
++            /* No VLAN tag */
++            if(ethProto != htons(ETHERTYPE_UADP))
++                continue;
+ 
+-        if((dataLength < 46) && (i > 0)) {
+-            message->length += 4;
+-            buf += 4;
++            pktBuffer.data = pkt + sizeof(struct ether_header);
++            pktBuffer.length = (size_t)len - sizeof(struct ether_header);
+         }
+ 
+-        memcpy(buf, dataReceived, dataLength);
+-        buf += dataLength;
+-        message->length += dataLength;
++        retval = receiveCallback(channel, receiveCallbackContext,
++                                 &pktBuffer);
++        if(retval != UA_STATUSCODE_GOOD) {
++            UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_NETWORK,
++                           "PubSub Connection decode and process failed.");
++        }
+     }
+ 
++    /* Recycle the consumed rx addresses back into the fill queue so the
++     * kernel can reuse the UMEM frames for future receives. Without this
++     * the fill queue starves and xsk_ring_prod__reserve() will eventually
++     * fail, or the kernel will drop frames. */
++    for(UA_UInt32 j = 0; j < rcvd; j++) {
++        *xsk_ring_prod__fill_addr(&xdp_socket->umem->fq,
++                                  xdp_socket->idx_fq++) =
++            xsk_ring_cons__rx_desc(&xdp_socket->rx_ring,
++                                   start_idx_rx + j)->addr;
++    }
+     xsk_ring_prod__submit(&xdp_socket->umem->fq, rcvd);
+     xsk_ring_cons__release(&xdp_socket->rx_ring, rcvd);
+     xdp_socket->rx_npkts += rcvd;
++
+     return UA_STATUSCODE_GOOD;
+ }
+ #endif
+@@ -619,13 +865,15 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+             UA_MIN(address->networkInterface.length, sizeof(ifreq.ifr_name)-1));
+ 
+     /* Set default socket options */
+-    ethernetSocketOptions sockOptions = {NULL, UA_FALSE, XDP_FLAGS_SKB_MODE, 0, XDP_COPY, UA_FALSE, 0, 0};
++    ethernetSocketOptions sockOptions = {NULL, UA_FALSE, XDP_FLAGS_SKB_MODE, 0,
++                                         XDP_COPY, NULL, UA_FALSE, 0, 0};
+ 
+     /* XDP parameters - Flags, hw queue option and binding flags */
+     UA_String xdpSocketParam = UA_STRING("enableXdpSocket");
+     UA_String xdpFlagParam = UA_STRING("xdpflag");
+     UA_String hwReceiveQueueParam = UA_STRING("hwreceivequeue");
+     UA_String xdpBindFlagParam = UA_STRING("xdpbindflag");
++    UA_String xdpProgPathParam = UA_STRING("xdpProgPath");
+ 
+     /* Socket priority and socket txtime option */
+     UA_String socketPriority = UA_STRING("sockpriority");
+@@ -671,8 +919,30 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+             if(UA_Variant_hasScalarType(&connectionConfig->connectionProperties[i].value, &UA_TYPES[UA_TYPES_UINT16])){
+                 sockOptions.xdp_bind_flags = *(UA_UInt16 *) connectionConfig->connectionProperties[i].value.data;
+             }
++        } else if(UA_String_equal(&connectionConfig->connectionProperties[i].key.name, &xdpProgPathParam)){
++            if(UA_Variant_hasScalarType(&connectionConfig->connectionProperties[i].value, &UA_TYPES[UA_TYPES_STRING])){
++                UA_String *pathStr = (UA_String *) connectionConfig->connectionProperties[i].value.data;
++                if(pathStr->length > 0 && pathStr->data) {
++                    /* Store a null-terminated copy; freed after XDP_open */
++                    char *tmp = (char *)UA_malloc(pathStr->length + 1);
++                    if(!tmp) {
++                        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                            "PubSub connection creation failed. Out of memory.");
++                        UA_free(channelDataEthernet);
++                        UA_free(newChannel);
++                        if(sockOptions.socketPriority)
++                            UA_free(sockOptions.socketPriority);
++                        return NULL;
++                    }
++                    memcpy(tmp, pathStr->data, pathStr->length);
++                    tmp[pathStr->length] = '\0';
++                    sockOptions.xdpProgPath = tmp;
++                }
++            }
+         } else {
+-            UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "PubSub Ethernet Connection creation. Unknown connection parameter.");
++            UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                           "PubSub Ethernet Connection creation."
++                           " Unknown connection parameter.");
+         }
+     }
+ 
+@@ -684,6 +954,10 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+         if((UA_PubSubChannelEthernetXDP_open(channelDataEthernet, &sockOptions, address)) != UA_STATUSCODE_GOOD) {
+             UA_free(channelDataEthernet);
+             UA_free(newChannel);
++            if(sockOptions.socketPriority)
++                UA_free(sockOptions.socketPriority);
++            if(sockOptions.xdpProgPath)
++                UA_free(sockOptions.xdpProgPath);
+             return NULL;
+         }
+ 
+@@ -693,6 +967,8 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+ 
+         if(sockOptions.socketPriority)
+             UA_free(sockOptions.socketPriority);
++        if(sockOptions.xdpProgPath)
++            UA_free(sockOptions.xdpProgPath);
+ 
+         return newChannel;
+     }
+@@ -712,6 +988,8 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+         UA_free(newChannel);
+         if(sockOptions.socketPriority)
+             UA_free(sockOptions.socketPriority);
++        if(sockOptions.xdpProgPath)
++            UA_free(sockOptions.xdpProgPath);
+         return NULL;
+     }
+     newChannel->sockfd = sockFd;
+@@ -727,6 +1005,8 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+         UA_free(newChannel);
+         if(sockOptions.socketPriority)
+             UA_free(sockOptions.socketPriority);
++        if(sockOptions.xdpProgPath)
++            UA_free(sockOptions.xdpProgPath);
+         return NULL;
+     }
+ 
+@@ -761,6 +1041,8 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+             UA_free(newChannel);
+             if(sockOptions.socketPriority)
+                 UA_free(sockOptions.socketPriority);
++            if(sockOptions.xdpProgPath)
++                UA_free(sockOptions.xdpProgPath);
+             return NULL;
+         }
+     }
+@@ -774,6 +1056,8 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+         UA_free(newChannel);
+         if(sockOptions.socketPriority)
+             UA_free(sockOptions.socketPriority);
++        if(sockOptions.xdpProgPath)
++            UA_free(sockOptions.xdpProgPath);
+         return NULL;
+     }
+ #endif
+@@ -787,6 +1071,8 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+         UA_free(newChannel);
+         if(sockOptions.socketPriority)
+             UA_free(sockOptions.socketPriority);
++        if(sockOptions.xdpProgPath)
++            UA_free(sockOptions.xdpProgPath);
+         return NULL;
+     }
+     channelDataEthernet->ifindex = ifreq.ifr_ifindex;
+@@ -801,6 +1087,8 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+         UA_free(newChannel);
+         if(sockOptions.socketPriority)
+             UA_free(sockOptions.socketPriority);
++        if(sockOptions.xdpProgPath)
++            UA_free(sockOptions.xdpProgPath);
+         return NULL;
+     }
+ #if defined(__vxworks) || defined(__VXWORKS__)
+@@ -824,6 +1112,8 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+         UA_free(newChannel);
+         if(sockOptions.socketPriority)
+             UA_free(sockOptions.socketPriority);
++        if(sockOptions.xdpProgPath)
++            UA_free(sockOptions.xdpProgPath);
+         return NULL;
+     }
+ 
+@@ -835,6 +1125,8 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+             UA_close(sockFd);
+             
+             UA_free(sockOptions.socketPriority);
++            if(sockOptions.xdpProgPath)
++                UA_free(sockOptions.xdpProgPath);
+             UA_free(channelDataEthernet);
+             UA_free(newChannel);
+             return NULL;
+@@ -849,12 +1141,14 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+         memset(&sk_txtime, 0, sizeof(sk_txtime));
+         sk_txtime.clockId = CLOCK_TAI;
+         sk_txtime.flags   = (UA_UInt16)(sockOptions.sotxtimeDeadlinemode | sockOptions.sotxtimeReceiveerrors);
+-        if (setsockopt(sockFd, SOL_SOCKET, SO_TXTIME, &sk_txtime, sizeof(&sk_txtime))) {
++        if (setsockopt(sockFd, SOL_SOCKET, SO_TXTIME, &sk_txtime, sizeof(sk_txtime))) {
+             UA_LOG_SOCKET_ERRNO_WRAP(
+                 UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "setsockopt SO_TXTIME failed (%s)", errno_str));
+             UA_close(sockFd);
+             if(sockOptions.socketPriority)
+                 UA_free(sockOptions.socketPriority);
++            if(sockOptions.xdpProgPath)
++                UA_free(sockOptions.xdpProgPath);
+ 
+             UA_free(channelDataEthernet);
+             UA_free(newChannel);
+@@ -871,6 +1165,8 @@ UA_PubSubChannelEthernet_open(const UA_PubSubConnectionConfig *connectionConfig)
+ 
+     if(sockOptions.socketPriority)
+         UA_free(sockOptions.socketPriority);
++    if(sockOptions.xdpProgPath)
++        UA_free(sockOptions.xdpProgPath);
+ 
+     return newChannel;
+ }
+@@ -904,12 +1200,42 @@ UA_PubSubChannelEthernet_regist(UA_PubSubChannel *channel,
+     UA_PubSubChannelDataEthernet *channelDataEthernet =
+         (UA_PubSubChannelDataEthernet *) channel->handle;
+ 
+-    if(channelDataEthernet->enableXdpSocket)
+-        return UA_STATUSCODE_GOOD; // Regist not required for XDP sockets
+-
+     if(!is_multicast_address(channelDataEthernet->targetAddress))
+         return UA_STATUSCODE_GOOD;
+ 
++    if(channelDataEthernet->enableXdpSocket) {
++        /* XDP sockets bypass the kernel network stack, but the NIC's
++         * hardware multicast filter still applies. Use ioctl(SIOCADDMULTI)
++         * to add the multicast MAC directly to the device filter so that
++         * incoming multicast frames reach the XDP program. A temporary
++         * AF_INET/SOCK_DGRAM socket is used because the AF_XDP fd
++         * cannot carry generic ioctls. */
++        struct ifreq ifr;
++        memset(&ifr, 0, sizeof(ifr));
++        if_indextoname((unsigned int)channelDataEthernet->ifindex, ifr.ifr_name);
++        ifr.ifr_hwaddr.sa_family = AF_UNSPEC;
++        memcpy(ifr.ifr_hwaddr.sa_data, channelDataEthernet->targetAddress, ETH_ALEN);
++
++        int tmpSock = UA_socket(AF_INET, SOCK_DGRAM, 0);
++        if(tmpSock < 0) {
++            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                         "PubSub Connection regist failed. Cannot create socket. %s",
++                         strerror(errno));
++            return UA_STATUSCODE_BADINTERNALERROR;
++        }
++
++        if(UA_ioctl(tmpSock, SIOCADDMULTI, &ifr) < 0) {
++            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                         "PubSub Connection regist failed. ioctl SIOCADDMULTI: %s",
++                         strerror(errno));
++            UA_close(tmpSock);
++            return UA_STATUSCODE_BADINTERNALERROR;
++        }
++
++        UA_close(tmpSock);
++        return UA_STATUSCODE_GOOD;
++    }
++
+     struct packet_mreq mreq;
+     mreq.mr_ifindex = channelDataEthernet->ifindex;
+     mreq.mr_type = PACKET_MR_MULTICAST;
+@@ -935,10 +1261,35 @@ UA_PubSubChannelEthernet_unregist(UA_PubSubChannel *channel,
+     UA_PubSubChannelDataEthernet *channelDataEthernet =
+         (UA_PubSubChannelDataEthernet *) channel->handle;
+ 
+-    if(channelDataEthernet->enableXdpSocket)
+-        return UA_STATUSCODE_GOOD; // Unregist not required for XDP sockets
++    if(!is_multicast_address(channelDataEthernet->targetAddress))
++        return UA_STATUSCODE_GOOD;
++
++    if(channelDataEthernet->enableXdpSocket) {
++        /* Remove the multicast MAC from the device filter that was
++         * previously added via ioctl(SIOCADDMULTI) during regist. */
++        struct ifreq ifr;
++        memset(&ifr, 0, sizeof(ifr));
++        if_indextoname((unsigned int)channelDataEthernet->ifindex, ifr.ifr_name);
++        ifr.ifr_hwaddr.sa_family = AF_UNSPEC;
++        memcpy(ifr.ifr_hwaddr.sa_data, channelDataEthernet->targetAddress, ETH_ALEN);
++
++        int tmpSock = UA_socket(AF_INET, SOCK_DGRAM, 0);
++        if(tmpSock < 0) {
++            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                         "PubSub Connection unregist failed. Cannot create socket. %s",
++                         strerror(errno));
++            return UA_STATUSCODE_BADINTERNALERROR;
++        }
++
++        if(UA_ioctl(tmpSock, SIOCDELMULTI, &ifr) < 0) {
++            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
++                         "PubSub Connection unregist failed. ioctl SIOCDELMULTI: %s",
++                         strerror(errno));
++            UA_close(tmpSock);
++            return UA_STATUSCODE_BADINTERNALERROR;
++        }
+ 
+-    if(!is_multicast_address(channelDataEthernet->targetAddress)) {
++        UA_close(tmpSock);
+         return UA_STATUSCODE_GOOD;
+     }
+ 
+@@ -948,8 +1299,8 @@ UA_PubSubChannelEthernet_unregist(UA_PubSubChannel *channel,
+     mreq.mr_alen = ETH_ALEN;
+     memcpy(mreq.mr_address, channelDataEthernet->targetAddress, ETH_ALEN);
+ 
+-    if(UA_setsockopt(channel->sockfd, SOL_PACKET, PACKET_DROP_MEMBERSHIP, (char*) &mreq, sizeof(mreq)) < 0) { 
+-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "PubSub Connection regist failed.");
++    if(UA_setsockopt(channel->sockfd, SOL_PACKET, PACKET_DROP_MEMBERSHIP, (char*) &mreq, sizeof(mreq)) < 0) {
++        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "PubSub Connection unregist failed.");
+         return UA_STATUSCODE_BADINTERNALERROR;
+     }
+ 
+@@ -1013,7 +1364,7 @@ sendWithTxTime(UA_PubSubChannel *channel, UA_ExtensionObject *transportSettings,
+         *((UA_UInt64 *) CMSG_DATA(controlMsg)) = ethernettransportSettings->transmission_time;
+ 
+     msgCount = sendmsg(channel->sockfd, &message, 0);
+-    if ((msgCount < 1) && (msgCount != (UA_Int32)lenBuf)) {
++    if ((msgCount < 1) || (msgCount != (ssize_t)lenBuf)) {
+         return UA_STATUSCODE_BADINTERNALERROR;
+     }
+ 
+@@ -1081,6 +1432,10 @@ UA_PubSubChannelEthernet_send(UA_PubSubChannel *channel,
+     /* copy payload of ethernet message */
+     memcpy(ptrCur, buf->data, buf->length);
+ 
++#if defined(NETWORK_DEBUG)
++    dumpPacket("TX", bufSend, lenBuf);
++#endif
++
+ #if defined(KERNEL_VERSION)
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,19,0))
+     if(channelDataEthernet->useSoTxTime) {
+@@ -1143,6 +1498,15 @@ UA_PubSubChannelEthernet_receive(UA_PubSubChannel *channel,
+     struct timespec *ts = NULL;
+ #endif
+ 
++#if defined LIBBPF_EBPF
++    if(channelDataEthernet->enableXdpSocket) {
++        retval = UA_PubSubChannelEthernetXDP_receive(
++                channelDataEthernet, channel,
++                receiveCallback, receiveCallbackContext);
++        return retval;
++    }
++#endif
++
+     memset(&tmptv, 0, sizeof(tmptv));
+ 
+     /* Sleep in a select call if a timeout was set */
+@@ -1183,28 +1547,18 @@ UA_PubSubChannelEthernet_receive(UA_PubSubChannel *channel,
+              break;
+         }
+ 
+-        UA_ByteString buffer;
+-        buffer.length = RECEIVE_MSG_BUFFER_SIZE;
+-        buffer.data = ReceiveMsgBufferETH;
+-
+-#if defined LIBBPF_EBPF
+-        if(channelDataEthernet->enableXdpSocket) {
+-            retval = UA_PubSubChannelEthernetXDP_receive(channelDataEthernet, &buffer);
+-            if (retval != UA_STATUSCODE_GOOD) {
+-                return retval;
+-            }
+-            retval = receiveCallback(channel, receiveCallbackContext, &buffer);
+-            return retval;
+-        }
+-#endif
+-
+         struct ether_header eth_hdr;
+         struct iovec        iov[2];
+         struct msghdr       msg;
+         ssize_t             dataLen;
++        UA_ByteString buffer;
++
+         memset(&dataLen, 0, sizeof(dataLen));
+         memset(&msg, 0, sizeof(msg));
+ 
++        buffer.length = RECEIVE_MSG_BUFFER_SIZE;
++        buffer.data = ReceiveMsgBufferETH;
++
+         iov[0].iov_base = &eth_hdr;
+         iov[0].iov_len  = sizeof(eth_hdr);
+         iov[1].iov_base = buffer.data;
+@@ -1279,10 +1633,9 @@ UA_PubSubChannelEthernet_receive(UA_PubSubChannel *channel,
+         buffer.length = messageLength;
+ 
+         retval = receiveCallback(channel, receiveCallbackContext, &buffer);
+-        if (retval != UA_STATUSCODE_GOOD) {
++        if(retval != UA_STATUSCODE_GOOD) {
+             UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_NETWORK,
+                            "PubSub Connection decode and process failed.");
+-
+         }
+ 
+         rcvCount++;
+@@ -1312,11 +1665,17 @@ UA_PubSubChannelEthernet_close(UA_PubSubChannel *channel) {
+     UA_PubSubChannelDataEthernet *channelDataEthernet = (UA_PubSubChannelDataEthernet *) channel->handle;
+ #if defined(LIBBPF_EBPF)
+     if(channelDataEthernet->enableXdpSocket) {
++        /* Detach and close the custom XDP program if one was loaded */
++        if(channelDataEthernet->customXdpObj) {
++            bpf_xdp_detach(channelDataEthernet->ifindex,
++                            channelDataEthernet->xdp_flags, NULL);
++            bpf_object__close(channelDataEthernet->customXdpObj);
++            channelDataEthernet->customXdpObj = NULL;
++            channelDataEthernet->customXskmapFd = -1;
++        }
+         xsk_socket__delete(channelDataEthernet->xdpsocket->xskfd);
+-        (void)xsk_umem__delete(channelDataEthernet->xdpsocket->umem->umem);
+-        /* Detach XDP program from the interface */
+-        bpf_xdp_detach(channelDataEthernet->ifindex, channelDataEthernet->xdp_flags, NULL);
+         UA_free(channelDataEthernet->xdpsocket->umem->buffer);
++        (void)xsk_umem__delete(channelDataEthernet->xdpsocket->umem->umem);
+         UA_free(channelDataEthernet->xdpsocket->umem);
+         UA_free(channelDataEthernet->xdpsocket);
+         UA_free(channelDataEthernet);
+-- 
+2.34.1
+
