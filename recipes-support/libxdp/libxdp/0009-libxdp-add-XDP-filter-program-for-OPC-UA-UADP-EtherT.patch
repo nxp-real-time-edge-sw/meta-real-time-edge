@@ -1,0 +1,124 @@
+From fc1df395b7394ebb81c44a99ede743cae779093c Mon Sep 17 00:00:00 2001
+From: Chenhui Zhao <chenhui.zhao@nxp.com>
+Date: Wed, 8 Jul 2026 14:06:44 +0800
+Subject: [PATCH] libxdp: add XDP filter program for OPC UA UADP (EtherType
+ 0xB62C)
+
+Add xdpfilt_alw_uadp BPF program that filters OPC UA UADP raw Ethernet
+frames and redirects them to an AF_XDP socket on queue 0. Non-UADP
+packets are passed to the kernel stack. Supports 802.1Q and 802.1AD
+(QinQ) VLAN-tagged frames.
+
+Upstream-Status: Pending
+
+Signed-off-by: Chenhui Zhao <chenhui.zhao@nxp.com>
+---
+ xdp-filter/Makefile           |  2 +-
+ xdp-filter/xdpfilt_alw_uadp.c | 82 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 83 insertions(+), 1 deletion(-)
+ create mode 100644 xdp-filter/xdpfilt_alw_uadp.c
+
+diff --git a/xdp-filter/Makefile b/xdp-filter/Makefile
+index 0d54e8e..c042d87 100644
+--- a/xdp-filter/Makefile
++++ b/xdp-filter/Makefile
+@@ -3,7 +3,7 @@
+ XDP_TARGETS  := xdpfilt_dny_udp xdpfilt_dny_tcp xdpfilt_dny_ip \
+ 	xdpfilt_dny_eth xdpfilt_dny_all \
+ 	xdpfilt_alw_udp xdpfilt_alw_tcp xdpfilt_alw_ip \
+-	xdpfilt_alw_eth xdpfilt_alw_all
++	xdpfilt_alw_eth xdpfilt_alw_all xdpfilt_alw_uadp
+ 
+ TOOL_NAME := xdp-filter
+ USER_TARGETS := xdp-filter
+diff --git a/xdp-filter/xdpfilt_alw_uadp.c b/xdp-filter/xdpfilt_alw_uadp.c
+new file mode 100644
+index 0000000..8c035dc
+--- /dev/null
++++ b/xdp-filter/xdpfilt_alw_uadp.c
+@@ -0,0 +1,82 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++
++/*
++ * XDP filter program: allow only OPC UA UADP raw Ethernet frames
++ * (EtherType 0xB62C) through to AF_XDP socket on queue 0.
++ * All other packets are passed to the kernel network stack.
++ *
++ * Supports 802.1Q and 802.1AD (QinQ) VLAN-tagged frames.
++ */
++
++#include <linux/bpf.h>
++#include <linux/if_ether.h>
++#include <bpf/bpf_helpers.h>
++#include <bpf/bpf_endian.h>
++#include <xdp/xdp_helpers.h>
++
++#define ETH_P_OPCUA_UADP	0xB62C
++#define UADP_QUEUE_ID		0
++#define DEFAULT_QUEUE_IDS	64
++
++/*
++ *	struct vlan_hdr - vlan header
++ *	@h_vlan_TCI: priority and VLAN ID
++ *	@h_vlan_encapsulated_proto: packet type ID or len
++ */
++struct vlan_hdr {
++	__be16	h_vlan_TCI;
++	__be16	h_vlan_encapsulated_proto;
++};
++
++struct {
++	__uint(type, BPF_MAP_TYPE_XSKMAP);
++	__uint(key_size, sizeof(int));
++	__uint(value_size, sizeof(int));
++	__uint(max_entries, DEFAULT_QUEUE_IDS);
++} xsks_map SEC(".maps");
++
++struct {
++	__uint(priority, 20);
++	__uint(XDP_PASS, 1);
++} XDP_RUN_CONFIG(xdpfilt_alw_uadp);
++
++SEC("xdp")
++int xdpfilt_alw_uadp(struct xdp_md *ctx)
++{
++	void *data_end = (void *)(long)ctx->data_end;
++	void *data = (void *)(long)ctx->data;
++	struct ethhdr *eth = data;
++	struct vlan_hdr *vlh;
++	__u16 h_proto;
++
++	if (eth + 1 > data_end)
++		return XDP_PASS;
++
++	h_proto = eth->h_proto;
++	vlh = (void *)(eth + 1);
++
++	/* Handle single VLAN tag (802.1Q or 802.1AD) */
++	if (h_proto == bpf_htons(ETH_P_8021Q) ||
++	    h_proto == bpf_htons(ETH_P_8021AD)) {
++		if (vlh + 1 > data_end)
++			return XDP_PASS;
++		h_proto = vlh->h_vlan_encapsulated_proto;
++		vlh++;
++	}
++
++	/* Handle double VLAN tag (QinQ) */
++	if (h_proto == bpf_htons(ETH_P_8021Q) ||
++	    h_proto == bpf_htons(ETH_P_8021AD)) {
++		if (vlh + 1 > data_end)
++			return XDP_PASS;
++		h_proto = vlh->h_vlan_encapsulated_proto;
++	}
++
++	/* Only redirect OPC UA UADP frames to AF_XDP on queue 0 */
++	if (h_proto == bpf_htons(ETH_P_OPCUA_UADP))
++		return bpf_redirect_map(&xsks_map, UADP_QUEUE_ID, XDP_PASS);
++
++	return XDP_PASS;
++}
++
++char _license[] SEC("license") = "GPL";
+-- 
+2.34.1
+

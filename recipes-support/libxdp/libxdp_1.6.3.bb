@@ -25,6 +25,7 @@ SRC_URI = "git://github.com/xdp-project/xdp-tools.git;nobranch=1;protocol=https 
              file://0006-xdp-trafficgen-support-XDP-ETF.patch \
              file://0007-xdp-trafficgen-add-config-and-script-for-XDP-ETF.patch \
              file://0008-xdp-trafficgen-fix-ETF-multi-stream-CQ-drain-and-sta.patch \
+             file://0009-libxdp-add-XDP-filter-program-for-OPC-UA-UADP-EtherT.patch \
            "
 
 # xdp-tools v1.6.3
