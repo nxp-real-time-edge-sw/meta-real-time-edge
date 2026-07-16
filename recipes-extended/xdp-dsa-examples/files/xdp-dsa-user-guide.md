@@ -1,6 +1,6 @@
 # XDP DSA Per-Port RX Examples - User Guide
 
-## 1. Overview
+## Overview
 
 This guide explains how to build, deploy and run the DSA XDP / AF_XDP
 example applications on a Real-time Edge i.MX target. The examples show
@@ -13,17 +13,11 @@ inserts a standard 4-byte 802.1Q (or 802.1AD) VLAN tag after the source
 MAC address, and the source switch port and switch id are encoded in the
 VLAN VID. The kernel exposes one network interface per switch user port,
 named `hms0pX` (for example `hms0p0`, `hms0p1`, ...), all riding on a
-single conduit interface (for example `eth0`).
+single conduit interface (for example `eth2` on i.MX 943).
 
-For the design background, frame formats, kernel data path and the
-hardware queue mapping analysis, see the companion document
-[`xdp-dsa-design.md`](./xdp-dsa-design.md). This guide focuses on the
-practical build-and-run workflow.
+For more details, refer to "Heterogeneous multi-SoC framework" in Real-time Edge User Guide.
 
-## 2. What is in the package
-
-The recipe `xdp-dsa-examples` builds and installs the following artifacts,
-all co-located under `/examples/xdp-dsa-examples`:
+These files are installed in the directory `/examples/xdp-dsa-examples` of the file system:
 
 | Artifact | Installed location | Purpose |
 |----------|--------------------|---------|
@@ -32,11 +26,10 @@ all co-located under `/examples/xdp-dsa-examples`:
 | `xdp_dsa_redirect.o`  | `/examples/xdp-dsa-examples` | BPF program that only redirects frames to AF_XDP (no tag strip). |
 | `xdp_dsa_meta.o`      | `/examples/xdp-dsa-examples` | BPF program that records the port in XDP metadata and strips the tag. |
 
-
 There are two complementary userspace applications:
 
 - `xdp_dsa_rx_monitor` loads `xdp_dsa_redirect.o`. The BPF program only
-  redirects frames to the AF_XDP socket; the DSA tag stays on the frame
+  redirects frames to the AF_XDP socket. The DSA tag stays on the frame
   and the application parses the tag in userspace to find the source
   port. This is the simplest variant and good for inspection.
 
@@ -47,167 +40,196 @@ There are two complementary userspace applications:
   port straight from the metadata, so it never has to see or parse the
   DSA tag. This variant also demonstrates the zero-copy data path.
 
-Both applications bind to the conduit interface (for example `eth0`),
-not to the `hms0pX` user ports.
+## Hardware setup
 
-## 3. Prerequisites
+Use i.MX 943 EVK + i.MX RT1180 EVK as an example.
 
-- A Real-time Edge image built for a supported i.MX machine with the HMS
-  DSA switch driver enabled, and the switch user ports (`hms0pX`)
-  present.
-- The image must contain `libxdp` and `libbpf` (these are pulled in as
-  build dependencies of the recipe; for runtime they ship as shared
-  libraries used by the applications).
-- Root privileges on the target (loading XDP programs and creating
-  AF_XDP sockets require `CAP_NET_ADMIN` / `CAP_BPF`).
+### Preparing the i.MX RT1180 EVK
 
-## 4. Building
+The i.MX RT1180 EVK runs a FreeRTOS-based DSA switch application that
+uses one of its external switch ports (`ENET3`) as the DSA CPU port. Before wiring
+the boards together, flash the `dsa_switch.elf` image to the RT1180:
 
-### 4.1 Add the recipe to your image
+1. Copy `dsa_switch.elf` to the host PC. Pre-built images are included in
+   the root filesystem at `/examples/heterogeneous-multi-soc/dsa-switch-evkmimxrt1180-cm33/release/`.
 
-Add the package to your image, for example by appending to your local
-`conf/local.conf`:
+2. Connect the host PC to the MCU-Link USB connector **J53** on the
+   RT1180 EVK using a micro-USB cable.
 
-```
-IMAGE_INSTALL:append = " xdp-dsa-examples"
-```
+3. Set **SW5[1..4]** to **0000** (SDP mode), then use the MCUXpresso
+   Secure Provisioning Tool (SPT) to burn `dsa_switch.elf` to the
+   on-board flash.
 
-Then build your image as usual, for example:
+4. After flashing, set **SW5** to **0100** (flash-boot mode) and power
+   cycle the board.
 
-```bash
-DISTRO=nxp-real-time-edge MACHINE=imx8mp-lpddr4-evk \
-    source real-time-edge-setup-env.sh -b build-imx8mpevk-real-time-edge
-bitbake nxp-image-real-time-edge
-```
+For the detailed step-by-step flashing procedure, see
+*Hardware preparation for i.MX RT1180 EVK* in the Real-time Edge User
+Guide (HMS hardware setup chapter).
 
-### 4.2 Build only the example package
+### SPI connection (DSA control plane)
 
-To build just the examples (for example while iterating):
+Use flying leads to connect i.MX 943 EVK LPSPI3 pins on **J47** to
+i.MX RT1180 EVK LPSPI3 pins on **J44**:
 
-```bash
-bitbake xdp-dsa-examples
-```
+| i.MX 943 EVK Pin | Function     | Connection   | i.MX RT1180 EVK Pin | Function     |
+|-------------------|--------------|--------------|---------------------|--------------|
+| 6                 | LPSPI3_PCS0  | connected to | 6                   | LPSPI3_PCS0  |
+| 8                 | LPSPI3_MOSI  | connected to | 10                  | LPSPI3_SIN   |
+| 10                | LPSPI3_MISO  | connected to | 8                   | LPSPI3_SOUT  |
+| 12                | LPSPI3_CLK   | connected to | 12                  | LPSPI3_CLK   |
+| 14                | GND          | connected to | 14                  | GND          |
 
-The recipe compiles the two BPF object files with the native `clang`
-(`clang -target bpf`) and cross-compiles the two userspace applications
-against the target `libxdp` / `libbpf`.
+### Ethernet connections
 
-## 5. Running on the target
+Two Ethernet cables are needed:
 
-Both applications must run as root and bind to the conduit interface.
-Each application loads its companion BPF object file (`xdp_dsa_redirect.o`
-or `xdp_dsa_meta.o`) from its install directory `/examples/xdp-dsa-examples`,
-which is baked into the binary at build time. You can therefore launch the
-applications from any working directory; there is no need to `cd` into the
-install directory or copy the `.o` files around.
+1. **DSA control-plane link** — connect:
+   - i.MX 943 EVK ENETC2 (`eth2` in Linux) on **J27** RJ45
+   - i.MX RT1180 EVK NETC switch port 3 (ENET3) on **J31** RJ45
 
-If you relocate the `.o` files (for example when running locally built
-binaries from a build tree), point the applications at the new directory
-with the `XDP_DSA_OBJDIR` environment variable:
+2. **Traffic path** — connect:
+   - i.MX 943 EVK ENETC1 (`eth1` in Linux) on **J26** RJ45
+   - i.MX RT1180 EVK switch port 0 (ENET0) on **J28** RJ45
 
-```bash
-export XDP_DSA_OBJDIR=/path/to/dir/with/objects
-```
+Traffic injected on `eth1` enters the RT1180 switch at port 0 and is
+forwarded to the DSA CPU port, arriving on the conduit
+interface `eth2` with a DSA tag. This is the traffic the XDP examples
+capture.
 
-The install directory is not on `PATH` by default, so the shell will not
-find the binaries by their bare name. Use one of these equivalent forms:
+## Running on the target
 
-- Full path (used throughout this guide), from any directory:
+### Select the HMS DSA device tree on the i.MX 943 EVK
 
-  ```bash
-  /examples/xdp-dsa-examples/xdp_dsa_port_rx -i eth0 -q 0 -v
-  ```
+Before booting Linux on the i.MX 943 EVK, select the HMS DSA device tree
+blob `imx943-evk-hms-dsa.dtb` so that the kernel enables the HMS switch driver and
+creates the DSA conduit and user-port interfaces.
 
-- `cd` into the directory and run with a leading `./` (the `./` is
-  required; a bare `xdp_dsa_port_rx` is still resolved through `PATH`,
-  not the current directory):
+After Linux boots, you should see the conduit interface `eth2` and
+the per-port DSA user interfaces (`hms0p0`, `hms0p1`, ...).
 
-  ```bash
-  cd /examples/xdp-dsa-examples/
-  ./xdp_dsa_port_rx -i eth0 -q 0 -v
-  ```
+### Bring up the interfaces
 
-- Add the directory to `PATH` once, then the bare name works:
-
-  ```bash
-  export PATH="/examples/xdp-dsa-examples:$PATH"
-  xdp_dsa_port_rx -i eth0 -q 0 -v
-  ```
-
-In all three forms the `.o` files are loaded correctly regardless of the
-current working directory, because the install path is baked into the
-binaries; `cd` only affects how the shell resolves the binary name.
-
-
-
-### 5.1 Bring up the interfaces
-
-Make sure the conduit interface and the relevant switch user ports are
-up:
+Make sure the DSA conduit interface and the relevant switch user ports are
+up. In this test, `eth2` on i.MX 943 is used as the DSA conduit interface for the HMS switch.
 
 ```bash
-ip link set eth0 up
+ip link set eth2 up
 ip link set hms0p0 up
 ip link set hms0p1 up
 ```
 
-> The conduit interface name on your platform may differ from `eth0`.
-> Check `ls /sys/class/net` and the switch topology in your device tree.
-> The switch user ports are named `hms0pX`.
+### Pre-test configuration
 
-### 5.2 xdp_dsa_rx_monitor (userspace tag parsing)
+Before running the XDP examples, apply these one-time setup steps on the target.
+
+* **Disable VLAN offloads.** The DSA tag looks like a VLAN tag to the ENETC.
+  The hardware VLAN offload would strip it before XDP sees the frame.
+  Therefore, the offload feature must be disabled:
 
 ```bash
-/examples/xdp-dsa-examples/xdp_dsa_rx_monitor -i eth0 -q 0 -v
+ethtool -K eth2 rx-vlan-offload off
+ethtool -K eth2 tx-vlan-offload off
 ```
 
-Options:
+* **Disable receive hashing on eth2.** Make sure all network traffic is received on Queue 0.
 
-| Option | Description |
-|--------|-------------|
-| `-i <ifname>` | Conduit interface name (required), for example `eth0`. |
-| `-q <queue>`  | RX queue id to bind the AF_XDP socket to (default `0`). |
-| `-v`          | Verbose output (hex dump of the first bytes of each frame). |
-| `-h`          | Show help. |
+```bash
+ethtool -K eth2 receive-hashing off
+```
 
-The monitor prints one line per received frame with the decoded source
+* **Skip the libxdp dispatcher.** The examples use libbpf directly and do
+  not go through the libxdp multi-program dispatcher. Tell libxdp to skip
+  its dispatcher check:
+
+```bash
+export LIBXDP_SKIP_DISPATCHER=1
+```
+
+* **Generate test traffic on eth1.** Start `pktgen` to inject traffic into switch port 0
+  via the `eth1` link (for example, one packet every 2 seconds):
+
+```bash
+cd /usr/share/samples/pktgen; while true; do ./pktgen_sample01_simple.sh -i eth1 -m be:a0:97:f3:c7:1f -n 1 > /dev/null 2>&1; sleep 2; done &
+```
+Note: replace the MAC address with the actual MAC address of `eth2` on your target.
+
+### Run xdp_dsa_rx_monitor (userspace tag parsing)
+
+```bash
+/examples/xdp-dsa-examples/xdp_dsa_rx_monitor -i eth2 -v
+```
+
+The application prints information per received frame with the decoded source
 port (shown as `hms0pX`), switch id, source/destination MAC, inner
-ethertype and length, and a per-port packet/byte summary on exit
-(Ctrl+C).
+ethertype and length.
 
-### 5.3 xdp_dsa_port_rx (metadata + zero-copy)
+**Example output:**
 
-```bash
-/examples/xdp-dsa-examples/xdp_dsa_port_rx -i eth0 -q 0 -v
+```
+DSA XDP RX Monitor
+==================
+Interface: eth2 (index 4)
+Queue: 0
+Press Ctrl+C to stop
+
+XDP program loaded and attached to eth2
+XSK socket created on eth2 queue 0
+
+Monitoring packets...
+
+[22:38:21.309317] hms0p1 (switch 0): 0a:34:30:27:46:0f -> be:a0:97:f3:c7:1f proto=0x0800 len=64
+  Hex: be a0 97 f3 c7 1f 0a 34 30 27 46 0f 81 00 0c 01
+       08 00 45 00 00 2e 00 00 00 00 20 11 b3 ce 0a c1
+       15 f4 c6 12 00 2a 00 3c 00 09 00 1a 00 00 be 9b
+       e9 55 00 00 00 01 00 00 00 00 00 00 00 00 00 00
+[22:38:23.937397] hms0p1 (switch 0): 0a:34:30:27:46:0f -> be:a0:97:f3:c7:1f proto=0x0800 len=64
+  Hex: be a0 97 f3 c7 1f 0a 34 30 27 46 0f 81 00 0c 01
+       08 00 45 00 00 2e 00 00 00 00 20 11 b3 ce 0a c1
+       15 f4 c6 12 00 2a 00 45 00 09 00 1a 00 00 be 9b
+       e9 55 00 00 00 01 00 00 00 00 00 00 00 00 00 00
 ```
 
-Options:
+### Run xdp_dsa_port_rx (metadata + zero-copy)
 
-| Option | Description |
-|--------|-------------|
-| `-i <ifname>` | Conduit interface name (required), for example `eth0`. |
-| `-q <queue>`  | RX queue id to bind the AF_XDP socket to (default `0`). |
-| `-z`          | Require zero-copy (`XDP_ZEROCOPY`); fail if the driver/queue does not support it. |
-| `-c`          | Force copy mode (`XDP_COPY`). |
-| `-S`          | Use SKB / generic XDP mode (default is native driver mode). |
-| `-v`          | Verbose output (hex dump). |
-| `-h`          | Show help. |
-
-Notes on the data path:
-
-- With neither `-z` nor `-c`, the kernel auto-negotiates and prefers
-  zero-copy when the driver supports it, silently falling back to copy
-  mode otherwise.
-- `-z` and `-c` are mutually exclusive.
-- Zero-copy (`-z`) requires native mode, so it cannot be combined with
-  `-S`.
+```bash
+/examples/xdp-dsa-examples/xdp_dsa_port_rx -i eth2 -v
+```
 
 Because the BPF program (`xdp_dsa_meta.o`) strips the DSA tag, the frames
 delivered to this application no longer carry the VLAN tag. The source
 port is read from the XDP metadata (`struct xdp_dsa_meta`) placed in
 front of each packet.
 
-## 6. How frames are classified
+**Example output:**
+
+```
+DSA XDP Port RX (metadata-based)
+================================
+Interface: eth2 (index 4)
+Queue: 0
+XDP mode: native
+Data path: auto (zero-copy preferred)
+Press Ctrl+C to stop
+
+XDP program loaded and attached to eth2
+XSK socket created on eth2 queue 0
+
+Monitoring packets...
+
+[21:49:27.817274] hms0p0 (switch 0, ipv 0): 0a:34:30:27:46:0f -> be:a0:97:f3:c7:1f proto=0x0800 len=60 [tag-stripped]
+  Hex: be a0 97 f3 c7 1f 0a 34 30 27 46 0f 08 00 45 00
+       00 2e 00 00 00 00 20 11 f9 03 a9 fe 31 81 c6 12
+       00 2a 00 47 00 09 00 1a 00 00 be 9b e9 55 00 00
+       00 01 00 00 00 00 00 00 00 00 00 00
+[21:49:30.425773] hms0p0 (switch 0, ipv 0): 0a:34:30:27:46:0f -> be:a0:97:f3:c7:1f proto=0x0800 len=60 [tag-stripped]
+  Hex: be a0 97 f3 c7 1f 0a 34 30 27 46 0f 08 00 45 00
+       00 2e 00 00 00 00 20 11 f9 03 a9 fe 31 81 c6 12
+       00 2a 00 61 00 09 00 1a 00 00 be 9b e9 55 00 00
+       00 01 00 00 00 00 00 00 00 00 00 00
+```
+
+## How frames are classified
 
 The BPF programs and the monitor only redirect genuine DSA `tag_8021q`
 data frames to AF_XDP. A frame is treated as a DSA-tagged data frame only
@@ -229,7 +251,7 @@ NOT redirected and continue up the normal stack:
 This keeps PTP, link-local protocols and switch control traffic working
 normally while only the data-plane frames are diverted to AF_XDP.
 
-## 7. Troubleshooting
+## Troubleshooting
 
 | Symptom | Likely cause / action |
 |---------|-----------------------|
@@ -239,9 +261,7 @@ normally while only the data-plane frames are diverted to AF_XDP.
 | No frames seen | Confirm the conduit and `hms0pX` ports are `up`, that traffic is actually arriving on a switch port, and that you bound to the correct RX queue (`-q`). |
 | Cannot open `xdp_dsa_redirect.o` / `xdp_dsa_meta.o` | The application loads the `.o` from `/examples/xdp-dsa-examples` (baked in at build time). Confirm the files exist there, or point the app at their actual location with `export XDP_DSA_OBJDIR=/path/to/dir`. |
 
-## 8. References
+## References
 
-- Kernel sources: `net/dsa/tag_hms.c`, `net/dsa/tag_8021q.c`,
-  `include/linux/dsa/8021q.h`.
-- libxdp / libbpf documentation for the AF_XDP / XSK APIs used by the
-  applications.
+- Kernel sources: `net/dsa/tag_hms.c`, `net/dsa/tag_8021q.c`, `include/linux/dsa/8021q.h`.
+- libxdp/libbpf documentation for the AF_XDP / XSK APIs used by the applications.

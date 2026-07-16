@@ -56,7 +56,6 @@
  */
 #define HMS_VLAN_TPID_C     0x8100  /* ETH_P_8021Q  C-tag */
 #define HMS_VLAN_TPID_S     0x88A8  /* ETH_P_HMS    S-tag (802.1AD) */
-#define HMS_VLAN_TAG_LEN    4
 #define MAX_PORTS           16
 
 /* tag_8021q VID bit layout: RSV[11:10]=3, SWITCH_ID[8:6], PORT[3:0]. */
@@ -99,13 +98,6 @@
 
 /* Name of the BPF object file this application loads. */
 #define XDP_DSA_OBJ_NAME    "xdp_dsa_redirect.o"
-
-
-/* HMS DSA tag is a standard 4-byte 802.1Q VLAN tag (TPID + TCI). */
-struct hms_vlan_tag {
-    __be16 tpid;           /* 0x8100 (C) or 0x88A8 (S) */
-    __be16 tci;            /* PCP[15:13] DEI[12] VID[11:0] */
-} __attribute__((packed));
 
 /* Per-port statistics */
 struct port_stats {
@@ -160,11 +152,11 @@ static void signal_handler(int sig)
 static int parse_hms_tag(void *pkt, size_t len, __u8 *port, __u8 *switch_id)
 {
     struct ethhdr *eth = pkt;
-    struct hms_vlan_tag *tag;
+    __be16 *tci_p;
     __u16 tpid, tci, vid;
 
-    /* Need at least Ethernet header + VLAN tag */
-    if (len < sizeof(struct ethhdr) + sizeof(struct hms_vlan_tag))
+    /* Need at least Ethernet header + VLAN TCI */
+    if (len < sizeof(struct ethhdr) + sizeof(__be16))
         return -1;
 
     /* Check for an HMS VLAN tag (C-tag or S-tag) */
@@ -172,9 +164,12 @@ static int parse_hms_tag(void *pkt, size_t len, __u8 *port, __u8 *switch_id)
     if (tpid != HMS_VLAN_TPID_C && tpid != HMS_VLAN_TPID_S)
         return -1;
 
-    /* VLAN tag follows the Ethernet header */
-    tag = (struct hms_vlan_tag *)(eth + 1);
-    tci = ntohs(tag->tci);
+    /*
+     * The VLAN TCI sits right after the Ethernet header (the TPID is
+     * carried in eth->h_proto). Read the TCI and decode the VID.
+     */
+    tci_p = (__be16 *)(eth + 1);
+    tci = ntohs(*tci_p);
     vid = tci & HMS_TCI_VID_MASK;
 
     /* Only act on genuine DSA tag_8021q VIDs (RSV bits == 3). */
@@ -194,8 +189,6 @@ static void print_packet_info(struct xdp_app *app, void *pkt, size_t len,
                               __u8 port, __u8 switch_id)
 {
     struct ethhdr *eth = pkt;
-    struct hms_vlan_tag *tag = (struct hms_vlan_tag *)(eth + 1);
-    int have_inner;
     __u16 inner_proto = 0;
     struct timespec ts;
     char time_str[32];
@@ -204,16 +197,8 @@ static void print_packet_info(struct xdp_app *app, void *pkt, size_t len,
     clock_gettime(CLOCK_REALTIME, &ts);
     strftime(time_str, sizeof(time_str), "%H:%M:%S", localtime(&ts.tv_sec));
 
-    /*
-     * The inner ethertype follows the Ethernet header and the 4-byte
-     * VLAN tag. Only read it if the frame is long enough to contain it,
-     * otherwise it would read past the end of the packet buffer.
-     */
-    have_inner = len >= sizeof(struct ethhdr) + sizeof(struct hms_vlan_tag) +
-                        sizeof(__be16);
-    if (have_inner)
-        inner_proto = ntohs(*(__be16 *)((void *)tag +
-                                        sizeof(struct hms_vlan_tag)));
+    if (len >= (size_t)(ETH_HLEN + 2 + sizeof(__be16)))
+        inner_proto = ntohs(*(__be16 *)(pkt + ETH_HLEN + 2));
 
     printf("[%s.%06ld] hms0p%u (switch %u): ",
            time_str, ts.tv_nsec / 1000, port, switch_id);
