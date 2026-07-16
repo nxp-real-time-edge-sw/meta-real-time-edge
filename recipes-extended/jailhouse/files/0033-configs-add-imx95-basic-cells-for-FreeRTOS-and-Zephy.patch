@@ -1,0 +1,211 @@
+From 9410060e252dafad2c3efdad79ab5979deda01a2 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Wed, 15 Jul 2026 19:59:30 +0800
+Subject: [PATCH 33/34] configs: add imx95 basic cells for FreeRTOS and Zephyr
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/arm64/imx95-hmc-freertos.c | 50 ++++++++++++++++++++
+ configs/arm64/imx95-hmc-rtos.h     | 74 ++++++++++++++++++++++++++++++
+ configs/arm64/imx95-hmc-zephyr.c   | 50 ++++++++++++++++++++
+ 3 files changed, 174 insertions(+)
+ create mode 100644 configs/arm64/imx95-hmc-freertos.c
+ create mode 100644 configs/arm64/imx95-hmc-rtos.h
+ create mode 100644 configs/arm64/imx95-hmc-zephyr.c
+
+diff --git a/configs/arm64/imx95-hmc-freertos.c b/configs/arm64/imx95-hmc-freertos.c
+new file mode 100644
+index 00000000..cfd4b902
+--- /dev/null
++++ b/configs/arm64/imx95-hmc-freertos.c
+@@ -0,0 +1,50 @@
++/*
++ * i.MX95 target - FreeRTOS config
++ *
++ * Copyright 2026 NXP
++ *
++ * Authors:
++ *  Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ */
++
++#include "cell-helper.h"
++#include "imx95-hmc-rtos.h"
++
++#define CONFIG_INMATE_NAME		"freertos"
++#define CONFIG_INMATE_CORE_BITMAP	(0b100000)
++#define CONFIG_INMATE_BASE		RTOS_INMATE_BASE
++
++/* Memory & peripherals */
++#define CONFIG_INMATE_REGIONS                   \
++	RTOS_COMMON_MEMORY_REGIONS,             \
++	RTOS_MEMRAM_MEMORY_REGIONS
++
++#define CONFIG_INMATE_IRQCHIPS_ADDR	CONFIG_RTOS_IRQCHIPS_ADDR
++#define CONFIG_INMATE_IRQCHIPS 	                \
++	IRQCHIP0(CONFIG_INMATE_IRQCHIPS_ADDR,   \
++		/* interrupts 32..63 */         \
++		RTOS_COMMON_IRQCHIP0_BITMAP1,   \
++		/* interrupts 64..95 */         \
++		RTOS_COMMON_IRQCHIP0_BITMAP2,   \
++		/* interrupts 96..127 */        \
++		RTOS_COMMON_IRQCHIP0_BITMAP3,   \
++		/* interrupts 128..159 */       \
++		RTOS_COMMON_IRQCHIP0_BITMAP4),  \
++	IRQCHIP1(CONFIG_INMATE_IRQCHIPS_ADDR,   \
++		/* interrupts 160..191 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP1,   \
++		/* interrupts 192..223 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP2,   \
++		/* interrupts 224..255 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP3,   \
++		/* interrupts 256..287 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP4)
++
++/* IVSHMEM PCI */
++#define CONFIG_INMATE_PCI_DEVICES \
++	RTOS_COMMON_PCI_IVSHMEM
++
++#include "cell-create.h"
+diff --git a/configs/arm64/imx95-hmc-rtos.h b/configs/arm64/imx95-hmc-rtos.h
+new file mode 100644
+index 00000000..0c144401
+--- /dev/null
++++ b/configs/arm64/imx95-hmc-rtos.h
+@@ -0,0 +1,74 @@
++/*
++ * i.MX95 target - common RTOS config
++ *
++ * Copyright 2026 NXP
++ *
++ * Authors:
++ *  Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ *
++ */
++
++#define RTOS_INMATE_BASE			(0xd0000000)
++
++typedef enum IRQn {
++  /* Device specific interrupts */
++  LPUART3_IRQn                 = 96,               /**< Low Power UART 3 */
++  MU3_A_IRQn                   = 260,              /**< Message Unit 3 */
++} IRQn_Type;
++
++#define RTOS_COMMON_MEMORY_REGIONS \
++	MEM_REGION_ROS( 0xff9f0000, 0xff9f0000, KB(4)),  /* IVSHMEM */              \
++	MEM_REGION_RWS( 0xff9f1000, 0xff9f1000, KB(36)), /* IVSHMEM */              \
++	MEM_REGION_ROS( 0xff9fa000, 0xff9fa000, KB(8)),  /* IVSHMEM */              \
++	MEM_REGION_RWS( 0xff9fc000, 0xff9fc000, KB(8)),  /* IVSHMEM */              \
++	MEM_REGION_ROS( 0xff9fe000, 0xff9fe000, KB(8)),  /* IVSHMEM */              \
++	/* IVSHMEM regions should always be kept on top so PCI_IVS doesn't change */\
++	MMIO_REGION_RW( 0x42570000, 0x42570000, KB(64)), /* LPUART3 */              \
++	MMIO_REGION_RW( 0x445d0000, 0x445d0000, KB(4)),  /* MU3 */                  \
++	MEM_REGION_RWS( 0x445d1000, 0x445d1000, KB(4))   /* MU3 SRAM */
++
++#define RTOS_MEMRAM_MEMORY_REGIONS \
++	MEM_REGION_RWXL(0xd0000000, 0xd0000000, MB(48)), /* RAM */    \
++	MEM_REGION_RWX( 0x20480000, 0x20480000, KB(640)) /* OCRAM */
++
++/* GIC */
++#define CONFIG_RTOS_IRQCHIPS_ADDR	(0x48000000)
++
++/* interrupts 32..63 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP1 \
++	0
++
++/* interrupts 64..95 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP2 \
++	0
++
++/* interrupts 96..127 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP3 \
++	IRQnMAP(LPUART3_IRQn)
++
++/* interrupts 128..159 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP4 \
++	0
++
++/* interrupts 160..191 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP1 \
++	0
++
++/* interrupts 192..223 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP2 \
++	0
++
++/* interrupts 224..255 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP3 \
++	0
++
++/* interrupts 256..287 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP4 \
++	IRQnMAP(MU3_A_IRQn)
++
++/* IVSHMEM PCI */
++#define	RTOS_COMMON_PCI_IVSHMEM \
++	PCI_IVSHMEM_UNDEFINED(0, 0, 0, 1, 3)
+diff --git a/configs/arm64/imx95-hmc-zephyr.c b/configs/arm64/imx95-hmc-zephyr.c
+new file mode 100644
+index 00000000..638a6eda
+--- /dev/null
++++ b/configs/arm64/imx95-hmc-zephyr.c
+@@ -0,0 +1,50 @@
++/*
++ * i.MX95 target - Zephyr config
++ *
++ * Copyright 2026 NXP
++ *
++ * Authors:
++ *  Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ */
++
++#include "cell-helper.h"
++#include "imx95-hmc-rtos.h"
++
++#define CONFIG_INMATE_NAME		"zephyr"
++#define CONFIG_INMATE_CORE_BITMAP	(0b100000)
++#define CONFIG_INMATE_BASE		RTOS_INMATE_BASE
++
++/* Memory & peripherals */
++#define CONFIG_INMATE_REGIONS                   \
++	RTOS_COMMON_MEMORY_REGIONS,             \
++	RTOS_MEMRAM_MEMORY_REGIONS
++
++#define CONFIG_INMATE_IRQCHIPS_ADDR	CONFIG_RTOS_IRQCHIPS_ADDR
++#define CONFIG_INMATE_IRQCHIPS 	                \
++	IRQCHIP0(CONFIG_INMATE_IRQCHIPS_ADDR,   \
++		/* interrupts 32..63 */         \
++		RTOS_COMMON_IRQCHIP0_BITMAP1,   \
++		/* interrupts 64..95 */         \
++		RTOS_COMMON_IRQCHIP0_BITMAP2,   \
++		/* interrupts 96..127 */        \
++		RTOS_COMMON_IRQCHIP0_BITMAP3,   \
++		/* interrupts 128..159 */       \
++		RTOS_COMMON_IRQCHIP0_BITMAP4),  \
++	IRQCHIP1(CONFIG_INMATE_IRQCHIPS_ADDR,   \
++		/* interrupts 160..191 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP1,   \
++		/* interrupts 192..223 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP2,   \
++		/* interrupts 224..255 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP3,   \
++		/* interrupts 256..287 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP4)
++
++/* IVSHMEM PCI */
++#define CONFIG_INMATE_PCI_DEVICES \
++	RTOS_COMMON_PCI_IVSHMEM
++
++#include "cell-create.h"
+-- 
+2.43.0
+

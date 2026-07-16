@@ -78,6 +78,17 @@ SRC_URI += " \
     file://0021-configs-arm64-fix-the-.architecture-for-ls1046ardb-d.patch \
     file://0022-configs-ls1028ardb-add-SerDes-MMIO-region.patch \
     file://0023-configs-ls1028-43-46-specify-explicit-PCI-domain-for.patch \
+    file://0024-arm-gic-v3-Inject-IRQ-priority-for-SGI.patch \
+    file://0025-arm-common-irqchip-Fix-the-mask-according-to-access-.patch \
+    file://0026-configs-Introduce-helper-files-to-create-inmate-cell.patch \
+    file://0027-configs-Guest-virtual-console.patch \
+    file://0028-configs-arm64-use-ULL-type-in-size-helper-to-avoid-o.patch \
+    file://0029-configs-add-imx8mp-basic-cells-for-FreeRTOS-and-Zeph.patch \
+    file://0030-configs-add-imx8mm-basic-cells-for-FreeRTOS-and-Zeph.patch \
+    file://0031-configs-add-imx93-basic-cells-for-FreeRTOS-and-Zephy.patch \
+    file://0032-configs-add-imx943-basic-cells-for-FreeRTOS-and-Zeph.patch \
+    file://0033-configs-add-imx95-basic-cells-for-FreeRTOS-and-Zephy.patch \
+    file://0034-configs-add-imx952-basic-cells-for-FreeRTOS-and-Zeph.patch \
 "
 
 DEPENDS += " \

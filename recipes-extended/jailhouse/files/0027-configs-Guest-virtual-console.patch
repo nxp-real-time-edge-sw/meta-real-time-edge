@@ -1,0 +1,33 @@
+From cc62fba9a9e49cd511ec7e7c45e395f5527e8634 Mon Sep 17 00:00:00 2001
+From: Rui Sousa <rui.sousa@nxp.com>
+Date: Tue, 30 Nov 2021 15:36:07 +0100
+Subject: [PATCH 27/34] configs: Guest virtual console
+
+Allow guest cells to use hypervisor calls for accessing hypervisor
+virtual console.
+This provides a very simple and cheap debug interface for guest low
+level code.
+
+Signed-off-by: Rui Sousa <rui.sousa@nxp.com>
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/arm64/cell-create.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configs/arm64/cell-create.h b/configs/arm64/cell-create.h
+index bdcb3aca..8be18809 100644
+--- a/configs/arm64/cell-create.h
++++ b/configs/arm64/cell-create.h
+@@ -46,7 +46,7 @@ struct {
+ 		.revision = JAILHOUSE_CONFIG_REVISION,
+ 		.architecture = JAILHOUSE_ARM64,
+ 		.name = CONFIG_INMATE_NAME,
+-		.flags = JAILHOUSE_CELL_PASSIVE_COMMREG,
++		.flags = JAILHOUSE_CELL_PASSIVE_COMMREG | JAILHOUSE_CELL_VIRTUAL_CONSOLE_ACTIVE,
+ 
+ 		.cpu_set_size = sizeof(config.cpus),
+ 		.num_memory_regions = ARRAY_SIZE(config.mem_regions),
+-- 
+2.43.0
+

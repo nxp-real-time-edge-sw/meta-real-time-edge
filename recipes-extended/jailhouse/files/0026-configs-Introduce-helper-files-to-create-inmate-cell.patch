@@ -1,0 +1,295 @@
+From e1414dd963a333c2d00bfbba4f2a65f421dbf22c Mon Sep 17 00:00:00 2001
+From: Stephane Viau <stephane.viau@nxp.com>
+Date: Wed, 17 Nov 2021 15:00:03 +0000
+Subject: [PATCH 26/34] configs: Introduce helper files to create inmate cell
+ config
+
+Inmate cell configurations all look alike. Let's create a couple of
+header files to hide the fastidious stuff (structure names and so on) so
+that .c cell configuration files don't look too ugly.
+
+Signed-off-by: Stephane Viau <stephane.viau@nxp.com>
+(configs: IVSHMEM PCI device helpers)
+Signed-off-by: Rui Sousa <rui.sousa@nxp.com>
+(add the required architecture information in cell creation helpers)
+Signed-off-by: Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/arm64/cell-create.h   |  81 ++++++++++++++++++++++
+ configs/arm64/cell-helper.h   | 124 ++++++++++++++++++++++++++++++++++
+ configs/arm64/cell-template.c |  43 ++++++++++++
+ 3 files changed, 248 insertions(+)
+ create mode 100644 configs/arm64/cell-create.h
+ create mode 100644 configs/arm64/cell-helper.h
+ create mode 100644 configs/arm64/cell-template.c
+
+diff --git a/configs/arm64/cell-create.h b/configs/arm64/cell-create.h
+new file mode 100644
+index 00000000..bdcb3aca
+--- /dev/null
++++ b/configs/arm64/cell-create.h
+@@ -0,0 +1,81 @@
++/*
++ * Cell Configuration - Structure definition
++ *
++ * Copyright (c) Siemens AG, 2014-2017
++ * Copyright 2021-2022 NXP
++ *
++ * Authors:
++ *  Jan Kiszka <jan.kiszka@siemens.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ */
++
++#include <jailhouse/types.h>
++#include <jailhouse/cell-config.h>
++
++#define CONFIG_INMATE_REGIONS_NUM \
++	(sizeof((struct jailhouse_memory[]){CONFIG_INMATE_REGIONS}) \
++	/ sizeof(struct jailhouse_memory))
++
++#if !defined(CONFIG_INMATE_IRQCHIPS)
++#define CONFIG_INMATE_IRQCHIP_NUM 0
++#else
++#define CONFIG_INMATE_IRQCHIP_NUM \
++	(sizeof((struct jailhouse_irqchip[]){CONFIG_INMATE_IRQCHIPS}) \
++	/ sizeof(struct jailhouse_irqchip))
++#endif
++
++#if !defined(CONFIG_INMATE_PCI_DEVICES)
++#define CONFIG_INMATE_PCI_NUM 0
++#else
++#define CONFIG_INMATE_PCI_NUM \
++	(sizeof((struct jailhouse_pci_device[]){CONFIG_INMATE_PCI_DEVICES}) \
++	/ sizeof(struct jailhouse_pci_device))
++#endif
++
++struct {
++	struct jailhouse_cell_desc cell;
++	__u64 cpus[1];
++	struct jailhouse_memory mem_regions[CONFIG_INMATE_REGIONS_NUM + 1];
++	struct jailhouse_irqchip irqchips[CONFIG_INMATE_IRQCHIP_NUM];
++	struct jailhouse_pci_device pci_devices[CONFIG_INMATE_PCI_NUM];
++} __attribute__((packed)) config = {
++	.cell = {
++		.signature = JAILHOUSE_CELL_DESC_SIGNATURE,
++		.revision = JAILHOUSE_CONFIG_REVISION,
++		.architecture = JAILHOUSE_ARM64,
++		.name = CONFIG_INMATE_NAME,
++		.flags = JAILHOUSE_CELL_PASSIVE_COMMREG,
++
++		.cpu_set_size = sizeof(config.cpus),
++		.num_memory_regions = ARRAY_SIZE(config.mem_regions),
++		.num_irqchips = ARRAY_SIZE(config.irqchips),
++		.num_pci_devices = ARRAY_SIZE(config.pci_devices),
++		.cpu_reset_address = CONFIG_INMATE_BASE,
++	},
++
++	.cpus = {
++		/*
++		 * bitmap of cores used by the inmate cell
++		 */
++		CONFIG_INMATE_CORE_BITMAP,
++	},
++
++	.mem_regions = {
++		CONFIG_INMATE_REGIONS,
++		COMM_REGION_RW(0x80000000, KB(4)) /* communication region */
++	},
++
++#if defined(CONFIG_INMATE_IRQCHIPS)
++	.irqchips = {
++		CONFIG_INMATE_IRQCHIPS
++	},
++#endif
++
++#if defined(CONFIG_INMATE_PCI_DEVICES)
++	.pci_devices = {
++		CONFIG_INMATE_PCI_DEVICES
++	},
++#endif
++};
+diff --git a/configs/arm64/cell-helper.h b/configs/arm64/cell-helper.h
+new file mode 100644
+index 00000000..6ad357c8
+--- /dev/null
++++ b/configs/arm64/cell-helper.h
+@@ -0,0 +1,124 @@
++/*
++ * Cell Configuration - Generic definitions
++ *
++ * Copyright 2021-2022 NXP
++ *
++ * Authors:
++ *  Stephane Viau <stephane.viau@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ *
++ */
++
++#ifndef KB
++#define KB(bytes)	(1024 * (bytes))
++#define MB(bytes)	(1024 * KB(bytes))
++#endif
++
++#define REGION(phys, virt, bytes) \
++	.phys_start = (phys), \
++	.virt_start = (virt), \
++	.size = (bytes) \
++
++#define MEM_REGION_ROS(phys, virt, bytes) \
++	{ \
++		REGION(phys, virt, bytes), \
++		.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_ROOTSHARED, \
++	}
++
++#define MEM_REGION_RW(phys, virt, bytes) \
++	{ \
++		REGION(phys, virt, bytes), \
++		.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE, \
++	}
++
++#define MEM_REGION_RWS(phys, virt, bytes) \
++	{ \
++		REGION(phys, virt, bytes), \
++		.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE | \
++			JAILHOUSE_MEM_ROOTSHARED, \
++	}
++
++#define COMM_REGION_RW(virt, bytes) \
++	{ \
++		REGION(0x00000000, virt, bytes), \
++		.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE | \
++		         JAILHOUSE_MEM_COMM_REGION, \
++	}
++
++#define MEM_REGION_RWX(phys, virt, bytes) \
++	{ \
++		REGION(phys, virt, bytes), \
++		.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE | \
++		         JAILHOUSE_MEM_EXECUTE, \
++		}
++
++#define MEM_REGION_RWXL(phys, virt, bytes) \
++	{ \
++		REGION(phys, virt, bytes), \
++		.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE | \
++		         JAILHOUSE_MEM_EXECUTE | JAILHOUSE_MEM_LOADABLE, \
++	}
++
++#define MMIO_REGION_RO(phys, virt, bytes) \
++	{ \
++		REGION(phys, virt, bytes), \
++		.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_IO, \
++	}
++
++#define MMIO_REGION_ROS(phys, virt, bytes) \
++	{ \
++		REGION(phys, virt, bytes), \
++		.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_IO | \
++		         JAILHOUSE_MEM_ROOTSHARED, \
++	}
++
++#define MMIO_REGION_RW(phys, virt, bytes) \
++	{ \
++		REGION(phys, virt, bytes), \
++		.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE | \
++		         JAILHOUSE_MEM_IO, \
++	}
++
++#define MMIO_REGION_RWS(phys, virt, bytes) \
++	{ \
++		REGION(phys, virt, bytes), \
++		.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE | \
++		         JAILHOUSE_MEM_IO | JAILHOUSE_MEM_ROOTSHARED, \
++	}
++
++#define IRQnMAP(x)	(1 << ((x) % 32))
++
++#define IRQCHIP_ENTRY(_index, _address, _base, _bitmap1, _bitmap2, _bitmap3, _bitmap4) \
++		[_index] = { \
++			.address = _address, \
++			.pin_base = _base, \
++			.pin_bitmap = { \
++				_bitmap1, \
++				_bitmap2, \
++				_bitmap3, \
++				_bitmap4, \
++			} \
++		}
++
++#define IRQCHIP0(_address, _bitmap1, _bitmap2, _bitmap3, _bitmap4) \
++	IRQCHIP_ENTRY(0, _address, 32, _bitmap1, _bitmap2, _bitmap3, _bitmap4)
++
++#define IRQCHIP1(_address, _bitmap1, _bitmap2, _bitmap3, _bitmap4) \
++	IRQCHIP_ENTRY(1, _address, 160, _bitmap1, _bitmap2, _bitmap3, _bitmap4)
++
++#define IRQCHIP2(_address, _bitmap1, _bitmap2, _bitmap3, _bitmap4) \
++	IRQCHIP_ENTRY(2, _address, 288, _bitmap1, _bitmap2, _bitmap3, _bitmap4)
++
++#define PCI_IVSHMEM_UNDEFINED(_domain, _bdf, region, id, peers) \
++	{ \
++		.type = JAILHOUSE_PCI_TYPE_IVSHMEM, \
++		.domain = _domain, \
++		.bdf = _bdf, \
++		.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX, \
++		.shmem_regions_start = region, \
++		.shmem_dev_id = id, \
++		.shmem_peers = peers, \
++		.shmem_protocol = JAILHOUSE_SHMEM_PROTO_UNDEFINED, \
++	}
+diff --git a/configs/arm64/cell-template.c b/configs/arm64/cell-template.c
+new file mode 100644
+index 00000000..ce6be1c5
+--- /dev/null
++++ b/configs/arm64/cell-template.c
+@@ -0,0 +1,43 @@
++/*
++ * Cell Configuration - Structure definition
++ *
++ * Copyright 2021-2022 NXP
++ *
++ * Authors:
++ *  Stephane Viau <stephane.viau@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ */
++
++#include "cell-helper.h"
++
++/* Name, cores, entry point */
++#define CONFIG_INMATE_NAME		"inmate-cell-name"
++#define CONFIG_INMATE_CORE_BITMAP	(0b1100) /* inmate uses cores 2 and 3 */
++#define CONFIG_INMATE_BASE		(0xc0000000) /* entry point in DDR */
++
++/* Memory & peripherals */
++#define CONFIG_INMATE_REGIONS		\
++	MEM_REGION_RWXL(0xc0000000, 0xc0000000, MB(16))   /* RAM */
++
++/* GIC */
++#define CONFIG_INMATE_IRQCHIPS_ADDR	(0x38800000) /* GIC DISTRIBUTOR BASE ADDR */
++#define CONFIG_INMATE_IRQCHIPS \
++	IRQCHIP0(CONFIG_INMATE_IRQCHIPS_ADDR,                    \
++		IRQnMAP(61),           /* interrupts 32..63 */   \
++		0,                     /* interrupts 64..95 */   \
++		0,                     /* interrupts 96..127 */  \
++		0),                    /* interrupts 128..159 */ \
++	IRQCHIP1(CONFIG_INMATE_IRQCHIPS_ADDR,                    \
++		0,                     /* interrupts 160..191 */ \
++		0,                     /* interrupts 192..223 */ \
++		0,                     /* interrupts 224..255 */ \
++		0),                    /* interrupts 256..287 */ \
++	IRQCHIP2(CONFIG_INMATE_IRQCHIPS_ADDR,                    \
++		0,                    /* interrupts 288..319 */  \
++		0,                     /* interrupts 320..351 */ \
++		0,                     /* interrupts 352..383 */ \
++		0)                     /* interrupts 384..415 */ \
++
++#include "cell-create.h"
+-- 
+2.43.0
+

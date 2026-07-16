@@ -1,0 +1,219 @@
+From 7ea6277498803ccd51b7b2ab169d63cc8d54cf93 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Wed, 15 Jul 2026 19:14:51 +0800
+Subject: [PATCH 30/34] configs: add imx8mm basic cells for FreeRTOS and Zephyr
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/arm64/imx8mm-hmc-freertos.c | 52 +++++++++++++++++++
+ configs/arm64/imx8mm-hmc-rtos.h     | 78 +++++++++++++++++++++++++++++
+ configs/arm64/imx8mm-hmc-zephyr.c   | 52 +++++++++++++++++++
+ 3 files changed, 182 insertions(+)
+ create mode 100644 configs/arm64/imx8mm-hmc-freertos.c
+ create mode 100644 configs/arm64/imx8mm-hmc-rtos.h
+ create mode 100644 configs/arm64/imx8mm-hmc-zephyr.c
+
+diff --git a/configs/arm64/imx8mm-hmc-freertos.c b/configs/arm64/imx8mm-hmc-freertos.c
+new file mode 100644
+index 00000000..c1fbfeca
+--- /dev/null
++++ b/configs/arm64/imx8mm-hmc-freertos.c
+@@ -0,0 +1,52 @@
++/*
++ * i.MX8MM target - FreeRTOS config
++ *
++ * Copyright 2026 NXP
++ *
++ * Authors:
++ *  Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ */
++
++#include "cell-helper.h"
++#include "imx8mm-hmc-rtos.h"
++
++/* Name, cores, entry point */
++#define CONFIG_INMATE_NAME		"freertos"
++#define CONFIG_INMATE_CORE_BITMAP	(0b1000)
++#define CONFIG_INMATE_BASE		RTOS_INMATE_BASE
++
++/* Memory & peripherals */
++#define CONFIG_INMATE_REGIONS		\
++	RTOS_COMMON_MEMORY_REGIONS,                                    \
++	RTOS_MEMRAM_MEMORY_REGIONS
++
++/* GIC */
++#define CONFIG_INMATE_IRQCHIPS_ADDR	CONFIG_RTOS_IRQCHIPS_ADDR
++#define CONFIG_INMATE_IRQCHIPS \
++	IRQCHIP0(CONFIG_INMATE_IRQCHIPS_ADDR,              \
++		/* interrupts 32..63 */                    \
++		RTOS_COMMON_IRQCHIP0_BITMAP1,              \
++		/* interrupts 64..95 */                    \
++		RTOS_COMMON_IRQCHIP0_BITMAP2,              \
++		/* interrupts 96..127 */                   \
++		RTOS_COMMON_IRQCHIP0_BITMAP3,              \
++		/* interrupts 128..159 */                  \
++		RTOS_COMMON_IRQCHIP0_BITMAP4),             \
++	IRQCHIP1(CONFIG_INMATE_IRQCHIPS_ADDR,              \
++		/* interrupts 160..191 */                  \
++		RTOS_COMMON_IRQCHIP1_BITMAP1,              \
++		/* interrupts 192..223 */                  \
++		RTOS_COMMON_IRQCHIP1_BITMAP2,              \
++		/* interrupts 224..255 */                  \
++		RTOS_COMMON_IRQCHIP1_BITMAP3,              \
++		/* interrupts 256..287 */                  \
++		RTOS_COMMON_IRQCHIP1_BITMAP4)
++
++/* IVSHMEM PCI */
++#define CONFIG_INMATE_PCI_DEVICES \
++	RTOS_COMMON_PCI_IVSHMEM
++
++#include "cell-create.h"
+diff --git a/configs/arm64/imx8mm-hmc-rtos.h b/configs/arm64/imx8mm-hmc-rtos.h
+new file mode 100644
+index 00000000..1863db80
+--- /dev/null
++++ b/configs/arm64/imx8mm-hmc-rtos.h
+@@ -0,0 +1,78 @@
++/*
++ * i.MX8MM target - common RTOS config
++ *
++ * Copyright 2026 NXP
++ *
++ * Authors:
++ *  Stephane Viau <stephane.viau@nxp.com>
++ *  Fabrice Goucem <fabrice.goucem@nxp.com>
++ *  Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ *
++ */
++
++#define RTOS_INMATE_BASE		(0x93c00000)
++
++typedef enum IRQn {
++
++  /* Device specific interrupts */
++  UART4_IRQn                   = 61,               /**< UART-4 ORed interrupt */
++} IRQn_Type;
++
++#define RTOS_COMMON_MEMORY_REGIONS \
++	MEM_REGION_ROS( 0xbbaf0000, 0xbbaf0000, KB(4)),  /* IVSHMEM */              \
++	MEM_REGION_RWS( 0xbbaf1000, 0xbbaf1000, KB(36)), /* IVSHMEM */              \
++	MEM_REGION_ROS( 0xbbafa000, 0xbbafa000, KB(8)),  /* IVSHMEM */              \
++	MEM_REGION_RWS( 0xbbafc000, 0xbbafc000, KB(8)),  /* IVSHMEM */              \
++	MEM_REGION_ROS( 0xbbafe000, 0xbbafe000, KB(8)),  /* IVSHMEM */              \
++	/* IVSHMEM regions should always be kept on top so PCI_IVS doesn't change */\
++	MMIO_REGION_RWS(0x30330000, 0x30330000, KB(64)), /* IOMUXC */               \
++	MMIO_REGION_ROS(0x30360000, 0x30360000, KB(64)), /* ANA_PLL */              \
++	MMIO_REGION_RWS(0x30380000, 0x30380000, KB(64)), /* CCM */                  \
++	MMIO_REGION_RW( 0x30a60000, 0x30a60000, KB(64)), /* UART4 */                \
++	MMIO_REGION_RW( 0x303d0000, 0x303d0000, KB(64))  /* RDC */
++
++#define RTOS_MEMRAM_MEMORY_REGIONS \
++	MEM_REGION_RWXL(0x93c00000, 0x93c00000, MB(48)),   /* RAM */    \
++	MEM_REGION_RWX( 0x00900000, 0x00900000, KB(384)),  /* OCRAM */  \
++	MEM_REGION_RW(  0x00800000, 0x00800000, KB(128)),  /* DTCM */   \
++	MEM_REGION_RWX( 0x007e0000, 0x007e0000, KB(128))   /* ITCM */
++
++/* GIC */
++#define CONFIG_RTOS_IRQCHIPS_ADDR	(0x38800000)
++
++/* interrupts 32..63 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP1 \
++	IRQnMAP(UART4_IRQn)
++
++/* interrupts 64..95 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP2 \
++	0
++/* interrupts 96..127 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP3 \
++	0
++
++/* interrupts 128..159 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP4 \
++	0
++
++/* interrupts 160..191 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP1 \
++	0
++/* interrupts 192..223 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP2 \
++	0
++
++/* interrupts 224..255 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP3 \
++	0
++
++/* interrupts 256..287 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP4 \
++	0
++
++/* IVSHMEM PCI */
++#define	RTOS_COMMON_PCI_IVSHMEM \
++	PCI_IVSHMEM_UNDEFINED(1, 0, 0, 1, 3)
+diff --git a/configs/arm64/imx8mm-hmc-zephyr.c b/configs/arm64/imx8mm-hmc-zephyr.c
+new file mode 100644
+index 00000000..8b054af3
+--- /dev/null
++++ b/configs/arm64/imx8mm-hmc-zephyr.c
+@@ -0,0 +1,52 @@
++/*
++ * i.MX8MM target - Zephyr config
++ *
++ * Copyright 2026 NXP
++ *
++ * Authors:
++ *  Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ */
++
++#include "cell-helper.h"
++#include "imx8mm-hmc-rtos.h"
++
++/* Name, cores, entry point */
++#define CONFIG_INMATE_NAME		"zephyr"
++#define CONFIG_INMATE_CORE_BITMAP	(0b1000)
++#define CONFIG_INMATE_BASE		RTOS_INMATE_BASE
++
++/* Memory & peripherals */
++#define CONFIG_INMATE_REGIONS							\
++	RTOS_COMMON_MEMORY_REGIONS,						\
++	RTOS_MEMRAM_MEMORY_REGIONS
++
++/* GIC */
++#define CONFIG_INMATE_IRQCHIPS_ADDR	CONFIG_RTOS_IRQCHIPS_ADDR
++#define CONFIG_INMATE_IRQCHIPS \
++	IRQCHIP0(CONFIG_INMATE_IRQCHIPS_ADDR,              \
++		/* interrupts 32..63 */                    \
++		RTOS_COMMON_IRQCHIP0_BITMAP1,              \
++		/* interrupts 64..95 */                    \
++		RTOS_COMMON_IRQCHIP0_BITMAP2,              \
++		/* interrupts 96..127 */                   \
++		RTOS_COMMON_IRQCHIP0_BITMAP3,              \
++		/* interrupts 128..159 */                  \
++		RTOS_COMMON_IRQCHIP0_BITMAP4),             \
++	IRQCHIP1(CONFIG_INMATE_IRQCHIPS_ADDR,              \
++		/* interrupts 160..191 */                  \
++		RTOS_COMMON_IRQCHIP1_BITMAP1,              \
++		/* interrupts 192..223 */                  \
++		RTOS_COMMON_IRQCHIP1_BITMAP2,              \
++		/* interrupts 224..255 */                  \
++		RTOS_COMMON_IRQCHIP1_BITMAP3,              \
++		/* interrupts 256..287 */                  \
++		RTOS_COMMON_IRQCHIP1_BITMAP4)
++
++/* IVSHMEM PCI */
++#define CONFIG_INMATE_PCI_DEVICES \
++	RTOS_COMMON_PCI_IVSHMEM
++
++#include "cell-create.h"
+-- 
+2.43.0
+

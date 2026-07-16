@@ -1,0 +1,34 @@
+From 913f7a789fb662da537030ba2c56de6adf6f7c7e Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Mon, 23 Aug 2021 14:34:49 +0800
+Subject: [PATCH 25/34] arm-common: irqchip: Fix the mask according to access
+ address and size
+
+The current access_mask is implicitly assuming that it always
+access the whole register, but some registers are byte-accessible,
+the Guest may get wrong value when it issue a byte or halfword
+access to these registers.
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ hypervisor/arch/arm-common/irqchip.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/hypervisor/arch/arm-common/irqchip.c b/hypervisor/arch/arm-common/irqchip.c
+index 256af114..daae5512 100644
+--- a/hypervisor/arch/arm-common/irqchip.c
++++ b/hypervisor/arch/arm-common/irqchip.c
+@@ -69,6 +69,9 @@ restrict_bitmask_access(struct mmio_access *mmio, unsigned int reg_index,
+ 		if (irqchip_irq_in_cell(cell, first_irq + irq))
+ 			access_mask |= irq_bits << (irq * bits_per_irq);
+ 
++	access_mask >>= 8 * (mmio->address & 0x3);
++	access_mask &= (1UL << (mmio->size * 8)) - 1;
++
+ 	if (!mmio->is_write) {
+ 		/* Restrict the read value */
+ 		mmio_perform_access(gicd_base, mmio);
+-- 
+2.43.0
+

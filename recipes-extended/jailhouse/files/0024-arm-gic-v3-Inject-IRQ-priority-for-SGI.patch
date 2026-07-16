@@ -1,0 +1,47 @@
+From 07d19cddcd2ba2380d28081b502946248a66875b Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Thu, 12 Aug 2021 10:36:10 +0800
+Subject: [PATCH 24/34] arm: gic-v3: Inject IRQ priority for SGI
+
+Also inject the priority value for SGI to inmates.
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ hypervisor/arch/arm-common/gic-v3.c | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/hypervisor/arch/arm-common/gic-v3.c b/hypervisor/arch/arm-common/gic-v3.c
+index 4ff91e26..ba992dad 100644
+--- a/hypervisor/arch/arm-common/gic-v3.c
++++ b/hypervisor/arch/arm-common/gic-v3.c
+@@ -622,17 +622,17 @@ static int gicv3_inject_irq(u16 irq_id, u16 sender)
+ 	if (!is_sgi(irq_id)) {
+ 		lr |= ICH_LR_HW_BIT;
+ 		lr |= (u64)irq_id << ICH_LR_PHYS_ID_SHIFT;
++	}
++
++	if (is_spi(irq_id))
++		iprio = mmio_read32(gicd_base + GICD_IPRIORITYR +
++				    (irq_id & ~3));
++	else
++		iprio = mmio_read32(gicr + GICR_IPRIORITYR + (irq_id & ~3));
+ 
+-		if (is_spi(irq_id))
+-			iprio = mmio_read32(gicd_base + GICD_IPRIORITYR +
+-					    (irq_id & ~3));
+-		else
+-			iprio = mmio_read32(gicr + GICR_IPRIORITYR +
+-					    (irq_id & ~3));
++	iprio = (iprio >> ((irq_id & 3) * 8)) & 0xff;
++	lr |= (u64)iprio << ICH_LR_PRIORITY_SHIFT;
+ 
+-		iprio = (iprio >> ((irq_id & 3) * 8)) & 0xff;
+-		lr |= (u64)iprio << ICH_LR_PRIORITY_SHIFT;
+-	}
+ 	/* GICv3 doesn't support the injection of the calling CPU ID */
+ 
+ 	gicv3_write_lr(free_lr, lr);
+-- 
+2.43.0
+

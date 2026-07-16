@@ -1,0 +1,245 @@
+From f8ef2b27f498f3173e4af2e911a8aaf14f800bf4 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Wed, 15 Jul 2026 19:48:29 +0800
+Subject: [PATCH 32/34] configs: add imx943 basic cells for FreeRTOS and Zephyr
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/arm64/imx943-hmc-freertos.c | 59 +++++++++++++++++++
+ configs/arm64/imx943-hmc-rtos.h     | 90 +++++++++++++++++++++++++++++
+ configs/arm64/imx943-hmc-zephyr.c   | 59 +++++++++++++++++++
+ 3 files changed, 208 insertions(+)
+ create mode 100644 configs/arm64/imx943-hmc-freertos.c
+ create mode 100644 configs/arm64/imx943-hmc-rtos.h
+ create mode 100644 configs/arm64/imx943-hmc-zephyr.c
+
+diff --git a/configs/arm64/imx943-hmc-freertos.c b/configs/arm64/imx943-hmc-freertos.c
+new file mode 100644
+index 00000000..62d503db
+--- /dev/null
++++ b/configs/arm64/imx943-hmc-freertos.c
+@@ -0,0 +1,59 @@
++/*
++ * i.MX943 target - FreeRTOS config
++ *
++ * Copyright 2026 NXP
++ *
++ * Authors:
++ *  Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ */
++
++#include "cell-helper.h"
++#include "imx943-hmc-rtos.h"
++
++#define CONFIG_INMATE_NAME		"freertos"
++#define CONFIG_INMATE_CORE_BITMAP	(0b1000)
++#define CONFIG_INMATE_BASE		RTOS_INMATE_BASE
++
++/* Memory & peripherals */
++#define CONFIG_INMATE_REGIONS                   \
++	RTOS_COMMON_MEMORY_REGIONS,             \
++	RTOS_MEMRAM_MEMORY_REGIONS
++
++#define CONFIG_INMATE_IRQCHIPS_ADDR	CONFIG_RTOS_IRQCHIPS_ADDR
++#define CONFIG_INMATE_IRQCHIPS 	                \
++	IRQCHIP0(CONFIG_INMATE_IRQCHIPS_ADDR,   \
++		/* interrupts 32..63 */         \
++		RTOS_COMMON_IRQCHIP0_BITMAP1,   \
++		/* interrupts 64..95 */         \
++		RTOS_COMMON_IRQCHIP0_BITMAP2,   \
++		/* interrupts 96..127 */        \
++		RTOS_COMMON_IRQCHIP0_BITMAP3,   \
++		/* interrupts 128..159 */       \
++		RTOS_COMMON_IRQCHIP0_BITMAP4),  \
++	IRQCHIP1(CONFIG_INMATE_IRQCHIPS_ADDR,   \
++		/* interrupts 160..191 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP1,   \
++		/* interrupts 192..223 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP2,   \
++		/* interrupts 224..255 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP3,   \
++		/* interrupts 256..287 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP4),  \
++	IRQCHIP2(CONFIG_INMATE_IRQCHIPS_ADDR,   \
++		/* interrupts 288..319 */       \
++		RTOS_COMMON_IRQCHIP2_BITMAP1,   \
++		/* interrupts 320..351 */       \
++		RTOS_COMMON_IRQCHIP2_BITMAP2,   \
++		/* interrupts 352..383 */       \
++		RTOS_COMMON_IRQCHIP2_BITMAP3,   \
++		/* interrupts 384..415 */       \
++		RTOS_COMMON_IRQCHIP2_BITMAP4)
++
++/* IVSHMEM PCI */
++#define CONFIG_INMATE_PCI_DEVICES \
++	RTOS_COMMON_PCI_IVSHMEM
++
++#include "cell-create.h"
+diff --git a/configs/arm64/imx943-hmc-rtos.h b/configs/arm64/imx943-hmc-rtos.h
+new file mode 100644
+index 00000000..f13f5938
+--- /dev/null
++++ b/configs/arm64/imx943-hmc-rtos.h
+@@ -0,0 +1,90 @@
++/*
++ * i.MX943 target - common RTOS config
++ *
++ * Copyright 2026 NXP
++ *
++ * Authors:
++ *  Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ *
++ */
++
++#define RTOS_INMATE_BASE			(0xd0000000)
++
++typedef enum IRQn {
++  /* Device specific interrupts */
++  LPUART8_IRQn                 = 111,               /**< Low Power UART 8 */
++  MU3_A_IRQn                   = 298,              /**< Message Unit 3 */
++} IRQn_Type;
++
++#define RTOS_COMMON_MEMORY_REGIONS \
++	MEM_REGION_ROS( 0xff9f0000, 0xff9f0000, KB(4)),  /* IVSHMEM */              \
++	MEM_REGION_RWS( 0xff9f1000, 0xff9f1000, KB(36)), /* IVSHMEM */              \
++	MEM_REGION_ROS( 0xff9fa000, 0xff9fa000, KB(8)),  /* IVSHMEM */              \
++	MEM_REGION_RWS( 0xff9fc000, 0xff9fc000, KB(8)),  /* IVSHMEM */              \
++	MEM_REGION_ROS( 0xff9fe000, 0xff9fe000, KB(8)),  /* IVSHMEM */              \
++	/* IVSHMEM regions should always be kept on top so PCI_IVS doesn't change */\
++	MMIO_REGION_RW( 0x426a0000, 0x426a0000, KB(64)), /* LPUART8 */             \
++	MMIO_REGION_RW( 0x445d0000, 0x445d0000, KB(4)),  /* MU3 */                  \
++	MEM_REGION_RWS( 0x445d1000, 0x445d1000, KB(4))   /* MU3 SRAM */
++
++#define RTOS_MEMRAM_MEMORY_REGIONS \
++	MEM_REGION_RWXL(0xd0000000, 0xd0000000, MB(48)), /* RAM */    \
++	MEM_REGION_RWX( 0x20480000, 0x20480000, KB(640)) /* OCRAM */
++
++/* GIC */
++#define CONFIG_RTOS_IRQCHIPS_ADDR	(0x48000000)
++
++/* interrupts 32..63 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP1 \
++	0
++
++/* interrupts 64..95 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP2 \
++	0
++
++/* interrupts 96..127 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP3 \
++	IRQnMAP(LPUART8_IRQn)
++
++/* interrupts 128..159 */
++#define RTOS_COMMON_IRQCHIP0_BITMAP4 \
++	0
++
++/* interrupts 160..191 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP1 \
++	0
++
++/* interrupts 192..223 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP2 \
++	0
++
++/* interrupts 224..255 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP3 \
++	0
++
++/* interrupts 256..287 */
++#define RTOS_COMMON_IRQCHIP1_BITMAP4 \
++	0
++
++/* interrupts 288..319 */
++#define RTOS_COMMON_IRQCHIP2_BITMAP1 \
++	IRQnMAP(MU3_A_IRQn)
++
++/* interrupts 320..351 */
++#define RTOS_COMMON_IRQCHIP2_BITMAP2 \
++	0
++
++/* interrupts 352..383 */
++#define RTOS_COMMON_IRQCHIP2_BITMAP3 \
++	0
++
++/* interrupts 384..415 */
++#define RTOS_COMMON_IRQCHIP2_BITMAP4 \
++	0
++
++/* IVSHMEM PCI */
++#define	RTOS_COMMON_PCI_IVSHMEM \
++	PCI_IVSHMEM_UNDEFINED(4, 0, 0, 1, 1)
+diff --git a/configs/arm64/imx943-hmc-zephyr.c b/configs/arm64/imx943-hmc-zephyr.c
+new file mode 100644
+index 00000000..213f24e8
+--- /dev/null
++++ b/configs/arm64/imx943-hmc-zephyr.c
+@@ -0,0 +1,59 @@
++/*
++ * i.MX943 target - Zephyr config
++ *
++ * Copyright 2026 NXP
++ *
++ * Authors:
++ *  Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2.  See
++ * the COPYING file in the top-level directory.
++ */
++
++#include "cell-helper.h"
++#include "imx943-hmc-rtos.h"
++
++#define CONFIG_INMATE_NAME		"zephyr"
++#define CONFIG_INMATE_CORE_BITMAP	(0b1000)
++#define CONFIG_INMATE_BASE		RTOS_INMATE_BASE
++
++/* Memory & peripherals */
++#define CONFIG_INMATE_REGIONS                   \
++	RTOS_COMMON_MEMORY_REGIONS,             \
++	RTOS_MEMRAM_MEMORY_REGIONS
++
++#define CONFIG_INMATE_IRQCHIPS_ADDR	CONFIG_RTOS_IRQCHIPS_ADDR
++#define CONFIG_INMATE_IRQCHIPS 	                \
++	IRQCHIP0(CONFIG_INMATE_IRQCHIPS_ADDR,   \
++		/* interrupts 32..63 */         \
++		RTOS_COMMON_IRQCHIP0_BITMAP1,   \
++		/* interrupts 64..95 */         \
++		RTOS_COMMON_IRQCHIP0_BITMAP2,   \
++		/* interrupts 96..127 */        \
++		RTOS_COMMON_IRQCHIP0_BITMAP3,   \
++		/* interrupts 128..159 */       \
++		RTOS_COMMON_IRQCHIP0_BITMAP4),  \
++	IRQCHIP1(CONFIG_INMATE_IRQCHIPS_ADDR,   \
++		/* interrupts 160..191 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP1,   \
++		/* interrupts 192..223 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP2,   \
++		/* interrupts 224..255 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP3,   \
++		/* interrupts 256..287 */       \
++		RTOS_COMMON_IRQCHIP1_BITMAP4),  \
++	IRQCHIP2(CONFIG_INMATE_IRQCHIPS_ADDR,   \
++		/* interrupts 288..319 */       \
++		RTOS_COMMON_IRQCHIP2_BITMAP1,   \
++		/* interrupts 320..351 */       \
++		RTOS_COMMON_IRQCHIP2_BITMAP2,   \
++		/* interrupts 352..383 */       \
++		RTOS_COMMON_IRQCHIP2_BITMAP3,   \
++		/* interrupts 384..415 */       \
++		RTOS_COMMON_IRQCHIP2_BITMAP4)
++
++/* IVSHMEM PCI */
++#define CONFIG_INMATE_PCI_DEVICES \
++	RTOS_COMMON_PCI_IVSHMEM
++
++#include "cell-create.h"
+-- 
+2.43.0
+

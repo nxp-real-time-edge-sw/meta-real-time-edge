@@ -1,0 +1,35 @@
+From a494d5a7242217e35bbcfa1e41da502236afc5d2 Mon Sep 17 00:00:00 2001
+From: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Date: Wed, 15 Jul 2026 16:34:56 +0800
+Subject: [PATCH 28/34] configs: arm64: use ULL type in size helper to avoid
+ overflow
+
+Signed-off-by: Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
+Upstream-Status: Pending
+---
+ configs/arm64/cell-helper.h | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/configs/arm64/cell-helper.h b/configs/arm64/cell-helper.h
+index 6ad357c8..c3a359fd 100644
+--- a/configs/arm64/cell-helper.h
++++ b/configs/arm64/cell-helper.h
+@@ -12,8 +12,13 @@
+  */
+ 
+ #ifndef KB
+-#define KB(bytes)	(1024 * (bytes))
+-#define MB(bytes)	(1024 * KB(bytes))
++#define KB(bytes)	(1024ULL * (bytes))
++#endif
++#ifndef MB
++#define MB(bytes)	(1024ULL * KB(bytes))
++#endif
++#ifndef GB
++#define GB(bytes)	(1024ULL * MB(bytes))
+ #endif
+ 
+ #define REGION(phys, virt, bytes) \
+-- 
+2.43.0
+
