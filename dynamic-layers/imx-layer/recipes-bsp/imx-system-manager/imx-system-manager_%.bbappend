@@ -10,5 +10,4 @@ SRC_URI:append:real-time-edge = " \
     file://0008-configs-mx952rte-copy-from-configs-mx952evk.cfg.patch \
     file://0009-configs-mx952rte-add-i.mx952-support-for-real-time-e.patch \
     file://0010-configs-mx952rte-enable-ca55-to-control-cm7.patch \
-    file://0011-configs-mx95rte-Set-NETC-KPA-to-1-to-bypass-SMMU.patch \
 "
