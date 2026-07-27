@@ -28,6 +28,7 @@ SRC_URI += " \
     file://0003-remove-bool-definition.patch \
     file://0001-Run-master_operation_loop-once-for-improved-performa.patch \
     file://0002-Update-Readme_For_User_Space_IGH_EtherCAT.txt.patch \
+    file://0001-fix-the-issue-regarding-the-do_div-function.patch \
     file://libus_drv.a;subdir=${S}/devices/nxp_userspace/ \
 "
 

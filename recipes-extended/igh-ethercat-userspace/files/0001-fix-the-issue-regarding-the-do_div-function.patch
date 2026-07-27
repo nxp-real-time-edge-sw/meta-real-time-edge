@@ -1,0 +1,45 @@
+From 796dc8b0c619ce7f6fe4e1ac39e96911ddf090a8 Mon Sep 17 00:00:00 2001
+From: Hongbo Wang <hongbo.wang@nxp.com>
+Date: Mon, 27 Jul 2026 09:08:17 +0800
+Subject: [PATCH] fix the issue regarding the do_div() function
+
+refer to the implementation of do_div() in Linux kernel:
+The first parameter is modified in place and becomes the quotient after the division.
+The return value of do_div() is the remainder, not the quotient.
+
+Signed-off-by: Hongbo Wang <hongbo.wang@nxp.com>
+Upstream-Status: Pending
+---
+ emulation/linux/jiffies.h | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/emulation/linux/jiffies.h b/emulation/linux/jiffies.h
+index 2f02c269..f9cf72c7 100644
+--- a/emulation/linux/jiffies.h
++++ b/emulation/linux/jiffies.h
+@@ -5,7 +5,6 @@
+ #include <stdlib.h>
+ #include <sys/time.h>
+ #include <linux/types.h>
+-
+ #include <stdbool.h>
+ 
+ typedef __s8  s8;
+@@ -29,7 +28,13 @@ typedef __u64 u64;
+     (void) (&_x == &_y);    \
+     _x > _y ? _x : _y; })
+ 
+-static inline u32 do_div(u64 x, u32 y) { return x / y; }
++#define do_div(n,base) ({					\
++	uint32_t __base = (base);				\
++	uint32_t __rem;						\
++	__rem = ((uint64_t)(n)) % __base;			\
++	(n) = ((uint64_t)(n)) / __base;				\
++	__rem;							\
++ })
+ 
+ typedef u64 cycles_t;
+ 
+-- 
+2.43.0
+
