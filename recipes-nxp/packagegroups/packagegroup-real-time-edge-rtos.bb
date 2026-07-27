@@ -99,6 +99,38 @@ digital_encoder_examples:append:imx943-19x19-lpddr5-evk = " \
     t-format-sync-transfer \
 "
 
+canopen_examples ?= ""
+canopen_examples:append:imx943-19x19-lpddr4-evk = " \
+    canopen-device-bm \
+    canopen-manager-bm \
+"
+canopen_examples:append:imx943-19x19-lpddr5-evk = " \
+    canopen-device-bm \
+    canopen-manager-bm \
+"
+
+modbus_examples ?= ""
+modbus_examples:append:imx943-19x19-lpddr4-evk = " \
+    modbus-rtu-client \
+    modbus-rtu-server \
+    modbus-tcp-client \
+    modbus-tcp-server \
+"
+modbus_examples:append:imx943-19x19-lpddr5-evk = " \
+    modbus-rtu-client \
+    modbus-rtu-server \
+    modbus-tcp-client \
+    modbus-tcp-server \
+"
+
+netc_examples ?= ""
+netc_examples:append:imx943-19x19-lpddr4-evk = " \
+    hsr-switch \
+"
+netc_examples:append:imx943-19x19-lpddr5-evk = " \
+    hsr-switch \
+"
+
 heterogeneous_multicore_examples ?= ""
 
 heterogeneous_multicore_examples:append:imx8mm-lpddr4-evk = " \
@@ -253,6 +285,9 @@ RTOS_INDUSTRIAL_INSTALL = " \
     ${soem_examples} \
     ${uart_examples} \
     ${digital_encoder_examples} \
+    ${canopen_examples} \
+    ${modbus_examples} \
+    ${netc_examples} \
     ${heterogeneous_multicore_examples} \
     ${heterogeneous_multi_soc_examples} \
 "
